@@ -1,0 +1,152 @@
+id: a1-functions
+track: foundations
+unit: 1
+order: 4
+title: Functions
+summary: def, return, and why print is not return.
+
+cards:
+  - type: learn
+    id: def
+    title: def instead of public static
+    body: >-
+      A function starts with `def`, then its name and parameters, then a colon. No types, no braces:
+      the indented lines are the body. `return` hands a value back to whoever called it.
+    code: |
+      def area(width, height):
+          return width * height
+
+      result = area(3, 4)
+      print(result)
+    java: |
+      static int area(int width, int height) {
+          return width * height;
+      }
+
+      int result = area(3, 4);
+      System.out.println(result);
+    subgoals:
+      - { line: 1, label: 'Define: name and parameters' }
+      - { line: 2, label: Return the answer }
+      - { line: 4, label: Call it and keep the result }
+    predict: What number gets printed?
+
+  - type: learn
+    id: print-vs-return
+    title: Printing is not returning
+    body: >-
+      Printing shows a value to you. Returning hands it back to the code. A function without
+      `return` gives back `None` (Python's `null`).
+    code: |
+      def shout(word):
+          print(word.upper())
+
+      x = shout("hi")
+      print(x)
+    predict: The function prints something. But what is `x`?
+
+  - type: choice
+    id: nested
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def double(n):
+          return n * 2
+
+      print(double(double(3)))
+    choices: ['12', '6', '9', '36']
+    answer: '12'
+    why: >-
+      The inner call runs first: `double(3)` is 6, then `double(6)` is 12.
+
+  - type: choice
+    id: default-arg
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def greet(name, greeting="Hi"):
+          return f"{greeting}, {name}"
+
+      print(greet("Sam"))
+      print(greet("Sam", "Hey"))
+    choices: ["Hi, Sam\nHey, Sam", "Hi, Sam\nHi, Sam", "Sam, Hi\nSam, Hey", 'Error']
+    answer: "Hi, Sam\nHey, Sam"
+    why: >-
+      `greeting="Hi"` is a default: used when you don't pass that argument. Java needs overloading for
+      this.
+
+  - type: parsons
+    id: full-name
+    prompt: Build `full_name` so `full_name("ada", "lovelace")` returns `"Ada Lovelace"`.
+    code: |
+      def full_name(first, last):
+          name = first + " " + last
+          return name.title()
+    distractors: ['    print(name.title())']
+    tests:
+      - { call: 'full_name("ada", "lovelace")', expect: "'Ada Lovelace'" }
+      - { call: 'full_name("alan", "turing")', expect: "'Alan Turing'" }
+    why: >-
+      The function has to return the name. Printing it would show it, but the caller would get `None`.
+
+  - type: blank
+    id: square
+    prompt: Make `square` give back n times n.
+    code: |
+      def square(n):
+          ____ n * n
+    answers: [['return']]
+    tests:
+      - { call: square(4), expect: '16' }
+      - { call: square(-3), expect: '9' }
+    why: >-
+      `return` sends the value back so the caller can use it.
+
+  - type: fix
+    id: missing-return
+    prompt: '`add_tax(10)` should be `12.0`, but it gives `None`. Fix it.'
+    code: |
+      def add_tax(price):
+          total = price * 1.2
+    solution: |
+      def add_tax(price):
+          total = price * 1.2
+          return total
+    tests:
+      - { call: add_tax(10), expect: '12.0' }
+      - { call: add_tax(0), expect: '0.0' }
+    why: >-
+      The math happens, but nothing is returned, so the caller gets `None`.
+    hints:
+      - What does a function give back when it never says `return`?
+
+  - type: write
+    id: minutes-to-hours
+    prompt: Write `minutes_to_hours` that returns a string like `"2h 15m"`.
+    starter: |
+      def minutes_to_hours(minutes):
+          # return a string like "2h 15m"
+          pass
+    solution: |
+      def minutes_to_hours(minutes):
+          return f"{minutes // 60}h {minutes % 60}m"
+    tests:
+      - { call: minutes_to_hours(135), expect: "'2h 15m'" }
+      - { call: minutes_to_hours(60), expect: "'1h 0m'" }
+      - { call: minutes_to_hours(59), expect: "'0h 59m'", hidden: true }
+    hints:
+      - '`//` and `%` from the numbers lesson do the math.'
+      - 'An f-string builds the text: `f"{a}h {b}m"`.'
+
+  - type: explain
+    id: discount
+    prompt: What does this function do?
+    code: |
+      def mystery(price, percent):
+          return price - price * percent / 100
+    model: >-
+      It applies a percentage discount: it returns the price minus `percent` percent of it. For
+      example, `mystery(50, 10)` returns 45.0.
+    keyPoints:
+      - '`price * percent / 100` is the amount taken off'
+      - It returns the reduced price (a float)

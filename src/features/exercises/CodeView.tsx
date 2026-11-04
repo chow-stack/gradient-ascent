@@ -1,0 +1,89 @@
+import { RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { CodeEditor } from '../../components/editor'
+import type { Card } from '../content/schema'
+import type { RunResult } from '../runner/harness'
+import { runPython } from '../runner/python'
+import { Prompt, RunButton, RunOutput } from './shared'
+import { locked, type ViewProps } from './types'
+
+type CodeCard = Extract<Card, { type: 'fix' | 'write' }>
+
+/** Fix-the-bug and write-a-function: a real editor, a Run button, and tests on Check. */
+export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: ViewProps<CodeCard>) {
+  const code = answer.type === 'code' ? answer.code : ''
+  const [scratch, setScratch] = useState<RunResult | null>(null)
+  const [running, setRunning] = useState(false)
+  // A graded result replaces any earlier plain run; "Try again" clears both.
+  const [lastResult, setLastResult] = useState(result)
+  if (result !== lastResult) {
+    setLastResult(result)
+    setScratch(null)
+  }
+  const shown = result ?? scratch
+  const visibleTests = card.tests?.filter((t) => !t.hidden) ?? []
+  const original = card.type === 'fix' ? card.code : card.starter
+
+  const run = async () => {
+    setRunning(true)
+    // Plain run shows output and visible tests, without grading.
+    setScratch(await runPython(code, visibleTests))
+    setRunning(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Prompt tag={card.type === 'fix' ? 'Fix the bug' : 'Write the code'} text={card.prompt} />
+      {visibleTests.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-small font-semibold text-muted">Should work like this</h3>
+          <ul className="flex flex-col gap-1 font-mono text-[13.5px]">
+            {visibleTests.map((t, i) => (
+              <li key={i}>
+                <span className="text-code-text">{t.call}</span>
+                <span className="text-faint"> → </span>
+                <span className="text-syn-str">{t.expect}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {card.type === 'fix' && card.expectOutput && (
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-small font-semibold text-muted">Should print</h3>
+          <pre className="font-mono text-[13.5px] text-syn-str">{card.expectOutput.replace(/\n$/, '')}</pre>
+        </div>
+      )}
+      <CodeEditor
+        value={code}
+        onChange={(v) => setAnswer({ type: 'code', code: v })}
+        readOnly={locked(phase)}
+        errorLine={shown?.error?.line ?? null}
+        onSubmit={(latest) => {
+          setAnswer({ type: 'code', code: latest })
+          onSubmit({ type: 'code', code: latest })
+        }}
+        ariaLabel={card.type === 'fix' ? 'Code with a bug' : 'Your code'}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <RunButton onRun={run} running={running} />
+        {!locked(phase) && code !== original && (
+          <button
+            type="button"
+            className="ga-btn ga-btn--ghost ga-btn--sm"
+            onClick={() => {
+              setAnswer({ type: 'code', code: original })
+              setScratch(null)
+            }}
+          >
+            <RotateCcw size={14} aria-hidden /> Reset
+          </button>
+        )}
+        <span className="ml-auto hidden text-caption text-faint sm:inline">
+          <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> to check
+        </span>
+      </div>
+      {shown && <RunOutput result={shown} expectOutput={card.type === 'fix' ? card.expectOutput : undefined} />}
+    </div>
+  )
+}

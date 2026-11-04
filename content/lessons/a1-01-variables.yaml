@@ -1,0 +1,152 @@
+id: a1-variables
+track: foundations
+unit: 1
+order: 1
+title: Variables and print
+summary: No types, no semicolons. Names point at values.
+
+cards:
+  - type: learn
+    id: intro
+    title: No types, no semicolons
+    body: >-
+      In Java you declare a type: `int age = 4;`. In Python you just pick a name and assign:
+      `age = 4`. The value knows its own type; the variable doesn't care.
+
+
+      `print()` shows values. Give it several, separated by commas, and it puts a space between them.
+    code: |
+      name = "Adam"
+      age = 4
+      print(name)
+      print("Age:", age)
+    java: |
+      String name = "Adam";
+      int age = 4;
+      System.out.println(name);
+      System.out.println("Age: " + age);
+    subgoals:
+      - { line: 1, label: Make variables (no type needed) }
+      - { line: 3, label: Print them }
+    predict: What exactly will the second print show?
+
+  - type: learn
+    id: reassign
+    title: A name can point at anything
+    body: >-
+      A variable is a name tag on a value. You can move the tag to a new value any time, even one of a
+      different type. Java would refuse; Python allows it. `type()` tells you what a value is.
+    code: |
+      x = 5
+      x = x + 1
+      print(x, type(x))
+      x = "five"
+      print(x, type(x))
+    java: |
+      int x = 5;
+      x = x + 1;
+      // x = "five";  // error: incompatible types
+    predict: What does `type(x)` print each time?
+
+  - type: choice
+    id: copy-value
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = 3
+      b = a
+      a = 10
+      print(b)
+    choices: ['3', '10', '13', 'Error']
+    answer: '3'
+    why: >-
+      `b = a` points `b` at the value 3 at that moment. Moving `a` to 10 later doesn't move `b`.
+    hints:
+      - Go line by line. What is `a` when `b = a` runs?
+
+  - type: choice
+    id: print-commas
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print("Score:", 7, "points")
+    choices: ['Score: 7 points', 'Score:7points', 'Score: 7points', '"Score:", 7, "points"']
+    answer: 'Score: 7 points'
+    why: >-
+      `print` puts one space between each value you give it.
+
+  - type: parsons
+    id: swap
+    prompt: Put the lines in order so the program swaps `a` and `b` and prints `2 1`.
+    code: |
+      a = 1
+      b = 2
+      temp = a
+      a = b
+      b = temp
+      print(a, b)
+    distractors: ['b = a']
+    expectOutput: '2 1'
+    why: >-
+      Save `a` in `temp` before overwriting it, or its value is lost. (Python also has a shortcut:
+      `a, b = b, a`.)
+    hints:
+      - If you write `a = b` first, what happens to the old value of `a`?
+
+  - type: blank
+    id: full-name
+    prompt: Fill in the blanks so it prints `Ada Lovelace`.
+    code: |
+      first = "Ada"
+      last = "Lovelace"
+      print(____, ____)
+    answers: [['first'], ['last']]
+    expectOutput: Ada Lovelace
+    why: >-
+      Passing two variables to `print` shows both, with a space between.
+
+  - type: fix
+    id: case-sensitive
+    prompt: This should print `10` but crashes. Fix it.
+    code: |
+      score = 10
+      print(Score)
+    solution: |
+      score = 10
+      print(score)
+    highlightLine: 2
+    expectOutput: '10'
+    why: >-
+      Names are case-sensitive: `score` and `Score` are different names, and `Score` was never created
+      (a NameError).
+    hints:
+      - Read the error. Which name does Python say it doesn't know?
+
+  - type: write
+    id: minutes
+    prompt: Make a variable named `minutes` that holds `hours` converted to minutes.
+    starter: |
+      hours = 3
+      # make minutes here
+    solution: |
+      hours = 3
+      minutes = hours * 60
+    tests:
+      - { call: minutes, expect: '180' }
+    why: Use the variable, not the number 3, so it still works if `hours` changes.
+    hints:
+      - There are 60 minutes in an hour. Multiply with `*`.
+
+  - type: explain
+    id: counter
+    prompt: What does this code do?
+    code: |
+      count = 0
+      count = count + 1
+      count = count + 1
+      print(count)
+    model: >-
+      It starts a counter at 0, adds 1 to it twice, and prints 2.
+    keyPoints:
+      - '`count = count + 1` reads the old value, adds 1, and stores the result back in `count`'
+      - It prints 2

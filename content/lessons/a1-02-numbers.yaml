@@ -1,0 +1,128 @@
+id: a1-numbers
+track: foundations
+unit: 1
+order: 2
+title: Numbers and math
+summary: int vs float, and why / is not Java's /.
+
+cards:
+  - type: learn
+    id: division
+    title: Two kinds of division
+    body: >-
+      The biggest surprise coming from Java: `/` always gives a decimal (a `float`), even for two whole
+      numbers. For Java-style whole-number division, use `//`.
+
+
+      `%` is the remainder, and `**` is "to the power of".
+    code: |
+      print(7 / 2)
+      print(7 // 2)
+      print(7 % 2)
+      print(2 ** 10)
+    java: |
+      System.out.println(7 / 2.0);         // 3.5
+      System.out.println(7 / 2);           // 3
+      System.out.println(7 % 2);           // 1
+      System.out.println(Math.pow(2, 10)); // 1024.0
+    subgoals:
+      - { line: 1, label: True division (always a float) }
+      - { line: 2, label: Floor division (drops the decimals) }
+      - { line: 3, label: Remainder }
+      - { line: 4, label: Power }
+    predict: Which line prints a number with a decimal point?
+
+  - type: choice
+    id: even-divide
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(10 / 5)
+    choices: ['2', '2.0', '5', '0.5']
+    answer: '2.0'
+    why: >-
+      `/` always returns a float, even when it divides evenly. Use `//` if you want `2`.
+
+  - type: choice
+    id: mod-floor
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(17 % 5, 17 // 5)
+    choices: ['2 3', '3 2', '2 3.4', '3.4 2']
+    answer: '2 3'
+    why: >-
+      5 goes into 17 three whole times (`//` gives 3) with 2 left over (`%` gives 2).
+    hints:
+      - How many whole 5s fit in 17, and what's left?
+
+  - type: choice
+    id: is-even
+    prompt: Which expression is `True` exactly when `n` is even?
+    choices: ['n % 2 == 0', 'n / 2 == 0', 'n // 2 == 0', 'n ** 2 == 0']
+    answer: 'n % 2 == 0'
+    why: >-
+      An even number has no remainder when divided by 2. Same idea as in Java.
+
+  - type: blank
+    id: hours-minutes
+    prompt: Turn 135 minutes into hours and leftover minutes, so it prints `2 15`.
+    code: |
+      total = 135
+      hours = total ____ 60
+      minutes = total ____ 60
+      print(hours, minutes)
+    answers: [['//'], ['%']]
+    expectOutput: '2 15'
+    why: >-
+      `//` counts the whole hours, `%` keeps what's left over. This pair shows up everywhere: time,
+      digits, grids.
+    hints:
+      - One operator gives "how many whole times", the other gives "what's left".
+
+  - type: fix
+    id: average
+    prompt: The average of 7 and 8 should be `7.5`. Fix the math.
+    code: |
+      a = 7
+      b = 8
+      average = a + b / 2
+      print(average)
+    solution: |
+      a = 7
+      b = 8
+      average = (a + b) / 2
+      print(average)
+    highlightLine: 3
+    expectOutput: '7.5'
+    why: >-
+      Division happens before addition, like in math class. Parentheses make the addition happen first.
+    hints:
+      - Which happens first, `+` or `/`?
+
+  - type: write
+    id: fahrenheit
+    prompt: Make `fahrenheit` from `celsius` using F = C × 9/5 + 32.
+    starter: |
+      celsius = 25
+    solution: |
+      celsius = 25
+      fahrenheit = celsius * 9 / 5 + 32
+    tests:
+      - { call: fahrenheit, expect: '77.0' }
+    hints:
+      - In Python, × is `*`.
+
+  - type: explain
+    id: digits
+    prompt: What do the two print lines show, and why?
+    code: |
+      n = 37
+      print(n % 10)
+      print(n // 10)
+    model: >-
+      They split 37 into its digits. `n % 10` is the last digit (7) and `n // 10` chops it off,
+      leaving 3.
+    keyPoints:
+      - '`% 10` gives the last digit'
+      - '`// 10` removes the last digit'

@@ -1,0 +1,7 @@
+id: foundations
+name: Foundations
+summary: Python first, then how it really works, data structures and algorithms.
+units:
+  - unit: 1
+    title: Python refresher, mapped from Java
+    summary: Everything from AP CSA, the Python way. Variables to dictionaries in ten lessons.

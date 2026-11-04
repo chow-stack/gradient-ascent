@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Secrets and keys (belt and braces; never commit these)
+*.pem
+*.key
+*.p12
+secrets/
+
+# Build and tool caches
+coverage/
+*.tsbuildinfo
+.vite/
+.cache/
+.eslintcache
+
+# Local AI-tool config (personal permissions and launch settings)
+.claude/
+
+# OS clutter
+Thumbs.db

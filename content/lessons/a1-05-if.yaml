@@ -1,0 +1,168 @@
+id: a1-if
+track: foundations
+unit: 1
+order: 5
+title: Booleans and if
+summary: and/or/not, elif, and indentation as structure.
+
+cards:
+  - type: learn
+    id: if-elif
+    title: if, elif, else
+    body: >-
+      No parentheses needed and no braces: a colon starts a block and indentation ends it. `else if`
+      is spelled `elif`. Only the first true branch runs.
+
+
+      Booleans are `True` and `False` (capitalized), and the operators are words: `and`, `or`, `not`.
+    code: |
+      temp = 18
+      if temp > 25:
+          print("hot")
+      elif temp > 15:
+          print("nice")
+      else:
+          print("cold")
+    java: |
+      int temp = 18;
+      if (temp > 25) {
+          System.out.println("hot");
+      } else if (temp > 15) {
+          System.out.println("nice");
+      } else {
+          System.out.println("cold");
+      }
+    subgoals:
+      - { line: 2, label: Check conditions top to bottom }
+      - { line: 6, label: Fallback when none match }
+    predict: Which word prints?
+
+  - type: choice
+    id: and-or-not
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 7
+      if x > 5 and x < 10:
+          print("A")
+      if x > 5 or x > 100:
+          print("B")
+      if not x > 5:
+          print("C")
+    choices: ["A\nB", 'A', "A\nB\nC", 'B']
+    answer: "A\nB"
+    why: >-
+      These are three separate `if`s, so each is checked. A and B are true; `not x > 5` is false.
+
+  - type: choice
+    id: first-wins
+    kind: predict
+    prompt: What does this print?
+    code: |
+      score = 95
+      if score > 60:
+          print("pass")
+      elif score > 90:
+          print("great")
+    choices: ['pass', 'great', "pass\ngreat", '(nothing)']
+    answer: 'pass'
+    why: >-
+      In an if/elif chain only the first true branch runs. 95 > 60 matches first, so `great` is never
+      reached. Put the strictest check first.
+    hints:
+      - Once one branch of an if/elif chain runs, are the others checked?
+
+  - type: choice
+    id: chained
+    prompt: Which is valid Python for "x is between 1 and 10, inclusive"?
+    choices: ['1 <= x <= 10', '1 <= x && x <= 10', 'x >= 1 & <= 10', '1 =< x =< 10']
+    answer: '1 <= x <= 10'
+    why: >-
+      Python lets you chain comparisons like in math. `&&` doesn't exist; it's `and`.
+
+  - type: parsons
+    id: letter-grade
+    prompt: Order the lines so a score of 72 prints `B`.
+    code: |
+      score = 72
+      if score >= 90:
+          print("A")
+      elif score >= 70:
+          print("B")
+      else:
+          print("C")
+    expectOutput: B
+    why: >-
+      Check from highest to lowest so each branch only catches its own range.
+
+  - type: blank
+    id: both-needed
+    prompt: You need to be 18+ and have a ticket to enter. Fill in the operator.
+    code: |
+      age = 20
+      has_ticket = False
+      if age >= 18 ____ has_ticket:
+          print("enter")
+      else:
+          print("no entry")
+    answers: [['and']]
+    expectOutput: no entry
+    why: >-
+      Both conditions must be true, so `and`. With `or`, being 18 alone would let you in.
+
+  - type: fix
+    id: assign-vs-compare
+    prompt: This should print `welcome`. Fix the syntax error.
+    code: |
+      password = "goat"
+      if password = "goat":
+          print("welcome")
+    solution: |
+      password = "goat"
+      if password == "goat":
+          print("welcome")
+    highlightLine: 2
+    expectOutput: welcome
+    why: >-
+      `=` assigns a value; `==` compares two values. Same as Java.
+
+  - type: write
+    id: grade-fn
+    prompt: >-
+      Write `grade(score)`: return "A" for 90 and up, "B" for 80 and up, "C" for 70 and up, otherwise "F".
+    starter: |
+      def grade(score):
+          pass
+    solution: |
+      def grade(score):
+          if score >= 90:
+              return "A"
+          elif score >= 80:
+              return "B"
+          elif score >= 70:
+              return "C"
+          return "F"
+    tests:
+      - { call: grade(95), expect: "'A'" }
+      - { call: grade(85), expect: "'B'" }
+      - { call: grade(70), expect: "'C'", hidden: true }
+      - { call: grade(69), expect: "'F'", hidden: true }
+      - { call: grade(90), expect: "'A'", hidden: true }
+    hints:
+      - Check the highest grade first.
+      - Watch the boundaries. Is 90 an A?
+
+  - type: explain
+    id: even-odd
+    prompt: What does `check` return, and why is there no `else`?
+    code: |
+      def check(n):
+          if n % 2 == 0:
+              return "even"
+          return "odd"
+    model: >-
+      It returns "even" when n divides by 2 with no remainder, otherwise "odd". No `else` is needed:
+      `return` exits the function, so the last line only runs when the `if` didn't.
+    keyPoints:
+      - '`n % 2 == 0` means no remainder, so even'
+      - '`return` ends the function right away'

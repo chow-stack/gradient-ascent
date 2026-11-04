@@ -1,0 +1,166 @@
+id: a1-patterns
+track: foundations
+unit: 1
+order: 10
+title: Loop patterns
+summary: Count, sum, find, best. One shape behind most loops.
+
+cards:
+  - type: learn
+    id: accumulator
+    title: One shape, many loops
+    body: >-
+      Most loops follow the same shape: start a result, visit each item, update the result, use it
+      after the loop. Counting, summing, finding the biggest, building a list: same skeleton,
+      different update.
+    code: |
+      temps = [12, 19, 25, 8, 22]
+      warm = 0
+      for t in temps:
+          if t > 18:
+              warm += 1
+      print(warm)
+    subgoals:
+      - { line: 2, label: Start the result }
+      - { line: 3, label: Visit each item }
+      - { line: 4, label: Decide }
+      - { line: 5, label: Update }
+      - { line: 6, label: Use the result }
+    predict: How many warm days?
+
+  - type: choice
+    id: longest
+    kind: predict
+    prompt: What does this print?
+    code: |
+      words = ["hi", "summit", "go", "ridge"]
+      longest = ""
+      for w in words:
+          if len(w) > len(longest):
+              longest = w
+      print(longest)
+    choices: ['summit', 'ridge', 'hi', 'go']
+    answer: 'summit'
+    why: >-
+      The "best so far" pattern: keep the winner, replace it only when something beats it.
+      "ridge" (5) never beats "summit" (6).
+
+  - type: choice
+    id: find-break
+    kind: predict
+    prompt: What does this print?
+    code: |
+      nums = [3, 8, 11, 4, 20]
+      found = -1
+      for i in range(len(nums)):
+          if nums[i] > 10:
+              found = i
+              break
+      print(found)
+    choices: ['2', '4', '11', '-1']
+    answer: '2'
+    why: >-
+      The "find first" pattern: `break` stops the loop at the first match, index 2. Without `break` it
+      would end on the last match (index 4).
+
+  - type: parsons
+    id: average
+    prompt: Build `average(nums)`, which returns the mean of a list.
+    code: |
+      def average(nums):
+          total = 0
+          for n in nums:
+              total += n
+          return total / len(nums)
+    distractors: ['    return total / n']
+    tests:
+      - { call: 'average([2, 4])', expect: '3.0' }
+      - { call: 'average([5])', expect: '5.0' }
+    why: >-
+      Sum with the accumulator pattern, then divide by how many there are (`len`).
+
+  - type: blank
+    id: first-longest
+    prompt: Fill in the comparison so ties keep the earlier word.
+    code: |
+      def longest_word(words):
+          best = words[0]
+          for w in words:
+              if len(w) ____ len(best):
+                  best = w
+          return best
+    answers: [['>']]
+    tests:
+      - { call: 'longest_word(["a", "abc", "ab"])', expect: "'abc'" }
+      - { call: 'longest_word(["xy", "zw"])', expect: "'xy'" }
+    why: >-
+      Strictly greater (`>`) only replaces on a real win, so the first of equal-length words stays.
+    hints:
+      - '`>=` would also replace on a tie. Is that what you want?'
+
+  - type: fix
+    id: early-return
+    prompt: '`count_negatives([-1, 2, -3])` should be 2. Fix it.'
+    code: |
+      def count_negatives(nums):
+          count = 0
+          for n in nums:
+              if n < 0:
+                  count += 1
+              return count
+    solution: |
+      def count_negatives(nums):
+          count = 0
+          for n in nums:
+              if n < 0:
+                  count += 1
+          return count
+    highlightLine: 6
+    tests:
+      - { call: 'count_negatives([-1, 2, -3])', expect: '2' }
+      - { call: 'count_negatives([])', expect: '0' }
+    why: >-
+      The `return` was indented inside the loop, so the function returned after the first item. In
+      Python, indentation is the structure.
+    hints:
+      - Look at how far `return` is indented. Which block is it in?
+
+  - type: write
+    id: running-total
+    prompt: >-
+      Write `running_total(nums)` that returns a list where each item is the sum so far.
+      `running_total([1, 2, 3])` is `[1, 3, 6]`.
+    starter: |
+      def running_total(nums):
+          pass
+    solution: |
+      def running_total(nums):
+          result = []
+          total = 0
+          for n in nums:
+              total += n
+              result.append(total)
+          return result
+    tests:
+      - { call: 'running_total([1, 2, 3])', expect: '[1, 3, 6]' }
+      - { call: 'running_total([])', expect: '[]' }
+      - { call: 'running_total([5, -5, 10])', expect: '[5, 0, 10]', hidden: true }
+    hints:
+      - You need two results here, a running number and a list.
+      - After updating the total, append it.
+
+  - type: explain
+    id: dedupe
+    prompt: What does `mystery([3, 1, 3, 2, 1])` return?
+    code: |
+      def mystery(nums):
+          result = []
+          for n in nums:
+              if n not in result:
+                  result.append(n)
+          return result
+    model: >-
+      It removes duplicates and keeps the first time each value appears, in order: `[3, 1, 2]`.
+    keyPoints:
+      - '`n not in result` checks whether we already kept it'
+      - Order is preserved

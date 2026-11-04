@@ -1,0 +1,161 @@
+id: a1-strings
+track: foundations
+unit: 1
+order: 3
+title: Strings and f-strings
+summary: Indexing, slicing, and the f-string you'll use every day.
+
+cards:
+  - type: learn
+    id: basics
+    title: Strings, Python style
+    body: >-
+      Strings work with either quote. An f-string (an `f` before the quote) fills in anything inside
+      `{ }`, which beats gluing pieces with `+`.
+
+
+      `len()` gives the length. Index with `[ ]`, and negative indexes count from the end: `[-1]` is the
+      last character.
+    code: |
+      name = "Adam"
+      age = 4
+      print(f"{name} is {age} years old")
+      print(len(name))
+      print(name[0], name[-1])
+      print(name.upper())
+    java: |
+      String name = "Adam";
+      int age = 4;
+      System.out.println(name + " is " + age + " years old");
+      System.out.println(name.length());
+      System.out.println(name.charAt(0) + " " + name.charAt(name.length() - 1));
+      System.out.println(name.toUpperCase());
+    subgoals:
+      - { line: 3, label: f-string fills in the braces }
+      - { line: 4, label: Length }
+      - { line: 5, label: First and last character }
+    predict: What does `name[-1]` give?
+
+  - type: learn
+    id: slicing
+    title: Slices
+    body: >-
+      `s[a:b]` gives the characters from index `a` up to, but not including, `b`. Leave a side empty to
+      go to the start or end. Same rule as Java's `substring(a, b)`.
+    code: |
+      word = "summit"
+      print(word[0:3])
+      print(word[3:])
+      print(word[:2])
+    java: |
+      String word = "summit";
+      System.out.println(word.substring(0, 3));
+      System.out.println(word.substring(3));
+      System.out.println(word.substring(0, 2));
+    predict: What does `word[3:]` print?
+
+  - type: choice
+    id: slice
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "summit"
+      print(word[1:4])
+    choices: ['umm', 'summ', 'ummi', 'umi']
+    answer: 'umm'
+    why: >-
+      Indexes 1, 2 and 3: u, m, m. The end index (4) is not included.
+    hints:
+      - Number the letters starting from 0. s=0, u=1, …
+
+  - type: choice
+    id: repeat
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print("ha" * 3)
+    choices: ['hahaha', 'ha3', 'ha ha ha', 'Error']
+    answer: 'hahaha'
+    why: >-
+      Multiplying a string by a whole number repeats it. Handy for drawing things in the terminal.
+
+  - type: choice
+    id: fstring
+    prompt: '`score = 10`. Which line prints `Score: 10`?'
+    choices:
+      - 'print(f"Score: {score}")'
+      - 'print("Score: {score}")'
+      - 'print("Score: " + score)'
+      - 'print(f"Score: score")'
+    answer: 'print(f"Score: {score}")'
+    why: >-
+      Only the f-string fills in `{score}`. `"Score: " + score` crashes, because Python won't add a
+      string and a number.
+
+  - type: parsons
+    id: capitalize
+    prompt: Order the lines so the program prints `Goat`.
+    code: |
+      word = "goat"
+      first = word[0].upper()
+      rest = word[1:]
+      print(first + rest)
+    distractors: ['rest = word[0:]']
+    expectOutput: Goat
+    why: >-
+      Uppercase the first letter, keep the rest from index 1 on, and join them with `+`.
+
+  - type: blank
+    id: fill-fstring
+    prompt: Add what's missing so it prints `The rope costs $12`.
+    code: |
+      item = "rope"
+      price = 12
+      print(____"The {item} costs ${price}")
+    answers: [['f']]
+    expectOutput: The rope costs $12
+    why: >-
+      Without the `f`, the braces are printed as-is.
+
+  - type: fix
+    id: str-plus-int
+    prompt: This should print `Level 3`. Fix the crash.
+    code: |
+      level = 3
+      print("Level " + level)
+    solution: |
+      level = 3
+      print("Level " + str(level))
+    highlightLine: 2
+    expectOutput: Level 3
+    why: >-
+      Python won't join a string and a number with `+` (Java quietly would). Convert with `str()`, or
+      use an f-string: `f"Level {level}"`.
+    hints:
+      - The error says something about `str` and `int`.
+
+  - type: write
+    id: initial
+    prompt: Make `initial` hold the first letter of `first`, in uppercase.
+    starter: |
+      first = "ada"
+    solution: |
+      first = "ada"
+      initial = first[0].upper()
+    tests:
+      - { call: initial, expect: "'A'" }
+    hints:
+      - Index first, then call `.upper()`.
+
+  - type: explain
+    id: username
+    prompt: What does this print, and how?
+    code: |
+      email = "adam@summit.io"
+      at = email.index("@")
+      print(email[:at])
+    model: >-
+      It finds the position of the @ and prints everything before it, so it prints `adam`.
+    keyPoints:
+      - '`.index("@")` gives the position of the @ (4)'
+      - '`email[:at]` slices from the start up to, not including, that position'

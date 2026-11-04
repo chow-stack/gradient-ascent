@@ -1,0 +1,117 @@
+/*
+ * Gradient Ascent — design tokens ("Summit": layered indigo night).
+ * Source of truth for color, type, shape and motion. Keep in sync with DESIGN.md.
+ *
+ * Everything inside @theme becomes a Tailwind utility (bg-surface, text-muted, border-border, rounded-lg, font-mono…)
+ * and a CSS variable (var(--color-surface)). Component classes in components.css read the same variables.
+ */
+
+@theme {
+  --color-*: initial;
+
+  /* Surfaces — each step up is a little lighter */
+  --color-bg: #14152b;
+  --color-sidebar: #181a33;
+  --color-surface: #1c1e3a;
+  --color-choice: #20234a;
+  --color-raised: #262950;
+  --color-progress-track: #2c2f58;
+  --color-border: rgb(255 255 255 / 0.08);
+  --color-border-strong: rgb(255 255 255 / 0.17);
+
+  /* Text */
+  --color-text: #f1f2fa;
+  --color-muted: #a9accb;
+  --color-faint: #8a8db4;
+
+  /* Brand & semantic */
+  --color-accent: #ff7a2f;
+  --color-accent-hover: #ff8b48;
+  --color-accent-press: #e9681f;
+  --color-on-accent: #1e0c02;
+  --color-sky: #8fcbff;
+  --color-success: #3ddc97;
+  --color-on-success: #04200f;
+  --color-danger: #ff6b81;
+  --color-on-danger: #2b0610;
+  --color-xp: #ffc94d;
+
+  /* Tracks (small accents only: dots, rings, tags) */
+  --color-track-foundations: #8fcbff;
+  --color-track-web: #b49bff;
+  --color-track-ml: #ff8fc8;
+
+  /* Code */
+  --color-code-bg: #101127;
+  --color-code-chrome: #191b38;
+  --color-code-text: #e4e6f6;
+  --color-code-gutter: #565a86;
+  --color-syn-kw: #ff9e64;
+  --color-syn-str: #a5d98a;
+  --color-syn-num: #ffc94d;
+  --color-syn-fn: #8fcbff;
+  --color-syn-com: #6e7299;
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+
+  /* Type */
+  --font-sans: 'Onest Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --text-display: 40px;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.025em;
+  --text-h1: 30px;
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h2: 23px;
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h3: 18px;
+  --text-h3--line-height: 1.3;
+  --text-body: 16px;
+  --text-body--line-height: 1.55;
+  --text-small: 14px;
+  --text-small--line-height: 1.45;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.35;
+  --text-code: 14.5px;
+  --text-code--line-height: 1.7;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root {
+  color-scheme: dark;
+
+  --weight-body: 450;
+  --weight-strong: 600;
+  --weight-display: 650;
+
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 450ms;
+
+  /* Elevation: a soft real shadow + a 1px top highlight on filled buttons. No glows. */
+  --shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 4px 12px -4px rgb(0 0 0 / 0.5);
+  --shadow-button-pressed: inset 0 1px 0 rgb(255 255 255 / 0.15);
+  --shadow-pop: 0 18px 40px -16px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}
