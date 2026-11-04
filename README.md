@@ -1,43 +1,164 @@
-# Gradient Ascent ⛰️
+# Gradient Ascent
 
-Small steps uphill, every day. A personal, Duolingo-style daily practice site for coding fundamentals,
-the web stack, and machine learning — running locally.
+**Small steps uphill, every day.** A local-first daily practice app for learning to code: Python fundamentals,
+the modern web stack, and machine learning. It's built on learning research instead of streak-farming.
 
-- **What & why, phases, data model:** [BUILD_PLAN.md](BUILD_PLAN.md)
-- **How it looks:** [DESIGN.md](DESIGN.md) — live at `/styleguide`
+Sessions take 10–20 minutes. Each one starts with spaced-repetition reviews, then teaches one new idea through
+a worked example. After that you climb a ladder of exercises: predict the output, order the lines, fill in the
+blank, fix the bug, write the function, and explain the code in plain English. All code runs as real Python in
+your browser, and all progress stays on your machine.
 
-## Run it
+> **Status:** Phase 2 of 5. The core lesson loop is complete, with Track A Unit 1 (Python, mapped from Java):
+> 10 lessons, 89 cards (13 worked examples, 76 exercises). See the [roadmap](#roadmap).
+
+---
+
+## Features
+
+- **Daily sessions:** a warm-up of due reviews, then one new lesson. After "Done for today" you can keep going
+  with the next lesson, extra reviews or practice.
+- **Seven exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
+  fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, and explain-in-your-own-words.
+- **Real Python in the browser:** [Pyodide](https://pyodide.org) runs in a Web Worker, so the UI never freezes.
+  Infinite loops are stopped by a timeout, and errors point to the line that caused them.
+- **A real editor:** [Monaco](https://microsoft.github.io/monaco-editor/), the editor from VS Code, with
+  autocomplete turned off on purpose so you do the thinking.
+- **Spaced repetition:** every exercise you've seen is scheduled with
+  [FSRS](https://github.com/open-spaced-repetition/ts-fsrs), the algorithm behind modern Anki.
+- **Mastery path:** a lesson is *passed* when you finish it and *mastered* after a correct review on a later day.
+  Each lesson unlocks the next.
+- **Habit-friendly gamification:** streaks with two automatic freezes a week, and XP weighted toward new and hard
+  work rather than easy repeats. There are no leaderboards and no guilt.
+- **Local-first and private:** progress is stored in IndexedDB, with JSON backup and restore. There are no
+  accounts, no tracking and no server.
+- **Keyboard-first:** <kbd>1</kbd>–<kbd>4</kbd> picks a choice, <kbd>Enter</kbd> checks and continues, and
+  <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd> checks from inside the editor.
+- **Adam the mountain goat:** an animated mascot who reacts to your answers. He's named after the Adam optimizer,
+  and his motion respects `prefers-reduced-motion`.
+
+## The learning approach
+
+Every feature traces back to a research-backed principle. The full table, with sources, is in
+[BUILD_PLAN.md](BUILD_PLAN.md#2-learning-principles-the-research-were-building-on).
+
+| Principle | How it shows up |
+| --- | --- |
+| Retrieval practice | Sessions open with recall, not re-reading |
+| Spaced repetition | FSRS schedules every exercise you've seen |
+| Interleaving | Reviews mix lessons, and never show the same lesson twice in a row when avoidable |
+| Read → trace → explain → write | Every lesson climbs the same exercise ladder |
+| Worked examples with subgoal labels | New ideas open with labelled, runnable code |
+| PRIMM (Predict, Run, Investigate, Modify, Make) | You predict before you run |
+| Mastery learning | Lessons unlock in order; mastery needs a correct review on another day |
+
+## Tech stack
+
+| Layer | Choice |
+| --- | --- |
+| App | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS v4 with design tokens ([DESIGN.md](DESIGN.md)) |
+| Python runtime | Pyodide (WebAssembly) in a Web Worker, served locally and offline |
+| Editor | Monaco, lazy-loaded |
+| Storage | IndexedDB via Dexie |
+| Scheduling | ts-fsrs (FSRS-7) |
+| Content | YAML, validated with zod |
+| Quality | Vitest + Testing Library, oxlint, Prettier |
+
+## Getting started
+
+**Requirements:** Node.js 22.18 or newer (the content checker uses Node's built-in TypeScript support).
 
 ```bash
+git clone https://github.com/chow-stack/gradient-ascent.git
+cd gradient-ascent
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173.
+Open <http://localhost:5173> and press **Start today's session**.
 
-| Command                 | What it does                                         |
-| ----------------------- | ---------------------------------------------------- |
-| `npm run dev`           | Dev server with hot reload                           |
-| `npm run build`         | Type-check + production build                        |
-| `npm run lint`          | Lint with oxlint                                     |
-| `npm test`              | Run tests once (Vitest)                              |
-| `npm run content:check` | Validate lessons and run every answer in real Python |
-| `npm run format`        | Format with Prettier                                 |
+### Scripts
 
-## Project layout
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server with hot reload |
+| `npm run build` | Type-check and build for production (`dist/`) |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Run the test suite once |
+| `npm run content:check` | Validate every lesson and run every answer in real Python |
+| `npm run lint` | Lint with oxlint |
+| `npm run format` | Format with Prettier |
+
+## Writing lessons
+
+Lessons are plain YAML files in [`content/lessons/`](content/lessons). They're validated against one
+[schema](src/features/content/schema.ts), and the app picks them up automatically.
+
+```yaml
+- type: fix
+  id: off-by-one
+  prompt: This should print 0, 1 and 2, but prints one number too many. Fix it.
+  code: |
+    i = 0
+    while i <= 3:
+        print(i)
+        i += 1
+  solution: |
+    i = 0
+    while i < 3:
+        print(i)
+        i += 1
+  expectOutput: |
+    0
+    1
+    2
+  why: '`<= 3` lets i = 3 through. Check the last pass of every loop.'
+```
+
+`npm run content:check` runs each lesson in Python and fails if any of these is untrue:
+
+- the answer to every "predict the output" question matches what the code really prints
+- every reference solution passes its tests
+- every buggy snippet actually fails
+
+## Project structure
 
 ```
-content/          curriculum as YAML (tracks/, lessons/); schema in src/features/content/schema.ts
-src/app/          routes + app shell
-src/pages/        Today, Path, Session, Settings, Style guide
-src/features/     content (schema + loader), runner (Python worker), exercises,
-                  session (planner + runner), review (FSRS), progress (streak, XP)
-src/components/   Adam, CodeBlock, editor (Monaco), UI primitives
-src/lib/          db (IndexedDB via Dexie), dates
-src/styles/       tokens.css, components.css, global.css
-scripts/          check-content.ts
+content/            Curriculum as YAML (tracks/, lessons/)
+scripts/            check-content.ts: runs every answer in Pyodide on Node
+src/
+  app/              Routes and the app shell
+  pages/            Today, Path, Session, Settings, Style guide
+  features/
+    content/        Schema and loader
+    runner/         Python worker, test harness, client with timeouts
+    exercises/      One view per exercise type, plus grading
+    session/        Session planner and runner, done screen
+    review/         FSRS scheduling
+    progress/       Recording, streak, XP
+  components/       Adam, CodeBlock, Monaco editor, UI primitives
+  lib/              IndexedDB (Dexie), dates, helpers
+  styles/           Design tokens and component styles
 ```
 
-## Secrets
+## Roadmap
 
-Copy `.env.example` to `.env.local` and add a Gemini key when we get to Phase 3. `.env.local` is git-ignored.
+- [x] **Phase 1:** plan, design system ("Summit"), project setup
+- [x] **Phase 2:** core lesson loop, spaced repetition, streaks, Python Unit 1
+- [ ] **Phase 3:** step-through code visualizer, AI hint ladder and explanation grading (Gemini, through a small
+      local server), JavaScript/TypeScript track
+- [ ] **Phase 4:** ML track: derivatives with pictures, a hand-built micrograd, neural networks with NumPy
+- [ ] **Phase 5:** multi-day projects and a tiny GPT capstone
+
+Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The visual system is in
+[DESIGN.md](DESIGN.md) and is also live at `/styleguide`.
+
+## Privacy
+
+Everything runs in your browser. Progress lives in IndexedDB on your machine, so clearing site data erases it;
+use **Settings → Download backup** now and then. AI features are planned for Phase 3. When they arrive, the API
+key will stay on a local server, in `.env.local`, which is git-ignored.
+
+## License
+
+[MIT](LICENSE). Use it, fork it, learn from it.
