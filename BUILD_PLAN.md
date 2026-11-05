@@ -50,39 +50,10 @@ Sources are listed in [§12](#12-sources).
 
 ---
 
-## 3. Curriculum outline (three interleaved tracks)
+## 3. Curriculum
 
-Content is **not** written in Phase 1. This is the target map; detailed lesson lists get written per phase.
-
-### Track A — Foundations (Python)
-
-1. **Python refresher, mapped from Java** — variables, types, control flow, functions, lists/dicts; "in Java you'd write…"
-2. **How Python actually works** — names vs objects, references, mutability, scope, the call stack, `import`
-3. **Data structures** — lists, dicts, sets, tuples → build a stack, queue, linked list, tree, graph yourself
-4. **Algorithms** — Big-O by feel, linear/binary search, sorting, recursion, BFS/DFS (all visualized)
-5. **Writing real programs** — classes/OOP, modules, error handling, testing with asserts/pytest
-
-### Track B — Understand my stack (JS/TS → web → backend)
-
-1. **JavaScript core** — values, functions, closures, objects/arrays, `this`
-2. **TypeScript** — types, interfaces, generics, reading type errors
-3. **Async** — event loop, callbacks → promises → `async/await`
-4. **How the web works** — HTTP, requests/responses, JSON, REST, status codes, CORS
-5. **React mental model** — components, props, state, re-renders, effects, why things re-render
-6. **Data** — SQL basics → Postgres/Supabase, auth basics
-7. **Code autopsy** — paste a file from my own projects → get quizzed on it
-
-### Track C — ML / AI (Karpathy "Zero to Hero" ladder + 3Blue1Brown-style visuals)
-
-1. **Math with pictures** — derivatives, chain rule, gradients as "which way is uphill"; vectors/matrices → NumPy
-2. **micrograd** — build a ~100-line autograd engine; visualize the computation graph & backward pass
-3. **Neuron → layer → MLP** — training loop, loss curve, learning rate (gradient _descent_, ironically)
-4. **makemore** — character-level name generator; bigrams → MLP → embeddings
-5. **Attention → tiny GPT**
-6. **Practical AI engineering** — tokens, embeddings, RAG, calling LLM APIs well, evals
-
-Recommended external companions (watched occasionally, turned into practice by the app):
-Karpathy _Neural Networks: Zero to Hero_, 3Blue1Brown _Essence of Calculus / Linear Algebra / Neural Networks_.
+The curriculum lives in [CURRICULUM.md](CURRICULUM.md): the three tracks, the unit and lesson plans, the target
+mistakes for each lesson, projects, checkpoints and the order the tracks start in.
 
 ---
 
@@ -104,12 +75,10 @@ Karpathy _Neural Networks: Zero to Hero_, 3Blue1Brown _Essence of Calculus / Lin
 - Next lesson (only if today's concept is passed)
 - **Project step** — continue the current multi-day project
 
-### Multi-day projects (examples)
+### Multi-day projects
 
-- Text adventure game (Python, Track A)
-- To-do REST API + small frontend that calls it (Track B)
-- micrograd → train an MLP on a toy dataset (Track C)
-- Mini-GPT that writes in a style I choose (Track C capstone)
+Every unit ends with a 3–5 step mini-project, and every track ends with a capstone. The list is in
+[CURRICULUM.md](CURRICULUM.md#projects).
 
 ---
 
@@ -317,6 +286,10 @@ npm run content:check  # validate content + run every answer in real Python
 | 2026-11-04 | Unit 1 order: variables → numbers → strings → functions → if → while → for → lists → dicts → patterns        | Functions early so later lessons can use real write-a-function tests              |
 | 2026-11-04 | Explain cards are self-graded for now                                                                        | Honest offline fallback until the Gemini tutor (Phase 3)                          |
 | 2026-11-04 | Misses come back the next day, not the same day                                                              | Sessions are daily; same-day repeats are handled by the in-session retry          |
+| 2026-11-04 | Curriculum moved to CURRICULUM.md; every lesson lists its target mistakes                                    | Wrong answers and fix-card bugs come from real novice mistakes                    |
+| 2026-11-04 | Each unit ends with a checkpoint (80% to pass) and a 3–5 step project                                        | Mixed recall before moving on; projects tie a unit's ideas together               |
+| 2026-11-04 | Tracks start in stages: Foundations, then + Web after A2, then + ML after A3                                 | Avoids overload; micrograd needs classes and special methods                      |
+| 2026-11-04 | Classes unit moved before data structures (now Track A Unit 3)                                               | Track C's micrograd depends on it                                                 |
 
 ## 12. Sources
 
