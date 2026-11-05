@@ -1,0 +1,204 @@
+id: a1-checkpoint
+track: foundations
+unit: 1
+order: 11
+kind: checkpoint
+title: Unit 1 checkpoint
+summary: Everything from Unit 1, mixed up. Get 80% right to unlock Unit 2.
+
+# Each card re-tests a Unit 1 target mistake (CURRICULUM.md §3) in code you haven't seen.
+cards:
+  - type: choice
+    id: three-divisions
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(7 // 2, 7 % 2, 7 / 2)
+    choices: ['3 1 3.5', '3 1 3', '4 1 3.5', '3.5 1 3.5']
+    answer: '3 1 3.5'
+    why: >-
+      `//` is floor division (3), `%` is the remainder (1), and `/` always gives a float (3.5). Unlike Java,
+      `/` never drops the decimal.
+
+  - type: choice
+    id: first-match
+    kind: predict
+    prompt: What does this print?
+    code: |
+      temp = 25
+      raining = False
+      if temp > 20 and not raining:
+          print("hike")
+      elif temp > 20:
+          print("museum")
+      else:
+          print("read")
+    choices: ['hike', "hike\nmuseum", 'museum', 'read']
+    answer: 'hike'
+    why: >-
+      Only the first true branch runs. `temp > 20` is also true for the `elif`, but Python never checks it
+      once the `if` has matched.
+
+  - type: blank
+    id: sum-through-n
+    prompt: Make `total_up_to(n)` add up every number from 1 through `n`, including `n`.
+    code: |
+      def total_up_to(n):
+          total = 0
+          for i in range(1, ____):
+              total += i
+          return total
+    answers: [['n + 1', 'n+1']]
+    tests:
+      - { call: 'total_up_to(3)', expect: '6' }
+      - { call: 'total_up_to(1)', expect: '1' }
+      - { call: 'total_up_to(10)', expect: '55', hidden: true }
+    why: >-
+      `range` stops before its end value, so to include `n` the end has to be `n + 1`.
+
+  - type: choice
+    id: slices
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "summit"
+      print(word[1:4], word[-2:])
+    choices: ['umm it', 'ummi it', 'sum it', 'umm t']
+    answer: 'umm it'
+    why: >-
+      A slice includes the start and stops before the end: indexes 1, 2 and 3 give "umm". `[-2:]` is the
+      last two characters.
+
+  - type: fix
+    id: all-positive
+    prompt: '`all_positive` should be True only when every number is above 0. Fix it.'
+    code: |
+      def all_positive(nums):
+          for n in nums:
+              if n <= 0:
+                  return False
+              return True
+    solution: |
+      def all_positive(nums):
+          for n in nums:
+              if n <= 0:
+                  return False
+          return True
+    tests:
+      - { call: 'all_positive([1, 2, -3])', expect: 'False' }
+      - { call: 'all_positive([4, 5])', expect: 'True' }
+      - { call: 'all_positive([])', expect: 'True' }
+    why: >-
+      `return True` was inside the loop, so the function answered after checking only the first number.
+      It can only say "all of them" after the loop has seen every one.
+
+  - type: choice
+    id: print-not-return
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def double(n):
+          print(n * 2)
+
+      result = double(4)
+      print(result)
+    choices: ["8\nNone", "8\n8", '8', "None\n8"]
+    answer: "8\nNone"
+    why: >-
+      `double` prints 8 but never returns anything, so `result` is `None`. Printing shows a value;
+      only `return` hands it back.
+
+  - type: write
+    id: clamp
+    prompt: >-
+      Write `clamp(n, low, high)`. It returns `low` if `n` is below it, `high` if `n` is above it, and
+      `n` otherwise.
+    starter: |
+      def clamp(n, low, high):
+          pass
+    solution: |
+      def clamp(n, low, high):
+          if n < low:
+              return low
+          elif n > high:
+              return high
+          return n
+    tests:
+      - { call: 'clamp(5, 0, 10)', expect: '5' }
+      - { call: 'clamp(-3, 0, 10)', expect: '0' }
+      - { call: 'clamp(42, 0, 10)', expect: '10' }
+      - { call: 'clamp(10, 0, 10)', expect: '10', hidden: true }
+    why: Two checks for the edges, and everything else passes through unchanged.
+
+  - type: choice
+    id: stock
+    kind: predict
+    prompt: What does this print?
+    code: |
+      stock = {"apples": 3}
+      stock["pears"] = stock.get("pears", 0) + 2
+      stock["apples"] += 1
+      print(stock)
+    choices: ["{'apples': 4, 'pears': 2}", "{'apples': 3, 'pears': 2}", "{'apples': 4}", 'KeyError']
+    answer: "{'apples': 4, 'pears': 2}"
+    why: >-
+      `.get("pears", 0)` gives 0 for the missing key instead of an error, so pears becomes 2. Then
+      apples goes from 3 to 4.
+
+  - type: parsons
+    id: count-long
+    prompt: Build `count_long(words, n)`, which counts the words longer than `n` letters.
+    code: |
+      def count_long(words, n):
+          count = 0
+          for w in words:
+              if len(w) > n:
+                  count += 1
+          return count
+    distractors: ['            count++', '        return count']
+    tests:
+      - { call: 'count_long(["hi", "ridge", "summit"], 3)', expect: '2' }
+      - { call: 'count_long([], 3)', expect: '0' }
+    why: >-
+      The counting pattern: start at 0, add 1 for each match, return after the loop. Python has no `++`.
+
+  - type: fix
+    id: split-bill
+    prompt: '`split_bill(10, 4)` should be 2.5, but it gives 2. Fix it.'
+    code: |
+      def split_bill(total, people):
+          return total // people
+    solution: |
+      def split_bill(total, people):
+          return total / people
+    highlightLine: 2
+    tests:
+      - { call: 'split_bill(10, 4)', expect: '2.5' }
+      - { call: 'split_bill(9, 3)', expect: '3.0' }
+    why: >-
+      `//` rounds down to a whole number. Use `/` when you want the exact answer.
+
+  - type: write
+    id: first-repeat
+    prompt: >-
+      Write `first_repeat(words)` that returns the first word that shows up a second time, or `None` if
+      no word repeats.
+    starter: |
+      def first_repeat(words):
+          pass
+    solution: |
+      def first_repeat(words):
+          seen = {}
+          for w in words:
+              if w in seen:
+                  return w
+              seen[w] = True
+          return None
+    tests:
+      - { call: 'first_repeat(["a", "b", "a"])', expect: "'a'" }
+      - { call: 'first_repeat(["x", "y"])', expect: 'None' }
+      - { call: 'first_repeat(["b", "a", "a", "b"])', expect: "'a'", hidden: true }
+      - { call: 'first_repeat([])', expect: 'None', hidden: true }
+    why: >-
+      Remember what you've already seen (a dict or a list works), and return the moment a word is
+      already in it.

@@ -1,10 +1,11 @@
-import { ArrowRight, Check, Dumbbell, Layers, Lock, Play, Snowflake, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Dumbbell, Flag, Layers, Lock, Play, Snowflake, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Adam } from '../components/Adam'
 import { Card } from '../components/ui/Card'
 import { ProgressBar } from '../components/ui/ProgressBar'
-import { lessons, lessonsForTrack } from '../features/content/content'
+import { lessonsForTrack } from '../features/content/content'
+import { isCheckpoint } from '../features/content/schema'
 import { useProgress, type ProgressSnapshot } from '../features/progress/progress'
 import { nextLesson } from '../features/session/plan'
 import { addDays, dayKey, weekStart } from '../lib/dates'
@@ -30,8 +31,10 @@ export function HomePage() {
   if (!p) return <div className="min-h-[60vh]" aria-busy="true" />
 
   const coreDone = !!p.today?.coreDone
-  const upNext = nextLesson(p.mastery)
-  const foundations = lessonsForTrack('foundations')
+  const upNext = nextLesson(p.mastery, p.retakeTomorrow)
+  const waiting = nextLesson(p.mastery) // includes a checkpoint that's locked until tomorrow
+  const retakeLater = !!waiting && p.retakeTomorrow.has(waiting.id)
+  const foundations = lessonsForTrack('foundations').filter((l) => !isCheckpoint(l))
   const passed = foundations.filter((l) => p.mastery.has(l.id)).length
   const reviewsToday = Math.min(p.dueCount, 5)
   const minutes = reviewsToday + (upNext ? 12 : 0)
@@ -51,11 +54,12 @@ export function HomePage() {
               <h1 className="text-h1">Done for today</h1>
               <p className="mt-2 max-w-[56ch] text-muted">
                 Streak safe. Anything more is a bonus: keep going while you’re in the mood, or come back tomorrow.
+                {retakeLater && ` You can retake “${waiting.title}” tomorrow.`}
               </p>
               <div className="mt-5 flex flex-col gap-2 sm:max-w-[440px]">
                 {upNext && (
                   <KeepGoing to="/session?kind=lesson" icon={<ArrowRight size={18} />}>
-                    Next lesson: {upNext.title}
+                    Next: {upNext.title}
                   </KeepGoing>
                 )}
                 {p.reviewCount > 0 && (
@@ -80,8 +84,9 @@ export function HomePage() {
                   </PlanRow>
                 )}
                 {upNext && (
-                  <PlanRow icon={<Sparkles size={16} />}>
-                    New: <span className="font-semibold text-text">{upNext.title}</span>
+                  <PlanRow icon={isCheckpoint(upNext) ? <Flag size={16} /> : <Sparkles size={16} />}>
+                    {isCheckpoint(upNext) ? '' : 'New: '}
+                    <span className="font-semibold text-text">{upNext.title}</span>
                     <span className="text-faint"> · {upNext.summary}</span>
                   </PlanRow>
                 )}
@@ -92,6 +97,13 @@ export function HomePage() {
                 </Link>
                 <span className="text-small text-faint">About {minutes} min</span>
               </div>
+            </>
+          ) : retakeLater ? (
+            <>
+              <h1 className="text-h1">Checkpoint tomorrow</h1>
+              <p className="mt-2 max-w-[56ch] text-muted">
+                You can retake “{waiting.title}” tomorrow. The questions you missed will be in your reviews first.
+              </p>
             </>
           ) : (
             <>
@@ -109,7 +121,7 @@ export function HomePage() {
         <Card className="flex flex-col justify-center gap-4">
           <Stat label="XP today" value={p.today?.xp ?? 0} />
           <Stat label="Total XP" value={p.totalXp} />
-          <Stat label="Lessons passed" value={`${passed} / ${lessons.length}`} />
+          <Stat label="Lessons passed" value={`${passed} / ${foundations.length}`} />
         </Card>
       </div>
 

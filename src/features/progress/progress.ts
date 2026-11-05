@@ -2,10 +2,10 @@ import { liveQuery } from 'dexie'
 import { useEffect, useState } from 'react'
 import { dayKey, endOfDay, startOfTomorrow, type DayKey } from '../../lib/dates'
 import { db, type DayRow, type GradientDB, type MasteryRow } from '../../lib/db'
-import { REVIEWABLE, type CardType } from '../content/schema'
+import { CHECKPOINT_PASS, REVIEWABLE, type CardType } from '../content/schema'
 import { schedule, type FsrsCard } from '../review/fsrs'
 import { computeStreak, type StreakInfo } from './streak'
-import { LESSON_COMPLETE_BONUS, xpFor, type ItemSource, type Outcome } from './xp'
+import { CHECKPOINT_PASS_BONUS, LESSON_COMPLETE_BONUS, xpFor, type ItemSource, type Outcome } from './xp'
 
 export type AttemptInput = {
   itemId: string
@@ -33,10 +33,12 @@ export async function recordAttempt(a: AttemptInput, now = new Date(), database:
   const day = dayKey(now)
   const xp = xpFor(a.type, a.source, a.outcome)
 
-  // FSRS: lessons create the card the first time; reviews move it. Practice/retries don't touch the schedule.
+  // FSRS: lessons and checkpoints create the card the first time; reviews move it.
+  // Practice/retries don't touch the schedule.
   let nextCard: FsrsCard | null = null
   const existing = await database.reviews.get(a.itemId)
-  if (REVIEWABLE.has(a.type) && (a.source === 'review' || (a.source === 'lesson' && !existing))) {
+  const firstSeen = (a.source === 'lesson' || a.source === 'checkpoint') && !existing
+  if (REVIEWABLE.has(a.type) && (a.source === 'review' || firstSeen)) {
     nextCard = await schedule((existing?.card as FsrsCard | undefined) ?? null, a.outcome, now)
   }
 
@@ -81,6 +83,46 @@ export async function completeLesson(lessonId: string, now = new Date(), databas
   return LESSON_COMPLETE_BONUS
 }
 
+export type CheckpointResult = { passed: boolean; correct: number; total: number; needed: number; bonus: number }
+
+/** Cards needed to pass a checkpoint of `total` cards. */
+export const checkpointNeeded = (total: number) => Math.ceil(total * CHECKPOINT_PASS)
+
+/**
+ * Score a finished checkpoint. Passing marks it passed (which unlocks the next unit) and gives a bonus.
+ * Failing changes nothing here: its cards are already in review, and it can be retaken tomorrow.
+ */
+export async function completeCheckpoint(
+  lessonId: string,
+  correct: number,
+  total: number,
+  now = new Date(),
+  database: GradientDB = db,
+): Promise<CheckpointResult> {
+  const needed = checkpointNeeded(total)
+  const passed = total > 0 && correct >= needed
+  let bonus = 0
+  if (passed && !(await database.mastery.get(lessonId))) {
+    const day = dayKey(now)
+    await database.mastery.put({ lessonId, status: 'passed', passedOn: day })
+    await addToDay(database, day, { xp: CHECKPOINT_PASS_BONUS })
+    bonus = CHECKPOINT_PASS_BONUS
+  }
+  return { passed, correct, total, needed, bonus }
+}
+
+/** Checkpoints tried today and not passed: they can be retaken tomorrow. */
+export async function checkpointsToRetake(now = new Date(), database: GradientDB = db): Promise<Set<string>> {
+  const tried = await database.attempts
+    .where('day')
+    .equals(dayKey(now))
+    .filter((a) => a.source === 'checkpoint')
+    .toArray()
+  const ids = new Set(tried.map((a) => a.lessonId))
+  for (const id of ids) if (await database.mastery.get(id)) ids.delete(id)
+  return ids
+}
+
 /** The day's core session is done → the day counts for the streak. */
 export async function completeCoreSession(now = new Date(), database: GradientDB = db) {
   const day = dayKey(now)
@@ -99,14 +141,17 @@ export type ProgressSnapshot = {
   dueCount: number
   reviewCount: number
   mastery: Map<string, MasteryRow>
+  /** Checkpoints failed today; they unlock again tomorrow. */
+  retakeTomorrow: Set<string>
 }
 
 export async function loadProgress(now = new Date(), database: GradientDB = db): Promise<ProgressSnapshot> {
-  const [days, dueCount, reviewCount, mastery] = await Promise.all([
+  const [days, dueCount, reviewCount, mastery, retakeTomorrow] = await Promise.all([
     database.days.toArray(),
     database.reviews.where('due').belowOrEqual(endOfDay(now)).count(),
     database.reviews.count(),
     database.mastery.toArray(),
+    checkpointsToRetake(now, database),
   ])
   const today = dayKey(now)
   const doneDays = new Set(days.filter((d) => d.coreDone).map((d) => d.day))
@@ -118,6 +163,7 @@ export async function loadProgress(now = new Date(), database: GradientDB = db):
     dueCount,
     reviewCount,
     mastery: new Map(mastery.map((m) => [m.lessonId, m])),
+    retakeTomorrow,
   }
 }
 

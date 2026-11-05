@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import { lessons } from '../features/content/content'
 import { App } from './App'
 
 function renderAt(path: string) {
@@ -22,7 +23,9 @@ describe('App', () => {
     renderAt('/path')
     expect(await screen.findByRole('heading', { level: 2, name: /Unit 1/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Start' })).toBeInTheDocument()
-    expect(screen.getAllByRole('listitem').filter((li) => li.dataset.status === 'locked')).toHaveLength(9)
+    expect(screen.getAllByRole('listitem').filter((li) => li.dataset.status === 'locked')).toHaveLength(
+      lessons.length - 1,
+    )
   })
 
   it('renders the style guide', () => {

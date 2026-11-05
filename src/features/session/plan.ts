@@ -2,12 +2,14 @@ import { endOfDay } from '../../lib/dates'
 import { shuffled } from '../../lib/random'
 import { db, type GradientDB, type MasteryRow } from '../../lib/db'
 import { getItem, lessons } from '../content/content'
-import { itemId, type Card, type Lesson } from '../content/schema'
+import { isCheckpoint, itemId, type Card, type Lesson } from '../content/schema'
+import { checkpointsToRetake } from '../progress/progress'
 import type { ItemSource } from '../progress/xp'
 
 /**
  * Builds sessions (BUILD_PLAN §4):
  * - core:     warm-up reviews (due, interleaved, ≤ 5) → the next lesson's ladder. Finishing it counts the day.
+ *             At the end of a unit the "next lesson" is its checkpoint; a failed one waits until tomorrow.
  * - review:   extra reviews, soonest-due first ("keep going").
  * - practice: more reps on one lesson's exercises; doesn't change the review schedule.
  * - lesson:   just the next lesson.
@@ -22,9 +24,13 @@ const WARMUP_MAX = 5
 const WARMUP_MAX_CODE = 2 // fix/write take longer; keep the warm-up short
 const PRACTICE_MAX = 6
 
-/** Next lesson on the path: the first one not yet passed. Everything after it is locked. */
-export function nextLesson(mastery: Map<string, MasteryRow>): Lesson | undefined {
-  return lessons.find((l) => !mastery.has(l.id))
+/**
+ * Next lesson on the path: the first one not yet passed. Everything after it is locked.
+ * Pass `retakeTomorrow` to skip a checkpoint that was failed today (nothing is available until tomorrow).
+ */
+export function nextLesson(mastery: Map<string, MasteryRow>, retakeTomorrow?: Set<string>): Lesson | undefined {
+  const next = lessons.find((l) => !mastery.has(l.id))
+  return next && retakeTomorrow?.has(next.id) ? undefined : next
 }
 
 export type LessonStatus = 'mastered' | 'passed' | 'next' | 'locked'
@@ -68,9 +74,10 @@ async function reviewItems(due: boolean, now: Date, database: GradientDB): Promi
 }
 
 function lessonItems(lesson: Lesson): SessionItem[] {
+  const source = isCheckpoint(lesson) ? ('checkpoint' as const) : ('lesson' as const)
   return lesson.cards.map((card) => {
     const id = itemId(lesson.id, card.id)
-    return { key: `lesson:${id}`, itemId: id, lesson, card, source: 'lesson' as const }
+    return { key: `${source}:${id}`, itemId: id, lesson, card, source }
   })
 }
 
@@ -91,7 +98,7 @@ export async function buildSession(
   database: GradientDB = db,
 ): Promise<SessionPlan> {
   const mastery = new Map((await database.mastery.toArray()).map((m) => [m.lessonId, m]))
-  const next = nextLesson(mastery)
+  const next = nextLesson(mastery, await checkpointsToRetake(now, database))
 
   switch (kind) {
     case 'core': {

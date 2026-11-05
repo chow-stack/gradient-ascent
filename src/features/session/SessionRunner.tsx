@@ -7,7 +7,7 @@ import { ExerciseView } from '../exercises/ExerciseView'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
 import { inline } from '../exercises/inline'
 import { type Phase } from '../exercises/types'
-import { completeCoreSession, completeLesson, recordAttempt } from '../progress/progress'
+import { completeCheckpoint, completeCoreSession, completeLesson, recordAttempt } from '../progress/progress'
 import type { Outcome } from '../progress/xp'
 import type { SessionItem, SessionPlan } from './plan'
 import { SessionDone, type SessionSummary } from './SessionDone'
@@ -21,6 +21,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   // Refs mirror state that event handlers must read synchronously (retries, totals for the summary).
   const queueRef = useRef(plan.items)
   const totals = useRef({ xp: 0, correct: 0, graded: 0 })
+  // Checkpoint score: right without hints or "show answer" (warm-up reviews don't count).
+  const checkpoint = useRef({ correct: 0, total: 0 })
   const [idx, setIdx] = useState(0)
   const item = queue[Math.min(idx, queue.length - 1)]
   const [answer, setAnswer] = useState<Answer>(() => initialAnswer(item.card))
@@ -53,6 +55,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       if (it.card.type !== 'learn') {
         totals.current.graded += 1
         if (outcome.correct) totals.current.correct += 1
+      }
+      if (it.source === 'checkpoint') {
+        checkpoint.current.total += 1
+        if (outcome.correct && !outcome.gaveUp && outcome.hintsUsed === 0) checkpoint.current.correct += 1
       }
       saving.current = saving.current
         .then(() =>
@@ -87,12 +93,17 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       !!plan.lessonId &&
       (plan.kind === 'core' || plan.kind === 'lesson') &&
       plan.items.some((i) => i.source === 'lesson')
-    const bonus = lessonDone ? await completeLesson(plan.lessonId!) : 0
+    const checkpointDone = !!plan.lessonId && plan.items.some((i) => i.source === 'checkpoint')
+    const cp = checkpointDone
+      ? await completeCheckpoint(plan.lessonId!, checkpoint.current.correct, checkpoint.current.total)
+      : undefined
+    const bonus = lessonDone ? await completeLesson(plan.lessonId!) : (cp?.bonus ?? 0)
     if (plan.kind === 'core') await completeCoreSession()
     setSummary({
       kind: plan.kind,
       lessonId: plan.lessonId,
-      lessonTitle: plan.items.find((i) => i.source === 'lesson')?.lesson.title,
+      lessonTitle: plan.items.find((i) => i.source === 'lesson' || i.source === 'checkpoint')?.lesson.title,
+      checkpoint: cp,
       xp: totals.current.xp + bonus,
       bonus,
       correct: totals.current.correct,
@@ -241,8 +252,9 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         <div key={item.key} className="flex w-full max-w-[760px] flex-col gap-5">
           {item.source !== 'lesson' && (
             <p className="text-caption text-faint">
-              {item.source === 'review' ? 'Review' : item.source === 'retry' ? 'One more try' : 'Practice'} ·{' '}
-              {item.lesson.title}
+              {item.source === 'checkpoint'
+                ? `Checkpoint · no hints, 80% to pass`
+                : `${item.source === 'review' ? 'Review' : item.source === 'retry' ? 'One more try' : 'Practice'} · ${item.lesson.title}`}
             </p>
           )}
           <div

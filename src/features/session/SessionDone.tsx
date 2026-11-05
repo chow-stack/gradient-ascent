@@ -2,13 +2,14 @@ import { ArrowRight, Check, Dumbbell, Flame, Home, Layers, Star } from 'lucide-r
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Adam } from '../../components/Adam'
-import { useProgress } from '../progress/progress'
+import { useProgress, type CheckpointResult } from '../progress/progress'
 import { nextLesson, type SessionKind } from './plan'
 
 export type SessionSummary = {
   kind: SessionKind
   lessonId?: string
   lessonTitle?: string
+  checkpoint?: CheckpointResult
   xp: number
   bonus: number
   correct: number
@@ -19,22 +20,32 @@ export type SessionSummary = {
 /** "Done for today" + the keep-going options. */
 export function SessionDone({ summary }: { summary: SessionSummary }) {
   const progress = useProgress()
-  const upNext = progress ? nextLesson(progress.mastery) : undefined
+  const upNext = progress ? nextLesson(progress.mastery, progress.retakeTomorrow) : undefined
   const core = summary.kind === 'core'
+  const cp = summary.checkpoint
+  const title = cp ? (cp.passed ? 'Checkpoint passed' : 'Not this time') : core ? 'Done for today' : 'Nice climbing'
+  const message = cp
+    ? cp.passed
+      ? `${cp.correct} of ${cp.total} right. The next unit is unlocked.`
+      : `${cp.correct} of ${cp.total} right; you need ${cp.needed}. The ones you missed come back in your reviews, and you can retake it tomorrow.`
+    : summary.lessonTitle && summary.bonus > 0
+      ? `You finished “${summary.lessonTitle}”. It will come back in your reviews.`
+      : core
+        ? 'Your streak is safe. Anything more is a bonus.'
+        : 'Every rep makes the next review easier.'
 
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-[560px] flex-col items-center gap-7 text-center">
-        <Adam mood="happy" size={140} title="Adam, celebrating" />
+        <Adam
+          mood={cp && !cp.passed ? 'think' : 'happy'}
+          size={140}
+          title={cp && !cp.passed ? 'Adam, thinking' : 'Adam, celebrating'}
+        />
         <div>
-          <h1 className="text-display leading-tight">{core ? 'Done for today' : 'Nice climbing'}</h1>
-          <p className="mt-2 text-muted">
-            {summary.lessonTitle && summary.bonus > 0
-              ? `You finished “${summary.lessonTitle}”. It will come back in your reviews.`
-              : core
-                ? 'Your streak is safe. Anything more is a bonus.'
-                : 'Every rep makes the next review easier.'}
-          </p>
+          <h1 className="text-display leading-tight">{title}</h1>
+          <p className="mx-auto mt-2 max-w-[48ch] text-muted">{message}</p>
+          {cp && core && <p className="mt-1 text-small text-faint">Your streak is safe either way.</p>}
         </div>
 
         <div className="grid w-full grid-cols-3 gap-3">
@@ -57,17 +68,13 @@ export function SessionDone({ summary }: { summary: SessionSummary }) {
           <h2 className="text-small font-semibold text-muted">Keep going?</h2>
           <div className="flex flex-col gap-2">
             {upNext && (
-              <KeepGoing
-                to="/session?kind=lesson"
-                icon={<ArrowRight size={18} />}
-                title={`Next lesson: ${upNext.title}`}
-              />
+              <KeepGoing to="/session?kind=lesson" icon={<ArrowRight size={18} />} title={`Next: ${upNext.title}`} />
             )}
             {summary.lessonId && (
               <KeepGoing
                 to={`/session?kind=practice&lesson=${summary.lessonId}`}
                 icon={<Dumbbell size={18} />}
-                title="Practice this lesson again"
+                title={cp ? 'Practice the checkpoint questions' : 'Practice this lesson again'}
               />
             )}
             {progress && progress.reviewCount > 0 && (

@@ -10,6 +10,10 @@ import { z } from 'zod'
  * learn (worked example) → predict → parsons → fill blank → fix bug → write → explain.
  */
 
+export const CHECKPOINT_MIN_CARDS = 8
+/** Share of checkpoint cards that must be right (no hints, no "show answer") to pass. */
+export const CHECKPOINT_PASS = 0.8
+
 const id = z.string().regex(/^[a-z0-9-]+$/, 'ids are lowercase-kebab')
 const hints = z.array(z.string()).default([])
 const testCase = z.object({ call: z.string(), expect: z.string(), hidden: z.boolean().optional() })
@@ -113,15 +117,28 @@ export const lessonSchema = z
     track: z.enum(['foundations', 'web', 'ml']),
     unit: z.number().int().positive(),
     order: z.number().int().positive(),
+    /** A checkpoint ends a unit: a mixed quiz on the whole unit that unlocks the next one (CURRICULUM.md §1). */
+    kind: z.enum(['lesson', 'checkpoint']).default('lesson'),
     title: z.string(),
     summary: z.string(),
     cards: z.array(cardSchema).min(1),
   })
   .superRefine((lesson, ctx) => {
     const seen = new Set<string>()
+    if (lesson.kind === 'checkpoint' && lesson.cards.length < CHECKPOINT_MIN_CARDS)
+      ctx.addIssue({
+        code: 'custom',
+        message: `checkpoints need at least ${CHECKPOINT_MIN_CARDS} cards`,
+        path: ['cards'],
+      })
     lesson.cards.forEach((c, i) => {
       const at = (msg: string) => ctx.addIssue({ code: 'custom', message: `${c.id}: ${msg}`, path: ['cards', i] })
       if (seen.has(c.id)) at('duplicate card id')
+      if (lesson.kind === 'checkpoint') {
+        // Checkpoints measure what stuck: no teaching cards, no self-grading, no hints.
+        if (c.type === 'learn' || c.type === 'explain') at(`${c.type} cards don't belong in a checkpoint`)
+        if ('hints' in c && c.hints.length) at('checkpoint cards have no hints')
+      }
       seen.add(c.id)
       if (c.type === 'choice') {
         if (!c.choices.includes(c.answer)) at('answer must be one of the choices')
@@ -167,6 +184,8 @@ function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
   }
   return r.data
 }
+
+export const isCheckpoint = (lesson: Lesson) => lesson.kind === 'checkpoint'
 
 /** Exercise ids are global: "<lesson id>/<card id>". */
 export const itemId = (lessonId: string, cardId: string) => `${lessonId}/${cardId}`

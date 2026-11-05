@@ -1,6 +1,6 @@
 import type { CardType } from '../content/schema'
 
-export type ItemSource = 'lesson' | 'review' | 'practice' | 'retry'
+export type ItemSource = 'lesson' | 'checkpoint' | 'review' | 'practice' | 'retry'
 
 /** Harder rungs of the ladder are worth more (BUILD_PLAN P10: gamify the habit, not the grind). */
 const BASE: Record<CardType, number> = {
@@ -13,9 +13,10 @@ const BASE: Record<CardType, number> = {
   explain: 8,
 }
 
-const SOURCE_FACTOR: Record<ItemSource, number> = { lesson: 1, review: 0.7, practice: 0.3, retry: 0.3 }
+const SOURCE_FACTOR: Record<ItemSource, number> = { lesson: 1, checkpoint: 1, review: 0.7, practice: 0.3, retry: 0.3 }
 
 export const LESSON_COMPLETE_BONUS = 20
+export const CHECKPOINT_PASS_BONUS = 50
 
 export type Outcome = { correct: boolean; firstTry: boolean; hintsUsed: number; gaveUp: boolean }
 

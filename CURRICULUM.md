@@ -115,7 +115,7 @@ Some ideas are taught once and then deliberately revisited in a new setting:
 | 9   | Dictionaries          | Keys, `.get`, counting                         | A missing key gives `None`; looping over a dict gives values                                    |
 | 10  | Loop patterns         | Count, sum, find, best                         | `return` inside the loop still checks every item; `>=` and `>` treat ties the same              |
 
-**To add:** the checkpoint, and modify cards in lessons 4–10.
+**Checkpoint:** built (`a1-11-checkpoint.yaml`, 11 cards). **To add:** modify cards in lessons 4–10.
 
 **Project 1 · Word stats** (4 steps). Functions that analyse a paragraph of text:
 
@@ -264,7 +264,7 @@ Things this curriculum uses that the app doesn't support yet:
 - [ ] **Modify** card type: starting code plus an instruction, checked by tests.
 - [ ] Parsons cards with blanks inside lines.
 - [ ] Feedback for each wrong choice (a `why` per option, naming the mistake).
-- [ ] Unit checkpoints and unit-level unlocking.
+- [x] Unit checkpoints and unit-level unlocking.
 - [ ] Projects: multi-step write cards where your code carries into the next step.
 - [ ] Rotating the new-lesson slot between active tracks.
 - [ ] A JavaScript/TypeScript runner (Track B).
