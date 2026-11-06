@@ -41,11 +41,23 @@ export type MasteryRow = { lessonId: string; status: MasteryStatus; passedOn: Da
 
 export type DayRow = { day: DayKey; xp: number; coreDone: boolean; items: number; ms: number }
 
+/** How one Daily 5 problem went: right first try, right with help, or missed. */
+export type DailyResult = 'clean' | 'assisted' | 'missed'
+
+/** One day's fixed set of problems, and how each has gone so far. */
+export type DailyRow = {
+  day: DayKey
+  itemIds: string[]
+  results: Record<string, DailyResult>
+  completedAt?: number
+}
+
 export class GradientDB extends Dexie {
   attempts!: EntityTable<AttemptRow, 'id'>
   reviews!: EntityTable<ReviewRow, 'itemId'>
   mastery!: EntityTable<MasteryRow, 'lessonId'>
   days!: EntityTable<DayRow, 'day'>
+  dailies!: EntityTable<DailyRow, 'day'>
 
   constructor(name = 'gradient-ascent') {
     super(name)
@@ -55,6 +67,7 @@ export class GradientDB extends Dexie {
       mastery: 'lessonId',
       days: 'day',
     })
+    this.version(2).stores({ dailies: 'day' })
   }
 }
 
@@ -62,7 +75,7 @@ export const db = new GradientDB()
 
 // ---------- Backup ----------
 
-const TABLES = ['attempts', 'reviews', 'mastery', 'days'] as const
+const TABLES = ['attempts', 'reviews', 'mastery', 'days', 'dailies'] as const
 export type Backup = {
   app: 'gradient-ascent'
   version: 1
@@ -97,7 +110,8 @@ export async function importBackup(raw: unknown, database: GradientDB = db): Pro
     TABLES.map((t) => database.table(t)),
     async () => {
       for (const t of TABLES) {
-        const rows = b.tables![t]
+        // Backups from before the Daily 5 have no dailies table.
+        const rows = t === 'dailies' ? (b.tables![t] ?? []) : b.tables![t]
         if (!Array.isArray(rows)) throw new Error(`Backup is missing "${t}".`)
         await database.table(t).clear()
         await database.table(t).bulkAdd(rows.map((r) => (t === 'reviews' ? reviveDates(r) : r)))

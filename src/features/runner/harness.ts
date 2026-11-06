@@ -6,6 +6,7 @@
  * - stdout is captured; `input()` is disabled (exercises never need it).
  * - Errors report the line in the learner's code (file name "main.py").
  * - Tests are `{call, expect}` pairs of Python expressions, compared with == (floats with isclose).
+ *   NumPy values are compared as plain lists, so `np.array([1, 2])` passes `[1, 2]`.
  */
 export const HARNESS_PY = String.raw`
 import io, json, math, sys, traceback, contextlib, builtins
@@ -26,6 +27,10 @@ def __ga_err(e):
     return {"type": type(e).__name__, "message": msg, "line": line}
 
 def __ga_same(a, b):
+    if hasattr(a, "tolist"):
+        a = a.tolist()
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return type(a) is type(b) and len(a) == len(b) and all(__ga_same(x, y) for x, y in zip(a, b))
     if isinstance(a, bool) or isinstance(b, bool):
         return type(a) is type(b) and a == b
     if isinstance(a, float) or isinstance(b, float):

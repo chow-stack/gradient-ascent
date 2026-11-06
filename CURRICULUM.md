@@ -1,11 +1,15 @@
 # Gradient Ascent — Curriculum
 
 This file is the plan for what Gradient Ascent teaches and in what order. Lessons are written from it into
-`content/lessons/*.yaml`. Only the next one or two units of each track are planned in full; units further out
-are outlines and will change as the app gets used.
+`content/lessons/*.yaml`. Only the next one or two units are planned in full; units further out are outlines and
+will change as the app gets used.
 
-**Learner profile:** knows Java (AP CSA level). Python is taught as a mapping from Java, so the basics move
-quickly and the time goes to the places where Python and Java differ.
+**One path:** everything serves one goal, understanding machine learning deeply enough to build a tiny GPT from
+scratch. The research behind this order is summarised in §6.
+
+**Learner profile:** took AP CSA (Java) and AP CSP, but much of it didn't stick. Calc AB/BC went well (rusty).
+AP Stats plus a college stats class in progress. Goal: deep understanding. Unit checkpoints test what really stuck,
+so nothing further is compressed until there's evidence from them.
 
 ---
 
@@ -13,13 +17,28 @@ quickly and the time goes to the places where Python and Java differ.
 
 ### Structure
 
-**Track → unit → lesson.**
+**Path → unit → lesson.**
 
 | Level  | Size                         | Ends with                         |
 | ------ | ---------------------------- | --------------------------------- |
 | Lesson | 7–10 cards, about 12 minutes | Nothing extra; review takes over  |
-| Unit   | 6–10 lessons                 | A checkpoint, then a mini-project |
-| Track  | 5–7 units                    | A capstone project                |
+| Unit   | 5–10 lessons                 | A checkpoint, then a mini-project |
+| Path   | 11 units                     | Train a tiny GPT                  |
+
+### Two daily loops
+
+- **Daily 5:** up to 5 problems from everything already learned, chosen by FSRS. It's the same set all day, takes
+  about 5 minutes, and finishing it counts the day for the streak.
+- **Lessons:** new material, as many as you want. On a day with nothing to review, finishing a lesson counts the day.
+
+Rules for the Daily 5:
+
+1. A problem enters the pool the day after you first see it, not when the unit ends.
+2. The pool grows; the daily count doesn't. Overdue problems wait their turn.
+3. At most 2 code-writing problems a day, placed last.
+4. Cards with `variants` come back with different numbers or code, so answers can't be memorised.
+
+If reviews keep piling up or checkpoints start failing, that's the signal to do fewer new lessons.
 
 ### The lesson ladder
 
@@ -28,59 +47,42 @@ the order stays the same.
 
 1. **Learn:** a worked example with labelled steps. You predict the output, then run it.
 2. **Predict / concept (2–3 cards):** multiple choice. Each wrong answer is a known mistake (see §2).
-3. **Parsons:** put lines in order. From Unit 2 onward, some lines also have a blank to fill in.
+3. **Parsons:** put lines in order.
 4. **Blank:** fill in one missing piece of working code.
-5. **Modify** _(new card type)_: working code is given; change it to do something slightly different.
+5. **Modify** _(planned card type)_: working code is given; change it to do something slightly different.
 6. **Fix:** buggy code; find and fix the bug. The bug is one of the lesson's target mistakes.
 7. **Write:** a small function with visible and hidden tests.
 8. **Explain:** say what the code does in plain English.
 
-Modify sits between fix and write on purpose. Research on PRIMM found the jump from "read it" to "write it
-yourself" is too big once a task has several lines; changing working code bridges that.
+Worked examples come first for ideas with many moving parts (backprop, attention). Simple ideas can open with a
+prediction instead.
 
 ### Checkpoints
 
 A checkpoint ends every unit before the project:
 
 - 10–12 cards drawn from the whole unit, mixed together, mostly predict, fix and write.
-- Pass at 80% or more to unlock the next unit.
+- Pass at 80% or more to unlock what follows.
 - Missed cards go into review either way. You can retake the checkpoint the next day.
 
 ### Projects
 
-Each unit ends with a mini-project: one program built over 3–5 sessions.
+Each unit ends with a project: one program built step by step.
 
-- Each session is one step, checked by tests like a write card.
-- Your code carries into the next step. If you get stuck, you can continue from the reference solution instead.
-- In the daily session, a project step takes the "new lesson" slot. The review warm-up still comes first.
-- Projects aren't added to spaced review; the ideas they use already are.
-
-Each track ends with a larger capstone.
-
-### Track order
-
-Starting all three tracks at once would be too much. They start in stages:
-
-| Stage | Active tracks          | Starts when                                     |
-| ----- | ---------------------- | ----------------------------------------------- |
-| 1     | Foundations            | Day one                                         |
-| 2     | Foundations + Web      | Foundations Unit 2 is passed                    |
-| 3     | Foundations + Web + ML | Foundations Unit 3 is passed (ML needs classes) |
-
-With more than one active track, the daily "new lesson" slot rotates between them. A project in progress
-always goes first. Reviews already mix all tracks.
+- Each step is a write card checked by tests. Its starter includes reference solutions for the earlier steps.
+- Project cards aren't added to spaced review; the ideas they use already are.
+- Units 5–11 also have a project outside the app, done in a long block (§5).
 
 ### Threads that come back
 
-Some ideas are taught once and then deliberately revisited in a new setting:
-
-| Idea                    | First                  | Again                            | Again                                          |
-| ----------------------- | ---------------------- | -------------------------------- | ---------------------------------------------- |
-| References and aliasing | Python lists (A1)      | JS objects (B1)                  | React state must be replaced, not changed (B5) |
-| Accumulator loops       | Loop patterns (A1)     | `map` / `filter` / `reduce` (B1) | NumPy operations on whole arrays (C4)          |
-| Functions as values     | Passing functions (A2) | Closures and callbacks (B1, B3)  | `_backward` closures in micrograd (C2)         |
-| Recursion and graphs    | Call stack (A2)        | Trees and BFS/DFS (A4–A5)        | Topological sort for backprop (C2)             |
-| Operator overloading    | Dunder methods (A3)    | —                                | `Value.__add__` in micrograd (C2)              |
+| Idea                    | First                    | Again                 | Again                                  |
+| ----------------------- | ------------------------ | --------------------- | -------------------------------------- |
+| References and aliasing | Python lists (U1)        | Names and copies (U2) | NumPy views (U3)                       |
+| Accumulator loops       | Loop patterns (U1)       | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
+| Functions as values     | Passing functions (U2)   | —                     | `_backward` closures in micrograd (U6) |
+| Operator overloading    | Special methods (U2)     | Vector project (U2)   | `Value.__add__` in micrograd (U6)      |
+| Word counts             | Word stats project (U1)  | —                     | Bigram counts (U9, U10)                |
+| Likelihood              | Logistic regression (U5) | Probability (U9)      | makemore's loss (U10)                  |
 
 ---
 
@@ -94,13 +96,16 @@ Some ideas are taught once and then deliberately revisited in a new setting:
 4. **Explanations name the mistake.** The `why` says what the wrong belief is, not only what is right.
 5. **Write tasks are small.** One function, one idea, and hidden tests for the edge cases (empty list,
    negatives, ties).
-6. **Every answer is checked in real Python** by `npm run content:check` before it ships.
+6. **Every answer is checked in real Python** by `npm run content:check` before it ships. That includes every variant.
+7. **Math and code cards should have variants** with fresh values. Retrieval over restudy is unproven in math, while
+   spacing helps modestly, so the skill being practised has to be working it out rather than recalling an answer.
+8. **Visuals need work around them.** A prediction first and a graded question after.
 
 ---
 
-## 3. Track A — Foundations (Python)
+## 3. The path
 
-### Unit 1 · Python refresher, mapped from Java _(built)_
+### Unit 1 · Python from Java _(built)_
 
 | #   | Lesson                | Teaches                                        | Target mistakes                                                                                 |
 | --- | --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -115,176 +120,163 @@ Some ideas are taught once and then deliberately revisited in a new setting:
 | 9   | Dictionaries          | Keys, `.get`, counting                         | A missing key gives `None`; looping over a dict gives values                                    |
 | 10  | Loop patterns         | Count, sum, find, best                         | `return` inside the loop still checks every item; `>=` and `>` treat ties the same              |
 
-**Checkpoint:** built (`a1-11-checkpoint.yaml`, 11 cards). **To add:** modify cards in lessons 4–10.
+**Checkpoint:** built. **Project · Word stats** _(built)_: `clean`, `word_counts`, `most_common`, `report`.
 
-**Project 1 · Word stats** (4 steps). Functions that analyse a paragraph of text:
+### Unit 2 · Python for ML code _(built)_
 
-1. `clean(text)` → lowercase words with punctuation removed.
-2. `word_counts(words)` → a dict of word → count.
-3. `most_common(counts)` → the most frequent word, ties go to the first one seen (best-so-far loop).
-4. `report(text)` → one f-string summary: word count, unique words, most common, longest word.
+Merges the old "How Python works" and "Writing real programs" units, keeping what ML code actually uses. The test
+for each topic was whether micrograd, PyTorch's `nn.Module` and `Dataset`, or nanoGPT's model file needs it.
 
-### Unit 2 · How Python actually works
+| #   | Lesson                          | Teaches                                                                            | Target mistakes                                                                                    |
+| --- | ------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | A first look at a neural net    | Guided TensorFlow Playground: layers, curved boundaries, learning rate             | A network with no hidden layer can draw any boundary; lower training loss alone means a good model |
+| 2   | Names and changes               | Names point at objects, `is` vs `==`, mutation vs reassignment, scope              | `x = x.sort()` keeps the list; reassigning a parameter changes the caller's variable               |
+| 3   | Copies                          | `.copy()`, shallow vs deep, `[[0] * 3] * 3`, `sorted`                              | A copy of a list of lists copies the inner lists too                                               |
+| 4   | Functions as values             | Passing functions, `lambda`, `key=`, closures                                      | A name without `()` still calls it; a closure stores a copy of the value                           |
+| 5   | Tuples, zip, comprehensions     | Unpacking, sets, `zip`, `enumerate`, comprehensions, generator expressions         | `(5)` is a tuple; a set keeps order; a comprehension changes the original                          |
+| 6   | Classes and objects             | `class`, `__init__`, `self`, instance vs class attributes                          | `self` is optional; a class attribute is separate for each object                                  |
+| 7   | Special methods                 | `__repr__`, `__eq__`, `__add__`, `__mul__`, `__rmul__`                             | `print(obj)` shows the fields automatically; `2 * v` uses `__mul__`                                |
+| 8   | Objects that act like functions | `__call__`, `__len__`, `__getitem__`, `super().__init__`                           | A child's `__init__` runs the parent's automatically; `model(x)` needs a method named `model`      |
+| 9   | Reading errors                  | Tracebacks bottom to top, common errors, debugging with `print`, `raise`, `assert` | The line in the error is always the line with the bug; bare `except:` is a good default            |
 
-Goal: an accurate picture of what Python does in memory, so that surprising behaviour stops being surprising.
-Until the Phase 3 code visualizer exists, these lessons lean on predict questions.
+**Checkpoint:** built. **Project · Vector class** _(built)_: `__init__`/`__repr__`, arithmetic, `dot`/`length`,
+`__eq__` with a float tolerance.
 
-| #   | Lesson                       | Teaches                                                                     | Target mistakes                                                                                                    |
-| --- | ---------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1   | Names and objects            | Names point at objects; `id`, `is` vs `==`                                  | A variable is a box that holds the value; `is` and `==` are the same                                               |
-| 2   | Mutable vs immutable         | Lists change, strings and tuples don't; `sort` vs `sorted`, `append` vs `+` | `s.upper()` changes `s`; `x = x.sort()` keeps the list                                                             |
-| 3   | Functions and mutation       | Passing lists into functions; changing vs reassigning a parameter           | Reassigning a parameter changes the caller's variable; changing a list inside a function doesn't affect the caller |
-| 4   | Copies                       | `.copy()`, slicing, shallow vs deep copies, `[[0] * 3] * 3`                 | A copy of a list of lists copies the inner lists too                                                               |
-| 5   | Scope                        | Local vs global, `UnboundLocalError`, `global`                              | A function can update a global just by assigning to it                                                             |
-| 6   | Functions are values         | Passing functions, `lambda`, `sorted(key=...)`, closures                    | A function name followed by no `()` still calls it; a closure stores a copy of the value                           |
-| 7   | The call stack and recursion | Frames, base case, the stack unwinding                                      | Recursive calls share one set of variables; a base case is optional                                                |
-| 8   | Reading tracebacks           | Read bottom to top, common error types                                      | The line in the error is always the line with the bug                                                              |
+Moved out on purpose: recursion and DFS are taught in micrograd (U6), where they're needed. Custom decorators,
+generator functions, packaging and the `if __name__` check wait until local projects need them.
 
-**Project 2 · Gradebook** (4 steps). A dict of student → list of scores. Every function must leave its input
-unchanged, and the hidden tests check that it does.
+### Unit 3 · NumPy, shapes and plots _(next)_
 
-1. `add_score(book, name, score)` → a new gradebook with the score added.
-2. `averages(book)` → a dict of student → average.
-3. `top_student(book)` → the name with the highest average.
-4. `curve(book, points)` → a new gradebook with every score raised, capped at 100.
+Vectorizing loops, indexing and views, axes, broadcasting, dot product and cosine similarity, the matrix product as
+a table of dot products, transpose, `matplotlib`. **Exit test:** predict shapes and vectorize loops.
 
-### Unit 3 · Writing real programs _(moved earlier, before data structures, because ML needs classes)_
+### Unit 4 · Calculus refresh and gradient descent
 
-| #   | Lesson                      | Teaches                                                              | Target mistakes                                                               |
-| --- | --------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| 1   | Tuples, sets and unpacking  | `a, b = ...`, sets for membership and de-duping                      | A set keeps order; `(5)` is a tuple                                           |
-| 2   | Comprehensions              | List and dict comprehensions, filters                                | A comprehension changes the original list                                     |
-| 3   | Classes and objects         | `class`, `__init__`, `self`, attributes (vs Java fields)             | `self` is optional; a class attribute is separate for each object             |
-| 4   | Special methods             | `__repr__`, `__eq__`, `__add__`, `__mul__`, `__radd__`               | `print(obj)` shows the fields automatically; `2 * v` uses `__mul__`           |
-| 5   | Inheritance and composition | `super().__init__`, overriding, "has a" vs "is a"                    | The child's `__init__` runs the parent's automatically                        |
-| 6   | Exceptions                  | `raise`, `try`/`except`/`finally`, custom errors                     | `except:` with nothing after is a good default; code after `raise` still runs |
-| 7   | Modules and tests           | `import`, `if __name__ == "__main__"`, `assert`, testing like pytest | Importing a file doesn't run its top-level code                               |
+Opens with a 5-minute diagnostic (slope, power rule, composition, logs, numeric derivatives) that skips whatever
+survived. Then nudging, the chain rule, partial derivatives and gradients (AB/BC usually skips these two), gradient
+descent. **Project · Fit a line** in NumPy, with a gradient check.
 
-**Project 3 · Vector class** (4 steps). A `Vec` class used again in Track C:
+### Unit 5 · First models, judged honestly
 
-1. `__init__` and `__repr__`.
-2. `__add__`, `__sub__`, and `__mul__` by a number (plus `__rmul__`).
-3. `dot` and `length`.
-4. `__eq__` with a tolerance for floats, and errors for vectors of different sizes.
+Log-odds, logistic regression as one neuron, cross-entropy, train/validation/test splits, baselines, learning curves,
+precision and recall, leakage. The stats background should make metrics quick. **Exit test:** beat a baseline with no
+leakage. **Long block:** a real table in a notebook, with git.
 
-### Unit 4 · Data structures _(outline)_
+### Unit 6 · micrograd
 
-Stacks, queues (`deque`), linked lists, binary trees, a hash map from scratch, graphs as adjacency lists.
-**Project:** undo/redo history for a text editor, built on two stacks.
+A `Value` class with `+`, `*`, `tanh`, closures for `_backward`, recursion, DFS and topological sort. Main target
+mistake: setting `grad =` instead of adding `grad +=` when a value is used twice. **Exit test:** matches numeric
+gradients. **Long block:** code along with Karpathy's video.
 
-### Unit 5 · Algorithms _(outline)_
+### Unit 7 · MLP and silent bugs
 
-Big-O by feel, linear vs binary search, insertion and merge sort, recursion on trees, BFS and DFS.
-**Project:** a maze solver using BFS for the shortest path.
+Neuron → layer → MLP, the training loop, expected initial loss, overfitting one batch, diagnosing loss curves,
+planted bugs. **Long block:** rebuild it in real PyTorch on Colab and compare gradients.
 
-### Capstone · Your own program
+**Decision point at the end of this unit:** review this path, including whether to go on to data science or AI
+engineering, and whether Unit 8 stays here or moves after the GPT.
 
-You pick from a few specs (for example a word game engine, a budget tracker or a tiny spreadsheet). It's built
-with tests over about a week.
+### Unit 8 · Trees and real tables
 
----
+pandas basics, one small tree by hand, forests, boosting, cross-validation. **Exit test:** an honest comparison of
+logistic regression, boosting and an MLP.
 
-## 4. Track B — Understand my stack (JS/TS → web → backend)
+### Unit 9 · Probability for language models
 
-Needs a JavaScript runner (planned for Phase 3: JavaScript runs natively in a Web Worker; TypeScript is
-stripped first).
+Starts with a diagnostic, because AP Stats plus college stats should cover distributions, conditional probability and
+sampling. New material is likely softmax, log-likelihood, negative log-likelihood and cross-entropy.
+**Exit test:** compute NLL by hand; a working bigram sampler.
 
-### Unit 1 · JavaScript for Python and Java people
+### Unit 10 · makemore in NumPy
 
-| #   | Lesson                        | Teaches                                                 | Target mistakes                                                   |
-| --- | ----------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
-| 1   | Values and variables          | `let` / `const`, one number type, `null` vs `undefined` | `const` makes an object frozen; `5 / 2` is 2                      |
-| 2   | Equality and truthiness       | `===` vs `==`, what counts as false                     | `[]` and `"0"` are false like in Python; `==` is safe             |
-| 3   | Strings and template literals | `` `${x}` ``, common methods                            | Template literals work with ordinary quotes                       |
-| 4   | Functions three ways          | Declarations, arrow functions, default parameters       | An arrow function returning `{ ... }` returns an object           |
-| 5   | Arrays and their methods      | `push`, `map`, `filter`, `reduce`, `sort`               | `sort()` sorts numbers by value; `map` changes the original array |
-| 6   | Objects and references        | Literals, spread `...`, destructuring                   | Spread makes a deep copy; `b = a` copies an object                |
-| 7   | Closures                      | Counters, `let` vs `var` in loops                       | Each loop callback with `var` sees its own value                  |
-| 8   | `this`                        | Methods, detached functions, arrow functions            | `this` always means the object the function was written in        |
+Bigrams to an MLP with embeddings. Backprop Ninja becomes optional graded drills; WaveNet is optional.
+**Long block:** makemore in PyTorch.
 
-**Project · To-do logic** (4 steps). Pure functions that never change their input, as practice for React:
-`addTodo`, `toggleTodo`, `removeTodo`, `visibleTodos(todos, filter)`.
+### Unit 11 · Attention to tiny GPT
 
-### Later units _(outline)_
+Masked attention, then a small GPT trained in the browser. Measured on one fast machine: about 30K parameters train
+5,000 steps in about 87 seconds, and about 110K in about 13 minutes. Check text quality on real data before fixing the
+final size. **Long block:** "Let's build GPT" plus nanoGPT on a GPU.
 
-2. **TypeScript:** types, interfaces, unions and narrowing, generics, reading type errors.
-3. **Async:** the event loop, callbacks → promises → `async`/`await`. Main target mistake: code after an
-   `await` or callback runs in the order it's written.
-4. **How the web works:** HTTP, requests and responses, JSON, REST, status codes, CORS.
-5. **React mental model:** components, props, state, why things re-render, effects.
-6. **Data:** SQL basics, then Postgres/Supabase, auth basics.
-7. **Code autopsy:** paste a file from your own projects and get quizzed on it.
+### After the path
 
-**Capstone:** a small full-stack app with a React front end and a database.
+Depends on the goal chosen at the Unit 7 decision point:
+
+| Goal                         | Next                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Deep understanding (current) | Reproduce a small GPT in PyTorch, read papers                            |
+| AI engineering               | Evals first, then context, retrieval and tools, on a real app            |
+| ML engineering               | PyTorch depth, data pipelines, serving, monitoring, interview track      |
+| Research                     | Paper reproductions; return to eigenvectors, SVD and probability         |
+| Data science                 | Statistics, experiment design, SQL; Unit 8 moves before Unit 6 and grows |
 
 ---
 
-## 5. Track C — ML / AI
+## 4. Parked
 
-Follows the order of Karpathy's _Neural Networks: Zero to Hero_, with 3Blue1Brown-style visuals. Starts once
-Foundations Unit 3 is passed.
+| What                                    | Status                                              |
+| --------------------------------------- | --------------------------------------------------- |
+| Web track (JS, TS, async, React, SQL)   | Paused. No JS/TS runner, no track rotation          |
+| Linked lists, general trees, sorts, BFS | Optional interview track, only when job hunting     |
+| Practical AI engineering (RAG, evals)   | After the path, or sooner if the goal changes       |
+| Determinants, Gaussian elimination, SVD | Only if a later goal or classical method needs them |
 
-### Unit 1 · Math with pictures
+The test for any math lesson: **name the later line of code that needs it.** If no line does, it waits.
 
-All in plain Python, before NumPy.
+---
 
-| #   | Lesson                    | Teaches                                                              | Target mistakes                                                       |
-| --- | ------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 1   | Functions and slopes      | Functions as machines, plotting, rise over run                       | A steeper line has a smaller slope                                    |
-| 2   | The derivative by nudging | `(f(x + h) - f(x)) / h` with a small `h`                             | The derivative is the function's value; a bigger `h` is more accurate |
-| 3   | Rules worth knowing       | Power, sum and constant rules; `exp` and `tanh` derivatives as facts | The derivative of `x**2` is `x`                                       |
-| 4   | Several inputs            | Partial derivatives: nudge one input, hold the rest                  | Nudging two inputs at once gives one partial derivative               |
-| 5   | The chain rule            | Multiply local slopes along a chain (the core of backprop)           | Slopes along a chain add                                              |
-| 6   | Gradients                 | The gradient points uphill (gradient _ascent_)                       | The gradient points downhill                                          |
-| 7   | Gradient descent          | Step against the gradient, learning rate, a loss going down          | A bigger learning rate is always faster                               |
-| 8   | Vectors and dot products  | Lists as vectors, dot product as a weighted sum                      | The dot product gives a vector                                        |
+## 5. What stays outside the app
 
-**Project · Fit a line** (4 steps). Fit `y = w * x + b` to points with gradient descent you write yourself:
-the prediction, the loss (mean squared error), the gradients, then the training loop with the loss shrinking.
+The app handles retrieval and small steps. Twenty minutes a day is only about 122 hours a year, and some skills can't
+be auto-graded in a short session.
 
-### Later units _(outline)_
+- From about Unit 5, one weekend block of 90–180 minutes covers first exposures to hard ideas (Karpathy's videos),
+  real PyTorch and messy data.
+- Long blocks should count toward the streak once they're tracked in the app.
+- **Learning mode vs building mode:** attempt first, use AI only for concepts and hints when learning. Vibecoding is
+  fine when building, but it doesn't count as ML practice, and neither does working on this app.
 
-2. **micrograd:** a `Value` class with `+`, `*`, `tanh`; the computation graph; `backward` with a
-   topological sort. Main target mistake: setting `grad =` instead of adding `grad +=` when a value is used
-   twice.
-3. **Neuron → layer → MLP:** a training loop on a tiny dataset, loss curves, learning-rate experiments.
-4. **NumPy and tensors:** arrays, shapes, broadcasting, matrix multiplication (Pyodide includes NumPy).
-5. **makemore:** a character-level name generator, from bigrams to an MLP with embeddings.
-6. **Attention → tiny GPT.**
-7. **Practical AI engineering:** tokens, embeddings, RAG, calling LLM APIs well, evals.
-
-**Capstone:** train a tiny GPT on a small text and generate from it.
+Signals that matter more than XP: delayed unaided tasks, completed long blocks, and real models trained.
 
 ---
 
 ## 6. What the app needs for this
 
-Things this curriculum uses that the app doesn't support yet:
-
+- [x] Unit checkpoints and unit-level unlocking.
+- [x] Daily 5, with one fixed set a day and its own streak rule.
+- [x] Card variants with fresh values, each checked in real Python.
+- [x] Projects as step-by-step write cards, kept out of spaced review.
+- [x] NumPy, self-hosted so it works offline.
 - [ ] **Modify** card type: starting code plus an instruction, checked by tests.
 - [ ] Parsons cards with blanks inside lines.
 - [ ] Feedback for each wrong choice (a `why` per option, naming the mistake).
-- [x] Unit checkpoints and unit-level unlocking.
-- [ ] Projects: multi-step write cards where your code carries into the next step.
-- [ ] Rotating the new-lesson slot between active tracks.
-- [ ] A JavaScript/TypeScript runner (Track B).
+- [ ] Plots and shape output (matplotlib) for Unit 3.
+- [ ] Watch-with-prediction and long-block lesson types.
+- [ ] A "mistake to card" button for errors made in outside projects.
 
 ---
 
 ## 7. Research behind these choices
 
+No controlled study compares ML learning orders, so this path is reasoned judgment from course syllabi, the math each
+step needs, and general learning science.
+
+- ML order and prerequisites: [Karpathy: Zero to Hero](https://karpathy.ai/zero-to-hero.html),
+  [CS229](https://cs229.stanford.edu/), [fast.ai](https://course.fast.ai/), [Parr & Howard](https://arxiv.org/abs/1802.01528)
+- Guidance beats unassisted discovery: [Alfieri et al. 2011](https://www.fisme.science.uu.nl/publicaties/literatuur/2011_alfieri_discovery_learning.pdf)
+- Visuals need active use: [Hundhausen et al.](https://www.academia.edu/15636659/A_Meta_Study_of_Algorithm_Visualization_Effectiveness),
+  [exploRNN](https://arxiv.org/pdf/2012.06326)
+- AI assistance and skill: [Anthropic](https://www.anthropic.com/research/AI-assistance-coding-skills),
+  [Bastani et al. 2025](https://ideas.repec.org/a/nas/journl/v122y2025pe2422633122.html)
+- Spacing and retrieval in math: [Murray et al.](https://eprints.whiterose.ac.uk/id/eprint/229807)
+- Spaced repetition limits: [Nielsen](https://augmentingcognition.com/ltm.html)
+- Silent training bugs: [Karpathy's recipe](https://karpathy.github.io/2019/04/25/recipe/),
+  [scikit-learn pitfalls](https://scikit-learn.org/stable/common_pitfalls.html)
 - Tracing, then explaining, then writing:
-  [Raspberry Pi: code tracing](https://static.raspberrypi.org/files/curriculum/quickreads/14-Pedagogy_Summary_Code_Tracing_V4_2023.pdf),
-  [study of prerequisite skills (2024)](https://arxiv.org/html/2410.12967v2)
-- PRIMM and use-modify-create: [Sentance et al. PRIMM study](https://eprints.gla.ac.uk/229013),
-  [Raspberry Pi: PRIMM](https://static.raspberrypi.org/files/curriculum/quickreads/11-Pedagogy_Summary_PRIMM_V4_2023.pdf),
+  [Raspberry Pi: code tracing](https://static.raspberrypi.org/files/curriculum/quickreads/14-Pedagogy_Summary_Code_Tracing_V4_2023.pdf)
+- PRIMM and use-modify-create (limited evidence, still a sensible bridge):
+  [Sentance et al.](https://eprints.gla.ac.uk/229013),
   [Use-Modify-Create](https://textbooks.cs.ksu.edu/tlcs/4-designing-cs-lessons/04-use-modify-create)
-- Parsons problems with blanks:
-  [Faded Parsons problems (CHI 2021)](https://acelab.berkeley.edu/wp-content/papercite-data/pdf/parsons-chi2021.pdf),
-  [Parsons variations (2025)](https://arxiv.org/abs/2512.22407v1)
-- Wrong answers built from real mistakes:
-  [Python misconceptions (2025)](https://drops.dagstuhl.de/storage/01oasics/oasics-vol134-programming2025/html/OASIcs.Programming.2025.21/OASIcs.Programming.2025.21.html),
-  [concept inventory for intro programming (SIGCSE 2016)](https://www.aminer.org/pub/573696ea6e3b12023e5e85f8/developing-a-computer-science-concept-inventory-for-introductory-programming),
-  [progmiscon.org](https://progmiscon.org)
-- Projects that bring topics back: [spiral project-based course (ETSU)](https://dc.etsu.edu/etsu-works/13085)
-- ML order and prerequisites: [Karpathy: Zero to Hero](https://karpathy.ai/zero-to-hero.html)
+- Parsons problems: [Faded Parsons (CHI 2021)](https://acelab.berkeley.edu/wp-content/papercite-data/pdf/parsons-chi2021.pdf),
+  [Poulsen et al.](https://arxiv.org/abs/2211.09609)
+- Wrong answers built from real mistakes: [progmiscon.org](https://progmiscon.org)

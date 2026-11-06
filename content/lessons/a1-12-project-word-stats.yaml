@@ -1,0 +1,144 @@
+id: a1-project-word-stats
+track: ml
+unit: 1
+order: 12
+kind: project
+title: 'Project: Word stats'
+summary: Four functions that analyse a paragraph. Counting words comes back in language models.
+
+cards:
+  - type: write
+    id: clean
+    prompt: >-
+      Step 1 of 4. Write `clean(text)`: split the text into lowercase words, with punctuation removed from
+      both ends of each word. `text.lower()`, `text.split()` and `word.strip(".,!?")` will do it.
+    starter: |
+      def clean(text):
+          pass
+    solution: |
+      def clean(text):
+          words = []
+          for word in text.lower().split():
+              words.append(word.strip(".,!?"))
+          return words
+    tests:
+      - { call: 'clean("Hello, world!")', expect: "['hello', 'world']" }
+      - { call: 'clean("The cat. The DOG?")', expect: "['the', 'cat', 'the', 'dog']" }
+      - { call: 'clean("")', expect: '[]', hidden: true }
+    hints:
+      - Start with an empty list, loop over `text.lower().split()`, and append each stripped word.
+
+  - type: write
+    id: word-counts
+    prompt: Step 2 of 4. Write `word_counts(words)`, which returns a dict of word to how many times it appears.
+    starter: |
+      def clean(text):
+          words = []
+          for word in text.lower().split():
+              words.append(word.strip(".,!?"))
+          return words
+
+      def word_counts(words):
+          pass
+    solution: |
+      def clean(text):
+          words = []
+          for word in text.lower().split():
+              words.append(word.strip(".,!?"))
+          return words
+
+      def word_counts(words):
+          counts = {}
+          for word in words:
+              counts[word] = counts.get(word, 0) + 1
+          return counts
+    tests:
+      - { call: 'word_counts(["a", "b", "a"])', expect: "{'a': 2, 'b': 1}" }
+      - { call: 'word_counts([])', expect: '{}', hidden: true }
+    hints:
+      - '`counts.get(word, 0)` gives the count so far, or 0 for a new word.'
+
+  - type: write
+    id: most-common
+    prompt: >-
+      Step 3 of 4. Write `most_common(counts)`, which returns the word with the highest count. If there's a tie, the
+      word seen first wins.
+    starter: |
+      def most_common(counts):
+          pass
+    solution: |
+      def most_common(counts):
+          best = None
+          best_count = 0
+          for word in counts:
+              if counts[word] > best_count:
+                  best = word
+                  best_count = counts[word]
+          return best
+    tests:
+      - { call: 'most_common({"a": 1, "b": 3, "c": 2})', expect: "'b'" }
+      - { call: 'most_common({"x": 2, "y": 2})', expect: "'x'" }
+      - { call: 'most_common({"only": 1})', expect: "'only'", hidden: true }
+    hints:
+      - This is the best-so-far loop. Which comparison keeps the first word in a tie, `>` or `>=`?
+
+  - type: write
+    id: report
+    prompt: >-
+      Step 4 of 4. Write `report(text)` using the three functions, returning a string like
+      `"5 words, 4 unique, most common: the"`.
+    starter: |
+      def clean(text):
+          words = []
+          for word in text.lower().split():
+              words.append(word.strip(".,!?"))
+          return words
+
+      def word_counts(words):
+          counts = {}
+          for word in words:
+              counts[word] = counts.get(word, 0) + 1
+          return counts
+
+      def most_common(counts):
+          best = None
+          best_count = 0
+          for word in counts:
+              if counts[word] > best_count:
+                  best = word
+                  best_count = counts[word]
+          return best
+
+      def report(text):
+          pass
+    solution: |
+      def clean(text):
+          words = []
+          for word in text.lower().split():
+              words.append(word.strip(".,!?"))
+          return words
+
+      def word_counts(words):
+          counts = {}
+          for word in words:
+              counts[word] = counts.get(word, 0) + 1
+          return counts
+
+      def most_common(counts):
+          best = None
+          best_count = 0
+          for word in counts:
+              if counts[word] > best_count:
+                  best = word
+                  best_count = counts[word]
+          return best
+
+      def report(text):
+          words = clean(text)
+          counts = word_counts(words)
+          return f"{len(words)} words, {len(counts)} unique, most common: {most_common(counts)}"
+    tests:
+      - { call: 'report("The cat saw the dog.")', expect: "'5 words, 4 unique, most common: the'" }
+      - { call: 'report("Go go GO!")', expect: "'3 words, 1 unique, most common: go'", hidden: true }
+    hints:
+      - The number of unique words is the size of the counts dict.

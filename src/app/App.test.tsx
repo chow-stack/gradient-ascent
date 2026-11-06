@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { lessons } from '../features/content/content'
 import { App } from './App'
 
@@ -12,11 +12,14 @@ function renderAt(path: string) {
   )
 }
 
+afterEach(cleanup)
+
 describe('App', () => {
-  it('shows the first session on a fresh start', async () => {
+  it('on a fresh start, the first lesson is the way in and the Daily 5 waits', async () => {
     renderAt('/')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Your first climb' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Start today’s session/ })).toHaveAttribute('href', '/session?kind=core')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Daily 5' })).toBeInTheDocument()
+    expect(screen.getByText('Starts after your first lesson.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Start/ })).toHaveAttribute('href', '/session?kind=lesson')
   })
 
   it('lists the path with the first lesson up next', async () => {

@@ -7,13 +7,21 @@
  * - fix-the-bug: the buggy code must FAIL and the solution must PASS
  * - write: the solution must pass and the starter must not
  * - worked examples and explain snippets must run without errors
+ * - every card variant gets the same checks as its card
  *
  * Runs with Node's built-in TypeScript support (Node 23.6+), no build step.
  */
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { loadPyodide } from 'pyodide'
-import { fillBlanks, parseLesson, parseTrack, type Lesson } from '../src/features/content/schema.ts'
+import {
+  cardVariants,
+  fillBlanks,
+  parseLesson,
+  parseTrack,
+  type Card,
+  type Lesson,
+} from '../src/features/content/schema.ts'
 import {
   HARNESS_PY,
   normalizeOutput,
@@ -26,7 +34,8 @@ const root = join(import.meta.dirname, '..')
 const problems: string[] = []
 let checks = 0
 
-const py = await loadPyodide()
+const py = await loadPyodide({ packageBaseUrl: join(root, 'vendor/pyodide-packages') + '/' })
+await py.loadPackage('numpy', { messageCallback: () => {} })
 py.runPython(HARNESS_PY)
 const pyRun = py.globals.get('__ga_run') as (code: string, tests: string) => string
 const run = (code: string, tests: TestCase[] = []): RunResult => JSON.parse(pyRun(code, JSON.stringify(tests)))
@@ -61,6 +70,12 @@ for (const f of readdirSync(join(root, 'content/lessons')).filter((f) => f.endsW
   }
 }
 
+// NumPy is self-hosted; make sure it works here and that tests can compare its values.
+const numpyCheck = run('import numpy as np\nx = np.arange(6).reshape(2, 3)', [
+  { call: 'x.sum(axis=0)', expect: '[3, 5, 7]' },
+])
+expect(runPassed(numpyCheck), 'numpy', `doesn't work: ${describe(numpyCheck)}`)
+
 const ids = new Set<string>()
 const orders = new Set<string>()
 for (const lesson of lessons) {
@@ -71,7 +86,13 @@ for (const lesson of lessons) {
   orders.add(slot)
 
   for (const card of lesson.cards) {
-    const at = `${lesson.id}/${card.id}`
+    checkCard(card, `${lesson.id}/${card.id}`)
+    cardVariants(card).forEach((v, i) => checkCard(v, `${lesson.id}/${card.id} variant ${i + 1}`))
+  }
+}
+
+function checkCard(card: Card, at: string) {
+  {
     switch (card.type) {
       case 'learn':
         if (card.code) {

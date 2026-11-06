@@ -1,4 +1,4 @@
-import { Coffee, Lightbulb } from 'lucide-react'
+import { Coffee, ExternalLink, Lightbulb } from 'lucide-react'
 import { useState } from 'react'
 import { CodeBlock } from '../../components/CodeBlock'
 import type { Card } from '../content/schema'
@@ -29,6 +29,12 @@ export function LearnView({ card }: { card: LearnCard }) {
         <h2 className="text-[26px] leading-snug font-[650] text-balance">{card.title}</h2>
       </div>
       <Prose text={card.body} className="max-w-[62ch] text-[17px] leading-relaxed text-text" />
+
+      {card.link && (
+        <a href={card.link.url} target="_blank" rel="noreferrer" className="ga-btn ga-btn--secondary self-start">
+          {card.link.label} <ExternalLink size={16} aria-hidden />
+        </a>
+      )}
 
       {card.code && (
         <div className={showJava && card.java ? 'grid gap-3 lg:grid-cols-2' : 'flex flex-col'}>

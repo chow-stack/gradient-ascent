@@ -1,5 +1,4 @@
-import { ArrowRight, Check, Dumbbell, Flame, Home, Layers, Star } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ArrowRight, CalendarCheck, Dumbbell, Flame, Home, Star } from 'lucide-react'
 import { Link } from 'react-router'
 import { Adam } from '../../components/Adam'
 import { useProgress, type CheckpointResult } from '../progress/progress'
@@ -17,99 +16,71 @@ export type SessionSummary = {
   minutes: number
 }
 
-/** "Done for today" + the keep-going options. */
+/** End of a lesson, checkpoint, review or practice session, and what's next. */
 export function SessionDone({ summary }: { summary: SessionSummary }) {
   const progress = useProgress()
   const upNext = progress ? nextLesson(progress.mastery, progress.retakeTomorrow) : undefined
-  const core = summary.kind === 'core'
+  const dailyPending = !!progress && progress.daily.total > 0 && !progress.daily.done
   const cp = summary.checkpoint
-  const title = cp ? (cp.passed ? 'Checkpoint passed' : 'Not this time') : core ? 'Done for today' : 'Nice climbing'
-  const message = cp
+  const finishedLesson = !!summary.lessonTitle && summary.bonus > 0
+  const title = cp
     ? cp.passed
-      ? `${cp.correct} of ${cp.total} right. The next unit is unlocked.`
-      : `${cp.correct} of ${cp.total} right; you need ${cp.needed}. The ones you missed come back in your reviews, and you can retake it tomorrow.`
-    : summary.lessonTitle && summary.bonus > 0
-      ? `You finished “${summary.lessonTitle}”. It will come back in your reviews.`
-      : core
-        ? 'Your streak is safe. Anything more is a bonus.'
-        : 'Every rep makes the next review easier.'
+      ? 'Checkpoint passed'
+      : 'Not this time'
+    : finishedLesson
+      ? summary.lessonTitle
+      : 'Nice climbing'
+  const failedCheckpoint = !!cp && !cp.passed
 
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
-      <div className="flex w-full max-w-[560px] flex-col items-center gap-7 text-center">
-        <Adam
-          mood={cp && !cp.passed ? 'think' : 'happy'}
-          size={140}
-          title={cp && !cp.passed ? 'Adam, thinking' : 'Adam, celebrating'}
-        />
-        <div>
-          <h1 className="text-display leading-tight">{title}</h1>
-          <p className="mx-auto mt-2 max-w-[48ch] text-muted">{message}</p>
-          {cp && core && <p className="mt-1 text-small text-faint">Your streak is safe either way.</p>}
-        </div>
+      <div className="flex w-full max-w-[440px] flex-col items-center text-center">
+        <Adam mood={failedCheckpoint ? 'think' : 'happy'} size={120} title="Adam" />
+        <h1 className="mt-6 text-h1">{title}</h1>
+        {failedCheckpoint && (
+          <p className="mt-2 text-muted">
+            {cp.correct} of {cp.total} right; you need {cp.needed}. Retake it tomorrow.
+          </p>
+        )}
+        <p className="mt-3 flex items-center gap-5 font-semibold tabular-nums">
+          {summary.total > 0 && (
+            <span>
+              {summary.correct}/{summary.total} right
+            </span>
+          )}
+          <span className="flex items-center gap-1.5">
+            <Star size={18} className="text-xp" aria-hidden /> +{summary.xp} XP
+          </span>
+          {!!progress?.streak.current && (
+            <span className="flex items-center gap-1.5">
+              <Flame size={18} className="text-accent" aria-hidden /> {progress.streak.current}
+            </span>
+          )}
+        </p>
 
-        <div className="grid w-full grid-cols-3 gap-3">
-          <Stat icon={<Star size={18} />} color="var(--color-xp)" value={`+${summary.xp}`} label="XP" />
-          <Stat
-            icon={<Check size={18} />}
-            color="var(--color-success)"
-            value={summary.total ? `${summary.correct}/${summary.total}` : '—'}
-            label="Correct"
-          />
-          <Stat
-            icon={<Flame size={18} />}
-            color="var(--color-accent)"
-            value={progress ? String(progress.streak.current) : '…'}
-            label="Day streak"
-          />
-        </div>
-
-        <div className="flex w-full flex-col gap-2">
-          <h2 className="text-small font-semibold text-muted">Keep going?</h2>
-          <div className="flex flex-col gap-2">
-            {upNext && (
-              <KeepGoing to="/session?kind=lesson" icon={<ArrowRight size={18} />} title={`Next: ${upNext.title}`} />
-            )}
+        <div className="mt-8 flex w-full flex-col gap-2">
+          {dailyPending ? (
+            <Link to="/session?kind=daily" className="ga-btn ga-btn--primary">
+              <CalendarCheck size={16} aria-hidden /> Daily {progress.daily.total}
+            </Link>
+          ) : upNext ? (
+            <Link to="/session?kind=lesson" className="ga-btn ga-btn--primary min-w-0">
+              <span className="truncate">Next: {upNext.title}</span>
+              <ArrowRight size={16} className="flex-none" aria-hidden />
+            </Link>
+          ) : null}
+          <div className="flex justify-center gap-2">
+            <Link to="/" className="ga-btn ga-btn--ghost">
+              <Home size={16} aria-hidden /> Today
+            </Link>
             {summary.lessonId && (
-              <KeepGoing
-                to={`/session?kind=practice&lesson=${summary.lessonId}`}
-                icon={<Dumbbell size={18} />}
-                title={cp ? 'Practice the checkpoint questions' : 'Practice this lesson again'}
-              />
-            )}
-            {progress && progress.reviewCount > 0 && (
-              <KeepGoing to="/session?kind=review" icon={<Layers size={18} />} title="Extra reviews" />
+              <Link to={`/session?kind=practice&lesson=${summary.lessonId}`} className="ga-btn ga-btn--ghost">
+                <Dumbbell size={16} aria-hidden /> Practice
+              </Link>
             )}
           </div>
         </div>
-
-        <Link to="/" className="ga-btn ga-btn--primary w-full sm:w-auto">
-          <Home size={16} aria-hidden /> Back to Today
-        </Link>
       </div>
-    </div>
-  )
-}
-
-function KeepGoing({ to, icon, title }: { to: string; icon: ReactNode; title: string }) {
-  return (
-    <Link to={to} className="ga-choice text-left">
-      <span className="ga-choice-key text-sky">{icon}</span>
-      <span>{title}</span>
-    </Link>
-  )
-}
-
-function Stat({ icon, value, label, color }: { icon: ReactNode; value: string; label: string; color: string }) {
-  return (
-    <div className="ga-card flex flex-col items-center gap-1 px-3 py-4">
-      <span className="flex items-center gap-1.5 text-[22px] font-semibold tabular-nums" style={{ color }}>
-        <span aria-hidden className="flex">
-          {icon}
-        </span>
-        {value}
-      </span>
-      <span className="text-caption text-muted">{label}</span>
     </div>
   )
 }

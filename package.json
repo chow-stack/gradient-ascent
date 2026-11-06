@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "content:check": "node scripts/check-content.ts"
+    "content:check": "node scripts/check-content.ts",
+    "setup:python": "node scripts/setup-python.ts",
+    "postinstall": "node scripts/setup-python.ts"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

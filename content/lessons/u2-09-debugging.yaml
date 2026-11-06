@@ -1,0 +1,250 @@
+id: u2-debugging
+track: ml
+unit: 2
+order: 9
+title: Reading errors
+summary: Tracebacks tell you what happened and where. Learn to read them before asking AI.
+
+cards:
+  - type: learn
+    id: tracebacks
+    title: Read a traceback bottom to top
+    body: >-
+      The last line names the error and what went wrong. The lines above show the chain of calls, with the failing line
+      last. The bug is often earlier, where a bad value was made. `raise` creates an error on purpose.
+    code: |
+      def mean(nums):
+          if len(nums) == 0:
+              raise ValueError("mean of an empty list")
+          return sum(nums) / len(nums)
+
+      try:
+          print(mean([]))
+      except ValueError as e:
+          print("caught:", e)
+    subgoals:
+      - { line: 3, label: Stop with a clear message }
+      - { line: 6, label: Run code that might fail }
+      - { line: 8, label: Handle just that error }
+    predict: What does it print?
+
+  - type: choice
+    id: where-bug
+    prompt: "This crashes with `TypeError: unsupported operand type(s) for +: 'int' and 'NoneType'` on the `return` line. Where is the bug most likely to be?"
+    code: |
+      def double(x):
+          x * 2
+
+      def total(a, b):
+          return double(a) + 1
+    choices:
+      - '`double` has no `return`, so it gives back `None`'
+      - The `return` line, since that's where the error is
+      - The `+` operator can't be used in a `return`
+    answer: '`double` has no `return`, so it gives back `None`'
+    why: >-
+      The error shows where the bad value was used, not where it came from. The line in the error isn't always the line with the bug.
+
+  - type: choice
+    id: error-kind
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 1}
+      try:
+          print(d["b"])
+      except KeyError:
+          print("key")
+      except IndexError:
+          print("index")
+    choices: ['key', 'index', 'None', "key\nindex"]
+    answer: 'key'
+    why: A missing dict key is a `KeyError`. A list index out of range is an `IndexError`. Only the first match runs.
+    variants:
+      - code: |
+          nums = [1, 2]
+          try:
+              print(nums[5])
+          except KeyError:
+              print("key")
+          except IndexError:
+              print("index")
+        choices: ['index', 'key', 'None', "key\nindex"]
+        answer: 'index'
+        why: A list position that doesn't exist is an `IndexError`.
+      - code: |
+          try:
+              print(1 + "2")
+          except ValueError:
+              print("value")
+          except TypeError:
+              print("type")
+        choices: ['type', 'value', '3', "value\ntype"]
+        answer: 'type'
+        why: The two types can't be added, so that's a `TypeError`. `ValueError` is for a right type with a bad value.
+
+  - type: choice
+    id: after-raise
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f():
+          raise ValueError("no")
+          print("after")
+
+      try:
+          f()
+          print("next")
+      except ValueError:
+          print("caught")
+    choices: ['caught', "after\ncaught", "next\ncaught", "after\nnext"]
+    answer: 'caught'
+    why: >-
+      `raise` stops right there and jumps to the matching `except`. Code after it doesn't run.
+
+  - type: choice
+    id: bare-except
+    prompt: Why is `except:` with nothing after it a bad default?
+    choices:
+      - It hides every error, including typos, so bugs fail silently
+      - It's a syntax error
+      - It only catches the first error type
+    answer: It hides every error, including typos, so bugs fail silently
+    why: >-
+      In ML, a silent failure is the worst kind. Catch only what you expect, and let everything else crash loudly.
+
+  - type: learn
+    id: asserts
+    title: Assert what must be true
+    body: >-
+      Most ML bugs don't crash. They just train badly. `assert` crashes on purpose when something that must be true
+      isn't, which turns a silent bug into a loud one. Printing values and sizes is the other main tool.
+    code: |
+      def dot(a, b):
+          assert len(a) == len(b), f"sizes differ: {len(a)} and {len(b)}"
+          return sum(x * y for x, y in zip(a, b))
+
+      print(dot([1, 2], [3, 4]))
+    subgoals:
+      - { line: 2, label: Check it before computing }
+    predict: Without that assert, what would `zip` do with `[1, 2]` and `[3]`?
+
+  - type: choice
+    id: silent-zip
+    kind: predict
+    prompt: This has a bug but no error. What does it print?
+    code: |
+      def dot(a, b):
+          return sum(x * y for x, y in zip(a, b))
+
+      print(dot([1, 2, 3], [10, 10]))
+    choices: ['30', '60', 'Error', '20']
+    answer: '30'
+    why: >-
+      `zip` stops at the shorter list, so the 3 is silently ignored. That's exactly the kind of bug an `assert` catches.
+
+  - type: parsons
+    id: check-then-compute
+    prompt: Order the lines so `mean` raises an error on an empty list rather than dividing by zero.
+    code: |
+      def mean(nums):
+          if not nums:
+              raise ValueError("empty")
+          return sum(nums) / len(nums)
+    distractors: ['        return 0']
+    tests:
+      - { call: 'mean([2, 4])', expect: '3.0' }
+    why: >-
+      Failing loudly is better than returning a made-up 0, which would look like a real answer.
+
+  - type: fix
+    id: swallowed-error
+    prompt: '`safe_ratio` should return `None` only when dividing by zero, but it hides every other error too. Fix it.'
+    code: |
+      def safe_ratio(a, b):
+          try:
+              return a / b
+          except:
+              return None
+
+      def _raises_type_error():
+          try:
+              safe_ratio("a", 2)
+          except TypeError:
+              return True
+          return False
+    solution: |
+      def safe_ratio(a, b):
+          try:
+              return a / b
+          except ZeroDivisionError:
+              return None
+
+      def _raises_type_error():
+          try:
+              safe_ratio("a", 2)
+          except TypeError:
+              return True
+          return False
+    tests:
+      - { call: 'safe_ratio(1, 2)', expect: '0.5' }
+      - { call: 'safe_ratio(1, 0)', expect: 'None' }
+      - { call: '_raises_type_error()', expect: 'True', hidden: true }
+    why: >-
+      Name the one error you expect. A bare `except` would also hide a typo or a wrong type.
+    hints:
+      - What's the name of the error for dividing by zero?
+
+  - type: write
+    id: checked-dot
+    prompt: >-
+      Write `dot(a, b)`, which returns the dot product and raises `ValueError` if the lists have different lengths.
+    starter: |
+      def dot(a, b):
+          pass
+
+      def _raises(a, b):
+          try:
+              dot(a, b)
+          except ValueError:
+              return True
+          return False
+    solution: |
+      def dot(a, b):
+          if len(a) != len(b):
+              raise ValueError("sizes differ")
+          return sum(x * y for x, y in zip(a, b))
+
+      def _raises(a, b):
+          try:
+              dot(a, b)
+          except ValueError:
+              return True
+          return False
+    tests:
+      - { call: 'dot([1, 2], [3, 4])', expect: '11' }
+      - { call: 'dot([], [])', expect: '0' }
+      - { call: '_raises([1], [1, 2])', expect: 'True' }
+    hints:
+      - Check the lengths first, then compute.
+
+  - type: explain
+    id: read-it
+    prompt: This crashes with `TypeError` inside `area`. Why is the real bug not in `area`?
+    code: |
+      def load_size():
+          size = 3
+
+      def area(s):
+          return s * s
+
+      try:
+          print(area(load_size()))
+      except TypeError as e:
+          print(e)
+    model: >-
+      `load_size` never returns, so it gives back `None`, and `area` only fails when it tries to use that value. The fix is a
+      `return` in `load_size`.
+    keyPoints:
+      - No `return` gives `None`
+      - The error shows where a bad value was used, not where it came from

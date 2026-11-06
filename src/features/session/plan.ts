@@ -1,27 +1,29 @@
-import { endOfDay } from '../../lib/dates'
+import { dayKey, type DayKey } from '../../lib/dates'
 import { shuffled } from '../../lib/random'
-import { db, type GradientDB, type MasteryRow } from '../../lib/db'
+import { db, type DailyResult, type GradientDB, type MasteryRow } from '../../lib/db'
 import { getItem, lessons } from '../content/content'
-import { isCheckpoint, itemId, type Card, type Lesson } from '../content/schema'
+import { isCheckpoint, isProject, itemId, versionForReview, type Card, type Lesson } from '../content/schema'
 import { checkpointsToRetake } from '../progress/progress'
 import type { ItemSource } from '../progress/xp'
+import { selectDaily } from './daily'
 
 /**
  * Builds sessions (BUILD_PLAN §4):
- * - core:     warm-up reviews (due, interleaved, ≤ 5) → the next lesson's ladder. Finishing it counts the day.
- *             At the end of a unit the "next lesson" is its checkpoint; a failed one waits until tomorrow.
+ * - daily:    today's fixed set of up to 5 problems from everything learned. Finishing it counts the day.
+ * - lesson:   the next lesson, checkpoint or project on the path. As many as you like.
  * - review:   extra reviews, soonest-due first ("keep going").
  * - practice: more reps on one lesson's exercises; doesn't change the review schedule.
- * - lesson:   just the next lesson.
  */
-export type SessionKind = 'core' | 'review' | 'practice' | 'lesson'
+export type SessionKind = 'daily' | 'review' | 'practice' | 'lesson'
 
 export type SessionItem = { key: string; itemId: string; lesson: Lesson; card: Card; source: ItemSource }
 
-export type SessionPlan = { kind: SessionKind; items: SessionItem[]; lessonId?: string }
+export type DailyPlan = { day: DayKey; itemIds: string[]; results: Record<string, DailyResult> }
 
-const WARMUP_MAX = 5
-const WARMUP_MAX_CODE = 2 // fix/write take longer; keep the warm-up short
+export type SessionPlan = { kind: SessionKind; items: SessionItem[]; lessonId?: string; daily?: DailyPlan }
+
+const REVIEW_MAX = 5
+const REVIEW_MAX_CODE = 2 // fix/write take longer; keep the set short
 const PRACTICE_MAX = 6
 
 /**
@@ -55,26 +57,63 @@ export function interleave(items: SessionItem[]): SessionItem[] {
   return out
 }
 
-async function reviewItems(due: boolean, now: Date, database: GradientDB): Promise<SessionItem[]> {
-  const rows = due
-    ? await database.reviews.where('due').belowOrEqual(endOfDay(now)).sortBy('due')
-    : await database.reviews.orderBy('due').toArray()
+/** A review item, showing the next version of the card if it has variants. */
+async function reviewItem(id: string, keyPrefix: string, database: GradientDB): Promise<SessionItem | null> {
+  const found = getItem(id)
+  if (!found) return null // content was removed or renamed
+  const reviews = await database.attempts
+    .where('itemId')
+    .equals(id)
+    .filter((a) => a.source === 'review')
+    .count()
+  return {
+    key: `${keyPrefix}:${id}`,
+    itemId: id,
+    lesson: found.lesson,
+    card: versionForReview(found.card, reviews),
+    source: 'review',
+  }
+}
+
+async function reviewItems(database: GradientDB): Promise<SessionItem[]> {
+  const rows = await database.reviews.orderBy('due').toArray()
   const picked: SessionItem[] = []
   let code = 0
   for (const r of rows) {
     const found = getItem(r.itemId)
-    if (!found) continue // content was removed or renamed
+    if (!found) continue
     const heavy = found.card.type === 'fix' || found.card.type === 'write'
-    if (heavy && code >= WARMUP_MAX_CODE) continue
+    if (heavy && code >= REVIEW_MAX_CODE) continue
     if (heavy) code++
-    picked.push({ key: `review:${r.itemId}`, itemId: r.itemId, ...found, source: 'review' })
-    if (picked.length >= WARMUP_MAX) break
+    const item = await reviewItem(r.itemId, 'review', database)
+    if (item) picked.push(item)
+    if (picked.length >= REVIEW_MAX) break
   }
   return interleave(picked)
 }
 
+/** Today's set, created the first time it's opened and fixed for the rest of the day. */
+async function dailyPlan(now: Date, database: GradientDB): Promise<SessionPlan> {
+  const day = dayKey(now)
+  let row = await database.dailies.get(day)
+  if (!row) {
+    const itemIds = await selectDaily(now, database)
+    if (itemIds.length === 0) return { kind: 'daily', items: [] }
+    row = { day, itemIds, results: {} }
+    await database.dailies.put(row)
+  }
+  const { itemIds, results } = row
+  const items: SessionItem[] = []
+  for (const id of itemIds) {
+    if (results[id]) continue
+    const item = await reviewItem(id, 'daily', database)
+    if (item) items.push(item)
+  }
+  return { kind: 'daily', items, daily: { day, itemIds, results } }
+}
+
 function lessonItems(lesson: Lesson): SessionItem[] {
-  const source = isCheckpoint(lesson) ? ('checkpoint' as const) : ('lesson' as const)
+  const source: ItemSource = isCheckpoint(lesson) ? 'checkpoint' : isProject(lesson) ? 'project' : 'lesson'
   return lesson.cards.map((card) => {
     const id = itemId(lesson.id, card.id)
     return { key: `${source}:${id}`, itemId: id, lesson, card, source }
@@ -97,18 +136,15 @@ export async function buildSession(
   now = new Date(),
   database: GradientDB = db,
 ): Promise<SessionPlan> {
+  if (kind === 'daily') return dailyPlan(now, database)
   const mastery = new Map((await database.mastery.toArray()).map((m) => [m.lessonId, m]))
-  const next = nextLesson(mastery, await checkpointsToRetake(now, database))
-
   switch (kind) {
-    case 'core': {
-      const reviews = await reviewItems(true, now, database)
-      return { kind, items: [...reviews, ...(next ? lessonItems(next) : [])], lessonId: next?.id }
-    }
     case 'review':
-      return { kind, items: await reviewItems(false, now, database) }
-    case 'lesson':
+      return { kind, items: await reviewItems(database) }
+    case 'lesson': {
+      const next = nextLesson(mastery, await checkpointsToRetake(now, database))
       return { kind, items: next ? lessonItems(next) : [], lessonId: next?.id }
+    }
     case 'practice': {
       const passed = [...mastery.values()].sort((a, b) => b.passedOn.localeCompare(a.passedOn))
       const target = lessons.find((l) => l.id === (opts.lessonId ?? passed[0]?.lessonId))

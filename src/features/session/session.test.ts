@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { exportBackup, GradientDB, importBackup } from '../../lib/db'
 import { lessons } from '../content/content'
-import { completeCoreSession, completeLesson, loadProgress, recordAttempt } from '../progress/progress'
+import { parseLesson, versionForReview } from '../content/schema'
+import {
+  completeDaily,
+  completeLesson,
+  countDayIfNothingToReview,
+  loadProgress,
+  recordAttempt,
+  recordDailyResult,
+} from '../progress/progress'
+import { dayKey } from '../../lib/dates'
 import { buildSession, nextLesson } from './plan'
 
 const dbs: GradientDB[] = []
@@ -19,9 +28,9 @@ const day1 = new Date(2026, 10, 4, 10)
 const day8 = new Date(2026, 10, 11, 10)
 
 /** Play every item of a plan, answering everything right. */
-async function playAll(db: GradientDB, kind: 'core' | 'review', now: Date) {
+async function playAll(db: GradientDB, kind: 'lesson' | 'daily', now: Date) {
   const plan = await buildSession(kind, {}, now, db)
-  for (const it of plan.items)
+  for (const it of plan.items) {
     await recordAttempt(
       {
         itemId: it.itemId,
@@ -34,8 +43,13 @@ async function playAll(db: GradientDB, kind: 'core' | 'review', now: Date) {
       now,
       db,
     )
-  if (plan.lessonId) await completeLesson(plan.lessonId, now, db)
-  if (kind === 'core') await completeCoreSession(now, db)
+    if (plan.daily) await recordDailyResult(plan.daily.day, it.itemId, 'clean', db)
+  }
+  if (plan.lessonId) {
+    await completeLesson(plan.lessonId, now, db)
+    await countDayIfNothingToReview(now, db)
+  }
+  if (plan.daily) await completeDaily(plan.daily.day, db)
   return plan
 }
 
@@ -43,45 +57,48 @@ describe('content', () => {
   it('loads every lesson in path order', () => {
     expect(lessons.length).toBeGreaterThanOrEqual(10)
     expect(lessons[0].id).toBe('a1-variables')
-    expect(lessons.map((l) => l.order)).toEqual([...lessons.map((l) => l.order)].sort((a, b) => a - b))
+    const positions = lessons.map((l) => l.unit * 100 + l.order)
+    expect(positions).toEqual([...positions].sort((a, b) => a - b))
   })
 })
 
 describe('daily loop', () => {
-  it('starts with the first lesson and no reviews', async () => {
+  it('starts with the first lesson; nothing to review yet', async () => {
     const db = freshDb()
-    const plan = await buildSession('core', {}, day1, db)
+    expect((await buildSession('daily', {}, day1, db)).items).toHaveLength(0)
+    const plan = await buildSession('lesson', {}, day1, db)
     expect(plan.lessonId).toBe('a1-variables')
     expect(plan.items.every((i) => i.source === 'lesson')).toBe(true)
   })
 
-  it('finishing a core session passes the lesson, counts the day and schedules reviews', async () => {
+  it('on a day with nothing to review, a lesson passes, counts the day and schedules reviews', async () => {
     const db = freshDb()
-    await playAll(db, 'core', day1)
+    await playAll(db, 'lesson', day1)
     const p = await loadProgress(day1, db)
     expect(p.mastery.get('a1-variables')?.status).toBe('passed')
     expect(p.streak).toMatchObject({ current: 1, todayDone: true })
     expect(p.totalXp).toBeGreaterThan(0)
     expect(p.reviewCount).toBeGreaterThan(0)
     expect(p.dueCount).toBe(0) // nothing due the same day
+    expect(p.daily.total).toBe(0) // and nothing in today's set
     expect(nextLesson(p.mastery)?.id).toBe('a1-numbers')
   })
 
-  it('brings reviews back later, then masters the lesson on a correct review', async () => {
+  it('brings problems back later, then masters the lesson on a correct review', async () => {
     const db = freshDb()
-    await playAll(db, 'core', day1)
-    const plan = await playAll(db, 'core', day8)
-    const reviews = plan.items.filter((i) => i.source === 'review')
-    expect(reviews.length).toBeGreaterThan(0)
-    expect(reviews.length).toBeLessThanOrEqual(5)
-    expect(plan.lessonId).toBe('a1-numbers')
+    await playAll(db, 'lesson', day1)
+    const plan = await playAll(db, 'daily', day8)
+    expect(plan.items.length).toBeGreaterThan(0)
+    expect(plan.items.length).toBeLessThanOrEqual(5)
+    expect(plan.items.every((i) => i.source === 'review')).toBe(true)
     const p = await loadProgress(day8, db)
     expect(p.mastery.get('a1-variables')?.status).toBe('mastered')
+    expect(p.daily.done).toBe(true)
   })
 
   it('a missed review comes back sooner than a correct one', async () => {
     const db = freshDb()
-    await playAll(db, 'core', day1)
+    await playAll(db, 'lesson', day1)
     const [a, b] = await db.reviews.toArray()
     const base = { lessonId: a.lessonId, type: 'choice' as const, source: 'review' as const, durationMs: 1 }
     await recordAttempt({ ...base, itemId: a.itemId, outcome: { ...ok, correct: false } }, day8, db)
@@ -92,7 +109,7 @@ describe('daily loop', () => {
 
   it('round-trips a backup', async () => {
     const db = freshDb()
-    await playAll(db, 'core', day1)
+    await playAll(db, 'lesson', day1)
     const backup = JSON.parse(JSON.stringify(await exportBackup(db)))
     const other = freshDb()
     await importBackup(backup, other)
@@ -100,7 +117,7 @@ describe('daily loop', () => {
     // FSRS dates survive JSON and still schedule.
     const r = await other.reviews.toArray()
     expect((r[0].card as { dueAt: unknown }).dueAt).toBeInstanceOf(Date)
-    const plan = await buildSession('core', {}, day8, other)
+    const plan = await buildSession('daily', {}, day8, other)
     expect(plan.items.some((i) => i.source === 'review')).toBe(true)
   })
 
@@ -110,9 +127,9 @@ describe('daily loop', () => {
 })
 
 describe('same-day behavior', () => {
-  it('a miss in today’s lesson is not due again until tomorrow', async () => {
+  it('a problem enters the pool the day after it is first seen, even after a miss', async () => {
     const db = freshDb()
-    const plan = await buildSession('core', {}, day1, db)
+    const plan = await buildSession('lesson', {}, day1, db)
     const first = plan.items.find((i) => i.card.type === 'choice')!
     await recordAttempt(
       {
@@ -126,9 +143,95 @@ describe('same-day behavior', () => {
       day1,
       db,
     )
-    const again = await buildSession('core', {}, day1, db)
-    expect(again.items.some((i) => i.source === 'review')).toBe(false)
-    const tomorrow = await buildSession('core', {}, new Date(2026, 10, 5, 9), db)
+    expect((await buildSession('daily', {}, day1, db)).items).toHaveLength(0)
+    const tomorrow = await buildSession('daily', {}, new Date(2026, 10, 5, 9), db)
     expect(tomorrow.items.some((i) => i.itemId === first.itemId && i.source === 'review')).toBe(true)
+  })
+})
+
+describe('daily 5', () => {
+  /** Pass Unit 1's lessons and see every card, so the pool is large. */
+  async function fillPool(db: GradientDB) {
+    for (const l of lessons.filter((l) => l.unit === 1 && l.kind === 'lesson').slice(0, 5)) {
+      for (const card of l.cards) {
+        await recordAttempt(
+          {
+            itemId: `${l.id}/${card.id}`,
+            lessonId: l.id,
+            type: card.type,
+            source: 'lesson',
+            outcome: ok,
+            durationMs: 1,
+          },
+          day1,
+          db,
+        )
+      }
+      await completeLesson(l.id, day1, db)
+    }
+  }
+
+  it('stays at 5 however large the pool is, with at most 2 code problems, placed last', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    expect(await db.reviews.count()).toBeGreaterThan(5)
+    const plan = await buildSession('daily', {}, day8, db)
+    expect(plan.items).toHaveLength(5)
+    const code = plan.items.map((i) => i.card.type === 'fix' || i.card.type === 'write')
+    expect(code.filter(Boolean).length).toBeLessThanOrEqual(2)
+    expect(code.indexOf(true) === -1 || code.slice(code.indexOf(true)).every(Boolean)).toBe(true)
+  })
+
+  it('is the same set all day, and leaving resumes where you stopped', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    const first = await buildSession('daily', {}, day8, db)
+    const again = await buildSession('daily', {}, day8, db)
+    expect(again.daily?.itemIds).toEqual(first.daily?.itemIds)
+
+    await recordDailyResult(dayKey(day8), first.items[0].itemId, 'clean', db)
+    const resumed = await buildSession('daily', {}, day8, db)
+    expect(resumed.items.map((i) => i.itemId)).toEqual(first.items.slice(1).map((i) => i.itemId))
+    expect((await loadProgress(day8, db)).daily.results.filter(Boolean)).toHaveLength(1)
+  })
+
+  it('the last answer finishes the set, even if the finish screen is never reached', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    const { daily } = await buildSession('daily', {}, day8, db)
+    for (const id of daily!.itemIds) await recordDailyResult(daily!.day, id, 'clean', db)
+    const p = await loadProgress(day8, db)
+    expect(p.daily.done).toBe(true)
+    expect(p.streak.todayDone).toBe(true)
+  })
+
+  it('finishing counts the day once; a lesson does not when a set is waiting', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    const plan = await buildSession('daily', {}, day8, db)
+    await countDayIfNothingToReview(day8, db)
+    expect((await loadProgress(day8, db)).streak.todayDone).toBe(false)
+    expect(await completeDaily(plan.daily!.day, db)).toBeGreaterThan(0)
+    expect(await completeDaily(plan.daily!.day, db)).toBe(0)
+  })
+})
+
+describe('card variants', () => {
+  const lesson = (extra: string) =>
+    `id: x\ntrack: ml\nunit: 1\norder: 1\ntitle: T\nsummary: S\ncards:\n  - type: choice\n    id: c\n    prompt: P\n    choices: ['a', 'b']\n    answer: 'a'\n    why: W\n${extra}`
+
+  it('reviews cycle through versions, starting with a new one', () => {
+    const card = parseLesson(lesson(`    variants:\n      - { prompt: Q }\n      - { prompt: R }\n`), 'v.yaml').cards[0]
+    const prompts = [0, 1, 2, 3].map((n) => (versionForReview(card, n) as { prompt: string }).prompt)
+    expect(prompts).toEqual(['Q', 'R', 'P', 'Q'])
+  })
+
+  it('a card without variants always shows itself', () => {
+    const card = parseLesson(lesson(''), 'v.yaml').cards[0]
+    expect(versionForReview(card, 3)).toBe(card)
+  })
+
+  it('rejects a variant whose answer is not a choice', () => {
+    expect(() => parseLesson(lesson(`    variants:\n      - { answer: z }\n`), 'v.yaml')).toThrow(/variant/)
   })
 })

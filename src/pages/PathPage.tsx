@@ -1,7 +1,7 @@
-import { Check, Dumbbell, Flag, Lock, Play, Star } from 'lucide-react'
+import { Check, Dumbbell, Flag, Hammer, Lock, Play, Star } from 'lucide-react'
 import { Link } from 'react-router'
 import { tracks, lessonsForTrack } from '../features/content/content'
-import { isCheckpoint } from '../features/content/schema'
+import { isCheckpoint, isProject } from '../features/content/schema'
 import { useProgress } from '../features/progress/progress'
 import { lessonStatus, type LessonStatus } from '../features/session/plan'
 
@@ -22,9 +22,8 @@ export function PathPage() {
       <header>
         <h1 className="text-h1">Path</h1>
         <p className="mt-2 max-w-[60ch] text-muted">
-          One lesson unlocks the next. A lesson is <span className="text-success">passed</span> when you finish it, and{' '}
-          <span className="text-xp">mastered</span> after you get it right again in a review on a later day. Each unit
-          ends with a checkpoint: get 80% right to unlock the next unit.
+          A lesson is <span className="text-success">passed</span> when you finish it and{' '}
+          <span className="text-xp">mastered</span> when you get it right again on a later day.
         </p>
       </header>
 
@@ -41,14 +40,12 @@ export function PathPage() {
                 <h2 id={`unit-${unit.unit}`} className="text-h2">
                   Unit {unit.unit}: {unit.title}
                 </h2>
-                <p className="mt-1 text-small text-muted">
-                  {track.name} · {unit.summary}
-                </p>
+                <p className="mt-1 text-small text-muted">{unit.summary}</p>
               </div>
               <ol className="flex flex-col gap-2">
                 {unitLessons.map((lesson, i) => {
                   const status = lessonStatus(lesson, p.mastery)
-                  const checkpoint = isCheckpoint(lesson)
+                  const special = isCheckpoint(lesson) ? 'checkpoint' : isProject(lesson) ? 'project' : undefined
                   const retakeLater = status === 'next' && p.retakeTomorrow.has(lesson.id)
                   return (
                     <li
@@ -57,7 +54,7 @@ export function PathPage() {
                       data-status={status}
                       style={status === 'locked' ? { opacity: 0.6 } : undefined}
                     >
-                      <StatusIcon status={status} n={i + 1} checkpoint={checkpoint} />
+                      <StatusIcon status={status} n={i + 1} special={special} />
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold">{lesson.title}</h3>
                         <p className="truncate text-small text-muted">{lesson.summary}</p>
@@ -91,7 +88,8 @@ export function PathPage() {
   )
 }
 
-function StatusIcon({ status, n, checkpoint }: { status: LessonStatus; n: number; checkpoint: boolean }) {
+function StatusIcon({ status, n, special }: { status: LessonStatus; n: number; special?: 'checkpoint' | 'project' }) {
+  const icon = special === 'project' ? <Hammer size={16} /> : special === 'checkpoint' ? <Flag size={16} /> : null
   const base = 'grid size-10 flex-none place-items-center rounded-full font-semibold tabular-nums'
   switch (status) {
     case 'mastered':
@@ -109,13 +107,13 @@ function StatusIcon({ status, n, checkpoint }: { status: LessonStatus; n: number
     case 'next':
       return (
         <span className={`${base} bg-accent text-on-accent`} aria-hidden>
-          {checkpoint ? <Flag size={16} /> : n}
+          {icon ?? n}
         </span>
       )
     case 'locked':
       return (
         <span className={`${base} bg-raised text-faint`} aria-hidden>
-          {checkpoint ? <Flag size={16} /> : <Lock size={16} />}
+          {icon ?? <Lock size={16} />}
         </span>
       )
   }

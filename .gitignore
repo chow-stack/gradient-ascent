@@ -46,3 +46,10 @@ coverage/
 
 # OS clutter
 Thumbs.db
+
+# Python packages (npm run setup:python)
+vendor/
+
+# Research output
+reports/
+research_notes/

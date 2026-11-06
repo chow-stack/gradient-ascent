@@ -8,11 +8,14 @@ import { defineConfig, type Plugin } from 'vite'
 /**
  * Serves Pyodide (Python compiled to WebAssembly) from node_modules at /pyodide/ in dev,
  * and copies it into dist/pyodide/ on build. Keeps Python fully offline and out of the JS bundle.
+ * Packages like NumPy come from vendor/pyodide-packages (filled by `npm run setup:python`).
  */
 function pyodideAssets(): Plugin {
   const src = resolve(import.meta.dirname, 'node_modules/pyodide')
   const files = ['pyodide.mjs', 'pyodide.asm.mjs', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json']
+  const packages = resolve(import.meta.dirname, 'vendor/pyodide-packages')
   const mime: Record<string, string> = {
+    '.whl': 'application/zip',
     '.mjs': 'text/javascript',
     '.wasm': 'application/wasm',
     '.zip': 'application/zip',
@@ -27,8 +30,9 @@ function pyodideAssets(): Plugin {
     configureServer(server) {
       server.middlewares.use('/pyodide', (req, res, next) => {
         const name = (req.url ?? '').split('?')[0].replace(/^\//, '')
-        const file = join(src, name)
-        if (!files.includes(name) || !existsSync(file)) return next()
+        const isPackage = /^[\w.-]+\.whl$/.test(name)
+        const file = isPackage ? join(packages, name) : join(src, name)
+        if ((!isPackage && !files.includes(name)) || !existsSync(file)) return next()
         res.setHeader('Content-Type', mime[name.slice(name.lastIndexOf('.'))] ?? 'application/octet-stream')
         createReadStream(file).pipe(res)
       })
@@ -36,6 +40,7 @@ function pyodideAssets(): Plugin {
     closeBundle() {
       mkdirSync(join(outDir, 'pyodide'), { recursive: true })
       for (const f of files) cpSync(join(src, f), join(outDir, 'pyodide', f))
+      if (existsSync(packages)) cpSync(packages, join(outDir, 'pyodide'), { recursive: true })
     },
   }
 }

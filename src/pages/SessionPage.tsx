@@ -7,14 +7,14 @@ import { warmUpPython } from '../features/runner/python'
 import { buildSession, type SessionKind, type SessionPlan } from '../features/session/plan'
 import { SessionRunner } from '../features/session/SessionRunner'
 
-const KINDS: SessionKind[] = ['core', 'review', 'practice', 'lesson']
+const KINDS: SessionKind[] = ['daily', 'review', 'practice', 'lesson']
 
-/** /session?kind=core|review|practice|lesson[&lesson=id] — full-screen, no sidebar. */
+/** /session?kind=daily|review|practice|lesson[&lesson=id] — full-screen, no sidebar. */
 export function SessionPage() {
   const [params] = useSearchParams()
   const location = useLocation()
   const raw = params.get('kind') as SessionKind | null
-  const kind: SessionKind = raw && KINDS.includes(raw) ? raw : 'core'
+  const kind: SessionKind = raw && KINDS.includes(raw) ? raw : 'daily'
   const lessonId = params.get('lesson') ?? undefined
   const [plan, setPlan] = useState<{ key: string; plan: SessionPlan } | null>(null)
   // location.key changes on every navigation, so "Practice again" restarts even with the same URL.
@@ -46,11 +46,13 @@ export function SessionPage() {
           <div>
             <h1 className="text-h1">Nothing to do here yet</h1>
             <p className="mt-2 text-muted">
-              {kind === 'review'
-                ? 'Reviews appear after you finish a lesson.'
-                : kind === 'practice'
-                  ? 'Finish a lesson first, then practice it here.'
-                  : 'You’ve finished every lesson that exists so far. More are on the way.'}
+              {kind === 'daily'
+                ? 'Your Daily 5 is done, or there’s nothing to review yet.'
+                : kind === 'review'
+                  ? 'Reviews appear after you finish a lesson.'
+                  : kind === 'practice'
+                    ? 'Finish a lesson first, then practice it here.'
+                    : 'You’ve finished every lesson that exists so far. More are on the way.'}
             </p>
           </div>
           <Link to="/" className="ga-btn ga-btn--primary">

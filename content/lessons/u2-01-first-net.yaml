@@ -1,0 +1,122 @@
+id: u2-first-net
+track: ml
+unit: 2
+order: 1
+title: A first look at a neural net
+summary: See where all this is going before learning the Python behind it.
+
+cards:
+  - type: choice
+    id: predict-line
+    prompt: >-
+      A network with no hidden layers can only draw one straight line. Can it separate blue dots from an orange ring
+      around them?
+    choices:
+      - 'No: one straight line can’t put a ring on one side and its middle on the other'
+      - 'Yes: with enough training it can draw any shape'
+      - 'Yes: as long as the learning rate is small'
+    answer: 'No: one straight line can’t put a ring on one side and its middle on the other'
+    why: >-
+      More training doesn't help, because the model can only ever draw a line. Its limit is its shape, not its effort.
+
+  - type: learn
+    id: try-it
+    title: Try it for two minutes
+    body: >-
+      Open the playground and choose the circle dataset. Remove every hidden layer and press play. Watch the
+      test loss get stuck. Then add one hidden layer with 4 neurons and press play again.
+    link: { label: Open TensorFlow Playground, url: 'https://playground.tensorflow.org/' }
+
+  - type: choice
+    id: hidden-layer
+    prompt: Why can one hidden layer solve what no hidden layers couldn't?
+    choices:
+      - Each neuron draws a line, and the next layer combines those lines into a curved boundary
+      - It gets more time to train
+      - Hidden layers memorise where each dot is
+    answer: Each neuron draws a line, and the next layer combines those lines into a curved boundary
+    why: >-
+      The extra neurons don't try harder. They give the model more shapes to build with.
+
+  - type: choice
+    id: learning-rate
+    prompt: In the playground, you raise the learning rate to 10 and the loss jumps around instead of falling. Why?
+    choices:
+      - Each step is so big that it overshoots the low point
+      - A higher learning rate always trains better, so this must be a bug
+      - The dataset changed
+    answer: Each step is so big that it overshoots the low point
+    why: >-
+      The learning rate sets the step size. Too small is slow; too big jumps past the bottom. A bigger rate isn't
+      always faster.
+
+  - type: choice
+    id: test-loss
+    prompt: Training loss is 0.01, but test loss is 0.30 and rising. What's most likely happening?
+    choices:
+      - It's learning the noise in the training data, so it's overfitting
+      - It's a great model, because training loss is what counts
+      - It needs a bigger learning rate
+    answer: It's learning the noise in the training data, so it's overfitting
+    why: >-
+      Low training loss alone says little. A model is only as good as how it does on data it hasn't seen.
+
+  - type: learn
+    id: neuron
+    title: One neuron is a weighted sum
+    body: >-
+      Under the visuals, a neuron multiplies each input by a weight, adds them up, and adds a bias. Training is
+      nudging those numbers. Everything else in this path builds up to that.
+    code: |
+      def neuron(x1, x2, w1, w2, bias):
+          return w1 * x1 + w2 * x2 + bias
+
+      print(neuron(2, 3, 0.5, -1, 1))
+    subgoals:
+      - { line: 2, label: Weighted sum plus a bias }
+      - { line: 4, label: 'Inputs 2 and 3, weights 0.5 and -1, bias 1' }
+    predict: What does it print?
+
+  - type: choice
+    id: compute-neuron
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def neuron(x1, x2, w1, w2, bias):
+          return w1 * x1 + w2 * x2 + bias
+
+      print(neuron(4, 1, 0.5, 2, -1))
+    choices: ['3.0', '4.0', '2.5', '5.0']
+    answer: '3.0'
+    why: >-
+      0.5 × 4 + 2 × 1 − 1 = 2 + 2 − 1 = 3.0. Don't forget the bias.
+    variants:
+      - code: |
+          def neuron(x1, x2, w1, w2, bias):
+              return w1 * x1 + w2 * x2 + bias
+
+          print(neuron(2, 5, 1, 0.5, 3))
+        choices: ['7.5', '4.5', '6.5', '8.5']
+        answer: '7.5'
+        why: 1 × 2 + 0.5 × 5 + 3 = 2 + 2.5 + 3 = 7.5.
+      - code: |
+          def neuron(x1, x2, w1, w2, bias):
+              return w1 * x1 + w2 * x2 + bias
+
+          print(neuron(3, 2, -1, 2.5, 0))
+        choices: ['2.0', '8.0', '-2.0', '3.5']
+        answer: '2.0'
+        why: −1 × 3 + 2.5 × 2 + 0 = −3 + 5 = 2.0.
+
+  - type: explain
+    id: why-hidden
+    prompt: In your own words, why does training one neuron longer not help on the circle data?
+    code: |
+      def neuron(x1, x2, w1, w2, bias):
+          return w1 * x1 + w2 * x2 + bias
+    model: >-
+      One neuron can only draw a straight line, however long it trains. A ring needs a curved boundary, which takes more
+      neurons combined in layers.
+    keyPoints:
+      - One neuron gives one straight line
+      - The limit is the model's shape, not the training time

@@ -1,0 +1,228 @@
+id: u2-special
+track: ml
+unit: 2
+order: 7
+title: Special methods
+summary: Teach your objects to work with +, *, == and print. This is how micrograd works.
+
+cards:
+  - type: learn
+    id: dunders
+    title: Operators are method calls
+    body: >-
+      `a + b` really runs `a.__add__(b)`, and `print(a)` uses `a.__repr__()`. Define these "dunder" methods and your
+      objects work with Python's own syntax. Java has no equivalent, which is why it has `a.add(b)`.
+    code: |
+      class Money:
+          def __init__(self, cents):
+              self.cents = cents
+
+          def __add__(self, other):
+              return Money(self.cents + other.cents)
+
+          def __repr__(self):
+              return f"Money({self.cents})"
+
+      print(Money(5) + Money(7))
+    subgoals:
+      - { line: 5, label: Runs for `+` }
+      - { line: 6, label: Returns a new object }
+      - { line: 8, label: Runs for `print` }
+    predict: What does it print?
+
+  - type: choice
+    id: no-repr
+    prompt: A class has no `__repr__`. What does `print(obj)` show?
+    choices:
+      - Something like `<__main__.Thing object at 0x10>`
+      - All its attributes and their values
+      - An error
+      - Nothing
+    answer: Something like `<__main__.Thing object at 0x10>`
+    why: >-
+      Python doesn't show the fields automatically. Without `__repr__` you get the class name and an address.
+
+  - type: choice
+    id: add-predict
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+          def __add__(self, other):
+              return V(self.x + other.x)
+          def __mul__(self, k):
+              return V(self.x * k)
+
+      print((V(2) + V(3) * 2).x)
+    choices: ['8', '10', '7', 'Error']
+    answer: '8'
+    why: >-
+      Normal precedence still applies, so `*` runs first: V(3) × 2 is V(6), and V(2) + V(6) is V(8).
+    variants:
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __add__(self, other):
+                  return V(self.x + other.x)
+              def __mul__(self, k):
+                  return V(self.x * k)
+
+          print(((V(2) + V(3)) * 2).x)
+        choices: ['10', '8', '7', 'Error']
+        answer: '10'
+        why: The parentheses make `+` run first, so V(5) × 2 is V(10).
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __add__(self, other):
+                  return V(self.x + other.x)
+
+          a = V(1)
+          b = a + a
+          a.x = 100
+          print(b.x)
+        choices: ['2', '200', '101', 'Error']
+        answer: '2'
+        why: "`__add__` returned a new object, which changing `a` afterwards doesn't touch."
+
+  - type: learn
+    id: rmul
+    title: When your object is on the right
+    body: >-
+      `v * 2` runs `v.__mul__(2)`. But `2 * v` starts with the number, which doesn't know about your class, so
+      Python then tries `v.__rmul__(2)`. Without it, you get a `TypeError`.
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __mul__(self, k):
+              return V(self.x * k)
+
+          def __rmul__(self, k):
+              return self * k
+
+      print((2 * V(3)).x)
+    subgoals:
+      - { line: 8, label: Runs for `2 * v` }
+      - { line: 9, label: Reuse `__mul__` }
+    predict: What does it print?
+
+  - type: choice
+    id: which-method
+    prompt: Which method does Python use for `2 * v` when `v` has both `__mul__` and `__rmul__`?
+    choices:
+      - "`__rmul__`, because the number 2 can't handle it"
+      - '`__mul__`, since multiplying always uses it'
+      - Neither; it's an error
+    answer: "`__rmul__`, because the number 2 can't handle it"
+    why: >-
+      Python tries the left object first. `int` doesn't know your class, so it falls back to the right object's `__rmul__`.
+
+  - type: choice
+    id: eq-default
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class P:
+          def __init__(self, x):
+              self.x = x
+
+      print(P(1) == P(1))
+    choices: ['False', 'True', 'None', 'Error']
+    answer: 'False'
+    why: >-
+      Without `__eq__`, `==` falls back to asking if they're the same object, and these are two objects.
+
+  - type: blank
+    id: add-method
+    prompt: Fill in the method name so `+` works.
+    code: |
+      class Pair:
+          def __init__(self, a):
+              self.a = a
+
+          def ____(self, other):
+              return Pair(self.a + other.a)
+    answers: [['__add__']]
+    tests:
+      - { call: '(Pair(1) + Pair(2)).a', expect: '3' }
+    why: Python looks for `__add__` when it sees `+`.
+
+  - type: fix
+    id: mutating-add
+    prompt: '`a + b` should leave `a` unchanged, but `a` changes. Fix `__add__`.'
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __add__(self, other):
+              self.x = self.x + other.x
+              return self
+    solution: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __add__(self, other):
+              return V(self.x + other.x)
+    tests:
+      - { call: '(V(1) + V(2)).x', expect: '3' }
+      - { call: '(lambda a: (a + V(2), a.x)[1])(V(1))', expect: '1' }
+    why: >-
+      `+` should make a new object. If `2 + 3` changed the 2, nothing would make sense. micrograd relies on this.
+    hints:
+      - What should `__add__` return, and should it change `self`?
+
+  - type: write
+    id: value-class
+    prompt: >-
+      Write a class `Num`, which holds `.data`, and supports `+` with another `Num`, `*` with another `Num`, and a
+      `__repr__` that gives `Num(3)`.
+    starter: |
+      class Num:
+          pass
+    solution: |
+      class Num:
+          def __init__(self, data):
+              self.data = data
+
+          def __add__(self, other):
+              return Num(self.data + other.data)
+
+          def __mul__(self, other):
+              return Num(self.data * other.data)
+
+          def __repr__(self):
+              return f"Num({self.data})"
+    tests:
+      - { call: '(Num(2) + Num(3)).data', expect: '5' }
+      - { call: '(Num(2) * Num(3)).data', expect: '6' }
+      - { call: 'repr(Num(3))', expect: "'Num(3)'" }
+      - { call: '(lambda a: (a + a, a.data)[1])(Num(1))', expect: '1', hidden: true }
+    why: >-
+      This is the first version of micrograd's `Value`. In Unit 6 it learns to compute gradients.
+    hints:
+      - Each operator returns a new `Num`.
+
+  - type: explain
+    id: why-rmul
+    prompt: Why does `3 * v` fail here while `v * 3` works?
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __mul__(self, k):
+              return V(self.x * k)
+    model: >-
+      `3 * v` starts with the integer, which can't multiply a `V`, and the class has no `__rmul__` to fall back on.
+      `v * 3` uses `__mul__`.
+    keyPoints:
+      - The left object goes first
+      - '`__rmul__` handles a value on the left'

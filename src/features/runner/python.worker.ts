@@ -25,6 +25,9 @@ self.onmessage = async (e: MessageEvent<RunRequest>) => {
   const { id, code, tests } = e.data
   try {
     const py = await pyodide!
+    // Packages load on first import (NumPy takes a moment), before the run's time limit starts.
+    await py.loadPackagesFromImports(code, { messageCallback: () => {} })
+    self.postMessage({ type: 'started', id })
     const run = py.globals.get('__ga_run') as (code: string, tests: string) => string
     const json = run(code, JSON.stringify(tests))
     self.postMessage({ type: 'result', id, result: JSON.parse(json) })

@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 /** Calendar days are local-time "YYYY-MM-DD" strings; that's what a streak counts. */
 export type DayKey = string
 
@@ -38,4 +40,16 @@ export function endOfDay(d: Date = new Date()): number {
   const e = new Date(d)
   e.setHours(23, 59, 59, 999)
   return e.getTime()
+}
+
+/** Time until the next local day, like "7h 12m". Updates once a minute. */
+export function useNextDayCountdown(): string {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  const minutes = Math.ceil((startOfTomorrow(now) - now.getTime()) / 60_000)
+  const h = Math.floor(minutes / 60)
+  return h > 0 ? `${h}h ${minutes % 60}m` : `${minutes}m`
 }

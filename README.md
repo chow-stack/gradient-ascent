@@ -1,22 +1,23 @@
 # Gradient Ascent
 
-**Small steps uphill, every day.** A local-first daily practice app for learning to code: Python fundamentals,
-the modern web stack, and machine learning. It's built on learning research instead of streak-farming.
+**Small steps uphill, every day.** A local-first daily practice app for learning machine learning, from Python to
+a tiny GPT. It's built on learning research instead of streak-farming.
 
-Sessions take 10–20 minutes. Each one starts with spaced-repetition reviews, then teaches one new idea through
-a worked example. After that you climb a ladder of exercises: predict the output, order the lines, fill in the
-blank, fix the bug, write the function, and explain the code in plain English. All code runs as real Python in
-your browser, and all progress stays on your machine.
+Each day has a **Daily 5**: up to five problems from everything you've learned, picked by spaced repetition. Lessons are
+separate, and you can do as many as you like. Each one teaches one new idea through a worked example, then climbs a
+ladder of exercises: predict the output, order the lines, fill in the blank, fix the bug, write the function, and
+explain the code in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
 
-> **Status:** Phase 2 of 5. The core lesson loop is complete, with Track A Unit 1 (Python, mapped from Java):
-> 10 lessons, 89 cards (13 worked examples, 76 exercises). See the [roadmap](#roadmap).
+> **Status:** Phase 2 of 5. Units 1–2 of 11 are built: Python from Java, and Python for ML code. See the
+> [roadmap](#roadmap).
 
 ---
 
 ## Features
 
-- **Daily sessions:** a warm-up of due reviews, then one new lesson. After "Done for today" you can keep going
-  with the next lesson, extra reviews or practice.
+- **Daily 5:** one fixed set a day, tracked as tiles. It's what counts for your streak, so a busy day takes about five
+  minutes. Cards can come back with new values, so answers can't just be memorised.
+- **Unlimited lessons:** on your own schedule, with a checkpoint and a project ending each unit.
 - **Seven exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
   fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, and explain-in-your-own-words.
 - **Real Python in the browser:** [Pyodide](https://pyodide.org) runs in a Web Worker, so the UI never freezes.
@@ -25,7 +26,7 @@ your browser, and all progress stays on your machine.
   autocomplete turned off on purpose so you do the thinking.
 - **Spaced repetition:** every exercise you've seen is scheduled with
   [FSRS](https://github.com/open-spaced-repetition/ts-fsrs), the algorithm behind modern Anki.
-- **Mastery path:** a lesson is *passed* when you finish it and *mastered* after a correct review on a later day.
+- **Mastery path:** a lesson is _passed_ when you finish it and _mastered_ after a correct review on a later day.
   Each lesson unlocks the next.
 - **Habit-friendly gamification:** streaks with two automatic freezes a week, and XP weighted toward new and hard
   work rather than easy repeats. There are no leaderboards and no guilt.
@@ -41,28 +42,28 @@ your browser, and all progress stays on your machine.
 Every feature traces back to a research-backed principle. The full table, with sources, is in
 [BUILD_PLAN.md](BUILD_PLAN.md#2-learning-principles-the-research-were-building-on).
 
-| Principle | How it shows up |
-| --- | --- |
-| Retrieval practice | Sessions open with recall, not re-reading |
-| Spaced repetition | FSRS schedules every exercise you've seen |
-| Interleaving | Reviews mix lessons, and never show the same lesson twice in a row when avoidable |
-| Read → trace → explain → write | Every lesson climbs the same exercise ladder |
-| Worked examples with subgoal labels | New ideas open with labelled, runnable code |
-| PRIMM (Predict, Run, Investigate, Modify, Make) | You predict before you run |
-| Mastery learning | Lessons unlock in order; mastery needs a correct review on another day |
+| Principle                                       | How it shows up                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| Retrieval practice                              | Sessions open with recall, not re-reading                                         |
+| Spaced repetition                               | FSRS schedules every exercise you've seen                                         |
+| Interleaving                                    | Reviews mix lessons, and never show the same lesson twice in a row when avoidable |
+| Read → trace → explain → write                  | Every lesson climbs the same exercise ladder                                      |
+| Worked examples with subgoal labels             | New ideas open with labelled, runnable code                                       |
+| PRIMM (Predict, Run, Investigate, Modify, Make) | You predict before you run                                                        |
+| Mastery learning                                | Lessons unlock in order; mastery needs a correct review on another day            |
 
 ## Tech stack
 
-| Layer | Choice |
-| --- | --- |
-| App | React 19, TypeScript, Vite |
-| Styling | Tailwind CSS v4 with design tokens ([DESIGN.md](DESIGN.md)) |
+| Layer          | Choice                                                            |
+| -------------- | ----------------------------------------------------------------- |
+| App            | React 19, TypeScript, Vite                                        |
+| Styling        | Tailwind CSS v4 with design tokens ([DESIGN.md](DESIGN.md))       |
 | Python runtime | Pyodide (WebAssembly) in a Web Worker, served locally and offline |
-| Editor | Monaco, lazy-loaded |
-| Storage | IndexedDB via Dexie |
-| Scheduling | ts-fsrs (FSRS-7) |
-| Content | YAML, validated with zod |
-| Quality | Vitest + Testing Library, oxlint, Prettier |
+| Editor         | Monaco, lazy-loaded                                               |
+| Storage        | IndexedDB via Dexie                                               |
+| Scheduling     | ts-fsrs (FSRS-7)                                                  |
+| Content        | YAML, validated with zod                                          |
+| Quality        | Vitest + Testing Library, oxlint, Prettier                        |
 
 ## Getting started
 
@@ -75,19 +76,22 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173> and press **Start today's session**.
+`npm install` also downloads NumPy for offline use (`npm run setup:python` retries it).
+
+Open <http://localhost:5173> and press **Start**.
 
 ### Scripts
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the dev server with hot reload |
-| `npm run build` | Type-check and build for production (`dist/`) |
-| `npm run preview` | Serve the production build locally |
-| `npm test` | Run the test suite once |
+| Command                 | What it does                                              |
+| ----------------------- | --------------------------------------------------------- |
+| `npm run dev`           | Start the dev server with hot reload                      |
+| `npm run build`         | Type-check and build for production (`dist/`)             |
+| `npm run preview`       | Serve the production build locally                        |
+| `npm test`              | Run the test suite once                                   |
 | `npm run content:check` | Validate every lesson and run every answer in real Python |
-| `npm run lint` | Lint with oxlint |
-| `npm run format` | Format with Prettier |
+| `npm run setup:python`  | Download the Python packages lessons use                  |
+| `npm run lint`          | Lint with oxlint                                          |
+| `npm run format`        | Format with Prettier                                      |
 
 ## Writing lessons
 
@@ -144,20 +148,20 @@ src/
 ## Roadmap
 
 - [x] **Phase 1:** plan, design system ("Summit"), project setup
-- [x] **Phase 2:** core lesson loop, spaced repetition, streaks, Python Unit 1
-- [ ] **Phase 3:** step-through code visualizer, AI hint ladder and explanation grading (Gemini, through a small
-      local server), JavaScript/TypeScript track
-- [ ] **Phase 4:** ML track: derivatives with pictures, a hand-built micrograd, neural networks with NumPy
-- [ ] **Phase 5:** multi-day projects and a tiny GPT capstone
+- [x] **Phase 2:** lessons, Daily 5, spaced repetition, streaks, Units 1–2, self-hosted NumPy
+- [ ] **Phase 3:** NumPy and plots, calculus refresh, first models judged honestly (Units 3–5)
+- [ ] **Phase 4:** a hand-built micrograd and MLP, with diagnosing training curves (Units 6–7)
+- [ ] **Phase 5:** trees, probability, makemore, attention and a tiny GPT (Units 8–11)
 
+The full path is in [CURRICULUM.md](CURRICULUM.md).
 Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The visual system is in
 [DESIGN.md](DESIGN.md) and is also live at `/styleguide`.
 
 ## Privacy
 
 Everything runs in your browser. Progress lives in IndexedDB on your machine, so clearing site data erases it;
-use **Settings → Download backup** now and then. AI features are planned for Phase 3. When they arrive, the API
-key will stay on a local server, in `.env.local`, which is git-ignored.
+use **Settings → Download backup** now and then. If AI features arrive later, the API key will stay on a local
+server, in `.env.local`, which is git-ignored.
 
 ## License
 

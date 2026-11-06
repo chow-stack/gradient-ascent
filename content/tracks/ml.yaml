@@ -1,0 +1,10 @@
+id: ml
+name: Machine learning
+summary: One path from Python to a tiny GPT.
+units:
+  - unit: 1
+    title: Python from Java
+    summary: Everything from AP CSA, the Python way.
+  - unit: 2
+    title: Python for ML code
+    summary: The parts of Python that micrograd and PyTorch rely on.

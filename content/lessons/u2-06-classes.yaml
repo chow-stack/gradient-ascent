@@ -1,0 +1,220 @@
+id: u2-classes
+track: ml
+unit: 2
+order: 6
+title: Classes and objects
+summary: Java classes with less ceremony. Every model you build will be one.
+
+cards:
+  - type: learn
+    id: basics
+    title: Classes without the boilerplate
+    body: >-
+      `__init__` is the constructor. `self` is Java's `this`, except you must write it: in the parameters and on every
+      attribute. Attributes don't need declaring, because assigning to `self.x` creates them.
+    code: |
+      class Counter:
+          def __init__(self, start):
+              self.value = start
+
+          def bump(self):
+              self.value += 1
+              return self.value
+
+      c = Counter(5)
+      print(c.bump())
+      print(c.value)
+    java: |
+      class Counter {
+          int value;
+          Counter(int start) { this.value = start; }
+          int bump() { this.value += 1; return this.value; }
+      }
+    subgoals:
+      - { line: 2, label: Constructor }
+      - { line: 3, label: Creates the attribute }
+      - { line: 5, label: '`self` comes first in every method' }
+      - { line: 9, label: 'No `new`, and no `self` when calling' }
+    predict: What do the two lines print?
+
+  - type: choice
+    id: forgot-self
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Box:
+          def __init__(self, size):
+              size = size
+
+      try:
+          print(Box(3).size)
+      except AttributeError:
+          print("no attribute")
+    choices: ['no attribute', '3', 'None', 'size']
+    answer: 'no attribute'
+    why: >-
+      Without `self.`, `size = size` only reassigns a local name. Unlike Java, there's no implicit `this`.
+
+  - type: choice
+    id: two-objects
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Node:
+          def __init__(self, v):
+              self.v = v
+
+      a = Node(1)
+      b = a
+      b.v = 2
+      print(a.v)
+    choices: ['2', '1', 'None', 'Error']
+    answer: '2'
+    why: >-
+      `b = a` makes no new object, so both names point at the same `Node`.
+    variants:
+      - code: |
+          class Node:
+              def __init__(self, v):
+                  self.v = v
+
+          a = Node(1)
+          b = Node(1)
+          b.v = 2
+          print(a.v)
+        choices: ['1', '2', 'None', 'Error']
+        answer: '1'
+        why: Two calls make two objects, each with its own `v`.
+      - code: |
+          class Node:
+              def __init__(self, v):
+                  self.v = v
+
+          def bump(node):
+              node.v += 1
+
+          n = Node(1)
+          bump(n)
+          print(n.v)
+        choices: ['2', '1', 'None', 'Error']
+        answer: '2'
+        why: The parameter names the same object, so changing its attribute shows through `n`.
+
+  - type: choice
+    id: class-attribute
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Layer:
+          params = []
+
+          def add(self, p):
+              self.params.append(p)
+
+      a = Layer()
+      b = Layer()
+      a.add(1)
+      print(b.params)
+    choices: ['[1]', '[]', 'None', 'Error']
+    answer: '[1]'
+    why: >-
+      `params` belongs to the class, so all objects share one list. Set `self.params = []` in `__init__` to give each
+      object its own.
+
+  - type: parsons
+    id: order-class
+    prompt: Order the lines to make `Point(1, 2).total()` return 3.
+    code: |
+      class Point:
+          def __init__(self, x, y):
+              self.x = x
+              self.y = y
+          def total(self):
+              return self.x + self.y
+    distractors: ['    def total():']
+    tests:
+      - { call: 'Point(1, 2).total()', expect: '3' }
+    why: >-
+      Methods take `self` first. Calling `p.total()` passes `p` in as `self`.
+
+  - type: blank
+    id: method-self
+    prompt: Finish the method so it scales the value.
+    code: |
+      class Weight:
+          def __init__(self, value):
+              self.value = value
+
+          def scale(self, by):
+              ____ = self.value * by
+    answers: [['self.value']]
+    tests:
+      - { call: '(lambda w: (w.scale(3), w.value)[1])(Weight(2))', expect: '6' }
+    why: >-
+      Writing `value` alone would only make a local name, gone when the method ends.
+
+  - type: fix
+    id: shared-params
+    prompt: Each `Layer` should keep its own list, but they all share one. Fix it.
+    code: |
+      class Layer:
+          weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+    solution: |
+      class Layer:
+          def __init__(self):
+              self.weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+    tests:
+      - { call: '(lambda a, b: (a.add(1), b.weights)[1])(Layer(), Layer())', expect: '[]' }
+      - { call: '(lambda a: (a.add(1), a.weights)[1])(Layer())', expect: '[1]' }
+    why: >-
+      A variable in the class body belongs to the class. Per-object data goes on `self`, in `__init__`.
+    hints:
+      - Where should something that's different for each object get created?
+
+  - type: write
+    id: neuron-class
+    prompt: >-
+      Write a `Neuron` class. `Neuron(weights, bias)` stores both, and `.output(inputs)` returns the weighted sum of the
+      inputs plus the bias.
+    starter: |
+      class Neuron:
+          pass
+    solution: |
+      class Neuron:
+          def __init__(self, weights, bias):
+              self.weights = weights
+              self.bias = bias
+
+          def output(self, inputs):
+              return sum(w * x for w, x in zip(self.weights, inputs)) + self.bias
+    tests:
+      - { call: 'Neuron([1, 2], 3).output([4, 5])', expect: '17' }
+      - { call: 'Neuron([0.5], 0).output([2])', expect: '1.0' }
+      - { call: 'Neuron([], 7).output([])', expect: '7', hidden: true }
+    hints:
+      - '`sum` and `zip` from the last lesson do most of this.'
+
+  - type: explain
+    id: what-self
+    prompt: What is `self` when `a.bump()` runs?
+    code: |
+      class Counter:
+          def __init__(self):
+              self.n = 0
+
+          def bump(self):
+              self.n += 1
+
+      a = Counter()
+      a.bump()
+    model: >-
+      `self` is `a`. Python turns `a.bump()` into `Counter.bump(a)`, so the method changes that object's `n`.
+    keyPoints:
+      - '`self` is the object the method was called on'
+      - Python passes it automatically

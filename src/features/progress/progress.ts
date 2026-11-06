@@ -1,11 +1,20 @@
 import { liveQuery } from 'dexie'
 import { useEffect, useState } from 'react'
 import { dayKey, endOfDay, startOfTomorrow, type DayKey } from '../../lib/dates'
-import { db, type DayRow, type GradientDB, type MasteryRow } from '../../lib/db'
+import { db, type DailyResult, type DayRow, type GradientDB, type MasteryRow } from '../../lib/db'
+import { getItem } from '../content/content'
 import { CHECKPOINT_PASS, REVIEWABLE, type CardType } from '../content/schema'
 import { schedule, type FsrsCard } from '../review/fsrs'
+import { selectDaily } from '../session/daily'
 import { computeStreak, type StreakInfo } from './streak'
-import { CHECKPOINT_PASS_BONUS, LESSON_COMPLETE_BONUS, xpFor, type ItemSource, type Outcome } from './xp'
+import {
+  CHECKPOINT_PASS_BONUS,
+  DAILY_COMPLETE_BONUS,
+  LESSON_COMPLETE_BONUS,
+  xpFor,
+  type ItemSource,
+  type Outcome,
+} from './xp'
 
 export type AttemptInput = {
   itemId: string
@@ -123,18 +132,59 @@ export async function checkpointsToRetake(now = new Date(), database: GradientDB
   return ids
 }
 
-/** The day's core session is done → the day counts for the streak. */
-export async function completeCoreSession(now = new Date(), database: GradientDB = db) {
-  const day = dayKey(now)
+const markDayDone = async (database: GradientDB, day: DayKey) => {
   await addToDay(database, day, {})
   await database.days.update(day, { coreDone: true })
 }
 
+export function dailyResult(o: Outcome): DailyResult {
+  if (!o.correct || o.gaveUp) return 'missed'
+  return o.firstTry && o.hintsUsed === 0 ? 'clean' : 'assisted'
+}
+
+/**
+ * Save how one Daily 5 problem went, so leaving and coming back resumes the set.
+ * The last answer finishes the set, even if the finish screen is never reached.
+ */
+export async function recordDailyResult(day: DayKey, itemId: string, result: DailyResult, database: GradientDB = db) {
+  const row = await database.dailies.get(day)
+  if (!row) return
+  const results = { ...row.results, [itemId]: result }
+  await database.dailies.update(day, { results })
+  if (row.itemIds.every((id) => results[id] || !getItem(id))) await completeDaily(day, database)
+}
+
+/** Today's Daily 5 is finished: the day counts for the streak. Returns the bonus XP (0 if already finished). */
+export async function completeDaily(day: DayKey, database: GradientDB = db): Promise<number> {
+  const row = await database.dailies.get(day)
+  if (!row || row.completedAt) return 0
+  await database.dailies.update(day, { completedAt: Date.now() })
+  await addToDay(database, day, { xp: DAILY_COMPLETE_BONUS })
+  await markDayDone(database, day)
+  return DAILY_COMPLETE_BONUS
+}
+
+/** On a day with nothing to review, finishing a lesson counts the day instead. */
+export async function countDayIfNothingToReview(now = new Date(), database: GradientDB = db) {
+  const day = dayKey(now)
+  if (await database.dailies.get(day)) return
+  if ((await selectDaily(now, database)).length === 0) await markDayDone(database, day)
+}
+
 // ---------- Reading progress (live) ----------
+
+export type DailySnapshot = {
+  /** Problems in today's set (0 = nothing to review today). */
+  total: number
+  /** One entry per problem, in order; null = not answered yet. */
+  results: (DailyResult | null)[]
+  done: boolean
+}
 
 export type ProgressSnapshot = {
   streak: StreakInfo
-  /** Days whose core session was finished. */
+  daily: DailySnapshot
+  /** Days that count for the streak. */
   doneDays: Set<DayKey>
   totalXp: number
   today: DayRow | null
@@ -146,17 +196,25 @@ export type ProgressSnapshot = {
 }
 
 export async function loadProgress(now = new Date(), database: GradientDB = db): Promise<ProgressSnapshot> {
-  const [days, dueCount, reviewCount, mastery, retakeTomorrow] = await Promise.all([
+  const [days, dueCount, reviewCount, mastery, retakeTomorrow, dailyRow, candidates] = await Promise.all([
     database.days.toArray(),
     database.reviews.where('due').belowOrEqual(endOfDay(now)).count(),
     database.reviews.count(),
     database.mastery.toArray(),
     checkpointsToRetake(now, database),
+    database.dailies.get(dayKey(now)),
+    selectDaily(now, database),
   ])
+  const itemIds = dailyRow?.itemIds ?? candidates
   const today = dayKey(now)
   const doneDays = new Set(days.filter((d) => d.coreDone).map((d) => d.day))
   return {
     streak: computeStreak(doneDays, today),
+    daily: {
+      total: itemIds.length,
+      results: itemIds.map((id) => dailyRow?.results[id] ?? null),
+      done: !!dailyRow?.completedAt,
+    },
     doneDays,
     totalXp: days.reduce((s, d) => s + d.xp, 0),
     today: days.find((d) => d.day === today) ?? null,

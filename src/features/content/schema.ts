@@ -18,6 +18,11 @@ const id = z.string().regex(/^[a-z0-9-]+$/, 'ids are lowercase-kebab')
 const hints = z.array(z.string()).default([])
 const testCase = z.object({ call: z.string(), expect: z.string(), hidden: z.boolean().optional() })
 const tests = z.array(testCase).optional()
+/**
+ * Other versions of a card: any fields here replace the card's own. Reviews cycle through them so an
+ * answer can't just be remembered. Each one is validated, and checked in real Python by content:check.
+ */
+const variants = z.array(z.record(z.string(), z.unknown())).default([])
 
 const learn = z.object({
   type: z.literal('learn'),
@@ -32,6 +37,8 @@ const learn = z.object({
   subgoals: z.array(z.object({ line: z.number().int().positive(), label: z.string() })).default([]),
   /** If set, ask the learner to predict before they can run (PRIMM). */
   predict: z.string().optional(),
+  /** An outside page to open (visuals are linked, not rebuilt). */
+  link: z.object({ label: z.string(), url: z.url() }).optional(),
 })
 
 const choice = z.object({
@@ -46,6 +53,7 @@ const choice = z.object({
   answer: z.string(),
   why: z.string(),
   hints,
+  variants,
 })
 
 const parsons = z.object({
@@ -59,6 +67,7 @@ const parsons = z.object({
   expectOutput: z.string().optional(),
   why: z.string(),
   hints,
+  variants,
 })
 
 const blank = z.object({
@@ -73,6 +82,7 @@ const blank = z.object({
   expectOutput: z.string().optional(),
   why: z.string(),
   hints,
+  variants,
 })
 
 const fix = z.object({
@@ -86,6 +96,7 @@ const fix = z.object({
   expectOutput: z.string().optional(),
   why: z.string(),
   hints,
+  variants,
 })
 
 const write = z.object({
@@ -97,6 +108,7 @@ const write = z.object({
   tests: z.array(testCase).min(1),
   why: z.string().optional(),
   hints,
+  variants,
 })
 
 const explain = z.object({
@@ -111,14 +123,31 @@ const explain = z.object({
 
 export const cardSchema = z.discriminatedUnion('type', [learn, choice, parsons, blank, fix, write, explain])
 
+function checkCard(c: z.infer<typeof cardSchema>, at: (msg: string) => void) {
+  if (c.type === 'choice') {
+    if (!c.choices.includes(c.answer)) at('answer must be one of the choices')
+    if (new Set(c.choices).size !== c.choices.length) at('choices must be unique')
+    if (c.kind === 'predict' && !c.code) at('predict questions need code')
+  }
+  if (c.type === 'blank') {
+    const slots = c.code.split('____').length - 1
+    if (slots !== c.answers.length) at(`has ${slots} blanks but ${c.answers.length} answer lists`)
+  }
+  if ((c.type === 'fix' || c.type === 'parsons') && !c.tests && c.expectOutput === undefined)
+    at('needs tests or expectOutput')
+}
+
 export const lessonSchema = z
   .object({
     id,
-    track: z.enum(['foundations', 'web', 'ml']),
+    track: z.enum(['ml']),
     unit: z.number().int().positive(),
     order: z.number().int().positive(),
-    /** A checkpoint ends a unit: a mixed quiz on the whole unit that unlocks the next one (CURRICULUM.md §1). */
-    kind: z.enum(['lesson', 'checkpoint']).default('lesson'),
+    /**
+     * A checkpoint ends a unit's lessons: a mixed quiz on the whole unit (CURRICULUM.md §1).
+     * A project is a program built step by step; its cards stay out of spaced review.
+     */
+    kind: z.enum(['lesson', 'checkpoint', 'project']).default('lesson'),
     title: z.string(),
     summary: z.string(),
     cards: z.array(cardSchema).min(1),
@@ -140,17 +169,12 @@ export const lessonSchema = z
         if ('hints' in c && c.hints.length) at('checkpoint cards have no hints')
       }
       seen.add(c.id)
-      if (c.type === 'choice') {
-        if (!c.choices.includes(c.answer)) at('answer must be one of the choices')
-        if (new Set(c.choices).size !== c.choices.length) at('choices must be unique')
-        if (c.kind === 'predict' && !c.code) at('predict questions need code')
+      checkCard(c, at)
+      for (const v of cardVariants(c)) {
+        const r = cardSchema.safeParse(v)
+        if (!r.success) at(`variant: ${r.error.issues[0].path.join('.')}: ${r.error.issues[0].message}`)
+        else checkCard(r.data, (msg) => at(`variant: ${msg}`))
       }
-      if (c.type === 'blank') {
-        const slots = c.code.split('____').length - 1
-        if (slots !== c.answers.length) at(`has ${slots} blanks but ${c.answers.length} answer lists`)
-      }
-      if ((c.type === 'fix' || c.type === 'parsons') && !c.tests && c.expectOutput === undefined)
-        at('needs tests or expectOutput')
     })
   })
 
@@ -160,7 +184,7 @@ export type Lesson = z.infer<typeof lessonSchema>
 export type TrackId = Lesson['track']
 
 export const trackSchema = z.object({
-  id: z.enum(['foundations', 'web', 'ml']),
+  id: z.enum(['ml']),
   name: z.string(),
   summary: z.string(),
   units: z.array(z.object({ unit: z.number().int().positive(), title: z.string(), summary: z.string() })),
@@ -186,6 +210,19 @@ function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
 }
 
 export const isCheckpoint = (lesson: Lesson) => lesson.kind === 'checkpoint'
+export const isProject = (lesson: Lesson) => lesson.kind === 'project'
+
+/** A card's alternate versions, as full cards. */
+export function cardVariants(card: Card): Card[] {
+  if (!('variants' in card)) return []
+  return card.variants.map((v) => ({ ...card, ...v, variants: [] }) as Card)
+}
+
+/** The version to show on a card's nth review. The card itself came first, in its lesson. */
+export function versionForReview(card: Card, reviewsSoFar: number): Card {
+  const all = [card, ...cardVariants(card)]
+  return all[(reviewsSoFar + 1) % all.length]
+}
 
 /** Exercise ids are global: "<lesson id>/<card id>". */
 export const itemId = (lessonId: string, cardId: string) => `${lessonId}/${cardId}`

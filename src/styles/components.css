@@ -851,3 +851,133 @@
     color: var(--color-bg);
   }
 }
+
+/* ---------- Daily 5 ---------- */
+
+@layer components {
+  .ga-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--tile, 26px);
+    height: var(--tile, 26px);
+    border: 1px solid var(--color-border-strong);
+    border-radius: calc(var(--tile, 26px) * 0.24);
+    background: var(--color-choice);
+    color: transparent;
+  }
+  .ga-tile-icon {
+    width: 56%;
+    height: 56%;
+  }
+  .ga-tile[data-current='true'] {
+    border-color: var(--color-sky);
+    box-shadow: inset 0 0 0 1px var(--color-sky);
+  }
+  .ga-tile[data-state] {
+    border-color: transparent;
+  }
+  .ga-tile[data-state='clean'] {
+    background: var(--color-success);
+    color: var(--color-on-success);
+  }
+  .ga-tile[data-state='assisted'] {
+    background: var(--color-xp);
+    color: var(--color-on-accent);
+  }
+  .ga-tile[data-state='missed'] {
+    background: var(--color-danger);
+    color: var(--color-on-danger);
+  }
+
+  /* Top bar of a session: a tile flips when its answer lands. */
+  .ga-tile-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    perspective: 400px;
+  }
+  .ga-tile-row .ga-tile[data-state] {
+    animation: ga-tile-flip 460ms var(--ease-out);
+  }
+
+  /* The staircase: each tile sits one step higher, with Adam standing on one. */
+  .ga-steps {
+    --tile: 52px;
+    --gap: 8px;
+    --rise: 11px;
+    --adam: 64px;
+    position: relative;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: var(--gap);
+    padding-top: calc(var(--adam) - 8px);
+    perspective: 600px;
+  }
+  .ga-steps > .ga-tile {
+    margin-bottom: calc(var(--rise) * var(--i));
+  }
+  .ga-steps-adam {
+    position: absolute;
+    bottom: calc(var(--rise) * var(--at) + var(--tile) - 7px);
+    left: calc((var(--tile) + var(--gap)) * var(--at) + (var(--tile) - var(--adam)) / 2);
+    display: block;
+    width: var(--adam);
+    height: var(--adam);
+    pointer-events: none;
+    transition:
+      left 220ms var(--ease-out),
+      bottom 220ms var(--ease-spring);
+  }
+  .ga-steps[data-flip] > .ga-tile {
+    animation: ga-tile-flip 520ms var(--ease-out) var(--flip-delay) backwards;
+  }
+  .ga-steps[data-wave] > .ga-tile {
+    animation:
+      ga-tile-flip 520ms var(--ease-out) var(--flip-delay) backwards,
+      ga-tile-wave 420ms var(--ease-out) var(--wave-delay);
+  }
+  .ga-settle {
+    animation: ga-settle 520ms var(--ease-out) backwards;
+  }
+}
+
+@keyframes ga-tile-flip {
+  0%,
+  49% {
+    border-color: var(--color-border-strong);
+    background: var(--color-choice);
+    color: transparent;
+  }
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+@keyframes ga-tile-wave {
+  40% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes ga-settle {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-tile-row .ga-tile[data-state],
+  .ga-steps[data-flip] > .ga-tile,
+  .ga-steps[data-wave] > .ga-tile,
+  .ga-settle {
+    animation: none;
+  }
+  .ga-steps-adam {
+    transition: none;
+  }
+}

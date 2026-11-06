@@ -2,13 +2,23 @@ import { Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
+import type { DailyResult } from '../../lib/db'
 import { SegmentedProgress } from '../../components/ui/ProgressBar'
 import { ExerciseView } from '../exercises/ExerciseView'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
 import { inline } from '../exercises/inline'
 import { type Phase } from '../exercises/types'
-import { completeCheckpoint, completeCoreSession, completeLesson, recordAttempt } from '../progress/progress'
-import type { Outcome } from '../progress/xp'
+import {
+  completeCheckpoint,
+  completeLesson,
+  countDayIfNothingToReview,
+  dailyResult,
+  recordAttempt,
+  recordDailyResult,
+} from '../progress/progress'
+import { DAILY_COMPLETE_BONUS, type Outcome } from '../progress/xp'
+import { DailyDone } from './DailyDone'
+import { DailyTileRow } from './DailyTiles'
 import type { SessionItem, SessionPlan } from './plan'
 import { SessionDone, type SessionSummary } from './SessionDone'
 
@@ -41,6 +51,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const retried = useRef(new Set<string>())
   const [xp, setXp] = useState(0)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
+  const daily = plan.daily
+  const [dailyResults, setDailyResults] = useState<Record<string, DailyResult>>(daily?.results ?? {})
+  const [dailyXp, setDailyXp] = useState<number | null>(null)
+  const tiles = daily?.itemIds.map((id) => dailyResults[id] ?? null)
   const [praise] = useState(() => PRAISE[Math.floor(Math.random() * PRAISE.length)])
 
   const card = item.card
@@ -76,6 +90,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           setXp(totals.current.xp)
         })
         .catch(console.error)
+      if (daily) {
+        const r = dailyResult(outcome)
+        setDailyResults((prev) => ({ ...prev, [it.itemId]: r }))
+        saving.current = saving.current.then(() => recordDailyResult(daily.day, it.itemId, r)).catch(console.error)
+      }
       // Missed lesson items come back once at the end (they don't touch the review schedule again).
       const missed = !outcome.correct || outcome.gaveUp
       if (missed && it.source === 'lesson' && !retried.current.has(it.key)) {
@@ -84,25 +103,29 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         setQueue(queueRef.current)
       }
     },
-    [item],
+    [item, daily],
   )
 
   const finish = useCallback(async () => {
     await saving.current
+    if (plan.daily) {
+      setDailyXp(totals.current.xp + DAILY_COMPLETE_BONUS)
+      return
+    }
     const lessonDone =
       !!plan.lessonId &&
-      (plan.kind === 'core' || plan.kind === 'lesson') &&
-      plan.items.some((i) => i.source === 'lesson')
+      plan.kind === 'lesson' &&
+      plan.items.some((i) => i.source === 'lesson' || i.source === 'project')
     const checkpointDone = !!plan.lessonId && plan.items.some((i) => i.source === 'checkpoint')
     const cp = checkpointDone
       ? await completeCheckpoint(plan.lessonId!, checkpoint.current.correct, checkpoint.current.total)
       : undefined
     const bonus = lessonDone ? await completeLesson(plan.lessonId!) : (cp?.bonus ?? 0)
-    if (plan.kind === 'core') await completeCoreSession()
+    if (plan.kind === 'lesson') await countDayIfNothingToReview()
     setSummary({
       kind: plan.kind,
       lessonId: plan.lessonId,
-      lessonTitle: plan.items.find((i) => i.source === 'lesson' || i.source === 'checkpoint')?.lesson.title,
+      lessonTitle: plan.items.find((i) => i.source !== 'review' && i.source !== 'practice')?.lesson.title,
       checkpoint: cp,
       xp: totals.current.xp + bonus,
       bonus,
@@ -184,7 +207,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 
   useEffect(() => {
-    if (summary) return
+    if (summary || dailyXp !== null) return
     const onKey = (e: KeyboardEvent) => {
       const t = (e.target instanceof HTMLElement ? e.target : document.body) as HTMLElement
       const inEditor = !!t.closest('.monaco-editor')
@@ -209,9 +232,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [primary, phase, summary])
+  }, [primary, phase, summary, dailyXp])
 
   if (summary) return <SessionDone summary={summary} />
+  if (dailyXp !== null && tiles) return <DailyDone results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
 
   const mood: AdamMood =
     phase === 'correct'
@@ -233,12 +257,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           <X size={20} />
         </button>
         <div className="min-w-0 flex-1">
-          <SegmentedProgress
-            total={queue.length}
-            done={isLearn ? idx : done}
-            current={phase === 'answering' ? idx : undefined}
-            label="Session progress"
-          />
+          {tiles ? (
+            <DailyTileRow results={tiles} />
+          ) : (
+            <SegmentedProgress
+              total={queue.length}
+              done={isLearn ? idx : done}
+              current={phase === 'answering' ? idx : undefined}
+              label="Session progress"
+            />
+          )}
         </div>
         <span className="ga-chip text-xp" title="XP this session">
           <Star size={16} aria-hidden />
@@ -250,11 +278,13 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       {/* Card */}
       <main className="flex flex-1 justify-center px-4 pt-8 pb-12 sm:px-8">
         <div key={item.key} className="flex w-full max-w-[760px] flex-col gap-5">
-          {item.source !== 'lesson' && (
+          {item.source !== 'lesson' && !daily && (
             <p className="text-caption text-faint">
               {item.source === 'checkpoint'
                 ? `Checkpoint · no hints, 80% to pass`
-                : `${item.source === 'review' ? 'Review' : item.source === 'retry' ? 'One more try' : 'Practice'} · ${item.lesson.title}`}
+                : item.source === 'project'
+                  ? item.lesson.title
+                  : `${item.source === 'review' ? 'Review' : item.source === 'retry' ? 'One more try' : 'Practice'} · ${item.lesson.title}`}
             </p>
           )}
           <div
@@ -399,11 +429,9 @@ function FooterText({
   if (isLearn) return <p className="ga-footer-body hidden text-muted sm:block">Read it, run it, then continue.</p>
   switch (phase) {
     case 'answering':
-      return (
-        <p className="ga-footer-body hidden text-muted sm:block">
-          {type === 'explain' ? 'Write it in your own words, then compare.' : 'Answer, then check.'}
-        </p>
-      )
+      return type === 'explain' ? (
+        <p className="ga-footer-body hidden text-muted sm:block">Write it in your own words, then compare.</p>
+      ) : null
     case 'checking':
       return <p className="ga-footer-body text-muted">Running your code…</p>
     case 'correct':

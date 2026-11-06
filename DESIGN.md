@@ -108,7 +108,7 @@ Headings use `text-wrap: balance`. Keep reading width ≤ 65ch.
   Below `md` the sidebar becomes a bottom tab bar. Unbuilt sections show as disabled "Soon" items.
 - **Lesson:** top bar (close · segmented progress · streak) → prompt (tag, h2, code, choices) → feedback footer.
   Keyboard first: 1–4 pick, Enter checks/continues.
-- **Today (home):** greeting card with Adam and the "Start today's session" button, then the three track cards.
+- **Today (home):** the Daily 5 with Adam on its staircase, then the next lesson, then the week.
 
 ## 8. Adam the mountain goat
 
@@ -145,6 +145,18 @@ so he reads from 32px to 200px. Component: `src/components/Adam.tsx`.
 | `ga-textarea`            | Free-text answer (explain)            | `choice` surface, sky focus border                                                  |
 | `ga-prose`               | Lesson text                           | Inline `code` gets a raised pill                                                    |
 | `ga-day[data-frozen]`    | Streak week dot covered by a freeze   | Sky snowflake                                                                       |
+
+Daily 5:
+
+| Class         | What                              | Notes                                                                                                             |
+| ------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `ga-tile`     | One problem                       | `data-state="clean\|assisted\|missed"` (check on success, check on xp, X on danger); `data-current` is a sky ring |
+| `ga-tile-row` | Flat row in the session's top bar | A tile flips when its answer lands                                                                                |
+| `ga-steps`    | The tiles as a rising staircase   | Adam stands on tile `--at`. `data-flip` flips tiles in turn; `data-wave` bounces them after a clean sweep         |
+| `ga-settle`   | Text arriving after the climb     | Used once, on the finish screen                                                                                   |
+
+The finish is the one authored moment: tiles flip one by one as Adam climbs to the top, then the words arrive. Under
+reduced motion everything is simply in its final place. Keep this screen to a heading, streak, XP and one next step.
 
 Session layout: full screen (no sidebar). Sticky top bar (exit · segmented progress · session XP), centered card
 column ≤ 760px, sticky feedback footer. Keyboard: Enter checks/continues everywhere (also from read-only fields),

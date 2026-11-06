@@ -17,12 +17,12 @@ afterEach(async () => {
 
 const day1 = new Date(2026, 10, 4, 10)
 const day2 = new Date(2026, 10, 5, 10)
-const unit1 = lessons.filter((l) => l.track === 'foundations' && l.unit === 1)
+const unit1 = lessons.filter((l) => l.unit === 1)
 const checkpoint = unit1.find(isCheckpoint)!
 
 /** Pass every Unit 1 lesson so the checkpoint is next. */
 async function passLessons(db: GradientDB) {
-  for (const l of unit1.filter((l) => !isCheckpoint(l))) await completeLesson(l.id, day1, db)
+  for (const l of unit1.filter((l) => l.kind === 'lesson')) await completeLesson(l.id, day1, db)
 }
 
 /** Answer the checkpoint, getting `right` cards correct, and score it. */
@@ -45,9 +45,9 @@ async function takeCheckpoint(db: GradientDB, right: number, now: Date) {
 }
 
 describe('unit checkpoint', () => {
-  it('ends Unit 1 and comes right after its last lesson', () => {
+  it('comes right after the last lesson of Unit 1', () => {
     expect(checkpoint).toBeDefined()
-    expect(unit1.at(-1)?.id).toBe(checkpoint.id)
+    expect(unit1.findLast((l) => l.kind !== 'project')?.id).toBe(checkpoint.id)
   })
 
   it('is next once every lesson in the unit is passed, with checkpoint items', async () => {
@@ -83,14 +83,15 @@ describe('unit checkpoint', () => {
     expect((await buildSession('lesson', {}, day1, db)).items).toHaveLength(0)
     expect(await db.reviews.where('lessonId').equals(checkpoint.id).count()).toBeGreaterThan(0)
 
-    const tomorrow = await buildSession('core', {}, day2, db)
-    expect(tomorrow.lessonId).toBe(checkpoint.id)
-    expect(tomorrow.items.some((i) => i.source === 'review' && i.lesson.id === checkpoint.id)).toBe(true)
+    const retake = await buildSession('lesson', {}, day2, db)
+    expect(retake.lessonId).toBe(checkpoint.id)
+    const daily = await buildSession('daily', {}, day2, db)
+    expect(daily.items.some((i) => i.source === 'review' && i.lesson.id === checkpoint.id)).toBe(true)
   })
 })
 
 describe('checkpoint schema', () => {
-  const base = `id: x\ntrack: foundations\nunit: 1\norder: 1\nkind: checkpoint\ntitle: T\nsummary: S\ncards:\n`
+  const base = `id: x\ntrack: ml\nunit: 1\norder: 1\nkind: checkpoint\ntitle: T\nsummary: S\ncards:\n`
   const choice = (n: number, extra = '') =>
     `  - { type: choice, id: c${n}, prompt: P, choices: ['a', 'b'], answer: 'a', why: W${extra} }\n`
 
