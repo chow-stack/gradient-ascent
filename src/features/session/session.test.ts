@@ -56,7 +56,7 @@ async function playAll(db: GradientDB, kind: 'lesson' | 'daily', now: Date) {
 describe('content', () => {
   it('loads every lesson in path order', () => {
     expect(lessons.length).toBeGreaterThanOrEqual(10)
-    expect(lessons[0].id).toBe('a1-variables')
+    expect(lessons[0].id).toBe('p1-program')
     const positions = lessons.map((l) => l.unit * 100 + l.order)
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
   })
@@ -67,7 +67,7 @@ describe('daily loop', () => {
     const db = freshDb()
     expect((await buildSession('daily', {}, day1, db)).items).toHaveLength(0)
     const plan = await buildSession('lesson', {}, day1, db)
-    expect(plan.lessonId).toBe('a1-variables')
+    expect(plan.lessonId).toBe('p1-program')
     expect(plan.items.every((i) => i.source === 'lesson')).toBe(true)
   })
 
@@ -75,13 +75,13 @@ describe('daily loop', () => {
     const db = freshDb()
     await playAll(db, 'lesson', day1)
     const p = await loadProgress(day1, db)
-    expect(p.mastery.get('a1-variables')?.status).toBe('passed')
+    expect(p.mastery.get('p1-program')?.status).toBe('passed')
     expect(p.streak).toMatchObject({ current: 1, todayDone: true })
     expect(p.totalXp).toBeGreaterThan(0)
     expect(p.reviewCount).toBeGreaterThan(0)
     expect(p.dueCount).toBe(0) // nothing due the same day
     expect(p.daily.total).toBe(0) // and nothing in today's set
-    expect(nextLesson(p.mastery)?.id).toBe('a1-numbers')
+    expect(nextLesson(p.mastery)?.id).toBe('p1-errors')
   })
 
   it('brings problems back later, then masters the lesson on a correct review', async () => {
@@ -92,7 +92,7 @@ describe('daily loop', () => {
     expect(plan.items.length).toBeLessThanOrEqual(5)
     expect(plan.items.every((i) => i.source === 'review')).toBe(true)
     const p = await loadProgress(day8, db)
-    expect(p.mastery.get('a1-variables')?.status).toBe('mastered')
+    expect(p.mastery.get('p1-program')?.status).toBe('mastered')
     expect(p.daily.done).toBe(true)
   })
 
@@ -233,5 +233,29 @@ describe('card variants', () => {
 
   it('rejects a variant whose answer is not a choice', () => {
     expect(() => parseLesson(lesson(`    variants:\n      - { answer: z }\n`), 'v.yaml')).toThrow(/variant/)
+  })
+})
+
+describe('practice mode', () => {
+  it('moves each card to its next version every round', async () => {
+    const database = freshDb()
+    const practice = () => buildSession('practice', { lessonId: 'a1-strings' }, day1, database)
+    // A practice round samples the lesson's cards, so keep building until this one is in it.
+    const slice = async () => {
+      for (;;) {
+        const found = (await practice()).items.find((i) => i.card.id === 'slice')
+        if (found) return found
+      }
+    }
+    const base = lessons.find((l) => l.id === 'a1-strings')!.cards.find((c) => c.id === 'slice')!
+    const first = await slice()
+    expect(first.card).toEqual(versionForReview(base, 0))
+    expect(first.card).not.toEqual(base)
+    await recordAttempt(
+      { itemId: first.itemId, lessonId: 'a1-strings', type: 'choice', source: 'practice', outcome: ok, durationMs: 1 },
+      day1,
+      database,
+    )
+    expect((await slice()).card).toEqual(versionForReview(base, 1))
   })
 })

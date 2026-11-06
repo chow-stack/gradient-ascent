@@ -1,6 +1,6 @@
 id: u2-first-net
 track: ml
-unit: 2
+unit: 3
 order: 1
 title: A first look at a neural net
 summary: See where all this is going before learning the Python behind it.

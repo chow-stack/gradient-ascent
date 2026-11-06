@@ -4,11 +4,11 @@
 a tiny GPT. It's built on learning research instead of streak-farming.
 
 Each day has a **Daily 5**: up to five problems from everything you've learned, picked by spaced repetition. Lessons are
-separate, and you can do as many as you like. Each one teaches one new idea through a worked example, then climbs a
-ladder of exercises: predict the output, order the lines, fill in the blank, fix the bug, write the function, and
-explain the code in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
+separate, and you can do as many as you like. Each one teaches one new idea through worked examples and short
+explanations, mixed with exercises: predict the output, order the lines, fill in the blank, fix the bug, write the
+code, and explain it in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
 
-> **Status:** Phase 2 of 5. Units 1–2 of 11 are built: Python from Java, and Python for ML code. See the
+> **Status:** Phase 2 of 5. The new Unit 1, Programs and values, is built for true beginners. Older Python lessons stand in while the next two units are rewritten, followed by Python for ML code. See the
 > [roadmap](#roadmap).
 
 ---
@@ -47,7 +47,7 @@ Every feature traces back to a research-backed principle. The full table, with s
 | Retrieval practice                              | Sessions open with recall, not re-reading                                         |
 | Spaced repetition                               | FSRS schedules every exercise you've seen                                         |
 | Interleaving                                    | Reviews mix lessons, and never show the same lesson twice in a row when avoidable |
-| Read → trace → explain → write                  | Every lesson climbs the same exercise ladder                                      |
+| Read → trace → explain → write                  | Lessons move from reading code to writing it                                      |
 | Worked examples with subgoal labels             | New ideas open with labelled, runnable code                                       |
 | PRIMM (Predict, Run, Investigate, Modify, Make) | You predict before you run                                                        |
 | Mastery learning                                | Lessons unlock in order; mastery needs a correct review on another day            |
@@ -160,8 +160,8 @@ Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The vis
 ## Privacy
 
 Everything runs in your browser. Progress lives in IndexedDB on your machine, so clearing site data erases it;
-use **Settings → Download backup** now and then. If AI features arrive later, the API key will stay on a local
-server, in `.env.local`, which is git-ignored.
+use **Settings → Download backup** now and then. The one exception is optional: if you paste a Gemini key in **Settings**, it
+stays in this browser and is left out of backups, and your "explain the code" answers go to Google to be checked.
 
 ## License
 

@@ -6,8 +6,8 @@ import { z } from 'zod'
  * stay readable with `|`). This file is the single source of truth for the shape; `npm run content:check`
  * validates every file and runs every solution in real Python.
  *
- * A lesson = one skill node on the path. It climbs the ladder:
- * learn (worked example) → predict → parsons → fill blank → fix bug → write → explain.
+ * A lesson = one skill node on the path: short teaching cards mixed with activities, moving from reading code to
+ * writing it. CURRICULUM.md §1 has the format.
  */
 
 export const CHECKPOINT_MIN_CARDS = 8
@@ -27,10 +27,16 @@ const variants = z.array(z.record(z.string(), z.unknown())).default([])
 const learn = z.object({
   type: z.literal('learn'),
   id,
+  /** The tag above the title, such as "The goal" or "Recap". */
+  label: z.string().default('New idea'),
   title: z.string(),
-  /** Short paragraphs. `inline code` is supported. Keep it under ~60 words: show, don't lecture. */
+  /** Short paragraphs. `inline code` is supported. About 100–150 words: what it does, why, and the mistake people make. */
   body: z.string(),
+  /** Optional extra depth, collapsed until the learner opens it. */
+  deeper: z.string().optional(),
   code: z.string().optional(),
+  /** The error this example is meant to end with, such as NameError, for showing what errors look like. */
+  expectError: z.string().optional(),
   /** The same idea in Java (Unit 1 maps from AP CSA). */
   java: z.string().optional(),
   /** Subgoal labels shown beside the code (worked-example principle). */
@@ -105,7 +111,9 @@ const write = z.object({
   prompt: z.string(),
   starter: z.string(),
   solution: z.string(),
-  tests: z.array(testCase).min(1),
+  tests,
+  /** What the program should print, for programs too small to have anything else to test. */
+  expectOutput: z.string().optional(),
   why: z.string().optional(),
   hints,
   variants,
@@ -116,6 +124,8 @@ const explain = z.object({
   id,
   prompt: z.string(),
   code: z.string(),
+  /** The error this snippet is meant to end with, when the question is about that error. */
+  expectError: z.string().optional(),
   /** A good one-or-two sentence answer, shown after the learner writes theirs. */
   model: z.string(),
   keyPoints: z.array(z.string()).min(1),
@@ -133,7 +143,7 @@ function checkCard(c: z.infer<typeof cardSchema>, at: (msg: string) => void) {
     const slots = c.code.split('____').length - 1
     if (slots !== c.answers.length) at(`has ${slots} blanks but ${c.answers.length} answer lists`)
   }
-  if ((c.type === 'fix' || c.type === 'parsons') && !c.tests && c.expectOutput === undefined)
+  if ((c.type === 'fix' || c.type === 'parsons' || c.type === 'write') && !c.tests && c.expectOutput === undefined)
     at('needs tests or expectOutput')
 }
 

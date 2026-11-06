@@ -1,6 +1,6 @@
 id: u2-protocols
 track: ml
-unit: 2
+unit: 3
 order: 8
 title: Objects that act like functions
 summary: The methods behind PyTorch's model(x) and dataset[i].

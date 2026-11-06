@@ -1,0 +1,369 @@
+id: p1-elif
+track: ml
+unit: 1
+order: 11
+title: Many choices with elif
+summary: Choose one of several options, and see why order matters.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: More than two options
+    body: >-
+      Real decisions often have more than two outcomes. A grade might be A, B, C or F. A model's guess might be sorted into low, medium or high confidence.
+
+
+      By the end of this lesson you'll be able to choose between any number of options, and you'll know why the order of your conditions can quietly change the
+      answer. This is the last lesson before the checkpoint, so it also pulls the unit together.
+
+  - type: learn
+    id: elif-chain
+    title: Elif means "otherwise, if"
+    body: >-
+      `elif` is short for "else if". It's checked only if everything above it was false. Python goes down the chain from the top, runs the first block whose
+      condition is true, and then skips everything else in the chain. So at most one block runs.
+
+
+      You can have as many `elif` lines as you like. A final `else` is optional, and it catches whatever's left. Without one, it's possible that no block runs
+      at all.
+
+
+      Because it stops at the first match, each condition can rely on the ones above having failed. Below, by the time Python reaches `score >= 70`, it already
+      knows the score is under 90, so you don't need to say so.
+    code: |
+      score = 75
+      if score >= 90:
+          grade = "A"
+      elif score >= 70:
+          grade = "B"
+      elif score >= 50:
+          grade = "C"
+      else:
+          grade = "F"
+      print(grade)
+    subgoals:
+      - { line: 2, label: 'Checked first' }
+      - { line: 4, label: 'Only checked if the first was false' }
+      - { line: 6, label: 'Skipped: a match was already found' }
+      - { line: 8, label: 'Catches everything left' }
+    predict: 75 is also at least 50. Will the `"C"` block run as well?
+
+  - type: choice
+    id: first-wins
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 100
+      if x > 10:
+          print("big")
+      elif x > 50:
+          print("huge")
+      else:
+          print("small")
+    choices: ['big', 'huge', "big\nhuge", 'small']
+    answer: 'big'
+    why: >-
+      100 is greater than 10, so the first block runs and the rest of the chain is skipped, even though `x > 50` is also true.
+    hints:
+      - Which condition does Python check first?
+    variants:
+      - code: |
+          x = 7
+          if x > 10:
+              print("big")
+          elif x > 5:
+              print("medium")
+          elif x > 1:
+              print("small")
+        choices: ['medium', "medium\nsmall", 'small', 'big']
+        answer: 'medium'
+        why: >-
+          The first condition is false and the second is true, so `medium` shows and the chain ends.
+      - code: |
+          x = 0
+          if x > 10:
+              print("big")
+          elif x > 5:
+              print("medium")
+          print("end")
+        choices: ['end', "medium\nend", 'Nothing', 'Error']
+        answer: 'end'
+        why: >-
+          Neither condition is true, and there's no `else`, so no block runs. The last line is outside the chain.
+
+  - type: learn
+    id: elif-vs-if
+    title: One chain or separate checks?
+    body: >-
+      These look alike, but they mean different things. In a chain, at most one block runs. With separate `if` statements, each one is a fresh, independent
+      question, so several can run.
+
+
+      Use a chain when the options exclude each other, as with a grade. Use separate `if`s when each check stands by itself, as with looking for several different
+      problems.
+
+
+      Getting this wrong gives you wrong answers with no error message. Below, the second version overwrites the grade, since a score of 95 also passes the second
+      check.
+    code: |
+      score = 95
+      # A chain: one block runs
+      if score >= 90:
+          grade = "A"
+      elif score >= 70:
+          grade = "B"
+      print(grade)
+      # Separate checks: both run
+      if score >= 90:
+          grade = "A"
+      if score >= 70:
+          grade = "B"
+      print(grade)
+    subgoals:
+      - { line: 3, label: 'The chain stops at the first match' }
+      - { line: 9, label: 'This one is true' }
+      - { line: 11, label: 'So is this, and it overwrites the grade' }
+    predict: What two grades will this show?
+
+  - type: choice
+    id: separate-ifs
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 8
+      count = 0
+      if x > 1:
+          count += 1
+      if x > 5:
+          count += 1
+      if x > 100:
+          count += 1
+      print(count)
+    choices: ['2', '1', '3', '0']
+    answer: '2'
+    why: >-
+      Each `if` is a separate question. The first two are true, so `count` goes up twice.
+    variants:
+      - prompt: What does this print?
+        code: |
+          x = 8
+          count = 0
+          if x > 1:
+              count += 1
+          elif x > 5:
+              count += 1
+          elif x > 100:
+              count += 1
+          print(count)
+        choices: ['1', '2', '3', '0']
+        answer: '1'
+        why: >-
+          In a chain, only the first true condition's block runs.
+
+  - type: explain
+    id: why-order
+    prompt: Why does this show `C` for a score of 95, and how would you fix it?
+    code: |
+      score = 95
+      if score >= 50:
+          print("C")
+      elif score >= 70:
+          print("B")
+      elif score >= 90:
+          print("A")
+    model: >-
+      Python stops at the first true condition, and 95 is at least 50, so `C` runs and the others are never checked. To fix it, check the highest score first.
+    keyPoints:
+      - The chain stops at the first true condition, so the later ones are never checked
+      - The conditions should go from most specific to least, starting with the highest score
+
+  - type: blank
+    id: fill-elif
+    prompt: Fill in the missing word so that this is one chain and shows `warm`.
+    code: |
+      t = 20
+      if t > 30:
+          print("hot")
+      ____ t > 15:
+          print("warm")
+      else:
+          print("cold")
+    answers: [['elif']]
+    expectOutput: warm
+    why: >-
+      `elif` adds another condition to the same chain.
+    variants:
+      - prompt: Fill in the comparison so a score of exactly 50 still passes, and the program shows `pass`.
+        code: |
+          score = 50
+          if score ____ 50:
+              print("pass")
+          else:
+              print("fail")
+        answers: [['>=']]
+        expectOutput: pass
+        why: >-
+          `>` would leave out 50 itself. Boundaries like this are where most bugs in conditions live.
+
+  - type: fix
+    id: wrong-order
+    prompt: This should show `A` for a score of 95, but it shows `B`. Fix it without changing any numbers.
+    code: |
+      score = 95
+      if score >= 70:
+          print("B")
+      elif score >= 90:
+          print("A")
+    solution: |
+      score = 95
+      if score >= 90:
+          print("A")
+      elif score >= 70:
+          print("B")
+    highlightLine: 2
+    expectOutput: A
+    why: >-
+      The chain stops at the first match, so the strictest condition has to go first.
+    hints:
+      - 95 is at least 70. Which check should Python ask first?
+    variants:
+      - prompt: This should show only `small` for `n = 3`, but it shows two lines. Fix it.
+        code: |
+          n = 3
+          if n < 5:
+              print("small")
+          if n < 10:
+              print("medium")
+        solution: |
+          n = 3
+          if n < 5:
+              print("small")
+          elif n < 10:
+              print("medium")
+        highlightLine: 4
+        expectOutput: small
+        why: >-
+          Separate `if`s are separate questions. `elif` makes the second depend on the first being false.
+        hints:
+          - What makes the second check run only if the first was false?
+      - prompt: This has a `SyntaxError`. Fix it so that it shows `other`.
+        code: |
+          n = 3
+          if n == 1:
+              print("one")
+          else n == 2:
+              print("two")
+          else:
+              print("other")
+        solution: |
+          n = 3
+          if n == 1:
+              print("one")
+          elif n == 2:
+              print("two")
+          else:
+              print("other")
+        highlightLine: 4
+        expectOutput: other
+        why: >-
+          `else` has no condition. Use `elif` when there's a question to ask.
+        hints:
+          - Which word takes a condition?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Checking the boundaries
+    body: >-
+      Here's how to write a chain and trust it. Say a ticket is free for under 5s, 8 for under 18s, and 12 for everyone else. First, list the groups in order. Then write
+      one condition for each, and leave the last group to `else`.
+
+
+      Now test the values on the edges, because that's where chains go wrong. For this rule, try 4 and 5, then 17 and 18. If a child who is exactly 5 gets in for free, you
+      wrote `<=` where you meant `<`. A value from the middle of a range, like 10, tells you very little.
+
+
+      Notice how little each line needs to say. The `elif` doesn't have to say that `age` is at least 5, because the chain only reaches it if that's already true. Writing
+      `elif age >= 5 and age < 18` also works, but it's extra to read, and it's one more place to make a mistake.
+    code: |
+      age = 5
+      if age < 5:
+          price = 0
+      elif age < 18:
+          price = 8
+      else:
+          price = 12
+      print(f"Age {age}: {price}")
+    subgoals:
+      - { line: 2, label: 'The first group' }
+      - { line: 4, label: 'Already known to be at least 5' }
+      - { line: 6, label: 'Everyone left' }
+      - { line: 8, label: 'Try the edges: 4, 5, 17 and 18' }
+    predict: What does a 5-year-old pay?
+
+  - type: write
+    id: size-label
+    prompt: >-
+      Make `size` hold `"small"` if `n` is under 10, `"medium"` if it's under 100, and `"large"` otherwise. Use one chain.
+    starter: |
+      n = 42
+    solution: |
+      n = 42
+      if n < 10:
+          size = "small"
+      elif n < 100:
+          size = "medium"
+      else:
+          size = "large"
+    tests:
+      - { call: size, expect: "'medium'" }
+    why: >-
+      Since the chain stops at the first match, the `elif` doesn't need to say that `n` is at least 10.
+    hints:
+      - Start with the smallest group. What's left for the `else`?
+    variants:
+      - prompt: >-
+          Make `fizz` hold `"both"` if `n` is divisible by 3 and by 5, `"three"` if only by 3, `"five"` if only by 5, and `"none"` otherwise.
+        starter: |
+          n = 30
+        solution: |
+          n = 30
+          if n % 3 == 0 and n % 5 == 0:
+              fizz = "both"
+          elif n % 3 == 0:
+              fizz = "three"
+          elif n % 5 == 0:
+              fizz = "five"
+          else:
+              fizz = "none"
+        tests:
+          - { call: fizz, expect: "'both'" }
+        hints:
+          - Divisible means the remainder is 0. Which condition has to go first?
+
+  - type: choice
+    id: remember-reassign
+    kind: predict
+    prompt: From earlier in the unit. What does this print?
+    code: |
+      price = 10
+      total = price * 2
+      if price > 5:
+          price = 1
+      print(total)
+    choices: ['20', '2', '10', '1']
+    answer: '20'
+    why: >-
+      `total` got 20 when its line ran. Changing `price` afterwards doesn't update it, because variables don't stay linked.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An `if`, `elif`, `else` chain runs at most one block: the first whose condition is true. Order matters, so put the strictest condition first. Separate `if`s are
+      independent, and more than one can run. Watch the boundaries, like `>` versus `>=`.
+
+
+      That's the whole unit. The checkpoint is next, and it mixes everything together with no hints.

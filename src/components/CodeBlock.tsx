@@ -35,12 +35,19 @@ function highlight(line: string, lang: CodeLanguage, blank: BlankRender | undefi
     if (start > last) out.push(line.slice(last, start))
     const [text, isSlot, com, str, num, fn, word] = m
     const key = i++
-    if (isSlot) {
+    const slotNode = (k: number | string, marker: string) => {
       const index = slot.n++
-      out.push(<span key={key}>{typeof blank === 'function' ? blank(index) : (blank ?? text)}</span>)
-    } else if (com) out.push(span(key, 'com', text))
-    else if (str) out.push(span(key, 'str', text))
-    else if (num) out.push(span(key, 'num', text))
+      return <span key={k}>{typeof blank === 'function' ? blank(index) : (blank ?? marker)}</span>
+    }
+    if (isSlot) out.push(slotNode(key, text))
+    else if (com) out.push(span(key, 'com', text))
+    else if (str) {
+      // A blank can sit inside a string, as in f"Level {____}".
+      text.split('____').forEach((part, n) => {
+        if (n > 0) out.push(slotNode(`${key}-slot-${n}`, '____'))
+        if (part) out.push(span(`${key}-${n}`, 'str', part))
+      })
+    } else if (num) out.push(span(key, 'num', text))
     else if (fn) out.push(span(key, kws.has(fn) ? 'kw' : 'fn', text))
     else if (word) out.push(kws.has(word) ? span(key, 'kw', text) : text)
     last = start + text.length
@@ -49,7 +56,7 @@ function highlight(line: string, lang: CodeLanguage, blank: BlankRender | undefi
   return out
 }
 
-const span = (key: number, className: string, text: string) => (
+const span = (key: number | string, className: string, text: string) => (
   <span key={key} className={className}>
     {text}
   </span>

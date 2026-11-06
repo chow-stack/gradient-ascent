@@ -1,6 +1,7 @@
-import { Download, RotateCcw, Upload } from 'lucide-react'
+import { Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Card } from '../components/ui/Card'
+import { GEMINI_MODEL, getGeminiKey, setGeminiKey, testGeminiKey } from '../features/ai/gemini'
 import { dayKey } from '../lib/dates'
 import { exportBackup, importBackup, resetProgress } from '../lib/db'
 
@@ -39,6 +40,8 @@ export function SettingsPage() {
           now and then.
         </p>
       </header>
+
+      <GeminiCard />
 
       <Card className="flex flex-col gap-4">
         <h2 className="text-h3">Backup</h2>
@@ -99,5 +102,100 @@ export function SettingsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+/** The learner's own Gemini key, for checking "explain the code" answers. */
+function GeminiCard() {
+  const [saved, setSaved] = useState(getGeminiKey)
+  const [draft, setDraft] = useState('')
+  const [testing, setTesting] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const save = async () => {
+    const key = draft.trim()
+    setGeminiKey(key)
+    setSaved(key)
+    setDraft('')
+    setTesting(true)
+    setMessage(null)
+    const problem = await testGeminiKey(key)
+    setTesting(false)
+    setMessage(problem ? { ok: false, text: problem } : { ok: true, text: 'Key saved and working.' })
+  }
+
+  return (
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-h3">Gemini</h2>
+        <p className="text-small text-muted">
+          Checks your “explain the code” answers with <code className="font-mono">{GEMINI_MODEL}</code>.
+        </p>
+      </div>
+      {saved ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-small text-muted">
+            Key saved, ending in <span className="font-mono text-text">{saved.slice(-4)}</span>
+          </p>
+          <button
+            type="button"
+            className="ga-btn ga-btn--ghost ga-btn--sm"
+            onClick={() => {
+              setGeminiKey('')
+              setSaved('')
+              setMessage({ ok: true, text: 'Key removed.' })
+            }}
+          >
+            Remove key
+          </button>
+        </div>
+      ) : (
+        <form
+          className="flex flex-wrap gap-3"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (draft.trim()) void save()
+          }}
+        >
+          <label className="min-w-[240px] flex-1">
+            <span className="sr-only">Gemini API key</span>
+            <input
+              className="ga-input font-mono"
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Paste your API key"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+            />
+          </label>
+          <button type="submit" className="ga-btn ga-btn--primary" disabled={!draft.trim()}>
+            Save key
+          </button>
+          <a
+            href="https://aistudio.google.com/apikey"
+            target="_blank"
+            rel="noreferrer"
+            className="ga-btn ga-btn--secondary"
+          >
+            Get a key <ExternalLink size={16} aria-hidden />
+          </a>
+        </form>
+      )}
+      {testing && (
+        <p role="status" className="text-small text-muted">
+          Testing your key…
+        </p>
+      )}
+      {message && (
+        <p role="status" className={message.ok ? 'text-small text-success' : 'text-small text-danger'}>
+          {message.text}
+        </p>
+      )}
+      <p className="max-w-[68ch] text-caption text-faint">
+        The key stays in this browser and is left out of backups. Your explanations go to Google. On the free tier,
+        Google may use them to improve its products, and people may read them.
+      </p>
+    </Card>
   )
 }

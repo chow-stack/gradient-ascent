@@ -120,14 +120,28 @@ function lessonItems(lesson: Lesson): SessionItem[] {
   })
 }
 
-function practiceItems(lesson: Lesson): SessionItem[] {
+/** Each practice round moves a card on to its next version, separately from its review cycle. */
+async function practiceItems(lesson: Lesson, database: GradientDB): Promise<SessionItem[]> {
   const cards = lesson.cards.filter((c) => c.type !== 'learn' && c.type !== 'explain')
-  return shuffled(cards)
-    .slice(0, PRACTICE_MAX)
-    .map((card) => {
-      const id = itemId(lesson.id, card.id)
-      return { key: `practice:${id}`, itemId: id, lesson, card, source: 'practice' as const }
-    })
+  return Promise.all(
+    shuffled(cards)
+      .slice(0, PRACTICE_MAX)
+      .map(async (card) => {
+        const id = itemId(lesson.id, card.id)
+        const rounds = await database.attempts
+          .where('itemId')
+          .equals(id)
+          .filter((a) => a.source === 'practice')
+          .count()
+        return {
+          key: `practice:${id}`,
+          itemId: id,
+          lesson,
+          card: versionForReview(card, rounds),
+          source: 'practice' as const,
+        }
+      }),
+  )
 }
 
 export async function buildSession(
@@ -148,7 +162,7 @@ export async function buildSession(
     case 'practice': {
       const passed = [...mastery.values()].sort((a, b) => b.passedOn.localeCompare(a.passedOn))
       const target = lessons.find((l) => l.id === (opts.lessonId ?? passed[0]?.lessonId))
-      return { kind, items: target ? practiceItems(target) : [], lessonId: target?.id }
+      return { kind, items: target ? await practiceItems(target, database) : [], lessonId: target?.id }
     }
   }
 }

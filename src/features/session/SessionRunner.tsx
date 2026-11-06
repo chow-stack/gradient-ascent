@@ -1,4 +1,4 @@
-import { Lightbulb, Star, X } from 'lucide-react'
+import { BookOpen, Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
@@ -19,6 +19,7 @@ import {
 import { DAILY_COMPLETE_BONUS, type Outcome } from '../progress/xp'
 import { DailyDone } from './DailyDone'
 import { DailyTileRow } from './DailyTiles'
+import { NotesDialog } from './LessonNotes'
 import type { SessionItem, SessionPlan } from './plan'
 import { SessionDone, type SessionSummary } from './SessionDone'
 
@@ -60,6 +61,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const card = item.card
   const isLearn = card.type === 'learn'
   const hints = 'hints' in card ? card.hints : []
+  const [reading, setReading] = useState(false)
+  const notes = rereadable(item)
 
   /** Save the outcome of the current item (runs in order, in the background). */
   const resolve = useCallback(
@@ -207,7 +210,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 
   useEffect(() => {
-    if (summary || dailyXp !== null) return
+    if (summary || dailyXp !== null || reading) return
     const onKey = (e: KeyboardEvent) => {
       const t = (e.target instanceof HTMLElement ? e.target : document.body) as HTMLElement
       const inEditor = !!t.closest('.monaco-editor')
@@ -232,7 +235,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [primary, phase, summary, dailyXp])
+  }, [primary, phase, summary, dailyXp, reading])
 
   if (summary) return <SessionDone summary={summary} />
   if (dailyXp !== null && tiles) return <DailyDone results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
@@ -268,6 +271,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             />
           )}
         </div>
+        {notes.length > 0 && (
+          <button
+            type="button"
+            className="ga-btn ga-btn--ghost ga-btn--sm flex-none"
+            aria-label="Reread the lesson"
+            onClick={() => setReading(true)}
+          >
+            <BookOpen size={16} aria-hidden /> <span className="hidden sm:inline">Reread</span>
+          </button>
+        )}
         <span className="ga-chip text-xp" title="XP this session">
           <Star size={16} aria-hidden />
           <span className="sr-only">XP this session: </span>
@@ -322,7 +335,9 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           <div key={`${item.key}-${phase}`} className="ga-feedback-in min-w-0 flex-1">
             <FooterText
               phase={phase}
-              isLearn={isLearn}
+              learnHint={
+                isLearn ? (card.code ? 'Read it, run it, then continue.' : 'Read it, then continue.') : undefined
+              }
               type={card.type}
               praise={praise}
               why={why}
@@ -407,26 +422,41 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           </div>
         </div>
       </footer>
+      {reading && <NotesDialog title={item.lesson.title} cards={notes} onClose={() => setReading(false)} />}
     </div>
   )
 }
 
+/**
+ * What can be reread from this card: in a first pass, the teaching so far; in practice or a retry, all of it.
+ * Daily sets, reviews and checkpoints stay closed-book, because recalling unaided is what they're for.
+ */
+function rereadable(item: SessionItem) {
+  const { cards } = item.lesson
+  if (item.source === 'lesson' || item.source === 'project') {
+    const upTo = cards.findIndex((c) => c.id === item.card.id)
+    return cards.slice(0, upTo + 1).filter((c) => c.type === 'learn')
+  }
+  if (item.source === 'practice' || item.source === 'retry') return cards.filter((c) => c.type === 'learn')
+  return []
+}
+
 function FooterText({
   phase,
-  isLearn,
+  learnHint,
   type,
   praise,
   why,
   message,
 }: {
   phase: Phase
-  isLearn: boolean
+  learnHint?: string
   type: string
   praise: string
   why?: string
   message?: string
 }) {
-  if (isLearn) return <p className="ga-footer-body hidden text-muted sm:block">Read it, run it, then continue.</p>
+  if (learnHint) return <p className="ga-footer-body hidden text-muted sm:block">{learnHint}</p>
   switch (phase) {
     case 'answering':
       return type === 'explain' ? (
@@ -454,7 +484,7 @@ function FooterText({
       return type === 'explain' ? (
         <>
           <p className="ga-footer-title">How close were you?</p>
-          <p className="ga-footer-body text-muted">Be honest — it decides when this comes back.</p>
+          <p className="ga-footer-body text-muted">Missed it brings this back once at the end.</p>
         </>
       ) : (
         <>

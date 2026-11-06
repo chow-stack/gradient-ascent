@@ -1,10 +1,10 @@
 id: u2-checkpoint
 track: ml
-unit: 2
+unit: 3
 order: 10
 kind: checkpoint
-title: Unit 2 checkpoint
-summary: Everything from Unit 2, mixed up. Get 80% right to move on.
+title: Python for ML checkpoint
+summary: Everything from this unit, mixed up. Get 80% right to move on.
 
 cards:
   - type: choice

@@ -1,6 +1,6 @@
 id: u2-special
 track: ml
-unit: 2
+unit: 3
 order: 7
 title: Special methods
 summary: Teach your objects to work with +, *, == and print. This is how micrograd works.
@@ -206,7 +206,7 @@ cards:
       - { call: 'repr(Num(3))', expect: "'Num(3)'" }
       - { call: '(lambda a: (a + a, a.data)[1])(Num(1))', expect: '1', hidden: true }
     why: >-
-      This is the first version of micrograd's `Value`. In Unit 6 it learns to compute gradients.
+      This is the first version of micrograd's `Value`. Later on it learns to compute gradients.
     hints:
       - Each operator returns a new `Num`.
 

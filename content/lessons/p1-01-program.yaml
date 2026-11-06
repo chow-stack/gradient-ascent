@@ -1,0 +1,250 @@
+id: p1-program
+track: ml
+unit: 1
+order: 1
+title: What a program is
+summary: Code is a list of instructions. Python runs them in order.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Your first program
+    body: >-
+      Machine learning can look like magic from the outside. Underneath, it's a very long list of very simple
+      instructions, and you can learn to read and write them.
+
+
+      This lesson starts at the beginning. By the end you'll know what a program is, what happens when it runs, and
+      you'll have written one yourself. You don't need any programming experience.
+
+  - type: learn
+    id: instructions
+    title: A program is a list of instructions
+    body: >-
+      A program is a list of instructions for the computer. Python is the language we write them in, and it's also
+      the tool that carries them out, which is called running the program.
+
+
+      Python starts at the top line and does one instruction at a time, in order. It never skips ahead or guesses what
+      you meant. `print()` is the instruction for showing something on the screen. Whatever you put between the
+      parentheses gets shown.
+
+
+      Two things to keep apart: the code is what you write, and the output is what appears when it runs. Press the Run
+      button below to see the output of this code.
+    code: |
+      print("Good morning")
+      print("Let's climb")
+      print("See you at the top")
+    subgoals:
+      - { line: 1, label: 'Runs first' }
+      - { line: 2, label: 'Runs second' }
+      - { line: 3, label: 'Runs last' }
+    predict: Which line will appear first in the output?
+
+  - type: choice
+    id: order
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print("one")
+      print("two")
+    choices: ["one\ntwo", "two\none", "one two", "print(\"two\")"]
+    answer: "one\ntwo"
+    why: >-
+      Python runs the lines from top to bottom, and each `print` starts a new line of output. The word `print` itself
+      never appears, because it's an instruction and not part of the output.
+    variants:
+      - prompt: What does this print?
+        code: |
+          print("left")
+          print("right")
+          print("left")
+        choices: ["left\nright\nleft", "left\nright", "right\nleft\nleft", "left right left"]
+        answer: "left\nright\nleft"
+        why: >-
+          Every line runs, in order, even when it repeats an earlier one.
+
+  - type: learn
+    id: text-and-numbers
+    title: Text and numbers are different
+    body: >-
+      Text goes inside quotes, and programmers call it a string. Python prints what's inside the quotes exactly,
+      with the same spelling and spaces, but without the quotes themselves.
+
+
+      Numbers don't need quotes. Python treats them as values it can calculate with, so `print(2 + 3)` works out the
+      sum first and shows `5`. In quotes, `"2 + 3"` is just five characters of text, so Python shows them as they are.
+
+
+      You can give `print` several things, separated by commas. It shows them on one line with a space between each.
+    code: |
+      print("2 + 3")
+      print(2 + 3)
+      print("The answer is", 2 + 3)
+    subgoals:
+      - { line: 1, label: 'Text: shown exactly' }
+      - { line: 2, label: 'A number: worked out first' }
+      - { line: 3, label: 'Several values: spaces between them' }
+    predict: How will the first two lines of output differ?
+
+  - type: choice
+    id: quotes-or-math
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print("4 * 2")
+    choices: ['4 * 2', '8', '"4 * 2"', 'Error']
+    answer: '4 * 2'
+    why: >-
+      It's in quotes, so it's text. Python shows it exactly as written and doesn't calculate anything. The quotes
+      themselves aren't shown.
+    hints:
+      - Does anything here sit outside the quotes?
+    variants:
+      - code: |
+          print(4 * 2)
+        choices: ['8', '4 * 2', '42', 'Error']
+        answer: '8'
+        why: >-
+          With no quotes, `*` means multiply, so Python works it out and shows the result.
+      - code: |
+          print("Total:", 10 - 3)
+        choices: ['Total: 7', 'Total: 10 - 3', 'Total:7', '"Total:" 7']
+        answer: 'Total: 7'
+        why: >-
+          The text shows as written, the sum gets worked out, and `print` puts a space between them.
+
+  - type: explain
+    id: what-happens
+    prompt: What will this program show, and why in that order?
+    code: |
+      print("Start")
+      print(5 + 5)
+      print("End")
+    model: >-
+      It shows `Start`, then `10`, then `End`, because Python runs the lines one at a time from top to bottom. The
+      middle line has no quotes, so Python works out the sum.
+    keyPoints:
+      - Python runs the lines one at a time from top to bottom
+      - '`5 + 5` has no quotes, so it is calculated and shows 10'
+
+  - type: blank
+    id: fill-print
+    prompt: Fill in the blank so the program shows `Hello`.
+    code: |
+      ____("Hello")
+    answers: [['print']]
+    expectOutput: Hello
+    why: >-
+      `print` is the instruction that shows something. Capital letters matter, so `Print` wouldn't work.
+    variants:
+      - prompt: Fill in the blank so the program shows `12`.
+        code: |
+          print(3 ____ 4)
+        answers: [['*']]
+        expectOutput: '12'
+        why: >-
+          `*` is how you multiply in Python.
+      - prompt: Fill in the blank so the program shows the sum, not the text.
+        code: |
+          print(____)
+        answers: [['1 + 1', '1+1', '2']]
+        expectOutput: '2'
+        why: >-
+          No quotes, so Python calculates it.
+
+  - type: learn
+    id: comments
+    title: Notes for humans
+    body: >-
+      Anything after a `#` on a line is a comment. Python ignores it completely, so it's a note for whoever reads the
+      code next, which is often you, a month later.
+
+
+      Good comments say why something is there, not what the line obviously does. You'll also see comments used in
+      these lessons to mark what a program should show, and to switch a line off without deleting it.
+    code: |
+      # Greet the climber before the hike
+      print("Welcome")
+      # print("This line is switched off")
+      print("Ready")  # a comment can follow code too
+    subgoals:
+      - { line: 1, label: 'A note: ignored' }
+      - { line: 3, label: 'A switched-off line: ignored' }
+      - { line: 4, label: 'The code runs; the note is ignored' }
+    predict: How many lines will this show?
+
+  - type: parsons
+    id: order-lines
+    prompt: Put the lines in order so the program shows `Ready`, then `Set`, then `Go`.
+    code: |
+      print("Ready")
+      print("Set")
+      print("Go")
+    distractors: ['print(Ready)']
+    expectOutput: |
+      Ready
+      Set
+      Go
+    why: >-
+      The order you write is the order Python runs. Text also needs its quotes, so `print(Ready)` wouldn't work.
+
+  - type: fix
+    id: wrong-order
+    prompt: This should show `Lace up` first and `Set off` second. Fix it.
+    code: |
+      print("Set off")
+      print("Lace up")
+    solution: |
+      print("Lace up")
+      print("Set off")
+    expectOutput: |
+      Lace up
+      Set off
+    why: >-
+      Python can't tell what you meant. It only follows the order you wrote, so you fix the program by changing that
+      order.
+    hints:
+      - Which line needs to run first?
+    variants:
+      - prompt: This should show the result of `6 * 7`, which is `42`. Fix it.
+        code: |
+          print("6 * 7")
+        solution: |
+          print(6 * 7)
+        expectOutput: '42'
+        why: >-
+          With quotes, it's text and gets shown as written. Without them, Python calculates.
+        hints:
+          - What do the quotes tell Python?
+
+  - type: write
+    id: first-program
+    prompt: Write a program that shows `I am learning Python` on one line, then the result of `20 + 22` on the next.
+    starter: |
+      # Your first program
+    solution: |
+      print("I am learning Python")
+      print(20 + 22)
+    expectOutput: |
+      I am learning Python
+      42
+    why: >-
+      Two `print` lines, in order. The text needs quotes, and the sum must not have them.
+    hints:
+      - You need two lines, each starting with `print`.
+      - Should `20 + 22` be in quotes?
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A program is a list of instructions that Python runs from top to bottom, one at a time. `print()` shows values as
+      output. Text needs quotes and is shown exactly, while numbers can be calculated. A `#` starts a note that Python
+      ignores.
+
+
+      Next: what happens when something goes wrong, and how to read what Python tells you.

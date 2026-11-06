@@ -71,7 +71,7 @@ Up to 5 problems from everything already learned, chosen by FSRS (most overdue f
 leaving and coming back resumes it. Each problem shows up as a tile: right first try, right with help, or missed. When
 it's done, that's it until tomorrow.
 
-### Lessons (~12 min each, as many as you want)
+### Lessons (~15 min each, as many as you want)
 
 One visual, subgoal-labeled worked example → predict → run → practice ladder → explain. Then a checkpoint at the end of
 each unit, then the project. On a day with nothing to review, finishing a lesson counts the day.
@@ -115,7 +115,7 @@ Next lesson, extra reviews (due soonest first), or practice on any passed lesson
 | Python runtime     | **Pyodide** in a Web Worker — Phase 2                                      | Real Python + NumPy in the browser, no server needed, UI doesn't freeze |
 | Storage            | **IndexedDB via Dexie** — Phase 2                                          | All progress local; export/import JSON for backup                       |
 | Scheduling         | **ts-fsrs** — Phase 2                                                      | Open-source FSRS implementation                                         |
-| AI                 | **Gemini API** via a tiny local Node server — later                        | Keeps the key out of the browser; caches responses                      |
+| AI                 | **Gemini API**, called from the browser with my own key — optional         | No server to run; everything still works without it                     |
 | ML runtime         | NumPy in Pyodide (self-hosted wheels); PyTorch in Colab/Kaggle long blocks | Official Pyodide has no PyTorch                                         |
 | Tests              | **Vitest** (+ Testing Library)                                             | Same config as Vite                                                     |
 | Lint / format      | **oxlint** + Prettier                                                      | Came with the Vite template; very fast                                  |
@@ -131,7 +131,6 @@ gradient-ascent/
 │   ├── lessons/           ← worked examples, concept cards
 │   ├── exercises/         ← exercise items (by skill id)
 │   └── projects/          ← multi-day projects + milestones
-├── server/                ← (later) tiny local server: Gemini proxy, cache
 ├── src/
 │   ├── app/               ← routes, layout, providers
 │   ├── features/
@@ -141,7 +140,7 @@ gradient-ascent/
 │   │   ├── progress/      ← streak, XP, mastery, skill tree
 │   │   ├── runner/        ← code execution (Pyodide / JS workers)
 │   │   ├── visualizer/    ← step-through execution diagrams
-│   │   └── tutor/         ← AI hint ladder + explain grading
+│   │   └── ai/             ← Gemini check for explain cards
 │   │   └── lesson-demo/   ← sample lesson used by the style guide (prototype for exercises/)
 │   ├── components/        ← Adam, CodeBlock
 │   ├── components/ui/     ← design-system primitives (Button, Card, ProgressBar, Chip)
@@ -176,10 +175,22 @@ Daily      { day, itemIds, results: { itemId: clean|assisted|missed }, completed
 
 ### 6.5 Gemini notes
 
-- Free-tier limits change often (sources ranged ~20–1,500 requests/day per model). Check real limits in AI Studio.
-- Free-tier prompts may be used by Google to improve products → don't send private code I care about.
-- Cache every AI response by hash(prompt) on the local server; budget requests per day.
-- Key lives in `.env.local` (`GEMINI_API_KEY`), read only by the local server. Never committed.
+Optional. Without a key, explain cards are self-graded and nothing else changes.
+
+- **Model:** `gemini-3.5-flash-lite`, set in one place (`src/features/ai/gemini.ts`).
+- **Key:** pasted in Settings and kept in localStorage. It's left out of backups, sent only to Google in a header, and never
+  put in a URL. Any script running on the page could read it, so the app must never render model output as HTML.
+- **What it checks:** my answer against the model answer and key points, judging ideas rather than wording. The prompt tells it
+  not to be harsh on wording, names or order, and not to credit vague phrases, reading the code aloud, or false statements.
+- **Guardrails in code:** every key point must come back. A hit must quote my real words or it becomes "unclear". The verdict is
+  computed from the points, not taken from the model.
+- **Gemini suggests, I grade.** Explain cards aren't in spaced review, and if they ever join it, FSRS stays on my own grade.
+- **Failures:** every error (key, limit, offline, timeout, bad reply) shows a message and leaves self-grading working.
+  Results are cached in memory for the same answer.
+- **Limits:** check real ones in AI Studio. I couldn't verify "500 a day" for any model. Free-tier text may be used by Google to
+  improve its products and may be read by people.
+- **Before any public release:** Google's terms require users to be 18+, bar apps likely to be used by under-18s, and limit
+  the EEA, UK and Switzerland to paid services. Set aside for now. Re-read them before sharing this feature.
 
 ---
 
@@ -198,7 +209,7 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 - [x] Design tokens implemented in `src/styles/tokens.css` (dark only, Summit)
 - [x] Fonts self-hosted (works offline)
 - [x] Placeholder home + `/styleguide` page that renders the tokens and base primitives
-- [x] `.env.example`, `.gitignore`, README with how to run
+- [x] `.gitignore`, README with how to run
 - [x] Pick the mascot → **Adam the mountain goat** (`src/components/Adam.tsx`)
 - [x] Pick a visual direction → **Summit**; tokens, primitives and shell rebuilt from it
 - [x] Animate Adam (idle breathing/blink/ear flick; hop, flinch, tilt reactions)
@@ -211,7 +222,7 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 - [x] Content format (YAML + zod schema) + loader + validation script (`npm run content:check` runs every answer in real Python)
 - [x] Pyodide runner in a Web Worker (timeouts by restarting the worker, stdout capture, test harness)
 - [x] Monaco editor component (lazy-loaded, Summit theme, no autocomplete)
-- [x] Exercise components: worked example, predict-output/MC, Parsons, fill-blank, fix-bug, write-function, explain (self-graded for now)
+- [x] Exercise components: worked example, predict-output/MC, Parsons, fill-blank, fix-bug, write-function, explain (self-graded, with an optional Gemini check)
 - [x] Session builder + session runner (one card at a time, feedback, hints, try again / show answer, misses retried at the end)
 - [x] FSRS reviews (ts-fsrs, FSRS-7; anything seen today comes back tomorrow at the earliest)
 - [x] Streak (2 automatic freezes/week), XP, "done for today", "keep going" (next lesson, extra reviews, practice)
@@ -219,6 +230,10 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 - [x] Daily 5: its own session, fixed daily set, tiles, streak rule
 - [x] Card variants, project lessons, self-hosted NumPy
 - [x] Content: Unit 1 project, Unit 2 (9 lessons, checkpoint, project)
+- [x] Practice mode uses variants; Gemini check on explain cards; pilot lesson in the new format
+- [x] Tried the pilot: I liked the format, and it needed more teaching (done, §9a)
+- [x] Rewrite: Programs and values, the first of three Python units (done, §9a)
+- [ ] Rewrite: Functions and repetition, then Collections and libraries (§9a) ← **next**
 - [ ] Use it daily for 2 weeks and fix what feels off
 
 **Done when:** I can do a full daily session of Python for 2 weeks and reviews come back on schedule.
@@ -244,7 +259,7 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 
 ### Later, if still wanted
 
-- [ ] Local server + Gemini hint ladder + explain-grading + response cache
+- [ ] Gemini hints
 - [ ] Step-through code visualizer (top visualizations are free to link in the meantime)
 - [ ] AI-generated variants of mastered exercises, weekly recap, code autopsy
 
@@ -267,6 +282,64 @@ npm run content:check  # validate content + run every answer in real Python
 npm run setup:python   # download the Python packages (runs after npm install)
 ```
 
+## 9a. Feedback from using it, and what we decided
+
+From doing Unit 1, lessons 1–3. Research: `reports/Teaching Python and lesson design.md` (git-ignored, local only). Word,
+card and lesson counts below are judgement: no study tests whole-lesson formats or topic order for self-paced beginners.
+
+### Built (2026-11-06)
+
+- **Practice mode uses variants.** Each practice round moves a card to its next version.
+- **Blanks inside strings** now get an input, and a test checks every blank in every lesson.
+- **Explain panel padding** fixed.
+- **Gemini check** on explain cards, using a key pasted in Settings (see §6.5).
+- **Reread:** a button in lessons, practice and retries, and on the path for finished lessons. Daily sets, reviews and
+  checkpoints stay closed-book, because recalling unaided is their purpose.
+- **Pilot lesson:** the strings lesson, in the new format with no Java. It's now two lessons, `p1-06-strings.yaml` and `p1-07-building-text.yaml`.
+- **Unit 1, Programs and values:** 11 lessons, a checkpoint and a project, all in `p1-*.yaml`, with hand-written variants on most practice cards.
+  Learn cards and explain cards can now use `expectError` to show a program that crashes on purpose, and write cards can use `expectOutput`.
+
+### Pilot result
+
+I liked the format, but the first version still felt light (400 words for five ideas, about 80 words each). It explained
+what each tool does, but left out common errors, the difference between a name and text, and why things work. The second
+version has 746 words and an optional "Go deeper" on some cards. Still to learn: how long it takes, and whether I can still
+do its Daily 5 cards a few days later.
+
+### Python, not "Python from Java": next step
+
+The format passed, so Unit 1 becomes three Python units of about 36 lessons with no Java (see `CURRICULUM.md` §3). The first is built.
+The other two are next, and until then the older lessons stand in as a temporary Unit 2 and still mention Java. Lessons are
+written from scratch, because most good courses have non-commercial share-alike licences. Rewriting removes the `java` field,
+the "Compare with Java" button, Java wording and Java-based target mistakes.
+
+### Lesson format
+
+The current format is in `CURRICULUM.md` §1. Evidence for its parts is decent (segmenting, subgoal labels, tracing before
+writing). The whole has not been tested. The step-through visualizer is still not built, so lessons use predict and run.
+
+### Practice variety: next steps
+
+Variants exist on the new Unit 1 and a few Python for ML cards, so other lessons repeat the same cards in practice until this is done.
+Different numbers alone aren't enough, because you can memorize the method.
+
+1. Hand-write variants as lessons get rewritten, including 3–4 structurally different problems for key concepts. Unit 1 has
+   these; the next two units get theirs as they're written.
+2. Add an optional `template` block on a card. A build step runs seeded Python, computes the answer, makes wrong choices by
+   running buggy code, and writes ordinary `variants`, so everything stays offline with no key. Start with choice and blank
+   cards, then fix and write with mutation checks. Parsons and explain stay hand-written.
+3. Fail the build on low survival, duplicate choices or too few distinct shapes. A one-template prototype had 92.1% of draws
+   with a duplicate choice using naive ranges, and only 28 distinct shapes after narrowing.
+4. An LLM can draft templates at authoring time, behind the same checks and a human read. Consider a runtime "more like this"
+   button last, if at all.
+5. Don't count a lower practice score against mastery: varied practice should feel harder.
+
+### Order from here
+
+1. Rewrite into the three units, writing variants alongside.
+2. Build the template step.
+3. Back to Phase 3 (NumPy).
+
 ## 10. Open questions
 
 - Should explanations be typed or optionally spoken (speech-to-text)?
@@ -279,7 +352,9 @@ npm run setup:python   # download the Python packages (runs after npm install)
 | 2026-11-04 | Name: **Gradient Ascent**                                                                                            | Small steps uphill every day; ML pun                                                                              |
 | 2026-11-04 | Python first, then TS; three interleaved tracks                                                                      | Python is the ML language; TS explains my web projects                                                            |
 | 2026-11-04 | Local-only web app, Vite + React + TS                                                                                | Simple; the codebase itself is learning material                                                                  |
-| 2026-11-04 | Gemini (free tier) via local server, optional                                                                        | Free; key stays out of the browser                                                                                |
+| 2026-11-06 | Gemini called from the browser with my own key, optional                                                             | No server to run; replaces the 2026-11-04 local-server plan                                                       |
+| 2026-11-06 | Replace Unit 1 with three Python units, no Java, after a pilot lesson                                                | Should work for anyone; test the longer lesson format on one lesson first                                         |
+| 2026-11-06 | More explanation per idea, activities chosen by concept instead of a fixed ladder                                    | Short cards felt thin, and novice evidence favours fuller explanation in segments                                 |
 | 2026-11-04 | Phase 1 = plan + design + scaffold only                                                                              | Agree on the target before building                                                                               |
 | 2026-11-04 | Mascot: **Adam the mountain goat**                                                                                   | Climbs one step at a time; named after the Adam optimizer                                                         |
 | 2026-11-04 | First look rejected as too generic; 4 directions (Summit, Trailhead, Contour, Daybreak) built in a style lab         | Choose visually, mix parts, then commit                                                                           |
@@ -301,6 +376,7 @@ npm run setup:python   # download the Python packages (runs after npm install)
 | 2026-11-05 | Cards can have variants; each is checked in real Python                                                              | Repeating identical cards trains memory of the answer                                                             |
 | 2026-11-05 | Python packages are downloaded after install and verified by hash, not committed                                     | Stays offline at runtime without binaries in git                                                                  |
 | 2026-11-05 | Projects are lessons of write cards, with reference code in each starter                                             | Works today with no carryover engine; projects stay out of review                                                 |
+| 2026-11-06 | Rewrite one unit at a time, with older lessons standing in as a temporary unit                                       | The app keeps working, and feedback on Unit 1 can shape the next two before they're written                       |
 
 ## 12. Sources
 

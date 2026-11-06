@@ -1,6 +1,6 @@
 id: a1-patterns
 track: ml
-unit: 1
+unit: 2
 order: 10
 title: Loop patterns
 summary: Count, sum, find, best. One shape behind most loops.

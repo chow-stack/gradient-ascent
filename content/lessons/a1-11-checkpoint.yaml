@@ -1,10 +1,10 @@
 id: a1-checkpoint
 track: ml
-unit: 1
+unit: 2
 order: 11
 kind: checkpoint
-title: Unit 1 checkpoint
-summary: Everything from Unit 1, mixed up. Get 80% right to unlock Unit 2.
+title: Unit 2 checkpoint
+summary: Everything so far, mixed up. Get 80% right to move on.
 
 # Each card re-tests a Unit 1 target mistake (CURRICULUM.md §3) in code you haven't seen.
 cards:

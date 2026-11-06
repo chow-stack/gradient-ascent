@@ -1,0 +1,342 @@
+id: p1-reassignment
+track: ml
+unit: 1
+order: 5
+title: Changing variables
+summary: Update a variable, and see why variables don't stay linked.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Values change
+    body: >-
+      A model's score changes as it trains. A program counts things as it goes. Variables are useful because you can
+      change what they hold.
+
+
+      By the end of this lesson you'll be able to update a variable using its own value, and you'll understand the most
+      common wrong belief beginners have about `=`. People who are good at maths are especially likely to hold it, so
+      don't skip this.
+
+  - type: learn
+    id: reassign
+    title: Storing a new value
+    body: >-
+      When you assign to a name that already exists, the old value is replaced. The name now means the new value, and the
+      old one is gone.
+
+
+      The surprising form is `x = x + 1`. In maths, that's impossible. In Python it makes perfect sense, because `=` isn't a
+      statement of fact: it's an instruction. Python works out the right side first, using the current value of `x`, and
+      then stores the result back under `x`.
+
+
+      Since this comes up constantly, there's a shorthand: `x += 1` means the same as `x = x + 1`. There's also `-=`, `*=` and
+      `/=`.
+    code: |
+      x = 5
+      x = 8
+      print(x)
+      x = x + 1
+      print(x)
+      x += 10
+      print(x)
+    subgoals:
+      - { line: 2, label: 'The 5 is gone' }
+      - { line: 4, label: 'Right side first: 8 + 1, then store' }
+      - { line: 6, label: 'Shorthand for x = x + 10' }
+    predict: What three numbers will this show?
+
+  - type: choice
+    id: update-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      count = 0
+      count = count + 1
+      count = count + 1
+      print(count)
+    choices: ['2', '1', '0', 'Error']
+    answer: '2'
+    why: >-
+      Each line reads the current value, adds 1, and stores it back: 0, then 1, then 2.
+    variants:
+      - code: |
+          total = 10
+          total -= 3
+          total *= 2
+          print(total)
+        choices: ['14', '7', '20', '4']
+        answer: '14'
+        why: >-
+          `total` goes from 10 to 7, then to 14.
+      - code: |
+          n = 2
+          n = n * n
+          n = n * n
+          print(n)
+        choices: ['16', '4', '8', '2']
+        answer: '16'
+        why: >-
+          `n` goes from 2 to 4, then 4 times 4 is 16.
+
+  - type: learn
+    id: no-links
+    title: Variables don't stay linked
+    body: >-
+      This is the big one. Look at `total = price + 2`. If you're used to maths, you may read it as a rule, as if `total`
+      will always be `price` plus 2. It isn't a rule. That line runs once. Python looks up `price` at that moment, works out
+      the sum, and stores a plain number under `total`. `total` doesn't remember where that number came from.
+
+
+      So if `price` changes later, `total` doesn't move. To update it, you have to run a calculation again.
+
+
+      A spreadsheet works the other way: its formulas stay live. Python's assignment is more like writing the answer down on
+      paper.
+    deeper: >-
+      In one study, 19 out of 24 secondary school students who had already studied programming expected a variable to keep
+      updating this way. It's a sensible guess, because that's how equations work in maths. Later you'll meet cases where two names
+      really do share one list. Numbers and strings never behave like that, and that story has to wait until you know lists.
+    code: |
+      price = 10
+      total = price + 2
+      price = 100
+      print(total)
+      total = price + 2
+      print(total)
+    subgoals:
+      - { line: 2, label: 'Works out 12, and stores it' }
+      - { line: 3, label: 'Changes price only' }
+      - { line: 4, label: 'Still 12' }
+      - { line: 5, label: 'Calculate again to update' }
+    predict: What will the first `print(total)` show?
+
+  - type: choice
+    id: no-live-link
+    kind: predict
+    prompt: What does this print?
+    code: |
+      s = 2
+      t = 3 * s + 1
+      s = 10
+      print(t)
+    choices: ['7', '31', '10', 'Error']
+    answer: '7'
+    why: >-
+      `t` got the value 7 when line 2 ran. Changing `s` afterwards doesn't go back and change `t`.
+    hints:
+      - Trace it. What number is stored in `t` right after line 2?
+    variants:
+      - code: |
+          a = 3
+          b = a
+          a = 10
+          print(b)
+        choices: ['3', '10', '13', 'Error']
+        answer: '3'
+        why: >-
+          `b = a` stored the value 3 at that moment. Moving `a` to 10 later doesn't move `b`.
+      - code: |
+          width = 2
+          area = width * width
+          width = 5
+          area = width * width
+          print(area)
+        choices: ['25', '4', '10', '20']
+        answer: '25'
+        why: >-
+          Here `area` was calculated again after `width` changed, so it has the new value.
+
+  - type: explain
+    id: why-not-update
+    prompt: Someone expects this to show `20`, but it shows `10`. Explain why.
+    code: |
+      hours = 1
+      pay = hours * 10
+      hours = 2
+      print(pay)
+    model: >-
+      `pay` got the value 10 when its line ran. Changing `hours` later doesn't change `pay`, because the calculation only runs
+      once and isn't a lasting rule. You'd have to calculate `pay` again.
+    keyPoints:
+      - '`pay` stored a value when its line ran, and does not remember how it was calculated'
+      - Changing `hours` later has no effect unless `pay` is calculated again
+
+  - type: learn
+    id: type-changes
+    title: A name can hold any kind of value
+    body: >-
+      A variable isn't tied to one type. It's only a name, so you can move it to a different kind of value at any time. The
+      built-in `type()` tells you what kind of value a name holds right now.
+
+
+      This freedom makes Python quick to write, but it can also cause bugs. If a name that held a number now holds text, a
+      later calculation can fail with a `TypeError`. That's why it's good to use a name for one kind of thing throughout.
+
+
+      Finally, one classic pattern. To swap two variables, you need a third to hold a value temporarily, or the first
+      assignment destroys it.
+    code: |
+      x = 5
+      print(type(x))
+      x = "five"
+      print(type(x))
+      a = 1
+      b = 2
+      temp = a
+      a = b
+      b = temp
+      print(a, b)
+    subgoals:
+      - { line: 1, label: 'x holds an int' }
+      - { line: 3, label: 'Now it holds text' }
+      - { line: 7, label: 'Save a before overwriting it' }
+      - { line: 9, label: 'Use the saved value' }
+    predict: What would go wrong if you left out `temp` and wrote `a = b`, then `b = a`?
+
+  - type: parsons
+    id: swap
+    prompt: Put the lines in order so the program swaps `a` and `b` and prints `2 1`.
+    code: |
+      a = 1
+      b = 2
+      temp = a
+      a = b
+      b = temp
+      print(a, b)
+    distractors: ['b = a']
+    expectOutput: '2 1'
+    why: >-
+      Save `a` in `temp` before overwriting it, or its value is lost. (Python also has a shortcut: `a, b = b, a`.)
+    hints:
+      - If you write `a = b` first, what happens to the old value of `a`?
+
+  - type: blank
+    id: fill-update
+    prompt: Fill in the blank so that `score` goes up by 5, and the program shows `15`.
+    code: |
+      score = 10
+      score = ____ + 5
+      print(score)
+    answers: [['score']]
+    expectOutput: '15'
+    why: >-
+      The right side uses the current value of `score`, and the result is stored back under the same name.
+    variants:
+      - prompt: Fill in the operator so that `lives` goes down by 1, and the program shows `2`.
+        code: |
+          lives = 3
+          lives ____ 1
+          print(lives)
+        answers: [['-=']]
+        expectOutput: '2'
+        why: >-
+          `-=` is shorthand for `lives = lives - 1`.
+      - prompt: Fill in the operator so that `size` doubles, and the program shows `12`.
+        code: |
+          size = 6
+          size ____ 2
+          print(size)
+        answers: [['*=']]
+        expectOutput: '12'
+        why: >-
+          `*=` is shorthand for `size = size * 2`.
+
+  - type: fix
+    id: forgot-store
+    prompt: This should show `11`, but it shows `10`. Fix it.
+    code: |
+      points = 10
+      points + 1
+      print(points)
+    solution: |
+      points = 10
+      points = points + 1
+      print(points)
+    highlightLine: 2
+    expectOutput: '11'
+    why: >-
+      `points + 1` works out 11, then throws it away. To keep a result, you have to store it.
+    hints:
+      - What does line 2 do with its answer?
+    variants:
+      - prompt: This should show `24`, the new total after `price` changes to 20. Fix it.
+        code: |
+          price = 10
+          total = price + 4
+          price = 20
+          print(total)
+        solution: |
+          price = 20
+          total = price + 4
+          print(total)
+        expectOutput: '24'
+        why: >-
+          `total` is only calculated when its line runs, so it must run after `price` has its final value.
+        hints:
+          - When is `total` worked out, compared to when `price` becomes 20?
+
+  - type: write
+    id: bank
+    prompt: >-
+      `balance` starts at 100. Add `deposit` to it, then take away `fee`, updating `balance` both times. Don't type the final
+      number yourself.
+    starter: |
+      balance = 100
+      deposit = 50
+      fee = 3
+      # update balance here
+    solution: |
+      balance = 100
+      deposit = 50
+      fee = 3
+      balance += deposit
+      balance -= fee
+    tests:
+      - { call: balance, expect: '147' }
+    why: >-
+      Each line reads the current balance and stores the new one, so the order follows what happens to the money.
+    hints:
+      - '`+=` adds to a variable, and `-=` takes away from it.'
+    variants:
+      - prompt: Double `level`, and then add `bonus`, updating `level` both times.
+        starter: |
+          level = 4
+          bonus = 3
+          # update level here
+        solution: |
+          level = 4
+          bonus = 3
+          level *= 2
+          level += bonus
+        tests:
+          - { call: level, expect: '11' }
+        hints:
+          - '`*=` multiplies a variable, and `+=` adds to it.'
+
+  - type: choice
+    id: remember-name-text
+    kind: predict
+    prompt: From earlier. What does this print?
+    code: |
+      steps = 4
+      steps = steps * 2
+      print("steps", steps)
+    choices: ['steps 8', 'steps 4', '8 8', 'steps steps']
+    answer: 'steps 8'
+    why: >-
+      `"steps"` with quotes is the word itself. Without quotes, `steps` is the variable, which now holds 8.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Assigning replaces the old value. `x = x + 1` reads the current value, adds 1 and stores it back, and `x += 1` is the
+      shorthand. An assignment runs once and isn't a lasting rule, so variables don't stay linked: to update a result, calculate
+      it again. A result that isn't stored is lost.
+
+
+      Next: text, in much more detail.

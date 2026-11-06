@@ -1,4 +1,4 @@
-import { Check, Dumbbell, Flag, Hammer, Lock, Play, Star } from 'lucide-react'
+import { BookOpen, Check, Dumbbell, Flag, Hammer, Lock, Play, Star } from 'lucide-react'
 import { Link } from 'react-router'
 import { tracks, lessonsForTrack } from '../features/content/content'
 import { isCheckpoint, isProject } from '../features/content/schema'
@@ -67,6 +67,16 @@ export function PathPage() {
                           <Play size={14} aria-hidden /> Start
                         </Link>
                       )}
+                      {(status === 'passed' || status === 'mastered') &&
+                        lesson.cards.some((c) => c.type === 'learn') && (
+                          <Link
+                            to={`/read/${lesson.id}`}
+                            className="ga-btn ga-btn--ghost ga-btn--sm"
+                            aria-label={`Reread ${lesson.title}`}
+                          >
+                            <BookOpen size={14} aria-hidden /> <span className="hidden sm:inline">Reread</span>
+                          </Link>
+                        )}
                       {(status === 'passed' || status === 'mastered') && (
                         <Link
                           to={`/session?kind=practice&lesson=${lesson.id}`}

@@ -1,0 +1,331 @@
+id: a1-strings
+track: ml
+unit: 1
+order: 6
+title: Working with text
+summary: Pull any piece out of a string.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Text is data too
+    body: >-
+      Programs spend a lot of time on text: cleaning up a name, reading part of a file name, or printing a result that
+      people can understand. In machine learning, a language model starts by turning text into pieces it can count.
+
+
+      By the end of this lesson you'll be able to pull any piece out of a string. It all rests on one simple idea about
+      how Python stores text, and that same idea comes back with lists and NumPy arrays.
+
+  - type: learn
+    id: quotes
+    title: Quotes make it text
+    body: >-
+      A string is text inside quotes. The quotes matter: they tell Python "take these characters literally". Without
+      them, Python treats the word as the name of a variable and looks up what it holds. So `name` is a variable, and
+      `"name"` is just four letters.
+
+
+      You can use double or single quotes, as long as they match. Use double quotes when the text has an apostrophe in it,
+      like `"it's"`.
+
+
+      Anything in quotes is text, even digits. `"5"` is a character, not a number, so `+` joins it to other text instead
+      of adding.
+    code: |
+      name = "Adam"
+      print(name)
+      print("name")
+      print("5" + "5")
+      print(5 + 5)
+    subgoals:
+      - { line: 2, label: 'A variable, so Python looks up its value' }
+      - { line: 3, label: 'A string, so it prints exactly as written' }
+      - { line: 4, label: 'Text joins' }
+      - { line: 5, label: 'Numbers add' }
+    predict: What will the two lines that use `5` print?
+
+  - type: choice
+    id: name-or-text
+    kind: predict
+    prompt: What does this print?
+    code: |
+      pet = "goat"
+      print("pet")
+    choices: ['pet', 'goat', '"pet"', 'Error']
+    answer: 'pet'
+    why: >-
+      `"pet"` has quotes, so it's the text itself. Python never looks at the variable. The quotes aren't part of the text,
+      so they don't print.
+    variants:
+      - code: |
+          print("3" + "4")
+        choices: ['34', '7', '"3""4"', 'Error']
+        answer: '34'
+        why: >-
+          Both are text, so `+` joins them rather than adding.
+      - code: |
+          city = "Oslo"
+          print(city)
+        choices: ['Oslo', 'city', '"Oslo"', 'Error']
+        answer: 'Oslo'
+        why: >-
+          `city` has no quotes, so Python looks up the variable and prints what it holds.
+
+  - type: learn
+    id: positions
+    title: Every character has a position
+    body: >-
+      A string is a row of characters in a fixed order, and each one has a number called its index. Counting starts at 0,
+      because the index means "how many steps from the start". The first character is zero steps away.
+
+
+      Put an index in square brackets to read one character. Negative numbers count from the end, so `[-1]` is always the
+      last character, however long the string is. `len()` tells you how many characters there are, and spaces count too.
+
+
+      A string of 4 characters has indexes 0 to 3, so its length is never a valid index. `word[4]` stops the program with
+      `IndexError: string index out of range`. When you see that error, you asked for a position past the end.
+    deeper: >-
+      Why count from 0? Because the index is a distance. A string is stored as characters side by side, and Python finds a
+      character by starting at the beginning and moving forward by the index. The first character needs no movement. Most
+      programming languages count this way, and so do NumPy arrays.
+    code: |
+      #  g   o   a   t
+      #  0   1   2   3
+      # -4  -3  -2  -1
+      word = "goat"
+      print(word[0])
+      print(word[3])
+      print(word[-1])
+      print(len(word))
+    subgoals:
+      - { line: 1, label: 'Each character has two positions' }
+      - { line: 4, label: 'Make a string' }
+      - { line: 5, label: 'Read from the start' }
+      - { line: 7, label: 'Read from the end' }
+      - { line: 8, label: 'Count the characters' }
+    predict: Which letter does `word[3]` give, and what does `len(word)` give?
+
+  - type: choice
+    id: index
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "summit"
+      print(word[1])
+    choices: ['u', 's', 'm', 'Error']
+    answer: 'u'
+    why: >-
+      Index 0 is `s`, so index 1 is the second character, `u`.
+    hints:
+      - Write the numbers under the letters, starting from 0.
+    variants:
+      - code: |
+          word = "ladder"
+          print(word[-2])
+        choices: ['e', 'r', 'd', 'Error']
+        answer: 'e'
+        why: >-
+          `[-1]` is the last character, `r`, so `[-2]` is the one before it, `e`.
+      - code: |
+          word = "trail"
+          print(word[2])
+        choices: ['a', 'r', 'i', 'Error']
+        answer: 'a'
+        why: >-
+          Counting from 0: `t` is 0, `r` is 1, `a` is 2.
+
+  - type: explain
+    id: last-char
+    prompt: Why does this print the last letter, and why would `word[len(word)]` crash?
+    code: |
+      word = "goat"
+      print(word[len(word) - 1])
+    model: >-
+      `len(word)` is 4, but indexes start at 0, so the last valid index is 3. Subtracting 1 lands on the last letter, while
+      index 4 is past the end of the string.
+    keyPoints:
+      - Indexes start at 0, so the last valid index is one less than the length
+      - '`word[len(word)]` asks for a position past the end of the string'
+
+  - type: learn
+    id: slices
+    title: A slice takes several characters
+    body: >-
+      `word[a:b]` gives you a piece of the string: it starts at index `a` and stops just before index `b`. The stop
+      position is left out, which feels odd at first but has a useful result: `b - a` is always the number of characters
+      you get back.
+
+
+      Leave out a side to go all the way to that end. `word[:3]` is the first three characters, and `word[3:]` is everything
+      else. Together they make the whole string again.
+
+
+      Slices are more forgiving than single indexes. A stop past the end doesn't crash, and you just get whatever is there,
+      so `"goat"[2:100]` is `"at"`. The original string stays exactly as it was: a slice is a new string.
+    deeper: >-
+      It helps to picture the index numbers sitting between the characters, like cuts in a rope. `word[1:4]` means "cut at 1
+      and at 4, and keep the middle". This is why `word[:3] + word[3:]` never loses or repeats a character: both pieces use
+      the same cut. Lists and NumPy arrays slice by this same rule.
+    code: |
+      word = "summit"
+      print(word[1:4])
+      print(word[:3])
+      print(word[3:])
+      print(word[2:100])
+    subgoals:
+      - { line: 2, label: 'Start at 1, stop before 4' }
+      - { line: 3, label: 'From the start' }
+      - { line: 4, label: 'To the end' }
+      - { line: 5, label: 'A stop past the end is fine' }
+    predict: How many characters will `word[1:4]` print, and which ones?
+
+  - type: choice
+    id: slice
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "summit"
+      print(word[2:5])
+    choices: ['mmi', 'mmit', 'umm', 'mi']
+    answer: 'mmi'
+    why: >-
+      Indexes 2, 3 and 4 are `m`, `m`, `i`. The stop index, 5, is left out, and 5 - 2 = 3 characters.
+    hints:
+      - Number the letters from 0, then stop just before index 5.
+    variants:
+      - code: |
+          word = "python"
+          print(word[1:3])
+        choices: ['yt', 'yth', 'py', 'pyt']
+        answer: 'yt'
+        why: >-
+          Indexes 1 and 2 are `y` and `t`. The stop index, 3, is left out.
+      - code: |
+          word = "gradient"
+          print(word[:4])
+        choices: ['grad', 'gradi', 'radi', 'rad']
+        answer: 'grad'
+        why: >-
+          With no start, the slice begins at index 0, and it stops just before index 4.
+      - code: |
+          word = "ascent"
+          print(word[2:])
+        choices: ['cent', 'scent', 'as', 'ent']
+        answer: 'cent'
+        why: >-
+          It starts at index 2, which is `c`. With no stop, it runs to the end.
+
+  - type: blank
+    id: fill-slice
+    prompt: Fill in the blank so it prints `moun`, the first four letters.
+    code: |
+      word = "mountain"
+      print(word[____])
+    answers: [[':4', '0:4']]
+    expectOutput: moun
+    why: >-
+      Start at 0 and stop just before index 4. You can leave the 0 out.
+    variants:
+      - prompt: Fill in the blank so it prints `n`, the last letter.
+        code: |
+          word = "mountain"
+          print(word[____])
+        answers: [['-1', '7']]
+        expectOutput: 'n'
+        why: >-
+          `[-1]` always gives the last character, however long the string is.
+      - prompt: Fill in the blank so it prints `tain`.
+        code: |
+          word = "mountain"
+          print(word[____])
+        answers: [['4:', '-4:', '4:8']]
+        expectOutput: tain
+        why: >-
+          Start at index 4 and run to the end.
+
+  - type: fix
+    id: past-end
+    prompt: This should print the last letter, `t`, but it crashes with an `IndexError`. Fix it.
+    code: |
+      word = "goat"
+      print(word[4])
+    solution: |
+      word = "goat"
+      print(word[3])
+    highlightLine: 2
+    expectOutput: t
+    why: >-
+      A string of 4 characters has indexes 0 to 3. `word[-1]` also works, and carries on working if the word changes.
+    hints:
+      - What are the valid indexes for a string of 4 characters?
+    variants:
+      - prompt: This should print `sum`, but it prints `su`. Fix it.
+        code: |
+          word = "summit"
+          print(word[0:2])
+        solution: |
+          word = "summit"
+          print(word[0:3])
+        highlightLine: 2
+        expectOutput: sum
+        why: >-
+          The stop index is left out, so to get three characters you stop at 3.
+        hints:
+          - Which index does a slice stop just before?
+
+  - type: write
+    id: domain
+    prompt: Make `ending` hold the last three letters of `word`. Use a slice, so that it would work for any word.
+    starter: |
+      word = "summit"
+    solution: |
+      word = "summit"
+      ending = word[-3:]
+    tests:
+      - { call: ending, expect: "'mit'" }
+    why: >-
+      `word[-3:]` starts three from the end and runs to the end. It works whatever the length of the word.
+    hints:
+      - A negative start counts from the end. What goes after the colon if you want to run to the end?
+    variants:
+      - prompt: Make `middle` hold `word` with its first and last characters removed.
+        starter: |
+          word = "summit"
+        solution: |
+          word = "summit"
+          middle = word[1:-1]
+        tests:
+          - { call: middle, expect: "'ummi'" }
+        hints:
+          - Start at index 1. A negative stop counts from the end, and it's left out too.
+
+  - type: choice
+    id: remember-assignment
+    kind: predict
+    prompt: This one also uses an idea from the last lesson. What does it print?
+    code: |
+      word = "goat"
+      size = len(word)
+      word = "mountain"
+      print(size)
+    choices: ['4', '8', '12', 'Error']
+    answer: '4'
+    why: >-
+      `size` got the number 4 when that line ran. Changing `word` later doesn't go back and update it.
+    hints:
+      - Go line by line. What is stored in `size` right after line 2?
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Quotes make text, and without them Python looks up a variable. Read one character with `word[i]`, starting from 0, or
+      from the end with a negative index. Take a piece with `word[a:b]`, which stops just before `b`. `len()` gives the
+      length, which is never a valid index.
+
+
+      Next: building new text from your values.

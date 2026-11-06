@@ -1,0 +1,315 @@
+id: p1-calling
+track: ml
+unit: 1
+order: 8
+title: Calling functions
+summary: Give a function some values, and get a value back.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Tools someone already built
+    body: >-
+      You've been using functions since your first line of code: `print`, `len`, `int`. A function is a named piece of code that
+      does a job. Most of machine learning code is calling functions, so it's worth getting this exactly right.
+
+
+      By the end of this lesson you'll be able to call any function, use what it gives back, and read a line with several calls
+      inside each other. Soon after that, you'll write your own.
+
+  - type: learn
+    id: anatomy
+    title: Calling a function
+    body: >-
+      To use a function, write its name followed by parentheses. The parentheses are what make it run. This is called calling
+      the function. The values you put inside are called arguments, separated by commas.
+
+
+      Most functions give back a value, which is called the return value. When Python finishes the call, you can imagine the whole
+      call being replaced by that value. So `round(3.7) + 1` becomes `4 + 1`. You can print it, store it or use it in a sum.
+
+
+      Python comes with useful built-in functions: `abs()` drops a minus sign, `round()` rounds, and `max()` and `min()` pick the
+      largest or smallest of their arguments.
+    deeper: >-
+      `round(2.567, 1)` takes a second argument, the number of decimals, and gives `2.6`. Some functions have optional arguments like
+      this, and the function's documentation lists them. Oddly, `round(2.5)` gives `2`, not `3`. Python rounds exact halves to the
+      nearest even number, which keeps long lists of rounded numbers from drifting upward.
+    code: |
+      print(abs(-7))
+      print(round(3.7))
+      biggest = max(4, 9, 2)
+      print(biggest)
+      print(min(4, 9, 2) + 1)
+    subgoals:
+      - { line: 1, label: 'One argument' }
+      - { line: 3, label: 'Three arguments, and store the return value' }
+      - { line: 5, label: 'Use the return value in a sum' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: return-value
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = max(3, 8) - 1
+      print(x)
+    choices: ['7', '8', '2', 'Error']
+    answer: '7'
+    why: >-
+      `max(3, 8)` gives back 8, so the line becomes `x = 8 - 1`.
+    variants:
+      - code: |
+          print(abs(-4) + 1)
+        choices: ['5', '-3', '3', '4']
+        answer: '5'
+        why: >-
+          `abs(-4)` gives back 4, then adding 1 makes 5.
+      - code: |
+          n = round(9.6)
+          print(n * 2)
+        choices: ['20', '19.2', '18', '9.6']
+        answer: '20'
+        why: >-
+          `round(9.6)` gives back 10, and that's what gets stored in `n`.
+      - code: |
+          print(len("hike") + len("up"))
+        choices: ['6', '2', 'hikeup', '42']
+        answer: '6'
+        why: >-
+          The two calls give back 4 and 2, and then Python adds them.
+
+  - type: learn
+    id: inside-out
+    title: Calls inside calls
+    body: >-
+      An argument can itself be a call. To read a line like this, start from the inside. Python can't run the outer function until
+      it knows what to give it, so the innermost call runs first, and its return value is passed outward.
+
+
+      In `print(abs(min(3, -8)))`, Python first works out `min(3, -8)`, which is `-8`. Then `abs(-8)`, which is `8`. Then it shows `8`.
+
+
+      Reading left to right is the natural mistake, and it gives the wrong order. If a line gets hard to read, split it into steps with
+      named variables. That's never wrong, and it's often clearer.
+    code: |
+      print(abs(min(3, -8)))
+      # The same thing, in steps:
+      smallest = min(3, -8)
+      size = abs(smallest)
+      print(size)
+    subgoals:
+      - { line: 1, label: 'Innermost first, then outward' }
+      - { line: 3, label: 'Step 1: min' }
+      - { line: 4, label: 'Step 2: abs' }
+      - { line: 5, label: 'Step 3: print' }
+    predict: Will the two ways show the same number?
+
+  - type: choice
+    id: nested
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(max(2, abs(-5)))
+    choices: ['5', '2', '-5', 'Error']
+    answer: '5'
+    why: >-
+      The inside runs first: `abs(-5)` is 5. Then `max(2, 5)` is 5.
+    hints:
+      - Start from the innermost parentheses.
+    variants:
+      - code: |
+          print(len(str(1234)))
+        choices: ['4', '1234', '1', 'Error']
+        answer: '4'
+        why: >-
+          `str(1234)` gives the text `"1234"`, and `len` counts its 4 characters.
+      - code: |
+          print(round(abs(-2.6)))
+        choices: ['3', '-3', '2', '2.6']
+        answer: '3'
+        why: >-
+          `abs(-2.6)` is 2.6, and `round(2.6)` is 3.
+
+  - type: explain
+    id: explain-nested
+    prompt: In what order does Python work through this line, and what does it show?
+    code: |
+      print(abs(max(-9, -2)))
+    model: >-
+      It starts from the inside. `max(-9, -2)` gives back -2, then `abs(-2)` gives back 2, and `print` shows `2`.
+    keyPoints:
+      - The innermost call runs first, and its return value is passed outward
+      - '`max` gives -2, since -2 is larger than -9, and `abs` makes it 2'
+
+  - type: learn
+    id: print-vs-return
+    title: Showing isn't returning
+    body: >-
+      This difference trips up nearly everyone, so here it is early. `print` shows a value to a human, on the screen. It doesn't
+      give anything back to your program. Technically it returns the special value `None`, which means "nothing here".
+
+
+      So `x = print(5)` shows `5`, but `x` holds `None`. By contrast, `x = abs(-5)` shows nothing, and `x` holds `5`. If you want to use
+      a result later, you need a function that returns it.
+
+
+      And don't forget the parentheses. `print(len)` doesn't call `len`. It shows a description of the function itself, like
+      `<built-in function len>`, with no error. Writing a function's name without parentheses just refers to it.
+    code: |
+      x = print(5)
+      print(x)
+      y = abs(-5)
+      print(y)
+      print(len)
+    subgoals:
+      - { line: 1, label: 'Shows 5, and stores None' }
+      - { line: 3, label: 'Shows nothing, and stores 5' }
+      - { line: 5, label: 'No call: just describes the function' }
+    predict: What will `print(x)` show?
+
+  - type: choice
+    id: print-returns-none
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = len("hello")
+      b = print("hi")
+      print(a, b)
+    choices: ["hi\n5 None", "5 hi", "hi\n5 hi", "Error"]
+    answer: "hi\n5 None"
+    why: >-
+      `len` gives back 5. `print("hi")` shows `hi` straight away and gives back `None`, so that's what `b` holds.
+    variants:
+      - prompt: What does this print?
+        code: |
+          word = "goat"
+          print(len(word) * 2)
+        choices: ['8', 'goatgoat', 'len(word) * 2', 'None']
+        answer: '8'
+        why: >-
+          `len(word)` gives back the number 4, and then `* 2` multiplies it.
+
+  - type: blank
+    id: fill-call
+    prompt: Fill in the blank so it shows the larger number, `9`.
+    code: |
+      print(____(4, 9))
+    answers: [['max']]
+    expectOutput: '9'
+    why: >-
+      `max` gives back the largest of its arguments.
+    variants:
+      - prompt: Fill in the blank so it shows `3`, the number of characters.
+        code: |
+          print(____("hey"))
+        answers: [['len']]
+        expectOutput: '3'
+        why: >-
+          `len` counts the characters in a string.
+      - prompt: Fill in the blank so it shows `6`, with no minus sign.
+        code: |
+          print(____(-6))
+        answers: [['abs']]
+        expectOutput: '6'
+        why: >-
+          `abs` gives the size of a number, without its sign.
+
+  - type: fix
+    id: lost-return
+    prompt: This should show `8`, but it shows `-8`. Fix it.
+    code: |
+      n = -8
+      abs(n)
+      print(n)
+    solution: |
+      n = -8
+      n = abs(n)
+      print(n)
+    highlightLine: 2
+    expectOutput: '8'
+    why: >-
+      `abs(n)` gives back 8, but the line doesn't store it, so it's lost. Functions don't change the variable you give them.
+    hints:
+      - Where does the value from `abs(n)` go?
+    variants:
+      - prompt: This should show `5`, the length of the word, but it shows something strange. Fix it.
+        code: |
+          word = "trail"
+          print(len)
+        solution: |
+          word = "trail"
+          print(len(word))
+        highlightLine: 2
+        expectOutput: '5'
+        why: >-
+          Without parentheses, `len` is only the function's name. Calling it needs parentheses and an argument.
+        hints:
+          - What makes a function actually run?
+      - prompt: This should show `11`, but it crashes with a `TypeError`. Fix it.
+        code: |
+          total = print(5 + 5)
+          print(total + 1)
+        solution: |
+          total = 5 + 5
+          print(total + 1)
+        highlightLine: 1
+        expectOutput: '11'
+        why: >-
+          `print` gives back `None`, so `total` held nothing that could be added to. To show 11 alone, store the sum directly.
+        hints:
+          - What does `print` give back?
+
+  - type: write
+    id: spread
+    prompt: Make `spread` hold the difference between the largest and the smallest of `a`, `b` and `c`.
+    starter: |
+      a = 12
+      b = 5
+      c = 9
+    solution: |
+      a = 12
+      b = 5
+      c = 9
+      spread = max(a, b, c) - min(a, b, c)
+    tests:
+      - { call: spread, expect: '7' }
+    why: >-
+      Each call gives back a number, so you can subtract one from the other directly.
+    hints:
+      - You can use two function calls in the same calculation.
+    variants:
+      - prompt: Make `digits` hold how many digits `n` has. You can't call `len` on a number directly.
+        starter: |
+          n = 40960
+        solution: |
+          n = 40960
+          digits = len(str(n))
+        tests:
+          - { call: digits, expect: '5' }
+        hints:
+          - Convert it to text first, then count the characters.
+
+  - type: choice
+    id: remember-fstring
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      word = "summit"
+      print(f"{word[:3]} {len(word)}")
+    choices: ['sum 6', 'summ 6', 'word[:3] len(word)', 'sum 5']
+    answer: 'sum 6'
+    why: >-
+      Braces can hold any expression. The slice stops just before index 3, and `len` counts 6 characters.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Parentheses call a function. Arguments go in, and a return value comes out, which you can use like any other value. Nested calls
+      run from the inside out. `print` shows a value but returns `None`, so it's no use for keeping results.
+
+
+      Next: questions with yes or no answers, which let programs make decisions.

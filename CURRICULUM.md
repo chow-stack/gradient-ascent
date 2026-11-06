@@ -7,9 +7,10 @@ will change as the app gets used.
 **One path:** everything serves one goal, understanding machine learning deeply enough to build a tiny GPT from
 scratch. The research behind this order is summarised in §6.
 
-**Learner profile:** took AP CSA (Java) and AP CSP, but much of it didn't stick. Calc AB/BC went well (rusty).
-AP Stats plus a college stats class in progress. Goal: deep understanding. Unit checkpoints test what really stuck,
-so nothing further is compressed until there's evidence from them.
+**Who it's for:** anyone starting Python from zero and aiming at machine learning, with no other language assumed. Units
+are being rewritten to match. Math units still assume my background (Calc AB/BC, rusty; AP Stats plus a college stats class),
+to be revisited if the project is shared. Goal: deep understanding. Unit checkpoints test what really stuck, so nothing further
+is compressed until there's evidence from them.
 
 ---
 
@@ -19,11 +20,11 @@ so nothing further is compressed until there's evidence from them.
 
 **Path → unit → lesson.**
 
-| Level  | Size                         | Ends with                         |
-| ------ | ---------------------------- | --------------------------------- |
-| Lesson | 7–10 cards, about 12 minutes | Nothing extra; review takes over  |
-| Unit   | 5–10 lessons                 | A checkpoint, then a mini-project |
-| Path   | 11 units                     | Train a tiny GPT                  |
+| Level  | Size                          | Ends with                         |
+| ------ | ----------------------------- | --------------------------------- |
+| Lesson | 10–16 cards, about 15 minutes | Nothing extra; review takes over  |
+| Unit   | 5–10 lessons                  | A checkpoint, then a mini-project |
+| Path   | 11 units                      | Train a tiny GPT                  |
 
 ### Two daily loops
 
@@ -40,22 +41,38 @@ Rules for the Daily 5:
 
 If reviews keep piling up or checkpoints start failing, that's the signal to do fewer new lessons.
 
-### The lesson ladder
+### How a lesson is built
 
-Every lesson climbs the same ladder, from reading code to writing it. Not every lesson needs every rung, but
-the order stays the same.
+_New format, from the pilot (`a1-03-strings.yaml`). Other lessons still use the older fixed ladder until they're rewritten._
 
-1. **Learn:** a worked example with labelled steps. You predict the output, then run it.
-2. **Predict / concept (2–3 cards):** multiple choice. Each wrong answer is a known mistake (see §2).
-3. **Parsons:** put lines in order.
-4. **Blank:** fill in one missing piece of working code.
-5. **Modify** _(planned card type)_: working code is given; change it to do something slightly different.
-6. **Fix:** buggy code; find and fix the bug. The bug is one of the lesson's target mistakes.
-7. **Write:** a small function with visible and hidden tests.
-8. **Explain:** say what the code does in plain English.
+Each lesson is about 15 minutes and about 10–16 cards. It teaches properly, in small pieces, and ends with writing code alone.
 
-Worked examples come first for ideas with many moving parts (backprop, attention). Simple ideas can open with a
-prediction instead.
+- **Explanation:** about 100–150 words per idea, in cards with an activity after each one or two. That's usually 400–750 words
+  a lesson. Split a lesson that goes past that, rather than thinning it out.
+- **What each idea covers:** what it does, why it works that way, the error or mistake people run into, and how it connects to
+  what comes next.
+- **Go deeper:** optional extra depth on a card, collapsed until opened.
+- **Reread:** the teaching stays one button away during lessons and practice.
+- **Opening:** a concrete goal, then a labelled example if the notation is new, or a prediction if the idea is about
+  behaviour and I can reason from what I know. A prediction with nothing to go on is only a guess.
+- **Order:** reading before writing, but activities are chosen by concept rather than running every lesson through the same list:
+  - Blank for new syntax.
+  - Predict for control flow and anything people often get wrong.
+  - Parsons for patterns, but never in place of writing.
+  - Fix, using a target mistake as the bug.
+  - Explain early, on the example, not only at the end.
+- **Ending:** an unaided write, one question from an earlier lesson, then a short recap.
+- **Practice of a new idea stays together in its first lesson.** Mixing belongs in the Daily 5 and reviews.
+
+Default order: goal → idea with labelled example → quick check → explain → next idea → check → next idea → blank → fix →
+worked example → write → earlier-lesson question → recap.
+
+Two other shapes to try when they fit, neither tested yet:
+
+- **Predict and modify (control flow, functions):** goal → predict → run → explanation → two "what if" traces → second example →
+  modify → write → explain.
+- **Purpose first (recurring and ML patterns):** real outcome → working pattern with named parts → why each part exists → Parsons
+  → trace → adapt to new data → write → recap.
 
 ### Checkpoints
 
@@ -89,7 +106,7 @@ Each unit ends with a project: one program built step by step.
 ## 2. How questions are written
 
 1. **Each lesson names 2–4 target mistakes.** They come from research collections of novice mistakes
-   ([progmiscon.org](https://progmiscon.org), Sorva 2012, Kohn 2017) and from Java habits that break in Python.
+   ([progmiscon.org](https://progmiscon.org), Sorva 2012, Kohn 2017) and from what someone new to programming would assume.
 2. **Each wrong answer matches exactly one mistake.** Picking it should tell you what you misunderstood.
    A wrong answer that is just random is a wasted option.
 3. **Fix cards use a target mistake as the bug.** Not a typo.
@@ -105,24 +122,45 @@ Each unit ends with a project: one program built step by step.
 
 ## 3. The path
 
-### Unit 1 · Python from Java _(built)_
+### The Python rewrite
 
-| #   | Lesson                | Teaches                                        | Target mistakes                                                                                 |
-| --- | --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1   | Variables and print   | Names, reassignment, `print` with commas, swap | `a = b` links the two forever; commas print nothing between values; names aren't case-sensitive |
-| 2   | Numbers and math      | `int` vs `float`, `/`, `//`, `%`               | `/` drops the decimal like in Java; `//` rounds toward zero with negatives                      |
-| 3   | Strings and f-strings | Indexing, slicing, f-strings                   | The slice end is included; `"a" + 1` works like Java; strings can be changed in place           |
-| 4   | Functions             | `def`, `return`, default arguments             | Printing is the same as returning; a function with no `return` gives back 0                     |
-| 5   | Booleans and if       | `and`/`or`/`not`, `elif`, indentation          | `=` compares; every matching `elif` runs; indentation is just style                             |
-| 6   | while loops           | Loop conditions, `+=`                          | `i++` exists; the condition is checked constantly rather than once per pass                     |
-| 7   | for loops and range   | `for` over items, `range`                      | `range(n)` includes `n`; changing the loop variable changes how many times it runs              |
-| 8   | Lists                 | Methods, slicing, aliasing                     | `b = a` copies the list; a "best so far" can start at 0                                         |
-| 9   | Dictionaries          | Keys, `.get`, counting                         | A missing key gives `None`; looping over a dict gives values                                    |
-| 10  | Loop patterns         | Count, sum, find, best                         | `return` inside the loop still checks every item; `>=` and `>` treat ties the same              |
+The old "Python from Java" unit is being replaced by three units of about 36 lessons, with no Java assumed. Programs and values is
+done. Until the other two are written, the older lessons stand in as one unit, so the app's numbering is temporary: older lessons are
+Unit 2, Python for ML code is Unit 3, and the units below keep their planned numbers. When the rewrite is done, Python for ML code becomes Unit 4.
 
-**Checkpoint:** built. **Project · Word stats** _(built)_: `clean`, `word_counts`, `most_common`, `report`.
+| Unit                                | Lessons, in order                                                                                                                                                                                                                                   | Errors taught            | Main target mistakes                                                                                  |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Functions and repetition (about 11) | `def`; `return` vs `print`; return with `if`; local variables; `while`; accumulators; off-by-one and infinite loops; `for` and `range`; looping over strings; nested loops; tracebacks through calls                                                | Tracebacks               | Return not exiting, inner calls evaluated last, missing parentheses, when a loop condition is checked |
+| Collections and libraries (12–14)   | Index and slice; list methods; `for` over lists; count, sum, find, best; first aliasing warning; lists of lists; `split`; dicts; counting; looping over dicts; `import`, `math`, `random`; float precision; optional text files; word-stats project | `IndexError`, `KeyError` | Slice end included, `b = a` copying, a "best" that starts at 0, a missing key returning `None`        |
 
-### Unit 2 · Python for ML code _(built)_
+`def` after `if` and before loops is a practical choice: courses disagree, and no controlled study settles it. Spend extra care on
+assignment as a lasting equation, which has the strongest evidence of any novice mistake here (Kohn 2017). Python for ML code stays, with its
+error lesson moving from introduction to consolidation.
+
+### Unit 1 · Programs and values _(built)_
+
+| #   | Lesson                   | Teaches                                                                  | Target mistakes                                                                     |
+| --- | ------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| 1   | What a program is        | `print`, running top to bottom, text vs numbers, comments                | Lines run all at once; quotes are optional                                          |
+| 2   | When code goes wrong     | Three kinds of problem, reading a message, a routine for getting unstuck | Errors mean failure; lines before the error didn't run                              |
+| 3   | Numbers and maths        | `int`, `float`, `/`, `//`, `%`, `**`, order of operations                | `^` means power; `/` gives a whole number                                           |
+| 4   | Variables                | Storing values, names, tracing                                           | `=` as a maths equation; reversed assignment; a misspelled name                     |
+| 5   | Changing variables       | Reassignment, `x = x + 1`, `+=`                                          | Assignment as a lasting link, which is the main mistake this unit targets           |
+| 6   | Working with text        | Quotes, indexes, negative indexes, slices, `len`                         | Names vs text; counting from 1; the slice end included; a length used as an index   |
+| 7   | Building text            | f-strings, `int()`, `float()`, `str()`, string methods                   | Forgetting the `f`; `"a" + 1`; `int()` rounding; methods changing the string        |
+| 8   | Calling functions        | Arguments, return values, nested calls, `print` vs returning             | Reading nested calls left to right; `print` gives back a value; missing parentheses |
+| 9   | True and False           | Comparisons, `and`, `or`, `not`, ranges                                  | `=` for `==`; `x == 1 or 2`; `and` and `or` confused                                |
+| 10  | Making decisions with if | `if`, `else`, indentation, default-then-update                           | `if` repeats like a loop; `else` with a condition; indentation is only style        |
+| 11  | Many choices with elif   | `elif`, first match wins, chain vs separate `if`s, boundaries            | Every matching branch runs; order doesn't matter; `>` vs `>=`                       |
+
+**Checkpoint:** built (12 cards). **Project · Trail report** _(built)_: clean and convert the input, rate the hike, build the report.
+
+### Unit 2 (temporary) · Functions, loops and collections _(older lessons, to be replaced)_
+
+These are the older lessons, moved here unchanged until they're rewritten into the two units above: functions, `while`, `for` and `range`, lists,
+dictionaries, loop patterns, a checkpoint and the Word stats project. They still mention Java in places.
+
+### Unit 3 (temporary) · Python for ML code _(built)_
 
 Merges the old "How Python works" and "Writing real programs" units, keeping what ML code actually uses. The test
 for each topic was whether micrograd, PyTorch's `nn.Module` and `Dataset`, or nanoGPT's model file needs it.

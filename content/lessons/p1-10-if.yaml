@@ -1,0 +1,341 @@
+id: p1-if
+track: ml
+unit: 1
+order: 10
+title: Making decisions with if
+summary: Run code only when something is true.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Programs that choose
+    body: >-
+      So far your programs have done the same thing every time, running every line from top to bottom. The next step is to let the data decide.
+      Models, games and spam filters all work this way.
+
+
+      By the end of this lesson you'll be able to make a block of code run only when a condition is true, and you'll know why spaces at the start of
+      a line matter in Python.
+
+  - type: learn
+    id: if-block
+    title: The if statement
+    body: >-
+      `if` is followed by a question, and then a colon. The lines underneath, moved in by four spaces, make up a block. Python asks the question once. If
+      the answer is `True`, the block runs. If it's `False`, Python skips the whole block.
+
+
+      Then either way, it carries on with the next line that isn't indented. Indentation is how Python knows what belongs to the `if`: it's part of the
+      language, not decoration. Forget the colon and you get a `SyntaxError`. Forget the indent and you get an `IndentationError`.
+
+
+      One common misunderstanding: an `if` doesn't keep watching. It's checked once, when Python reaches it, and it doesn't repeat. Repeating is what
+      loops are for, in the next unit.
+    code: |
+      temperature = 30
+      if temperature > 25:
+          print("It's hot")
+          print("Bring water")
+      print("Have a good hike")
+    subgoals:
+      - { line: 2, label: 'Ask the question once' }
+      - { line: 3, label: 'Indented: only runs if True' }
+      - { line: 5, label: 'Not indented: always runs' }
+    predict: Which lines would still appear if `temperature` were 10?
+
+  - type: choice
+    id: skip-block
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 2
+      if x > 5:
+          print("big")
+      print("done")
+    choices: ['done', "big\ndone", 'big', 'Nothing']
+    answer: 'done'
+    why: >-
+      `x > 5` is `False`, so the block is skipped. The last line isn't indented, so it always runs.
+    variants:
+      - code: |
+          x = 8
+          if x > 5:
+              print("big")
+          print("done")
+        choices: ["big\ndone", 'done', 'big', 'Nothing']
+        answer: "big\ndone"
+        why: >-
+          The condition is true, so the block runs, and then the program carries on.
+      - code: |
+          x = 2
+          if x > 5:
+              print("big")
+              print("done")
+          print("end")
+        choices: ['end', "done\nend", "big\ndone\nend", 'Nothing']
+        answer: 'end'
+        why: >-
+          Both indented lines belong to the `if`, so both are skipped.
+
+  - type: learn
+    id: else-block
+    title: One or the other
+    body: >-
+      `else:` gives you a second block that runs when the condition is false. Exactly one of the two blocks runs, never both and never neither.
+
+
+      `else` has no condition of its own. It simply means "otherwise", so writing a condition after it is a `SyntaxError`. It lines up with its `if` and
+      has its own colon and its own indented block.
+
+
+      Conditions can be anything that gives `True` or `False`: a comparison, a combination using `and` or `or`, or a boolean variable. Don't write
+      `if is_open == True:`. Just write `if is_open:`, which reads like English.
+    code: |
+      steps = 12000
+      goal_met = steps >= 10000
+      if goal_met:
+          print("Goal reached")
+      else:
+          print("Keep walking")
+      print("Steps:", steps)
+    subgoals:
+      - { line: 2, label: 'Store the answer under a clear name' }
+      - { line: 3, label: 'Use it as the question' }
+      - { line: 5, label: 'Otherwise: no condition here' }
+      - { line: 7, label: 'Runs either way' }
+    predict: What would it show if `steps` were 500?
+
+  - type: choice
+    id: if-else-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 7
+      if n % 2 == 0:
+          print("even")
+      else:
+          print("odd")
+    choices: ['odd', 'even', "even\nodd", 'Nothing']
+    answer: 'odd'
+    why: >-
+      `7 % 2` is 1, so the condition is false, and the `else` block runs. Only one of the two ever runs.
+    hints:
+      - Work out `n % 2` first.
+    variants:
+      - code: |
+          name = "Ada"
+          if len(name) > 3:
+              print("long")
+          else:
+              print("short")
+        choices: ['short', 'long', "long\nshort", 'Error']
+        answer: 'short'
+        why: >-
+          `len(name)` is 3, and 3 isn't greater than 3, so the `else` block runs.
+      - code: |
+          total = 0
+          if total == 0:
+              total = 5
+          else:
+              total = 9
+          print(total)
+        choices: ['5', '9', '0', '14']
+        answer: '5'
+        why: >-
+          A block can contain any code, including assignments. The first block runs, so `total` becomes 5.
+
+  - type: explain
+    id: explain-indent
+    prompt: What's the difference between these two versions of the `print("done")` line, when `x` is 2?
+    code: |
+      x = 2
+      if x > 5:
+          print("big")
+          print("done")   # version A: indented
+      print("end")
+      if x > 5:
+          print("big")
+      print("done")       # version B: not indented
+    model: >-
+      In version A, `print("done")` is inside the block, so it only runs when `x > 5`, and it's skipped here. In version B it's outside the block, so it
+      always runs and shows `done`.
+    keyPoints:
+      - Indented lines belong to the `if` and only run when the condition is true
+      - A line that is not indented is outside the block and always runs
+
+  - type: learn
+    id: update-in-block
+    title: A common pattern
+    body: >-
+      A block often updates a variable. You start with a default value, then change it only in the special case. This often replaces an `else` altogether,
+      and it reads clearly.
+
+
+      Below, shipping costs 5 unless the order is large enough. It's still the same rules you know: `if` checks once, then the block runs or doesn't, and
+      after that, the variable holds whatever it was last given.
+
+
+      Blocks can also contain other `if` statements, with another level of indentation. Keep this to a minimum, because deep nesting is hard to read.
+    code: |
+      order = 60
+      shipping = 5
+      if order >= 50:
+          shipping = 0
+      total = order + shipping
+      print(f"Total: {total}")
+    subgoals:
+      - { line: 2, label: 'Start with the usual value' }
+      - { line: 3, label: 'Change it only in the special case' }
+      - { line: 5, label: 'Use whichever value it holds' }
+    predict: What will it show, and what would it show if `order` were 40?
+
+  - type: parsons
+    id: order-if
+    prompt: Put these lines in order so that `n` becomes its positive version, and the program shows `4`.
+    code: |
+      n = -4
+      if n < 0:
+          n = n * -1
+      print(n)
+    distractors: ['if n > 0:']
+    expectOutput: '4'
+    why: >-
+      Check the condition first, change `n` inside the block, and then print outside it, so the print always runs.
+    hints:
+      - The line inside the `if` needs its indentation.
+
+  - type: blank
+    id: fill-if
+    prompt: Fill in the blank so the program shows `pass` when `score` is at least 50.
+    code: |
+      score = 72
+      if score ____ 50:
+          print("pass")
+    answers: [['>=']]
+    expectOutput: pass
+    why: >-
+      "At least" includes 50 itself, so it's `>=`.
+    variants:
+      - prompt: Fill in the missing word so the second block runs otherwise.
+        code: |
+          score = 30
+          if score >= 50:
+              print("pass")
+          ____:
+              print("try again")
+        answers: [['else']]
+        expectOutput: try again
+        why: >-
+          `else` needs no condition, only a colon.
+
+  - type: fix
+    id: missing-colon
+    prompt: This won't run. Fix it so it shows `open`.
+    code: |
+      hour = 10
+      if hour > 8
+          print("open")
+    solution: |
+      hour = 10
+      if hour > 8:
+          print("open")
+    highlightLine: 2
+    expectOutput: open
+    why: >-
+      Every `if` line ends with a colon. It tells Python that a block comes next.
+    hints:
+      - What comes at the end of an `if` line?
+    variants:
+      - prompt: This gives an `IndentationError`. Fix it so it shows `open`.
+        code: |
+          hour = 10
+          if hour > 8:
+          print("open")
+        solution: |
+          hour = 10
+          if hour > 8:
+              print("open")
+        highlightLine: 3
+        expectOutput: open
+        why: >-
+          The block under an `if` has to be indented, usually with four spaces.
+        hints:
+          - What marks a line as part of the `if`?
+      - prompt: This should show only `closed` when `hour` is 22, but it also shows `Welcome`. Fix it.
+        code: |
+          hour = 22
+          if hour < 18:
+              print("open")
+          else:
+              print("closed")
+          print("Welcome")
+        solution: |
+          hour = 22
+          if hour < 18:
+              print("open")
+              print("Welcome")
+          else:
+              print("closed")
+        expectOutput: closed
+        why: >-
+          `Welcome` should only appear when it's open, so it belongs in the first block.
+        hints:
+          - Which block should `Welcome` be part of?
+
+  - type: write
+    id: discount
+    prompt: >-
+      Tickets cost `price`. If `age` is under 12, take 5 off. Use an `if` to update `price`, so that it works for any age.
+    starter: |
+      age = 9
+      price = 20
+    solution: |
+      age = 9
+      price = 20
+      if age < 12:
+          price = price - 5
+    tests:
+      - { call: price, expect: '15' }
+    why: >-
+      Start with the usual price, and change it only in the special case.
+    hints:
+      - The new line needs a colon, and the line under it needs an indent.
+    variants:
+      - prompt: Make `label` hold `"even"` if `n` is even, and `"odd"` otherwise. Use `if` and `else`.
+        starter: |
+          n = 14
+        solution: |
+          n = 14
+          if n % 2 == 0:
+              label = "even"
+          else:
+              label = "odd"
+        tests:
+          - { call: label, expect: "'even'" }
+        hints:
+          - A number is even when `n % 2 == 0`.
+
+  - type: choice
+    id: remember-compare
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      x = 5
+      y = x == 5 and x > 9
+      print(y)
+    choices: ['False', 'True', '5', 'Error']
+    answer: 'False'
+    why: >-
+      `x == 5` is true, but `x > 9` isn't, and `and` needs both.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `if condition:` runs its indented block when the condition is true, and it's checked once. `else:` runs when it's false, with no condition of its own.
+      Indentation decides what belongs to the block. Lines after the block always run.
+
+
+      Next: choosing between more than two options.

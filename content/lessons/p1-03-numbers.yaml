@@ -1,0 +1,290 @@
+id: p1-numbers
+track: ml
+unit: 1
+order: 3
+title: Numbers and maths
+summary: Whole numbers, decimals, and the operators that combine them.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Computers calculate
+    body: >-
+      Machine learning is, at its heart, a huge pile of arithmetic. A model's guess is a calculation, and so is every
+      small correction it makes to improve.
+
+
+      By the end of this lesson you'll know the two kinds of number Python uses, every arithmetic operator you'll need,
+      and the order Python works them out in. You'll also know the two division results that catch out almost everyone.
+
+  - type: learn
+    id: int-float
+    title: Two kinds of number
+    body: >-
+      Python has two main kinds of number. An `int` (short for integer) is a whole number, like `7` or `-3`. A `float` is
+      a number with a decimal point, like `2.5` or `7.0`. The name comes from the "floating" decimal point.
+
+
+      `7` and `7.0` have the same value, but they're different types, and `print` shows them differently. If a calculation
+      includes a float, the result is a float.
+
+
+      You use `+`, `-` and `*` as you'd expect. Don't put commas in numbers: Python reads `1,000` as two separate values.
+      Write `1000` instead.
+    code: |
+      print(2 + 3)
+      print(2 + 3.0)
+      print(4 * 2.5)
+      print(10 - 12)
+    subgoals:
+      - { line: 1, label: 'Two ints give an int' }
+      - { line: 2, label: 'A float makes the result a float' }
+      - { line: 3, label: 'Still a float, even for a whole value' }
+      - { line: 4, label: 'Negative results are fine' }
+    predict: What exactly will the second line show?
+
+  - type: choice
+    id: float-result
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(3 + 1.0)
+    choices: ['4.0', '4', '3 + 1.0', '31.0']
+    answer: '4.0'
+    why: >-
+      One of the numbers is a float, so the result is a float, even though its value is whole.
+    variants:
+      - code: |
+          print(2 * 3)
+        choices: ['6', '6.0', '23', '2 * 3']
+        answer: '6'
+        why: >-
+          Both are ints, so the result is an int.
+      - code: |
+          print(1.5 + 1.5)
+        choices: ['3.0', '3', '1.51.5', '2.5']
+        answer: '3.0'
+        why: >-
+          Two floats give a float, even when the value happens to be whole.
+
+  - type: learn
+    id: division
+    title: Division, three ways
+    body: >-
+      Python has three operators for division, and each answers a different question.
+
+
+      `/` is ordinary division, and it always gives a float, even when it divides evenly. `10 / 5` is `2.0`, not `2`.
+
+
+      `//` is floor division. It tells you how many whole times one number fits into another, and drops the rest. `7 // 2`
+      is `3`.
+
+
+      `%` is the remainder, also called modulo. It's what's left over. `7 % 2` is `1`. It's more useful than it looks:
+      a number is even exactly when `n % 2` is `0`, and `n % 10` gives the last digit.
+
+
+      `**` means "to the power of", so `2 ** 3` is 8. Note that `^` doesn't mean power in Python, which is a common slip.
+    deeper: >-
+      With a negative number, `//` rounds down, toward negative infinity, not toward zero. So `-7 // 2` is `-4`, not `-3`.
+      That's where the name "floor" comes from. Python chooses this so that `(a // b) * b + a % b` always gets you back to
+      `a`.
+    code: |
+      print(7 / 2)
+      print(10 / 5)
+      print(7 // 2)
+      print(7 % 2)
+      print(2 ** 3)
+    subgoals:
+      - { line: 1, label: 'Ordinary division' }
+      - { line: 2, label: 'Always a float' }
+      - { line: 3, label: 'How many whole times 2 fits in 7' }
+      - { line: 4, label: 'What is left over' }
+      - { line: 5, label: 'Power' }
+    predict: Which lines will show a decimal point?
+
+  - type: choice
+    id: even-divide
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(10 / 5)
+    choices: ['2.0', '2', '5', '0.5']
+    answer: '2.0'
+    why: >-
+      `/` always returns a float, even when it divides evenly. Use `//` if you want the int `2`.
+    variants:
+      - code: |
+          print(17 % 5)
+        choices: ['2', '3', '3.4', '12']
+        answer: '2'
+        why: >-
+          5 fits into 17 three whole times, making 15, with 2 left over. `%` gives what's left over.
+      - code: |
+          print(17 // 5)
+        choices: ['3', '2', '3.4', '4']
+        answer: '3'
+        why: >-
+          5 fits into 17 three whole times. `//` gives that count, and drops the remainder.
+      - code: |
+          print(3 ** 2)
+        choices: ['9', '6', '5', '32']
+        answer: '9'
+        why: >-
+          `**` is power, so this is 3 times 3.
+
+  - type: explain
+    id: why-remainder
+    prompt: 'What does this show, and how could `%` tell you whether a number is even?'
+    code: |
+      print(14 % 2)
+    model: >-
+      It shows `0`, because `%` gives the remainder and 2 fits into 14 exactly. A number is even when dividing it by 2
+      leaves a remainder of 0.
+    keyPoints:
+      - '`%` gives the remainder after dividing'
+      - A number is even when its remainder after dividing by 2 is 0
+
+  - type: learn
+    id: order
+    title: The order of operations
+    body: >-
+      When a line has several operators, Python follows the same rules as maths. Powers come first. Then `*`, `/`, `//`
+      and `%`, working left to right. Then `+` and `-`, also left to right.
+
+
+      So `2 + 3 * 4` is `14`, not `20`. Parentheses override all of this, and what's inside them is worked out first.
+
+
+      Use parentheses whenever the order might confuse someone reading it, even when they aren't strictly needed. Clear code
+      beats clever code. You'll write formulas like this all the time in machine learning, and a misplaced parenthesis is a
+      classic silent bug: no error, just a wrong answer.
+    code: |
+      print(2 + 3 * 4)
+      print((2 + 3) * 4)
+      print(10 - 2 - 3)
+      print(2 * 3 ** 2)
+    subgoals:
+      - { line: 1, label: 'Multiply first' }
+      - { line: 2, label: 'Parentheses first' }
+      - { line: 3, label: 'Same level: left to right' }
+      - { line: 4, label: 'Power before multiply' }
+    predict: What will `2 * 3 ** 2` give?
+
+  - type: choice
+    id: precedence
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(20 - 4 * 2)
+    choices: ['12', '32', '8', '16']
+    answer: '12'
+    why: >-
+      Multiplication comes first: `4 * 2` is 8, and `20 - 8` is 12.
+    hints:
+      - Which operator goes first?
+    variants:
+      - code: |
+          print((20 - 4) * 2)
+        choices: ['32', '12', '8', '16']
+        answer: '32'
+        why: >-
+          Parentheses go first: `20 - 4` is 16, and 16 times 2 is 32.
+      - code: |
+          print(8 / 2 * 4)
+        choices: ['16.0', '1.0', '16', '1']
+        answer: '16.0'
+        why: >-
+          `/` and `*` are on the same level, so Python goes left to right. `8 / 2` gives the float 4.0, then times 4 gives 16.0.
+
+  - type: blank
+    id: fill-operator
+    prompt: Fill in the operator so it shows how many whole 3s fit in 14, which is `4`.
+    code: |
+      print(14 ____ 3)
+    answers: [['//']]
+    expectOutput: '4'
+    why: >-
+      `//` counts the whole number of times it fits. `/` would give `4.666...`, and `%` would give the remainder, `2`.
+    variants:
+      - prompt: Fill in the operator so it shows the remainder of 14 divided by 3, which is `2`.
+        code: |
+          print(14 ____ 3)
+        answers: [['%']]
+        expectOutput: '2'
+        why: >-
+          `%` gives what's left over after dividing.
+      - prompt: Fill in the operator so it shows 2 to the power of 5, which is `32`.
+        code: |
+          print(2 ____ 5)
+        answers: [['**']]
+        expectOutput: '32'
+        why: >-
+          `**` is power. `^` means something else entirely in Python.
+
+  - type: fix
+    id: average
+    prompt: This should show the average of 80 and 90, which is `85.0`. It runs, but the answer is wrong. Fix it.
+    code: |
+      print(80 + 90 / 2)
+    solution: |
+      print((80 + 90) / 2)
+    highlightLine: 1
+    expectOutput: '85.0'
+    why: >-
+      Division happens before addition, so this added 80 to half of 90. Parentheses make the sum happen first.
+    hints:
+      - Which part does Python work out first?
+    variants:
+      - prompt: This should show 3 squared, which is `9`, but it crashes or gives the wrong answer. Fix it.
+        code: |
+          print(3 ^ 2)
+        solution: |
+          print(3 ** 2)
+        highlightLine: 1
+        expectOutput: '9'
+        why: >-
+          In Python, `^` isn't power. It's a different operation on the bits of a number. Use `**`.
+        hints:
+          - Which operator means "to the power of"?
+
+  - type: write
+    id: split-sweets
+    prompt: >-
+      29 sweets are shared between 4 people. On one line, show how many whole sweets each person gets. On the next line,
+      show how many are left over.
+    starter: |
+      # 29 sweets, 4 people
+    solution: |
+      print(29 // 4)
+      print(29 % 4)
+    expectOutput: |
+      7
+      1
+    why: >-
+      `//` gives the whole number each person gets, and `%` gives what's left over. These two go together very often.
+    hints:
+      - Which operator counts whole times? Which gives the remainder?
+
+  - type: choice
+    id: remember-error
+    kind: concept
+    prompt: From the last lesson. `print(2 + "3")` stops with an error. Which one?
+    choices: ['TypeError', 'SyntaxError', 'NameError', 'There is no error']
+    answer: 'TypeError'
+    why: >-
+      The grammar is fine, but `+` can't combine a number with text. `"3"` is text because of its quotes. That mismatch is
+      a `TypeError`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An `int` is whole, and a `float` has a decimal point. `/` always gives a float, `//` counts whole times, `%` gives the
+      remainder, and `**` is power. Python follows the order of operations from maths, and parentheses go first.
+
+
+      Next: giving values names so that you can use them again.

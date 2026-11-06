@@ -1,0 +1,318 @@
+id: p1-building-text
+track: ml
+unit: 1
+order: 7
+title: Building text
+summary: Fill values into text, convert between types, and use string tools.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Saying what you found
+    body: >-
+      A calculation is only useful if you can report it. When a model trains, it prints lines like `epoch 3, loss 0.214`, and
+      you read them to see whether it's working.
+
+
+      By the end of this lesson you'll be able to fill any value into text, convert between text and numbers, and use a few
+      string tools. You'll also learn one rule about strings that causes a very common bug.
+
+  - type: learn
+    id: building
+    title: Filling values into text
+    body: >-
+      Sooner or later you want to mix text and values. `"Age: " + 4` crashes with a `TypeError`, because `+` means joining for
+      text and adding for numbers, and Python refuses to guess which you meant.
+
+
+      The usual tool is an f-string. Put an `f` before the opening quote, and anything inside `{ }` is worked out and filled
+      in. It doesn't have to be a variable: any expression works, like `{age + 1}` or `{len(name)}`.
+
+
+      Forget the `f` and there's no error at all. Python prints the braces as plain text. That's the "runs, but wrong" kind of
+      bug, so look out for it.
+    code: |
+      name = "Adam"
+      age = 4
+      print(f"{name} is {age} years old")
+      print(f"Next year: {age + 1}")
+      print("{name} forgot the f")
+    subgoals:
+      - { line: 3, label: 'Fill in variables' }
+      - { line: 4, label: 'Fill in anything Python can work out' }
+      - { line: 5, label: 'No f: the braces are just text' }
+    predict: What number appears after `Next year:`?
+
+  - type: blank
+    id: fill-fstring
+    prompt: Add what's missing so it prints `The rope costs 12 dollars`.
+    code: |
+      item = "rope"
+      price = 12
+      print(____"The {item} costs {price} dollars")
+    answers: [['f']]
+    expectOutput: The rope costs 12 dollars
+    why: >-
+      Without the `f`, the braces are printed exactly as written.
+    variants:
+      - prompt: Fill in the blank so it prints `Level 3 of 10`.
+        code: |
+          level = 3
+          print(f"Level {____} of 10")
+        answers: [['level']]
+        expectOutput: Level 3 of 10
+        why: >-
+          Inside the braces goes the variable's name, and Python fills in its value.
+      - prompt: 'Fill in the blank so it prints `Double: 14`.'
+        code: |
+          n = 7
+          print(f"Double: {____}")
+        answers: [['n * 2', 'n*2', '2 * n', '2*n', 'n + n', 'n+n']]
+        expectOutput: 'Double: 14'
+        why: >-
+          Braces can hold a calculation, and Python fills in the result.
+
+  - type: choice
+    id: which-prints
+    prompt: '`score = 10`. Which line prints `Score: 10`?'
+    choices:
+      - 'print(f"Score: {score}")'
+      - 'print("Score: {score}")'
+      - 'print("Score: " + score)'
+      - 'print(f"Score: score")'
+    answer: 'print(f"Score: {score}")'
+    why: >-
+      Only the f-string fills in `{score}`. Without the `f` it prints the braces, and `"Score: " + score` crashes because
+      Python won't add text and a number. Without braces, `score` is just a word.
+    variants:
+      - prompt: What does `print(f"{2 + 3} goats")` show?
+        choices: ['5 goats', '2 + 3 goats', '{2 + 3} goats', 'Error']
+        answer: '5 goats'
+        why: >-
+          Braces in an f-string hold any expression, so Python works out the sum and fills it in.
+
+  - type: learn
+    id: conversion
+    title: Converting between types
+    body: >-
+      Sometimes you have to change a value's type yourself. `str(4)` gives the text `"4"`. `int("4")` gives the number `4`,
+      and `float("2.5")` gives the number `2.5`. Each of these gives you a new value of the type you asked for.
+
+
+      This matters whenever numbers arrive as text, which is how they come from files, from the web, and from people typing.
+      `"3" * 2` isn't `6`. It's `"33"`, because `*` repeats text. Convert first, then calculate.
+
+
+      Conversions can fail. `int("hello")` stops with a `ValueError`, meaning the type is fine but this particular value makes
+      no sense. And `int(3.9)` gives `3`: it chops off the decimal part and doesn't round.
+    code: |
+      typed = "21"
+      print(typed * 2)
+      age = int(typed)
+      print(age * 2)
+      print("Age: " + str(age))
+      print(int(3.9))
+    subgoals:
+      - { line: 2, label: 'Still text, so * repeats it' }
+      - { line: 3, label: 'Convert to a number' }
+      - { line: 4, label: 'Now * multiplies' }
+      - { line: 5, label: 'Convert to text so + can join' }
+      - { line: 6, label: 'Chops the decimals off' }
+    predict: What will `print(typed * 2)` show?
+
+  - type: choice
+    id: convert-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = "4"
+      print(n + "1")
+    choices: ['41', '5', 'Error', '4 1']
+    answer: '41'
+    why: >-
+      `n` holds the text `"4"`, so `+` joins it to `"1"`.
+    variants:
+      - code: |
+          n = "4"
+          print(int(n) + 1)
+        choices: ['5', '41', 'Error', '4.0']
+        answer: '5'
+        why: >-
+          `int(n)` gives the number 4, so `+` adds.
+      - code: |
+          print(int(7.8))
+        choices: ['7', '8', '7.8', 'Error']
+        answer: '7'
+        why: >-
+          `int()` chops off the decimal part. It doesn't round.
+      - code: |
+          print("ab" * 2)
+        choices: ['abab', 'ab2', 'ab ab', 'Error']
+        answer: 'abab'
+        why: >-
+          Multiplying text by a whole number repeats it.
+
+  - type: learn
+    id: tools
+    title: Strings have their own tools
+    body: >-
+      A method is a tool that belongs to a value. You call it with a dot: `name.upper()` means "`name`, give me an uppercase
+      version of yourself". Useful string methods include `.upper()`, `.lower()` and `.replace(old, new)`.
+
+
+      Here's the important part: none of these change the original. Strings can't be changed once they exist. Even
+      `word[0] = "G"` fails with a `TypeError`. Every tool hands back a new string, and it's lost unless you store it.
+      Forgetting that is one of the most common beginner bugs.
+    code: |
+      name = "adam"
+      name.upper()
+      print(name)
+      loud = name.upper()
+      print(loud)
+      print(name.replace("a", "o"))
+    subgoals:
+      - { line: 2, label: 'The new string is thrown away' }
+      - { line: 3, label: 'So this is unchanged' }
+      - { line: 4, label: 'Store it to keep it' }
+      - { line: 6, label: 'Swap every match' }
+    predict: What does the first `print(name)` show?
+
+  - type: explain
+    id: why-unchanged
+    prompt: Why does this print `goat` rather than `GOAT`?
+    code: |
+      animal = "goat"
+      animal.upper()
+      print(animal)
+    model: >-
+      `.upper()` makes a new uppercase string and leaves the original alone. Line 2 doesn't store that new string, so it's lost,
+      and `animal` still holds `goat`.
+    keyPoints:
+      - '`.upper()` gives back a new string and does not change the original'
+      - The new string is not stored, so `animal` is unchanged
+
+  - type: fix
+    id: str-plus-int
+    prompt: This should print `Level 3`, but it crashes. Fix it.
+    code: |
+      level = 3
+      print("Level " + level)
+    solution: |
+      level = 3
+      print(f"Level {level}")
+    highlightLine: 2
+    expectOutput: Level 3
+    why: >-
+      `+` can't join text and a number. An f-string fills the number in for you, and `str(level)` also works.
+    hints:
+      - Read the error. It mentions `str` and `int`. What tool from this lesson fills a number into text?
+    variants:
+      - prompt: This should print `GOAT`, but it prints `goat`. Fix it.
+        code: |
+          animal = "goat"
+          animal.upper()
+          print(animal)
+        solution: |
+          animal = "goat"
+          animal = animal.upper()
+          print(animal)
+        highlightLine: 2
+        expectOutput: GOAT
+        why: >-
+          `.upper()` makes a new string and leaves the original alone. Store the copy, or print it directly.
+        hints:
+          - Does `.upper()` change `animal`, or give back something new?
+      - prompt: This should print `10`, the sum of two numbers that arrived as text. Fix it.
+        code: |
+          a = "4"
+          b = "6"
+          print(a + b)
+        solution: |
+          a = "4"
+          b = "6"
+          print(int(a) + int(b))
+        highlightLine: 3
+        expectOutput: '10'
+        why: >-
+          Text joins, so this printed `46`. Convert to numbers first, then add.
+        hints:
+          - What type do `a` and `b` hold?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Putting the pieces together
+    body: >-
+      Real tasks combine these tools. Say you want someone's initials and a short message. Break it into small steps: read the
+      character you need, change it, join the pieces, then report the result. Each step makes a new value with a clear name, so
+      you can check each one by printing it if something goes wrong.
+    code: |
+      first = "ada"
+      last = "lovelace"
+      initials = first[0].upper() + last[0].upper()
+      letters = len(first) + len(last)
+      print(f"{initials} has {letters} letters")
+    subgoals:
+      - { line: 1, label: 'Start with the text' }
+      - { line: 3, label: 'Read each first letter, then uppercase it' }
+      - { line: 4, label: 'Work out a number' }
+      - { line: 5, label: 'Report both in one message' }
+    predict: What exactly will this print?
+
+  - type: write
+    id: capitalize
+    prompt: >-
+      Make a variable `title` that holds `word` with only its first letter in uppercase. For `"goat"`, that's `"Goat"`.
+    starter: |
+      word = "goat"
+    solution: |
+      word = "goat"
+      title = word[0].upper() + word[1:]
+    tests:
+      - { call: title, expect: "'Goat'" }
+    why: >-
+      Take the first character, make it uppercase, and join it to the slice holding everything after it. Both pieces are
+      strings, so `+` works.
+    hints:
+      - Split the job in two. Which piece needs changing, and which stays the same?
+      - The first piece is `word[0]`. What slice gives everything after it?
+    variants:
+      - prompt: 'Make `message` hold the text `Total: 12`, using an f-string and the sum of `a` and `b`.'
+        starter: |
+          a = 5
+          b = 7
+        solution: |
+          a = 5
+          b = 7
+          message = f"Total: {a + b}"
+        tests:
+          - { call: message, expect: "'Total: 12'" }
+        hints:
+          - Braces can hold a calculation.
+
+  - type: choice
+    id: remember-update
+    kind: predict
+    prompt: From earlier. What does this print?
+    code: |
+      s = "hi"
+      s = s + "!"
+      s = s + "!"
+      print(len(s))
+    choices: ['4', '2', '3', 'Error']
+    answer: '4'
+    why: >-
+      `s = s + "!"` makes a new string and stores it back, so the variable changes even though the strings themselves can't.
+      It ends up as `hi!!`, with 4 characters.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An f-string fills values into text. `int()`, `float()` and `str()` convert between types, which you need for numbers that
+      arrive as text. String tools like `.upper()` hand back a new string, so store the result if you want to keep it.
+
+
+      Next: `print` and `len` are functions, and it's time to look at how functions work.

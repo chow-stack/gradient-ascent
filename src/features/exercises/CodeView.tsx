@@ -48,7 +48,7 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
           </ul>
         </div>
       )}
-      {card.type === 'fix' && card.expectOutput && (
+      {card.expectOutput && (
         <div className="flex flex-col gap-1.5">
           <h3 className="text-small font-semibold text-muted">Should print</h3>
           <pre className="font-mono text-[13.5px] text-syn-str">{card.expectOutput.replace(/\n$/, '')}</pre>
@@ -83,7 +83,7 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
           <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> to check
         </span>
       </div>
-      {shown && <RunOutput result={shown} expectOutput={card.type === 'fix' ? card.expectOutput : undefined} />}
+      {shown && <RunOutput result={shown} expectOutput={card.expectOutput} />}
     </div>
   )
 }

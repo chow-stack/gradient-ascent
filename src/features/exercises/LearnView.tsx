@@ -25,10 +25,17 @@ export function LearnView({ card }: { card: LearnCard }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col items-start gap-3">
-        <span className="ga-tag">New idea</span>
+        <span className="ga-tag">{card.label}</span>
         <h2 className="text-[26px] leading-snug font-[650] text-balance">{card.title}</h2>
       </div>
       <Prose text={card.body} className="max-w-[62ch] text-[17px] leading-relaxed text-text" />
+
+      {card.deeper && (
+        <details className="ga-deeper">
+          <summary>Go deeper</summary>
+          <Prose text={card.deeper} className="max-w-[62ch] text-muted" />
+        </details>
+      )}
 
       {card.link && (
         <a href={card.link.url} target="_blank" rel="noreferrer" className="ga-btn ga-btn--secondary self-start">

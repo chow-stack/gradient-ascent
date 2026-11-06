@@ -1,6 +1,6 @@
 id: u2-functions
 track: ml
-unit: 2
+unit: 3
 order: 4
 title: Functions as values
 summary: Functions can be passed around and can remember things. micrograd is built on this.

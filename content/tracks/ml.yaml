@@ -3,8 +3,11 @@ name: Machine learning
 summary: One path from Python to a tiny GPT.
 units:
   - unit: 1
-    title: Python from Java
-    summary: Everything from AP CSA, the Python way.
+    title: Programs and values
+    summary: What code is, how to read errors, and working with numbers, text and decisions.
   - unit: 2
+    title: Functions, loops and collections
+    summary: Older lessons, being rewritten. They still mention Java in places.
+  - unit: 3
     title: Python for ML code
     summary: The parts of Python that micrograd and PyTorch rely on.

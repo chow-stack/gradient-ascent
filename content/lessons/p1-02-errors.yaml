@@ -1,0 +1,248 @@
+id: p1-errors
+track: ml
+unit: 1
+order: 2
+title: When code goes wrong
+summary: Errors are messages, not failures. Learn to read them.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Errors are normal
+    body: >-
+      Everyone who writes code sees errors all day, including the people who built the systems you use. An error doesn't
+      mean you've failed. It's Python telling you exactly where it got stuck.
+
+
+      By the end of this lesson you'll be able to name the three ways code goes wrong, read an error message, and follow
+      a simple routine to fix it. This one skill will save you more time than anything else in this course.
+
+  - type: learn
+    id: crash
+    title: Reading an error message
+    body: >-
+      When Python hits something it can't do, it stops and prints a message. Run this code to see one.
+
+
+      Notice two things. First, the line before the problem still ran, so `Hello` appears. Python stops at the problem,
+      not before it. Second, read the message from the bottom. The last line gives the type of error and a description,
+      and there's a line number showing where it happened.
+
+
+      `NameError` means Python found a word it doesn't recognise. Here it's `prnit`, a typo. Python won't guess that you
+      meant `print`, because it never guesses.
+    code: |
+      print("Hello")
+      prnit("World")
+      print("Goodbye")
+    expectError: NameError
+    subgoals:
+      - { line: 1, label: 'Runs fine' }
+      - { line: 2, label: 'The typo: Python stops here' }
+      - { line: 3, label: 'Never runs' }
+    predict: Will `Goodbye` appear in the output?
+
+  - type: choice
+    id: stops-at-error
+    kind: concept
+    prompt: A program has 5 lines, and line 3 has a `NameError`. What happens?
+    choices:
+      - Lines 1 and 2 run, then it stops at line 3
+      - Nothing runs at all
+      - Line 3 is skipped and lines 4 and 5 still run
+      - Python fixes line 3 and carries on
+    answer: Lines 1 and 2 run, then it stops at line 3
+    why: >-
+      Python runs one line at a time, so everything before the problem has already happened. Nothing after it runs.
+    variants:
+      - prompt: 'An error ends with `NameError: name ''totl'' is not defined`. What is the most likely cause?'
+        choices:
+          - A typo, or a name Python hasn't seen yet
+          - A number was divided by zero
+          - The computer is out of memory
+          - A quote mark is missing
+        answer: A typo, or a name Python hasn't seen yet
+        why: >-
+          `NameError` means Python doesn't recognise that word. Here `totl` looks like a misspelling of `total`.
+
+  - type: learn
+    id: three-kinds
+    title: Three ways code goes wrong
+    body: >-
+      It won't start. Python reads your whole program before running it. If it can't make sense of the grammar, like
+      a missing bracket or quote, you get a `SyntaxError` and nothing runs at all, not even line 1. A stray space at the
+      start of a line gives an `IndentationError`, which is a kind of syntax error.
+
+
+      It crashes partway. The grammar is fine, but a line can't be done when it's reached. `NameError` is one kind.
+      `TypeError` is another, and it means the values don't fit the operation, like adding text to a number.
+
+
+      It runs, but the answer is wrong. There's no message at all. This is the hardest kind, because Python did
+      exactly what you said, and you said the wrong thing. The only way to catch it is to compare the output with what you
+      expected.
+
+
+      Run this example, which is missing a closing parenthesis. Notice that the first line doesn't run.
+    code: |
+      print("This never appears")
+      print("Oops"
+    expectError: SyntaxError
+    subgoals:
+      - { line: 1, label: 'Looks fine, but never runs' }
+      - { line: 2, label: 'The closing parenthesis is missing' }
+    predict: Will the first line show anything?
+
+  - type: choice
+    id: which-kind
+    kind: concept
+    prompt: A program is meant to show `10`, runs with no message, and shows `7`. What kind of problem is this?
+    choices: ['It runs, but the answer is wrong', 'A SyntaxError', 'A NameError', 'A TypeError']
+    answer: 'It runs, but the answer is wrong'
+    why: >-
+      There's no error message, so Python had no complaint. The program does what it says, which isn't what was meant.
+    variants:
+      - prompt: 'Which of these gives a `SyntaxError`, so that nothing runs?'
+        choices: ['print("Hi"', 'print(Hi)', 'print("Hi" + 1)', 'print("Hi")']
+        answer: 'print("Hi"'
+        why: >-
+          The closing parenthesis is missing, so Python can't read the program at all. The next two run into errors only
+          when they're reached, and the last is fine.
+      - prompt: 'Which of these gives a `TypeError` when it runs?'
+        choices: ['print("Age: " + 4)', 'print("Age: " + "4")', 'print("Age:", 4)', 'print(4 + 4)']
+        answer: 'print("Age: " + 4)'
+        why: >-
+          `+` can't combine text with a number. Python won't guess whether you meant to join them or add them.
+
+  - type: explain
+    id: read-message
+    prompt: 'This program stops with `NameError`. What went wrong, and which lines ran?'
+    code: |
+      print("Packing the bag")
+      Print("Checking the map")
+      print("Leaving now")
+    expectError: NameError
+    model: >-
+      Line 1 ran and shows its text. Line 2 stops the program because `Print` with a capital P isn't a name Python knows,
+      so line 3 never runs.
+    keyPoints:
+      - Python treats `Print` and `print` as different names, so it doesn't recognise `Print`
+      - Line 1 runs, and the program stops at line 2 before line 3 runs
+
+  - type: learn
+    id: routine
+    title: A routine for getting unstuck
+    body: >-
+      When something goes wrong, resist the urge to change things at random. This routine works for nearly every bug.
+
+
+      First, read the last line of the error. What type is it, and what does it say? Second, go to the line number it
+      gives, but also check the line above, since a missing bracket is often reported one line late. Third, say out loud
+      what you expected that line to do. Fourth, change one thing and run it again.
+
+
+      If there's no error but the answer is wrong, add a `print` to see what's going on at each step. That's a real
+      technique called print debugging, and professional programmers use it every day.
+    code: |
+      # We wanted 3 + 4, doubled, which is 14. What does this show?
+      print(3 + 4 * 2)
+      # Check the pieces one at a time:
+      print(4 * 2)
+      print(3 + 8)
+      print((3 + 4) * 2)
+    subgoals:
+      - { line: 2, label: 'The result looks suspicious' }
+      - { line: 4, label: 'Print the pieces to see each step' }
+      - { line: 6, label: 'Test a change' }
+    predict: What does the first `print` show, and why isn't it 14?
+
+  - type: fix
+    id: fix-typo
+    prompt: This crashes with a `NameError`. Fix it so it shows `Ready`.
+    code: |
+      pritn("Ready")
+    solution: |
+      print("Ready")
+    highlightLine: 1
+    expectOutput: Ready
+    why: >-
+      Python doesn't recognise `pritn`. A `NameError` on a word you meant to type correctly usually means a typo.
+    hints:
+      - Read the error. Which name doesn't Python know?
+    variants:
+      - prompt: This gives a `SyntaxError`. Fix it so it shows `Ready`.
+        code: |
+          print("Ready)
+        solution: |
+          print("Ready")
+        highlightLine: 1
+        expectOutput: Ready
+        why: >-
+          The text never ended, because its closing quote is missing. Every opening quote or bracket needs a partner.
+        hints:
+          - Count the quote marks.
+      - prompt: This gives an `IndentationError`. Fix it so it shows `One`, then `Two`.
+        code: |
+          print("One")
+            print("Two")
+        solution: |
+          print("One")
+          print("Two")
+        highlightLine: 2
+        expectOutput: |
+          One
+          Two
+        why: >-
+          Spaces at the start of a line mean something in Python, as you'll see soon. Ordinary lines start at the left edge.
+        hints:
+          - Look at the start of line 2.
+      - prompt: 'This gives a `TypeError`. Fix it so it shows `Age: 4`.'
+        code: |
+          print("Age: " + 4)
+        solution: |
+          print("Age:", 4)
+        highlightLine: 1
+        expectOutput: 'Age: 4'
+        why: >-
+          `+` can't join text and a number, but `print` happily shows several values separated by a comma.
+        hints:
+          - You saw another way to show two values on one line.
+
+  - type: fix
+    id: fix-wrong-answer
+    prompt: This runs without an error, but it should show the average of 10 and 20, which is `15.0`. Fix it.
+    code: |
+      print(10 + 20 / 2)
+    solution: |
+      print((10 + 20) / 2)
+    highlightLine: 1
+    expectOutput: '15.0'
+    why: >-
+      Python divides before it adds, just like in maths. Parentheses make the addition happen first.
+    hints:
+      - What does Python work out first here? Try printing `20 / 2` by itself.
+
+  - type: choice
+    id: remember-order
+    kind: predict
+    prompt: From your first lesson. What does this print?
+    code: |
+      print("3 + 3")
+      # print(3 + 3)
+    choices: ['3 + 3', '6', "3 + 3\n6", 'Nothing']
+    answer: '3 + 3'
+    why: >-
+      The first line is text, so it shows as written. The second is a comment, which Python ignores.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Code goes wrong in three ways: it won't start (`SyntaxError`, `IndentationError`), it crashes partway (`NameError`,
+      `TypeError`), or it runs and gives the wrong answer. Read errors from the bottom, go to the line, change one thing,
+      and run again. When there's no message, print the pieces.
+
+
+      You'll see these errors again, on purpose, throughout the course.

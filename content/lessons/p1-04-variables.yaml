@@ -1,0 +1,328 @@
+id: p1-variables
+track: ml
+unit: 1
+order: 4
+title: Variables
+summary: Give a value a name, and trace what a program does line by line.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Remembering values
+    body: >-
+      So far, each line has forgotten everything as soon as it's finished. Real programs need to remember things: a score,
+      a name, the current guess of a model.
+
+
+      By the end of this lesson you'll be able to store a value under a name, use it later, and trace a program by
+      following its variables line by line. Tracing is the most useful skill for reading code, and every later lesson
+      relies on it.
+
+  - type: learn
+    id: assign
+    title: A variable is a name for a value
+    body: >-
+      `age = 4` means "store the value 4 under the name `age`". From then on, wherever you write `age`, Python uses the
+      value it stands for. A name for a value is called a variable.
+
+
+      Here's the key thing: `=` doesn't mean "equals" as it does in maths. It's an instruction, and it runs at one
+      moment. Python works out the right side first, then stores the result under the name on the left. So the name always
+      goes on the left. `4 = age` is a `SyntaxError`.
+
+
+      You can use a variable anywhere you'd use the value, including in calculations. Notice that `print(age)` has no
+      quotes, because we want the value, and not the word.
+    code: |
+      age = 4
+      height = 80
+      print(age)
+      print("age")
+      print(height * 2)
+    subgoals:
+      - { line: 1, label: 'Store values under names' }
+      - { line: 3, label: 'No quotes: look up the value' }
+      - { line: 4, label: 'Quotes: just the text' }
+      - { line: 5, label: 'Use it in a calculation' }
+    predict: How will `print(age)` and `print("age")` differ?
+
+  - type: choice
+    id: name-value
+    kind: predict
+    prompt: What does this print?
+    code: |
+      steps = 300
+      print(steps + 50)
+    choices: ['350', 'steps + 50', '30050', 'Error']
+    answer: '350'
+    why: >-
+      Python looks up `steps`, which holds 300, then adds 50.
+    variants:
+      - code: |
+          price = 8
+          print("price")
+        choices: ['price', '8', '"price"', 'Error']
+        answer: 'price'
+        why: >-
+          With quotes it's only the word. Without them, Python would look up the value.
+      - code: |
+          a = 3
+          b = 4
+          print(a * b)
+        choices: ['12', 'a * b', '7', '34']
+        answer: '12'
+        why: >-
+          Python looks up both values and multiplies them.
+
+  - type: learn
+    id: names
+    title: Choosing names
+    body: >-
+      A name can use letters, digits and underscores, but it can't start with a digit or contain spaces. So `total_cost`
+      and `step2` are fine, and `2step` and `total cost` are `SyntaxError`s.
+
+
+      Capitals matter. `Score` and `score` are two different names, which is a very common cause of `NameError`. If you use
+      a name before storing anything under it, or you misspell it, you get a `NameError` too.
+
+
+      Pick names that say what the value means. `minutes` is better than `m`, because you can read it six months later.
+      Python programmers join words with underscores, like `learning_rate`.
+    code: |
+      hours_walked = 3
+      speed = 4
+      distance = hours_walked * speed
+      print(distance)
+    subgoals:
+      - { line: 1, label: 'Underscores join the words' }
+      - { line: 3, label: 'Right side first, then store' }
+      - { line: 4, label: 'Show the result' }
+    predict: What value ends up in `distance`?
+
+  - type: choice
+    id: valid-name
+    kind: concept
+    prompt: Which of these is a valid variable name?
+    choices: ['total_score', '2nd_score', 'total score', 'total-score']
+    answer: 'total_score'
+    why: >-
+      Names can't start with a digit or contain spaces. A `-` would be read as subtraction.
+    variants:
+      - prompt: 'What happens when this runs? `score = 10`, then `print(Score)`'
+        choices: ['NameError', 'It prints 10', 'It prints Score', 'SyntaxError']
+        answer: 'NameError'
+        why: >-
+          Capitals matter. `Score` and `score` are different names, and nothing was ever stored under `Score`.
+
+  - type: learn
+    id: tracing
+    title: Tracing a program
+    body: >-
+      To trace a program, act like Python. Go through it line by line, and keep a little table of what each variable holds.
+      Only update a variable when a line assigns to it. It looks slow, but it's how experienced programmers find bugs, and
+      research suggests that people who can trace code learn to write it better.
+
+
+      The comments in this program show the table after each line. Try covering them up and working it out yourself, then
+      run it.
+
+
+      Copying from one variable to another copies the value at that moment. `b = a` looks up what `a` holds right now, and
+      stores it under `b`.
+    code: |
+      a = 5        # a: 5
+      b = a + 1    # a: 5, b: 6
+      c = a + b    # a: 5, b: 6, c: 11
+      print(a, b, c)
+    subgoals:
+      - { line: 1, label: 'Start the table' }
+      - { line: 2, label: 'Look up a, then store in b' }
+      - { line: 3, label: 'Look up both, then store in c' }
+    predict: What three numbers will it show?
+
+  - type: choice
+    id: trace-one
+    kind: predict
+    prompt: Trace it. What does this print?
+    code: |
+      x = 2
+      y = x * 3
+      z = y - x
+      print(z)
+    choices: ['4', '6', '2', '-4']
+    answer: '4'
+    why: >-
+      `x` is 2, `y` is 6, and `z` is 6 - 2, which is 4.
+    hints:
+      - Write down `x`, then `y`, then `z`, one line at a time.
+    variants:
+      - code: |
+          n = 10
+          m = n // 3
+          print(m + n)
+        choices: ['13', '3', '10', '13.3']
+        answer: '13'
+        why: >-
+          `n` is 10, `m` is 3, and 3 + 10 is 13.
+      - code: |
+          p = 7
+          q = p % 2
+          r = q + q
+          print(r)
+        choices: ['2', '1', '7', '14']
+        answer: '2'
+        why: >-
+          `p` is 7, `q` is the remainder 1, and `r` is 1 + 1.
+
+  - type: explain
+    id: explain-distance
+    prompt: Why does this program show `12`? Say what happens on each step.
+    code: |
+      width = 4
+      height = 3
+      area = width * height
+      print(area)
+    model: >-
+      It stores 4 and 3 under `width` and `height`. The third line looks up both, multiplies them, and stores 12 under
+      `area`, which the last line shows.
+    keyPoints:
+      - The third line looks up the stored values and multiplies them
+      - The result is stored in `area`, and printing `area` shows it
+
+  - type: blank
+    id: fill-assign
+    prompt: Fill in the blanks so the program shows `30`.
+    code: |
+      days = 5
+      miles = 6
+      ____ = days * miles
+      print(total)
+    answers: [['total']]
+    expectOutput: '30'
+    why: >-
+      `print(total)` needs something stored under that exact name first.
+    variants:
+      - prompt: Fill in the blank so the program shows `9`.
+        code: |
+          side = 3
+          area = side * ____
+          print(area)
+        answers: [['side', '3']]
+        expectOutput: '9'
+        why: >-
+          The area of a square is its side multiplied by itself.
+      - prompt: Fill in the blank so the program shows the word's value, `goat`.
+        code: |
+          word = "goat"
+          print(____)
+        answers: [['word']]
+        expectOutput: goat
+        why: >-
+          No quotes, so Python looks up the variable's value.
+
+  - type: fix
+    id: case-sensitive
+    prompt: This should print `10` but crashes. Fix it.
+    code: |
+      score = 10
+      print(Score)
+    solution: |
+      score = 10
+      print(score)
+    highlightLine: 2
+    expectOutput: '10'
+    why: >-
+      Names are case-sensitive. `Score` was never created, so Python raises a `NameError`.
+    hints:
+      - Read the error. Which name doesn't Python know?
+    variants:
+      - prompt: This should show `15` but crashes. Fix it.
+        code: |
+          print(total)
+          total = 15
+        solution: |
+          total = 15
+          print(total)
+        highlightLine: 1
+        expectOutput: '15'
+        why: >-
+          Python runs top to bottom, so a name must be stored before it's used.
+        hints:
+          - What does `total` hold when line 1 runs?
+      - prompt: This should store 8 and show it, but it won't run. Fix it.
+        code: |
+          8 = size
+          print(size)
+        solution: |
+          size = 8
+          print(size)
+        highlightLine: 1
+        expectOutput: '8'
+        why: >-
+          The name always goes on the left of `=`, because the line means "store the right side under this name".
+        hints:
+          - Which side of `=` does the name go on?
+
+  - type: write
+    id: minutes
+    prompt: Make a variable named `minutes` that holds `hours` converted to minutes.
+    starter: |
+      hours = 3
+      # make minutes here
+    solution: |
+      hours = 3
+      minutes = hours * 60
+    tests:
+      - { call: minutes, expect: '180' }
+    why: Use the variable, not the number 3, so that the code still works if `hours` changes.
+    hints:
+      - There are 60 minutes in an hour. Multiply with `*`.
+    variants:
+      - prompt: Make a variable named `change` holding what's left from `paid` after subtracting `price`.
+        starter: |
+          paid = 20
+          price = 13
+          # make change here
+        solution: |
+          paid = 20
+          price = 13
+          change = paid - price
+        tests:
+          - { call: change, expect: '7' }
+      - prompt: Make a variable named `average` holding the average of `a` and `b`.
+        starter: |
+          a = 6
+          b = 9
+          # make average here
+        solution: |
+          a = 6
+          b = 9
+          average = (a + b) / 2
+        tests:
+          - { call: average, expect: '7.5' }
+        hints:
+          - Add first, then divide. How do you make sure the adding happens first?
+
+  - type: choice
+    id: remember-division
+    kind: predict
+    prompt: From your last lesson. What does this print?
+    code: |
+      total = 9
+      print(total / 3)
+    choices: ['3.0', '3', '9 / 3', 'total / 3']
+    answer: '3.0'
+    why: >-
+      `/` always gives a float, even when it divides evenly.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `name = value` works out the right side, then stores the result under the name on the left. Names are case-sensitive,
+      and must exist before they're used. To trace a program, go line by line and keep a table of what each variable holds.
+
+
+      Next: what happens when a variable changes, including the most common wrong belief beginners have about `=`.

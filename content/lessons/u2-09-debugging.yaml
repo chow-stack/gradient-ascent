@@ -1,6 +1,6 @@
 id: u2-debugging
 track: ml
-unit: 2
+unit: 3
 order: 9
 title: Reading errors
 summary: Tracebacks tell you what happened and where. Learn to read them before asking AI.

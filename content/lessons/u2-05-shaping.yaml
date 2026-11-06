@@ -1,6 +1,6 @@
 id: u2-shaping
 track: ml
-unit: 2
+unit: 3
 order: 5
 title: Tuples, zip and comprehensions
 summary: The short forms you'll see on every line of ML code.

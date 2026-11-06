@@ -1,0 +1,176 @@
+id: p1-checkpoint
+track: ml
+unit: 1
+order: 12
+kind: checkpoint
+title: Unit 1 checkpoint
+summary: Everything from this unit, mixed up. Get 80% right to move on.
+
+cards:
+  - type: choice
+    id: no-link
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = 4
+      b = a * 2
+      a = 100
+      print(b)
+    choices: ['8', '200', '100', 'Error']
+    answer: '8'
+    why: >-
+      `b` got 8 when its line ran. Assignment isn't a lasting rule.
+    variants:
+      - code: |
+          s = 3
+          t = s + 1
+          s = t + 1
+          print(s, t)
+        choices: ['5 4', '3 4', '5 6', '4 5']
+        answer: '5 4'
+        why: >-
+          `t` becomes 4, then `s` becomes 5. Trace one line at a time.
+
+  - type: choice
+    id: division-kinds
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(8 / 4, 9 // 4, 9 % 4)
+    choices: ['2.0 2 1', '2 2 1', '2.0 2.25 1', '2 2.25 0']
+    answer: '2.0 2 1'
+    why: >-
+      `/` always gives a float, `//` counts whole times, and `%` gives the remainder.
+
+  - type: choice
+    id: slice-end
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "gradient"
+      print(word[1:4], word[-1])
+    choices: ['rad t', 'radi t', 'gra t', 'rad n']
+    answer: 'rad t'
+    why: >-
+      The slice stops just before index 4, and `[-1]` is the last character.
+
+  - type: choice
+    id: name-vs-text
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 3
+      print("n", n, f"{n + 1}")
+    choices: ['n 3 4', '3 3 4', 'n 3 n + 1', 'n n n + 1']
+    answer: 'n 3 4'
+    why: >-
+      Quotes make the word itself, no quotes looks up the value, and braces in an f-string are worked out.
+
+  - type: choice
+    id: return-none
+    kind: concept
+    prompt: After `x = print("hi")`, what does `x` hold?
+    choices: ['None', '"hi"', 'hi', '2']
+    answer: 'None'
+    why: >-
+      `print` shows a value, but it doesn't give one back.
+
+  - type: choice
+    id: chain-order
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 12
+      if n > 5:
+          print("a")
+      elif n > 10:
+          print("b")
+      if n > 10:
+          print("c")
+    choices: ["a\nc", "a\nb\nc", 'a', "b\nc"]
+    answer: "a\nc"
+    why: >-
+      The chain stops at its first match, so `b` never runs. The last `if` is a separate question, so `c` runs.
+
+  - type: choice
+    id: which-error
+    kind: concept
+    prompt: Which of these runs without any error?
+    choices: ['print("7" * 2)', 'print("7" + 2)', 'print("7" - 2)', 'print(seven)']
+    answer: 'print("7" * 2)'
+    why: >-
+      Multiplying text by a whole number repeats it. The next two are `TypeError`s, and the last is a `NameError`.
+
+  - type: blank
+    id: fill-even
+    prompt: Fill in the blank so this shows `True`, because 10 is even.
+    code: |
+      n = 10
+      print(n ____ 2 == 0)
+    answers: [['%']]
+    expectOutput: 'True'
+    why: >-
+      A number is even when its remainder after dividing by 2 is 0.
+
+  - type: fix
+    id: fix-lost-value
+    prompt: This should print `HELLO`. Fix it.
+    code: |
+      text = "hello"
+      text.upper()
+      print(text)
+    solution: |
+      text = "hello"
+      text = text.upper()
+      print(text)
+    expectOutput: HELLO
+    why: >-
+      String tools hand back a new string, so you have to store it.
+
+  - type: fix
+    id: fix-compare
+    prompt: This should print `yes` when `x` is 3, but it won't run. Fix it.
+    code: |
+      x = 3
+      if x = 3:
+          print("yes")
+    solution: |
+      x = 3
+      if x == 3:
+          print("yes")
+    expectOutput: 'yes'
+    why: >-
+      A condition asks a question, so it needs `==`.
+
+  - type: write
+    id: write-convert
+    prompt: '`a` and `b` hold numbers as text. Make `total` hold their sum, as a number.'
+    starter: |
+      a = "12"
+      b = "30"
+    solution: |
+      a = "12"
+      b = "30"
+      total = int(a) + int(b)
+    tests:
+      - { call: total, expect: '42' }
+    why: >-
+      Convert first, because `+` on text would join them.
+
+  - type: write
+    id: write-chain
+    prompt: Make `result` hold `"pass"` if `score` is at least 50 and `"fail"` otherwise, and then add the word `" (high)"` to the end if `score` is at least 90.
+    starter: |
+      score = 95
+    solution: |
+      score = 95
+      if score >= 50:
+          result = "pass"
+      else:
+          result = "fail"
+      if score >= 90:
+          result = result + " (high)"
+    tests:
+      - { call: result, expect: "'pass (high)'" }
+    why: >-
+      These are two separate questions, so they need separate `if` statements.

@@ -1,0 +1,310 @@
+id: p1-booleans
+track: ml
+unit: 1
+order: 9
+title: True and False
+summary: Comparisons, and combining them with and, or and not.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Questions with two answers
+    body: >-
+      Everything a program decides comes down to a question with a yes or no answer. Is the loss still falling? Has this word been seen
+      before? Is the guess above 0.5?
+
+
+      By the end of this lesson you'll be able to ask these questions in Python, and combine them. In the next lesson you'll use them to
+      make your programs choose what to do.
+
+  - type: learn
+    id: comparisons
+    title: Comparing values
+    body: >-
+      A comparison asks a question, and its answer is one of two special values: `True` or `False`. These are called booleans. They're a
+      real type of value, with capital letters and no quotes, and you can print them or store them like anything else.
+
+
+      The operators are `<`, `>`, `<=` (at most), `>=` (at least), `==` (equal) and `!=` (not equal).
+
+
+      Now the classic mix-up. One `=` stores a value, and two `==` asks whether two values are equal. `x = 5` is an instruction, and `x == 5`
+      is a question. Writing `=` where you meant `==` is one of the most common mistakes there is.
+    deeper: >-
+      Strings can be compared too. `"a" < "b"` is `True`, because Python compares them in alphabetical order, letter by letter. But capitals
+      come before all lowercase letters, so `"Zebra" < "apple"` is also `True`. And `"10" < "9"` is `True`, because these are text and `"1"` comes
+      before `"9"`. It's another reason to convert text to numbers first.
+    code: |
+      age = 16
+      print(age > 13)
+      print(age == 20)
+      print(age != 20)
+      is_adult = age >= 18
+      print(is_adult)
+      print("goat" == "Goat")
+    subgoals:
+      - { line: 2, label: 'Asks a question' }
+      - { line: 3, label: 'Two = means "is it equal?"' }
+      - { line: 5, label: 'Store the answer, and use a clear name' }
+      - { line: 7, label: 'Capitals matter in text' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: compare-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 7
+      print(x > 7)
+    choices: ['False', 'True', '7', 'Error']
+    answer: 'False'
+    why: >-
+      7 isn't greater than itself. `x >= 7` would be `True`.
+    variants:
+      - code: |
+          a = 3
+          b = a == 3
+          print(b)
+        choices: ['True', '3', 'False', 'Error']
+        answer: 'True'
+        why: >-
+          The right side is worked out first. `a == 3` asks a question, and the answer `True` is stored in `b`.
+      - code: |
+          print(10 % 2 == 0)
+        choices: ['True', 'False', '0', '5']
+        answer: 'True'
+        why: >-
+          `10 % 2` is 0, then `0 == 0` is `True`. This is the standard test for an even number.
+      - code: |
+          print(5 != 5)
+        choices: ['False', 'True', '5', 'Error']
+        answer: 'False'
+        why: >-
+          `!=` asks "are they different?". They aren't, so the answer is `False`.
+
+  - type: learn
+    id: and-or-not
+    title: Combining questions
+    body: >-
+      Three words combine booleans. `a and b` is `True` only if both are. `a or b` is `True` if at least one is, including both. `not a` flips
+      the answer.
+
+
+      Each side has to be a complete question. English lets you say "if x is 1 or 2", but in Python `x == 1 or 2` doesn't do what you'd hope. The
+      `2` isn't compared to anything, so you need to write `x == 1 or x == 2`.
+
+
+      Python also allows a neat maths-like form for ranges: `0 <= x < 10` means `x` is at least 0 and also less than 10. Python works out `not`
+      first, then `and`, then `or`. Use parentheses when it isn't obvious.
+    code: |
+      age = 16
+      has_ticket = True
+      print(age >= 13 and has_ticket)
+      print(age < 13 or age > 65)
+      print(not has_ticket)
+      print(13 <= age < 20)
+    subgoals:
+      - { line: 3, label: 'Both must be true' }
+      - { line: 4, label: 'At least one must be true' }
+      - { line: 5, label: 'Flips the answer' }
+      - { line: 6, label: 'A range check' }
+    predict: Which lines will show `False`?
+
+  - type: choice
+    id: logic-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 5
+      print(x > 3 and x > 10)
+    choices: ['False', 'True', '5', 'Error']
+    answer: 'False'
+    why: >-
+      The first question is true, and the second is false. `and` needs both.
+    variants:
+      - code: |
+          x = 5
+          print(x > 3 or x > 10)
+        choices: ['True', 'False', '5', 'Error']
+        answer: 'True'
+        why: >-
+          `or` needs at least one, and the first question is true.
+      - code: |
+          print(not 2 > 1)
+        choices: ['False', 'True', '-1', 'Error']
+        answer: 'False'
+        why: >-
+          `2 > 1` is `True`, and `not` flips it.
+      - code: |
+          x = 0
+          print(1 <= x < 5)
+        choices: ['False', 'True', '0', 'Error']
+        answer: 'False'
+        why: >-
+          `x` has to be at least 1, and 0 isn't.
+
+  - type: explain
+    id: explain-both
+    prompt: What is this code checking, and when would it show `True`?
+    code: |
+      n = 12
+      print(n % 2 == 0 and n > 10)
+    model: >-
+      It checks whether `n` is both even and greater than 10. It shows `True` only when both are true, as they are for 12.
+    keyPoints:
+      - '`n % 2 == 0` checks whether `n` is even'
+      - '`and` means that both conditions must be true'
+
+  - type: blank
+    id: fill-compare
+    prompt: Fill in the operator so `is_ten` holds whether `n` is equal to 10.
+    code: |
+      n = 10
+      is_ten = n ____ 10
+      print(is_ten)
+    answers: [['==']]
+    expectOutput: 'True'
+    why: >-
+      `==` asks whether they're equal. A single `=` here would be a `SyntaxError`.
+    variants:
+      - prompt: Fill in the word so this shows `True` when at least one side is true.
+        code: |
+          x = 3
+          print(x == 3 ____ x == 4)
+        answers: [['or']]
+        expectOutput: 'True'
+        why: >-
+          `or` is true when at least one side is, and `and` would need both.
+      - prompt: Fill in the operator so this tests that `n` is odd.
+        code: |
+          n = 7
+          print(n ____ 2 == 1)
+        answers: [['%']]
+        expectOutput: 'True'
+        why: >-
+          An odd number has a remainder of 1 when divided by 2.
+
+  - type: fix
+    id: assign-vs-compare
+    prompt: This should show `True` if `x` is 5, but it won't run. Fix it.
+    code: |
+      x = 5
+      print(x = 5)
+    solution: |
+      x = 5
+      print(x == 5)
+    highlightLine: 2
+    expectOutput: 'True'
+    why: >-
+      One `=` stores, and two `==` compares. Here you're asking a question, so you need two.
+    hints:
+      - Is this line storing a value, or asking a question?
+    variants:
+      - prompt: This should show `False`, because 3 is neither 1 nor 2, but it doesn't. Fix the condition.
+        code: |
+          x = 3
+          print(x == 1 or 2)
+        solution: |
+          x = 3
+          print(x == 1 or x == 2)
+        highlightLine: 2
+        expectOutput: 'False'
+        why: >-
+          Each side of `or` must be a complete question. `2` alone isn't comparing anything.
+        hints:
+          - What is being compared with the 2?
+      - prompt: This should show `True`, since the word is `goat` apart from its capitals. Fix it.
+        code: |
+          word = "GOAT"
+          print(word == "goat")
+        solution: |
+          word = "GOAT"
+          print(word.lower() == "goat")
+        highlightLine: 2
+        expectOutput: 'True'
+        why: >-
+          Capitals matter when comparing text, so convert to one case first.
+        hints:
+          - Which string tool can change `word` to lowercase?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Turning a rule into a condition
+    body: >-
+      Rules usually arrive in English, so translating them is a skill worth practising. Take this one: "You can enter if you have a ticket and you're at least 18,
+      or if you're on the staff list."
+
+
+      Start by finding the separate questions, and give each one a name. Then look for the joining words. Finally, ask whether the grouping matters. Here it
+      does: the ticket and the age belong together, and being on the staff list is enough alone. Parentheses show that plainly, even when Python doesn't need them.
+
+
+      Then test it by hand with a case that should fail, as well as one that should pass. Most mistakes in conditions only show up on the failing case. Named
+      booleans make this easy, because you can print each one and see which part gave the wrong answer.
+    code: |
+      age = 16
+      has_ticket = True
+      on_staff_list = False
+      old_enough = age >= 18
+      can_enter = (has_ticket and old_enough) or on_staff_list
+      print(old_enough)
+      print(can_enter)
+    subgoals:
+      - { line: 4, label: 'Name the separate question' }
+      - { line: 5, label: 'Join them, and group what belongs together' }
+      - { line: 6, label: 'Print the parts to check them' }
+    predict: This person has a ticket. Can they enter?
+
+  - type: write
+    id: can-ride
+    prompt: >-
+      Make `can_ride` hold `True` if `height` is at least 120 and `age` is at least 8, and `False` otherwise. Use a comparison, rather than
+      typing `True` yourself.
+    starter: |
+      height = 130
+      age = 9
+    solution: |
+      height = 130
+      age = 9
+      can_ride = height >= 120 and age >= 8
+    tests:
+      - { call: can_ride, expect: 'True' }
+    why: >-
+      The comparison itself gives you a boolean, so you can store the answer directly.
+    hints:
+      - '"At least" means `>=`. Both must be true, so which word joins them?'
+    variants:
+      - prompt: Make `in_range` hold whether `score` is at least 0 and at most 100.
+        starter: |
+          score = 104
+        solution: |
+          score = 104
+          in_range = 0 <= score <= 100
+        tests:
+          - { call: in_range, expect: 'False' }
+        hints:
+          - You can use `0 <= score <= 100`, or two comparisons joined with `and`.
+
+  - type: choice
+    id: remember-call
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      print(len("up") == 2)
+    choices: ['True', '2', 'False', 'up']
+    answer: 'True'
+    why: >-
+      The call runs first and gives back 2. Then `2 == 2` is `True`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Comparisons give `True` or `False`. `=` stores and `==` asks. `and` needs both sides, `or` needs at least one, and `not` flips the answer. Each
+      side has to be a complete question.
+
+
+      Next: using these answers to choose which code runs.

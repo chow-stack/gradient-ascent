@@ -1,10 +1,10 @@
 id: u2-project-vec
 track: ml
-unit: 2
+unit: 3
 order: 11
 kind: project
 title: 'Project: Vector class'
-summary: Build a small vector class with real arithmetic. Unit 3 replaces it with NumPy.
+summary: Build a small vector class with real arithmetic. The NumPy unit replaces it with NumPy.
 
 cards:
   - type: write

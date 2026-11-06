@@ -97,7 +97,9 @@ function checkCard(card: Card, at: string) {
       case 'learn':
         if (card.code) {
           const r = run(card.code)
-          expect(r.ok, at, `example crashes: ${describe(r)}`)
+          if (card.expectError)
+            expect(r.error?.type === card.expectError, at, `should end in ${card.expectError}: ${describe(r)}`)
+          else expect(r.ok, at, `example crashes: ${describe(r)}`)
         }
         break
       case 'choice':
@@ -137,14 +139,16 @@ function checkCard(card: Card, at: string) {
       }
       case 'write': {
         const good = run(card.solution, card.tests)
-        expect(runPassed(good), at, `solution fails: ${describe(good)}`)
+        expect(runPassed(good, card.expectOutput), at, `solution fails: ${describe(good)}`)
         const starter = run(card.starter, card.tests)
-        expect(!runPassed(starter), at, 'the starter code already passes')
+        expect(!runPassed(starter, card.expectOutput), at, 'the starter code already passes')
         break
       }
       case 'explain': {
         const r = run(card.code)
-        expect(r.ok, at, `snippet crashes: ${describe(r)}`)
+        if (card.expectError)
+          expect(r.error?.type === card.expectError, at, `should end in ${card.expectError}: ${describe(r)}`)
+        else expect(r.ok, at, `snippet crashes: ${describe(r)}`)
         break
       }
     }

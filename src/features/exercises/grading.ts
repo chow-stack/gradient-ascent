@@ -104,7 +104,7 @@ export async function grade(card: Card, answer: Answer): Promise<GradeResult> {
   }
 
   if ((card.type === 'fix' || card.type === 'write') && answer.type === 'code') {
-    const expectOutput = card.type === 'fix' ? card.expectOutput : undefined
+    const { expectOutput } = card
     const run = await runPython(answer.code, card.tests)
     const correct = runPassed(run, expectOutput)
     return { correct, run, message: correct ? undefined : describeRun(run, expectOutput) }
