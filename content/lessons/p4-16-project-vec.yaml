@@ -1,0 +1,230 @@
+id: p4-project-vec
+track: ml
+unit: 4
+order: 16
+kind: project
+title: 'Project: Vector class'
+summary: Build a small vector class with real arithmetic. The NumPy unit replaces it with NumPy.
+
+cards:
+  - type: learn
+    id: brief
+    label: The project
+    title: A vector you can do maths with
+    body: >-
+      A vector is a list of numbers that you can do maths with, and everything a neural network works on is built from vectors. Python lists can't do this: `[1, 2] + [3, 4]` joins them, and `[1, 2] * 2` repeats them.
+
+
+      You'll fix that by building `Vec`, a class that adds, subtracts and scales, and that has a dot product and a length. It brings together this unit's main ideas: special methods, `zip`, comprehensions, `sum`, raising errors and comparing with a tolerance. Your earlier work is in the starter at each step, so you can see the class grow. In the next unit, NumPy gives you all of this ready-made, and you'll already know how it works.
+
+  - type: write
+    id: init-repr
+    prompt: >-
+      Step 1 of 4. Write a class `Vec`. `Vec([1, 2])` stores the list as `.items`, and `repr` gives `Vec([1, 2])`.
+    starter: |
+      # Write the Vec class here
+    solution: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+    tests:
+      - { call: 'Vec([1, 2]).items', expect: '[1, 2]' }
+      - { call: 'repr(Vec([1, 2]))', expect: "'Vec([1, 2])'" }
+    why: >-
+      Make `__repr__` early, since you'll be printing these a lot.
+    hints:
+      - An f-string shows a list the way `print` does.
+
+  - type: write
+    id: arithmetic
+    prompt: >-
+      Step 2 of 4. Add `+` and `-` between vectors, and `*` by a number on either side. Each one gives back a new `Vec`.
+    starter: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          # Your code here
+    solution: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          def __add__(self, other):
+              return Vec([a + b for a, b in zip(self.items, other.items)])
+
+          def __sub__(self, other):
+              return Vec([a - b for a, b in zip(self.items, other.items)])
+
+          def __mul__(self, k):
+              return Vec([a * k for a in self.items])
+
+          def __rmul__(self, k):
+              return self * k
+    tests:
+      - { call: '(Vec([1, 2]) + Vec([3, 4])).items', expect: '[4, 6]' }
+      - { call: '(Vec([3, 4]) - Vec([1, 1])).items', expect: '[2, 3]' }
+      - { call: '(Vec([1, 2]) * 2).items', expect: '[2, 4]' }
+      - { call: '(2 * Vec([1, 2])).items', expect: '[2, 4]' }
+      - { call: '(lambda v: (v + v, v.items)[1])(Vec([1]))', expect: '[1]', hidden: true }
+    why: >-
+      Each operator makes a new `Vec`, and `__rmul__` reuses `__mul__`.
+    hints:
+      - '`zip` plus a comprehension handles `+` and `-`.'
+      - '`__rmul__` can just reuse `self * k`.'
+
+  - type: write
+    id: dot-length
+    prompt: >-
+      Step 3 of 4. Add `.dot(other)` for the dot product, and `.length()` for the length, which is the square root of the vector's dot product with itself. `math.sqrt` is one way of getting a square root, and `x ** 0.5` is another.
+    starter: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          def __add__(self, other):
+              return Vec([a + b for a, b in zip(self.items, other.items)])
+
+          def __sub__(self, other):
+              return Vec([a - b for a, b in zip(self.items, other.items)])
+
+          def __mul__(self, k):
+              return Vec([a * k for a in self.items])
+
+          def __rmul__(self, k):
+              return self * k
+
+          # Your code here
+    solution: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          def __add__(self, other):
+              return Vec([a + b for a, b in zip(self.items, other.items)])
+
+          def __sub__(self, other):
+              return Vec([a - b for a, b in zip(self.items, other.items)])
+
+          def __mul__(self, k):
+              return Vec([a * k for a in self.items])
+
+          def __rmul__(self, k):
+              return self * k
+
+          def dot(self, other):
+              return sum(a * b for a, b in zip(self.items, other.items))
+
+          def length(self):
+              return self.dot(self) ** 0.5
+    tests:
+      - { call: 'Vec([1, 2]).dot(Vec([3, 4]))', expect: '11' }
+      - { call: 'Vec([3, 4]).length()', expect: '5.0' }
+      - { call: 'Vec([0, 0]).length()', expect: '0.0' }
+    why: >-
+      A method can call another method through `self`, so `.length()` reuses `.dot()`.
+    hints:
+      - '`.length()` can call `self.dot(self)`.'
+
+  - type: write
+    id: eq-sizes
+    prompt: >-
+      Step 4 of 4. Add `==`, which treats values within 1e-9 as equal, because floats are rarely exact, and which gives `False` if the sizes differ. Also make `dot` raise a `ValueError` if the sizes differ.
+    starter: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          def __add__(self, other):
+              return Vec([a + b for a, b in zip(self.items, other.items)])
+
+          def __sub__(self, other):
+              return Vec([a - b for a, b in zip(self.items, other.items)])
+
+          def __mul__(self, k):
+              return Vec([a * k for a in self.items])
+
+          def __rmul__(self, k):
+              return self * k
+
+          def dot(self, other):
+              return sum(a * b for a, b in zip(self.items, other.items))
+
+          def length(self):
+              return self.dot(self) ** 0.5
+
+          # Add __eq__ here
+
+      def _dot_raises():
+          try:
+              Vec([1]).dot(Vec([1, 2]))
+          except ValueError:
+              return True
+          return False
+    solution: |
+      class Vec:
+          def __init__(self, items):
+              self.items = items
+
+          def __repr__(self):
+              return f"Vec({self.items})"
+
+          def __add__(self, other):
+              return Vec([a + b for a, b in zip(self.items, other.items)])
+
+          def __sub__(self, other):
+              return Vec([a - b for a, b in zip(self.items, other.items)])
+
+          def __mul__(self, k):
+              return Vec([a * k for a in self.items])
+
+          def __rmul__(self, k):
+              return self * k
+
+          def dot(self, other):
+              if len(self.items) != len(other.items):
+                  raise ValueError("sizes differ")
+              return sum(a * b for a, b in zip(self.items, other.items))
+
+          def length(self):
+              return self.dot(self) ** 0.5
+
+          def __eq__(self, other):
+              if len(self.items) != len(other.items):
+                  return False
+              return all(abs(a - b) < 1e-9 for a, b in zip(self.items, other.items))
+
+      def _dot_raises():
+          try:
+              Vec([1]).dot(Vec([1, 2]))
+          except ValueError:
+              return True
+          return False
+    tests:
+      - { call: 'Vec([0.1 + 0.2]) == Vec([0.3])', expect: 'True' }
+      - { call: 'Vec([1]) == Vec([2])', expect: 'False' }
+      - { call: '_dot_raises()', expect: 'True' }
+      - { call: 'Vec([1]) == Vec([1, 2])', expect: 'False' }
+    why: >-
+      A silent `zip` would hide a size mismatch, so the checks make it a loud error, or a clear `False`.
+    hints:
+      - '`all(...)` is `True` when every value from a generator is true.'
+      - Compare the lengths first.

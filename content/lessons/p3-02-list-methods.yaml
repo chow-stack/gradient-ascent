@@ -1,0 +1,394 @@
+id: p3-list-methods
+track: ml
+unit: 3
+order: 2
+title: Growing and sorting lists
+summary: Add, remove and sort, and why these tools give back None.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Lists that change size
+    body: >-
+      Usually you don't know a list's contents in advance. You start empty and add to it as you go, like recording the loss after each training step.
+
+
+      By the end of this lesson you'll be able to add and remove items and sort a list. You'll also learn the rule that makes list methods different from string methods, because mixing the two up causes a very common bug.
+
+  - type: learn
+    id: append
+    title: Adding items
+    body: >-
+      `.append(x)` adds one item to the end of a list. It's by far the most common list method. `.insert(i, x)` puts an item at position `i` and moves the later items along. `.extend(other)` adds every item from another list.
+
+
+      Mixing up `append` and `extend` is a common slip. `a.append([3, 4])` adds one item, which happens to be a list. `a.extend([3, 4])` adds two items.
+
+
+      A very common pattern is starting with an empty list and appending inside a loop. It's the accumulator pattern again, starting from `[]`.
+    code: |
+      a = [1, 2]
+      a.append(3)
+      print(a)
+      a.insert(0, 99)
+      print(a)
+      a.extend([7, 8])
+      print(a)
+
+      history = []
+      for step in range(3):
+          history.append(step * 10)
+      print(history)
+    subgoals:
+      - { line: 2, label: 'Add one item to the end' }
+      - { line: 4, label: 'Insert at a position' }
+      - { line: 6, label: 'Add each of these items' }
+      - { line: 9, label: 'Start with nothing' }
+      - { line: 11, label: 'Grow it on each pass' }
+    predict: What will `history` be at the end?
+
+  - type: choice
+    id: append-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = []
+      a.append(5)
+      a.append(6)
+      print(a, len(a))
+    choices: ['[5, 6] 2', '[6, 5] 2', '[5, 6] 11', '[] 0']
+    answer: '[5, 6] 2'
+    why: >-
+      Each `append` adds to the end, so the order is kept.
+    variants:
+      - code: |
+          a = [1]
+          a.append([2, 3])
+          print(len(a))
+        choices: ['2', '3', '1', 'Error']
+        answer: '2'
+        why: >-
+          `append` adds one item, and here that one item is a whole list.
+      - code: |
+          a = [1]
+          a.extend([2, 3])
+          print(len(a))
+        choices: ['3', '2', '1', 'Error']
+        answer: '3'
+        why: >-
+          `extend` adds each item from the other list.
+      - code: |
+          out = []
+          for i in range(3):
+              out.insert(0, i)
+          print(out)
+        choices: ['[2, 1, 0]', '[0, 1, 2]', '[0, 0, 0]', '[2]']
+        answer: '[2, 1, 0]'
+        why: >-
+          Each new item goes on the front, so the order comes out reversed.
+
+  - type: learn
+    id: none-rule
+    title: These tools change the list and give back None
+    body: >-
+      Remember how string tools work: `word.upper()` leaves `word` alone and gives back a new string, so you have to store the result. List methods that change a list work the opposite way. They change the list in place and give back `None`.
+
+
+      So `a.append(3)` is the whole job, and you don't assign it to anything. If you write `a = a.append(3)`, the item does get added, but then `a` is set to `None`, and your list is gone. The next line that uses `a` usually crashes, with an error about `NoneType`.
+
+
+      The rule to remember: strings can't change, so their tools return new strings. Lists can change, so their tools change them. The same goes for `.sort()`.
+    code: |
+      word = "goat"
+      word = word.upper()
+      print(word)
+
+      a = [1, 2]
+      a.append(3)
+      print(a)
+
+      b = [1, 2]
+      b = b.append(3)
+      print(b)
+    subgoals:
+      - { line: 2, label: 'String: store the new value' }
+      - { line: 6, label: 'List: no assignment needed' }
+      - { line: 10, label: 'The bug: this stores None' }
+    predict: What will `print(b)` show?
+
+  - type: choice
+    id: none-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [3, 1, 2]
+      x = a.sort()
+      print(x)
+      print(a)
+    choices: ["None\n[1, 2, 3]", "[1, 2, 3]\n[1, 2, 3]", "[1, 2, 3]\n[3, 1, 2]", "None\nNone"]
+    answer: "None\n[1, 2, 3]"
+    why: >-
+      `.sort()` changes the list and gives back `None`, so that's what `x` holds.
+    variants:
+      - code: |
+          s = "abc"
+          s.upper()
+          a = [1]
+          a.append(2)
+          print(s, a)
+        choices: ['abc [1, 2]', 'ABC [1, 2]', 'abc [1]', 'ABC [1]']
+        answer: 'abc [1, 2]'
+        why: >-
+          The string tool's result was thrown away, but the list tool changed the list itself.
+      - code: |
+          a = [1, 2]
+          print(a.append(3))
+        choices: ['None', '[1, 2, 3]', '3', 'Error']
+        answer: 'None'
+        why: >-
+          `append` gives back `None`, so that's what gets printed, even though the list did change.
+
+  - type: explain
+    id: explain-none
+    prompt: This crashes on the last line, with an error that mentions `NoneType`. Why, and how would you fix it?
+    code: |
+      nums = [1, 2]
+      nums = nums.append(3)
+      print(len(nums))
+    expectError: TypeError
+    model: >-
+      `append` changes the list in place and gives back `None`, so line 2 stores `None` in `nums`. Writing just `nums.append(3)` fixes it.
+    keyPoints:
+      - '`append` gives back `None`, and it changes the list itself'
+      - The assignment replaced the list with `None`, so remove the `nums =`
+
+  - type: learn
+    id: remove-sort
+    title: Removing and sorting
+    body: >-
+      There are two ways to remove an item. `.pop()` removes the last item and gives it back, which is the one exception to the `None` rule. `.pop(i)` does the same for position `i`. `.remove(x)` searches for the first item equal to `x` and removes it. If it isn't there, you get a `ValueError`, so check with `in` first if you aren't sure.
+
+
+      `.sort()` puts a list in ascending order, in place, and `.sort(reverse=True)` makes it descending. To keep the original, use the function `sorted(a)`, which gives back a new sorted list and leaves `a` alone.
+
+
+      `.index(x)` gives the position of the first match, and `.count(x)` gives the number of matches. Both are handy, but don't write them in a loop when you could just do the job once.
+    code: |
+      a = [3, 1, 2, 1]
+      last = a.pop()
+      print(last, a)
+      a.remove(3)
+      print(a)
+
+      b = [3, 1, 2]
+      print(sorted(b))
+      print(b)
+      b.sort(reverse=True)
+      print(b)
+    subgoals:
+      - { line: 2, label: 'Remove the last item and get it back' }
+      - { line: 4, label: 'Remove by value' }
+      - { line: 8, label: 'A new sorted list' }
+      - { line: 9, label: 'The original is unchanged' }
+      - { line: 10, label: 'Sorted in place, biggest first' }
+    predict: What will `print(a)` show after the `remove`?
+
+  - type: choice
+    id: remove-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [5, 6, 7]
+      x = a.pop(0)
+      print(x, a)
+    choices: ['5 [6, 7]', '7 [5, 6]', '0 [5, 6, 7]', 'None [6, 7]']
+    answer: '5 [6, 7]'
+    why: >-
+      `pop(0)` removes the item at position 0 and gives it back.
+    variants:
+      - code: |
+          a = [4, 5, 4]
+          a.remove(4)
+          print(a)
+        choices: ['[5, 4]', '[5]', '[4, 5]', '[4, 4]']
+        answer: '[5, 4]'
+        why: >-
+          `remove` only removes the first match, and its argument is a value, not a position.
+      - code: |
+          a = [2, 3, 1]
+          b = sorted(a)
+          print(a[0], b[0])
+        choices: ['2 1', '1 1', '2 2', '1 2']
+        answer: '2 1'
+        why: >-
+          `sorted` makes a new list, and `a` keeps its original order.
+
+  - type: blank
+    id: fill-method
+    prompt: Fill in the method so this shows `[1, 2]`.
+    code: |
+      a = [1]
+      a.____(2)
+      print(a)
+    answers: [['append']]
+    expectOutput: '[1, 2]'
+    why: >-
+      `append` adds one item to the end.
+    variants:
+      - prompt: Fill in the blank so the biggest item ends up first, and this shows `[3, 2, 1]`.
+        code: |
+          a = [2, 3, 1]
+          a.sort(____)
+          print(a)
+        answers: [['reverse=True']]
+        expectOutput: '[3, 2, 1]'
+        why: >-
+          `reverse=True` is an argument passed by name, which you've seen before.
+      - prompt: Fill in the method so this shows `9`, the item removed from the end.
+        code: |
+          a = [1, 9]
+          print(a.____())
+        answers: [['pop']]
+        expectOutput: '9'
+        why: >-
+          `pop` is the method that gives back what it removes.
+
+  - type: fix
+    id: fix-assign
+    prompt: This should show `[1, 2, 3]`, but it shows `None`. Fix it.
+    code: |
+      a = [3, 1, 2]
+      a = a.sort()
+      print(a)
+    solution: |
+      a = [3, 1, 2]
+      a.sort()
+      print(a)
+    highlightLine: 2
+    expectOutput: '[1, 2, 3]'
+    why: >-
+      `.sort()` changes the list and gives back `None`. `a = sorted(a)` also works, because `sorted` gives back a new list.
+    hints:
+      - What does `.sort()` give back?
+    variants:
+      - prompt: This should show `[0, 1, 2]`, but it only shows the last item. Fix it.
+        code: |
+          out = []
+          for i in range(3):
+              out = [i]
+          print(out)
+        solution: |
+          out = []
+          for i in range(3):
+              out.append(i)
+          print(out)
+        highlightLine: 3
+        expectOutput: '[0, 1, 2]'
+        why: >-
+          `out = [i]` replaces the whole list on each pass. `append` adds to it.
+        hints:
+          - Which tool adds to a list?
+      - prompt: This should show `[1, 3]`, by removing the value `2`, but it gives an `IndexError`. Fix it.
+        code: |
+          a = [1, 2, 3]
+          a.pop(2)
+          a.pop(2)
+          print(a)
+        solution: |
+          a = [1, 2, 3]
+          a.remove(2)
+          print(a)
+        highlightLine: 2
+        expectOutput: '[1, 3]'
+        why: >-
+          `pop` takes a position, and `remove` takes a value.
+        hints:
+          - Which method takes a value rather than a position?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Tracking progress
+    body: >-
+      During training, you keep a record of the loss so that you can plot it and check it's going down. Here's that shape, with a loss that shrinks by a fixed fraction on each step.
+
+
+      The list starts empty before the loop. Each pass works out a new value and appends it. After the loop you can ask questions of the whole history: what was the first value, what was the last, and how much did it improve?
+
+
+      Notice that `round(loss, 4)` only affects what gets stored. Rounding like this helps when you're displaying numbers, but you wouldn't want to feed rounded values back into a real calculation.
+    code: |
+      loss = 1.0
+      history = []
+      for step in range(4):
+          loss = loss * 0.5
+          history.append(round(loss, 4))
+
+      print(history)
+      print(history[0] - history[-1])
+    subgoals:
+      - { line: 2, label: 'Start empty' }
+      - { line: 4, label: 'Work out the new value' }
+      - { line: 5, label: 'Record it' }
+      - { line: 8, label: 'Ask about the whole run' }
+    predict: What will the last value in the history be?
+
+  - type: write
+    id: countdown-list
+    prompt: Write `doubles(n)`, which gives back a list of the first `n` powers of 2, starting from 1. So `doubles(4)` gives back `[1, 2, 4, 8]`.
+    starter: |
+      def doubles(n):
+          # Your code here
+    solution: |
+      def doubles(n):
+          out = []
+          value = 1
+          for i in range(n):
+              out.append(value)
+              value *= 2
+          return out
+    tests:
+      - { call: doubles(4), expect: '[1, 2, 4, 8]' }
+      - { call: doubles(0), expect: '[]' }
+    why: >-
+      Start with an empty list, append inside the loop, and return after it.
+    hints:
+      - You need two things that change, the list and the current value.
+    variants:
+      - prompt: Write `top_two(items)`, which gives back a new list of the two largest items, biggest first, without changing `items`. So `top_two([1, 5, 3])` gives back `[5, 3]`.
+        starter: |
+          def top_two(items):
+              # Your code here
+        solution: |
+          def top_two(items):
+              ordered = sorted(items, reverse=True)
+              return ordered[:2]
+        tests:
+          - { call: 'top_two([1, 5, 3])', expect: '[5, 3]' }
+          - { call: 'top_two([2, 2, 9, 1])', expect: '[9, 2]' }
+        hints:
+          - '`sorted` takes `reverse=True` as well, and leaves the original alone.'
+
+  - type: choice
+    id: remember-mutable
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      a = [1, 2, 3]
+      a[1] = a[1] * 10
+      print(a[1:])
+    choices: ['[20, 3]', '[1, 20]', '[10, 3]', '[2, 3]']
+    answer: '[20, 3]'
+    why: >-
+      The item at index 1 becomes 20, and the slice starts from there.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `append` adds to the end, `pop` removes and gives back, `remove` deletes by value, and `sort` orders the list. Most of these change the list in place and give back `None`, so don't assign the result. `sorted` is the one that gives you a new list.
+
+
+      Next: going through a list, item by item.

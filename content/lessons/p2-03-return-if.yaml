@@ -1,0 +1,380 @@
+id: p2-return-if
+track: ml
+unit: 2
+order: 3
+title: Functions that decide
+summary: Combine return with if, and make sure every path gives an answer.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Different answers for different inputs
+    body: >-
+      Most useful functions don't always do the same thing. A function might label a score as a pass or a fail, or stop an update if a number is too big. That means putting `if` and `return` together.
+
+
+      By the end of this lesson you'll be able to write functions that choose their answer, and you'll be able to spot the bug where some inputs give back `None`.
+
+  - type: learn
+    id: if-return
+    title: Return inside an if
+    body: >-
+      A `return` can sit inside an `if` block. When Python reaches it, the function ends right there. So a function can have several `return` lines, and each call uses only the first one it reaches.
+
+
+      This means you often don't need an `else`. Below, if the score is high enough, the function has already left by the time Python would reach the last line. So the last line only runs for scores that didn't
+      match. Both styles work. Without the `else` there's less to read, especially when there are several cases.
+
+
+      Pay attention to the order of your checks, for the same reason as with `elif`: the first `return` reached wins.
+    code: |
+      def label(score):
+          if score >= 50:
+              return "pass"
+          return "fail"
+
+      print(label(70))
+      print(label(20))
+    subgoals:
+      - { line: 2, label: 'Ask the question' }
+      - { line: 3, label: 'True: give back an answer and leave' }
+      - { line: 4, label: 'Only reached if the condition was False' }
+    predict: Does `label(70)` ever reach line 4?
+
+  - type: choice
+    id: which-return
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def size(n):
+          if n > 100:
+              return "big"
+          if n > 10:
+              return "medium"
+          return "small"
+
+      print(size(50))
+    choices: ['medium', 'big', 'small', "medium\nsmall"]
+    answer: 'medium'
+    why: >-
+      50 fails the first check and passes the second, so the function returns there. The later line never runs.
+    variants:
+      - code: |
+          def size(n):
+              if n > 10:
+                  return "medium"
+              if n > 100:
+                  return "big"
+              return "small"
+
+          print(size(500))
+        choices: ['medium', 'big', 'small', "medium\nbig"]
+        answer: 'medium'
+        why: >-
+          The first `return` reached wins, and 500 is greater than 10. The check order is wrong for what this function seems to want.
+      - code: |
+          def sign(n):
+              if n < 0:
+                  return -1
+              if n > 0:
+                  return 1
+              return 0
+
+          print(sign(-3) + sign(0) + sign(8))
+        choices: ['0', '1', '-1', '5']
+        answer: '0'
+        why: >-
+          The three calls give back -1, 0 and 1, which add up to 0.
+
+  - type: learn
+    id: missing-path
+    title: Every path needs an answer
+    body: >-
+      If a function can reach its end without hitting a `return`, it gives back `None`, and Python doesn't warn you. Below, `label` handles passes and fails, but a score of exactly 50 slips between the two conditions.
+
+
+      This kind of bug can hide for a long time, because the function works for most inputs. The `None` then causes a crash somewhere else, far away from the real mistake.
+
+
+      To check a function, go through it with an input from each case, and especially the boundary values. Ask: is there any value that gets to the bottom without a `return`? A final `return` or an `else` outside the conditions
+      is the usual fix, since it guarantees an answer.
+    code: |
+      def label(score):
+          if score > 50:
+              return "pass"
+          if score < 50:
+              return "fail"
+
+      print(label(70))
+      print(label(20))
+      print(label(50))
+    subgoals:
+      - { line: 2, label: 'Above 50' }
+      - { line: 4, label: 'Below 50' }
+      - { line: 9, label: 'Exactly 50 matches neither' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: path-none
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def check(n):
+          if n % 2 == 0:
+              return "even"
+
+      print(check(3))
+    choices: ['None', 'odd', 'even', 'Error']
+    answer: 'None'
+    why: >-
+      3 isn't even, so the `if` block is skipped. The function reaches its end with no `return` and gives back `None`.
+    variants:
+      - code: |
+          def f(x):
+              if x > 0:
+                  print("positive")
+              else:
+                  return "other"
+
+          print(f(5))
+        choices: ["positive\nNone", 'positive', "positive\nother", 'None']
+        answer: "positive\nNone"
+        why: >-
+          The first path prints, but it never returns, so that path gives back `None`.
+
+  - type: explain
+    id: explain-no-else
+    prompt: This function has no `else`. Why does it still give the right answer for both 4 and -4?
+    code: |
+      def size(n):
+          if n < 0:
+              return -n
+          return n
+
+      print(size(4))
+      print(size(-4))
+    model: >-
+      For -4 the condition is true, so `return -n` gives back 4 and leaves the function. For 4 the block is skipped, so Python carries on to `return n`. The last line only runs when the condition was false, so no `else` is needed.
+    keyPoints:
+      - '`return` leaves the function straight away, so the last line is not reached when the condition is true'
+      - The last line acts like an `else`, because it only runs when the condition was false
+
+  - type: learn
+    id: return-bool
+    title: Returning True or False
+    body: >-
+      Functions that answer a yes or no question are everywhere, and they often have names starting with `is_` or `has_`. You can write them with `if`, returning `True` in one case and `False` in the other. But look at what that does: the condition is already `True`
+      or `False`, so you can return it directly.
+
+
+      Both functions below are correct, and the second one is what experienced programmers write. When you call one of these, you can drop it straight into an `if`, and the line reads like a sentence: `if is_even(n):`.
+
+
+      You don't need to write `if is_even(n) == True:`. The call already gives you a boolean, and that's what `if` wants.
+    code: |
+      def is_even_long(n):
+          if n % 2 == 0:
+              return True
+          else:
+              return False
+
+      def is_even(n):
+          return n % 2 == 0
+
+      print(is_even(4))
+      if is_even(7):
+          print("seven is even")
+      else:
+          print("seven is odd")
+    subgoals:
+      - { line: 1, label: 'Works, but longer than it needs to be' }
+      - { line: 8, label: 'The comparison is already the answer' }
+      - { line: 11, label: 'Reads like a sentence' }
+    predict: What will the `if` part show?
+
+  - type: blank
+    id: fill-bool
+    prompt: Fill in the blank so `is_adult(18)` gives back `True` and `is_adult(17)` gives back `False`.
+    code: |
+      def is_adult(age):
+          return ____
+    answers: [['age >= 18', 'age>=18', '18 <= age', 'age > 17']]
+    tests:
+      - { call: is_adult(18), expect: 'True' }
+      - { call: is_adult(17), expect: 'False' }
+    why: >-
+      The comparison itself gives `True` or `False`, so you can return it directly.
+    variants:
+      - prompt: Fill in the missing word so anything that isn't negative gives back `"ok"`.
+        code: |
+          def status(n):
+              if n < 0:
+                  ____ "negative"
+              return "ok"
+        answers: [['return']]
+        tests:
+          - { call: status(-1), expect: "'negative'" }
+          - { call: status(3), expect: "'ok'" }
+        why: >-
+          The `return` inside the block leaves the function, so the last line only runs for other values.
+
+  - type: fix
+    id: fix-missing-path
+    prompt: '`grade(50)` should give back `"pass"`, but it gives back `None`. Fix it.'
+    code: |
+      def grade(score):
+          if score > 50:
+              return "pass"
+          if score < 50:
+              return "fail"
+    solution: |
+      def grade(score):
+          if score >= 50:
+              return "pass"
+          return "fail"
+    highlightLine: 2
+    tests:
+      - { call: grade(50), expect: "'pass'" }
+      - { call: grade(80), expect: "'pass'" }
+      - { call: grade(49), expect: "'fail'" }
+    why: >-
+      Exactly 50 matched neither condition, so that path reached the end with no `return`.
+    hints:
+      - Which path does 50 take through the function?
+    variants:
+      - prompt: '`biggest(9, 2)` should give back `9`, but it gives back `2`. Fix it.'
+        code: |
+          def biggest(a, b):
+              if a > b:
+                  print(a)
+              return b
+        solution: |
+          def biggest(a, b):
+              if a > b:
+                  return a
+              return b
+        highlightLine: 3
+        tests:
+          - { call: 'biggest(9, 2)', expect: '9' }
+          - { call: 'biggest(2, 9)', expect: '9' }
+        why: >-
+          `print` shows `a` and then carries on to the last line. Only `return` leaves the function with an answer.
+        hints:
+          - After line 3 runs, which line runs next?
+      - prompt: '`tier(500)` should give back `"high"`, but it gives back `"mid"`. Fix it by changing the order.'
+        code: |
+          def tier(n):
+              if n > 10:
+                  return "mid"
+              if n > 100:
+                  return "high"
+              return "low"
+        solution: |
+          def tier(n):
+              if n > 100:
+                  return "high"
+              if n > 10:
+                  return "mid"
+              return "low"
+        highlightLine: 2
+        tests:
+          - { call: tier(500), expect: "'high'" }
+          - { call: tier(50), expect: "'mid'" }
+          - { call: tier(5), expect: "'low'" }
+        why: >-
+          The first `return` reached wins, so the strictest check has to go first.
+        hints:
+          - 500 passes the first check. Which check should come first?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Guarding against bad input
+    body: >-
+      A common shape is to deal with the awkward cases first, and leave the ordinary case for the end. Each awkward case gets its own `if` and `return`, so by the time you reach the main calculation you know the input is safe. These are often called guard clauses.
+
+
+      Say you need a safe division. Dividing by 0 would crash, so you check for it first. Below, the last line can only run if `b` isn't 0. Compare that with putting the main calculation inside a deep `else`: the code here stays flat and readable.
+
+
+      Whenever you write this kind of function, test the awkward case and the ordinary case. Both of these calls have a different path, and you want to see both work.
+    code: |
+      def safe_divide(a, b):
+          if b == 0:
+              return 0
+          return a / b
+
+      print(safe_divide(10, 2))
+      print(safe_divide(10, 0))
+    subgoals:
+      - { line: 2, label: 'Deal with the awkward case first' }
+      - { line: 3, label: 'Leave early with a safe answer' }
+      - { line: 4, label: 'Now `b` must be safe' }
+      - { line: 6, label: 'Test both paths' }
+    predict: What will each call show?
+
+  - type: write
+    id: clamp
+    prompt: >-
+      Write `clamp(x, low, high)`. It gives back `low` if `x` is below it, `high` if `x` is above it, and `x` otherwise. Machine learning code uses this to stop numbers getting too large.
+    starter: |
+      def clamp(x, low, high):
+          # Your code here
+    solution: |
+      def clamp(x, low, high):
+          if x < low:
+              return low
+          if x > high:
+              return high
+          return x
+    tests:
+      - { call: 'clamp(5, 0, 10)', expect: '5' }
+      - { call: 'clamp(-3, 0, 10)', expect: '0' }
+      - { call: 'clamp(99, 0, 10)', expect: '10' }
+      - { call: 'clamp(0, 0, 10)', expect: '0', hidden: true }
+    why: >-
+      Deal with each out-of-range case and leave. What's left is the ordinary case.
+    hints:
+      - You need three `return` lines, and two `if`s.
+    variants:
+      - prompt: Write `is_multiple(n, d)`, which gives back `True` if `n` divides by `d` with no remainder. If `d` is 0, it should give back `False`.
+        starter: |
+          def is_multiple(n, d):
+              # Your code here
+        solution: |
+          def is_multiple(n, d):
+              if d == 0:
+                  return False
+              return n % d == 0
+        tests:
+          - { call: 'is_multiple(10, 5)', expect: 'True' }
+          - { call: 'is_multiple(10, 3)', expect: 'False' }
+          - { call: 'is_multiple(10, 0)', expect: 'False' }
+        hints:
+          - Check for the awkward case first, because `% 0` crashes.
+
+  - type: choice
+    id: remember-return
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def f(n):
+          return n + 1
+          return n + 2
+
+      print(f(1))
+    choices: ['2', '3', "2\n3", 'Error']
+    answer: '2'
+    why: >-
+      The first `return` ends the function, so the second never runs.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A function can have several `return` lines, and the first one reached ends the call, so you often don't need an `else`. Check that every path gives an answer, or some inputs will give back `None`. A yes or no function can return its comparison directly.
+
+
+      Next: why a variable inside a function isn't the same as one outside it.

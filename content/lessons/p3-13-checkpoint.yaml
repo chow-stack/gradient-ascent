@@ -1,0 +1,213 @@
+id: p3-checkpoint
+track: ml
+unit: 3
+order: 13
+kind: checkpoint
+title: Unit 3 checkpoint
+summary: Lists, dicts and libraries, mixed up. Get 80% right to move on.
+
+cards:
+  - type: choice
+    id: method-none
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [2, 1]
+      b = a.sort()
+      print(b, a)
+    choices: ['None [1, 2]', '[1, 2] [1, 2]', '[1, 2] [2, 1]', 'None [2, 1]']
+    answer: 'None [1, 2]'
+    why: >-
+      `.sort()` changes the list and gives back `None`.
+
+  - type: choice
+    id: alias
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1]
+      b = a
+      c = a[:]
+      b.append(2)
+      c.append(3)
+      print(a)
+    choices: ['[1, 2]', '[1, 2, 3]', '[1, 3]', '[1]']
+    answer: '[1, 2]'
+    why: >-
+      `b` is the same list, and `c` is a copy.
+    variants:
+      - code: |
+          def f(x):
+              x.append(1)
+              x = [9]
+
+          a = []
+          f(a)
+          print(a)
+        choices: ['[1]', '[9]', '[]', '[1, 9]']
+        answer: '[1]'
+        why: >-
+          `append` changes the shared list. Assigning only moves the local name.
+
+  - type: choice
+    id: loop-variable
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1, 2]
+      for x in a:
+          x = x * 5
+      print(a)
+    choices: ['[1, 2]', '[5, 10]', '[5, 2]', '10']
+    answer: '[1, 2]'
+    why: >-
+      Assigning to the loop variable doesn't touch the list.
+
+  - type: choice
+    id: grid
+    kind: predict
+    prompt: What does this print?
+    code: |
+      g = [[1, 2, 3], [4, 5, 6]]
+      print(len(g), g[1][0])
+    choices: ['2 4', '3 4', '2 2', '6 4']
+    answer: '2 4'
+    why: >-
+      There are 2 rows, and row 1, column 0 is 4.
+
+  - type: choice
+    id: split-strings
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a, b = "2,5".split(",")
+      print(a * 2 + b)
+    choices: ['225', '9', '45', 'Error']
+    answer: '225'
+    why: >-
+      The pieces are strings, so `*` repeats and `+` joins.
+
+  - type: choice
+    id: dict-loop
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"z": 1, "a": 2}
+      for x in d:
+          print(x, d[x])
+      print(max(d))
+    choices: ["z 1\na 2\nz", "1 z\n2 a\n2", "a 2\nz 1\na", "z 1\na 2\n2"]
+    answer: "z 1\na 2\nz"
+    why: >-
+      A dict loop goes through the keys in the order they were added, and `max` compares keys.
+
+  - type: choice
+    id: which-safe
+    kind: concept
+    prompt: Which of these is the right way to compare a calculated float `x` with 0.3?
+    choices:
+      - 'abs(x - 0.3) < 1e-9'
+      - 'x == 0.3'
+      - 'x is 0.3'
+      - 'int(x) == 0.3'
+    answer: 'abs(x - 0.3) < 1e-9'
+    why: >-
+      Floats are approximate, so compare with a tolerance.
+
+  - type: blank
+    id: fill-count
+    prompt: Fill in the blank so this counts properly, and shows `2`.
+    code: |
+      c = {}
+      for w in ["a", "a"]:
+          c[w] = c.get(____) + 1
+      print(c["a"])
+    answers: [['w, 0', 'w,0']]
+    expectOutput: '2'
+    why: >-
+      A new key should start from a default of 0.
+
+  - type: fix
+    id: fix-best
+    prompt: '`largest([-3, -1])` should give back `-1`. Fix it.'
+    code: |
+      def largest(items):
+          best = 0
+          for x in items:
+              if x > best:
+                  best = x
+          return best
+    solution: |
+      def largest(items):
+          best = items[0]
+          for x in items:
+              if x > best:
+                  best = x
+          return best
+    tests:
+      - { call: 'largest([-3, -1])', expect: '-1' }
+      - { call: 'largest([2, 9])', expect: '9' }
+    why: >-
+      Best so far starts from a real item.
+
+  - type: fix
+    id: fix-remove
+    prompt: '`no_negatives([-1, -2, 3])` should give back `[3]`. Fix it.'
+    code: |
+      def no_negatives(items):
+          for x in items:
+              if x < 0:
+                  items.remove(x)
+          return items
+    solution: |
+      def no_negatives(items):
+          out = []
+          for x in items:
+              if x >= 0:
+                  out.append(x)
+          return out
+    tests:
+      - { call: 'no_negatives([-1, -2, 3])', expect: '[3]' }
+      - { call: 'no_negatives([])', expect: '[]' }
+    why: >-
+      Removing during the loop skips items, so build a new list.
+
+  - type: write
+    id: write-matrix
+    prompt: Write `row_means(grid)`, which gives back a list of the mean of each row. So `row_means([[1, 3], [2, 2]])` gives back `[2.0, 2.0]`.
+    starter: |
+      def row_means(grid):
+          # Your code here
+    solution: |
+      def row_means(grid):
+          out = []
+          for row in grid:
+              out.append(sum(row) / len(row))
+          return out
+    tests:
+      - { call: 'row_means([[1, 3], [2, 2]])', expect: '[2.0, 2.0]' }
+      - { call: 'row_means([])', expect: '[]' }
+    why: >-
+      A row is a list, so `sum` and `len` work on it.
+
+  - type: write
+    id: write-top
+    prompt: Write `top_word(text)`, which gives back the most common word in `text`, in lowercase. If there's a tie, the word seen first wins. You can assume that the text has at least one word.
+    starter: |
+      def top_word(text):
+          # Your code here
+    solution: |
+      def top_word(text):
+          counts = {}
+          for word in text.lower().split():
+              counts[word] = counts.get(word, 0) + 1
+          best = None
+          for word in counts:
+              if best is None or counts[word] > counts[best]:
+                  best = word
+          return best
+    tests:
+      - { call: 'top_word("a b B")', expect: "'b'" }
+      - { call: 'top_word("x y")', expect: "'x'" }
+    why: >-
+      Two patterns one after another: count, then best so far.

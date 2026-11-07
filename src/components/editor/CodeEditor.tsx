@@ -7,6 +7,8 @@ export type CodeEditorProps = {
   readOnly?: boolean
   /** 1-based line to mark (e.g. where an error happened). */
   errorLine?: number | null
+  /** 1-based line to point the learner at (e.g. where a bug is). An error on the same line takes priority. */
+  markLine?: number | null
   /** Called on Cmd/Ctrl+Enter with the editor's current text (fresher than React state). */
   onSubmit?: (value: string) => void
   ariaLabel?: string
@@ -22,6 +24,7 @@ export default function CodeEditor({
   onChange,
   readOnly,
   errorLine,
+  markLine,
   onSubmit,
   ariaLabel = 'Code editor',
   minLines = 6,
@@ -99,17 +102,16 @@ export default function CodeEditor({
   }, [readOnly])
 
   useEffect(() => {
-    decorations.current?.set(
-      errorLine
-        ? [
-            {
-              range: new monaco.Range(errorLine, 1, errorLine, 1),
-              options: { isWholeLine: true, className: 'ga-editor-error-line' },
-            },
-          ]
-        : [],
-    )
-  }, [errorLine])
+    const whole = (line: number, className: string) => ({
+      range: new monaco.Range(line, 1, line, 1),
+      options: { isWholeLine: true, className },
+    })
+    decorations.current?.set([
+      ...(markLine && markLine !== errorLine ? [whole(markLine, 'ga-editor-mark-line')] : []),
+      ...(errorLine ? [whole(errorLine, 'ga-editor-error-line')] : []),
+    ])
+    // `value` is here because replacing the editor's text clears its decorations.
+  }, [errorLine, markLine, value])
 
   return <div ref={host} className="ga-editor" />
 }

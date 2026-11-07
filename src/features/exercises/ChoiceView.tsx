@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CodeBlock } from '../../components/CodeBlock'
 import { shuffled } from '../../lib/random'
+import { inline } from './inline'
 import type { Card } from '../content/schema'
 import { Prompt } from './shared'
 import { locked, type ViewProps } from './types'
@@ -40,7 +41,7 @@ export function ChoiceView({ card, answer, setAnswer, phase }: ViewProps<ChoiceC
               onClick={() => setAnswer({ type: 'choice', choice: c })}
             >
               <span className="ga-choice-key">{i + 1}</span>
-              {code ? <code className="whitespace-pre-wrap">{c}</code> : <span>{c}</span>}
+              {code ? <code className="whitespace-pre-wrap">{c}</code> : <span>{inline(c)}</span>}
             </button>
           )
         })}

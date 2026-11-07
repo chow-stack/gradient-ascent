@@ -1,0 +1,167 @@
+id: p2-project-descent
+track: ml
+unit: 2
+order: 13
+kind: project
+title: 'Project: Find the bottom'
+summary: Use functions and a loop to find the lowest point of a curve, the way a model learns.
+
+cards:
+  - type: learn
+    id: brief
+    label: The project
+    title: How a model learns, in miniature
+    body: >-
+      Training a model means finding the settings that make its error as small as possible. Imagine standing on a hillside in fog, trying to reach the bottom of the valley. You can't see far, but you can feel which way the ground slopes under your feet. So you take a small step downhill, and repeat.
+
+
+      That's all the algorithm does, and it's called gradient descent. Here the valley is the curve `(x - 3) ** 2`. Its lowest point is at `x = 3`, and we'll pretend we don't know that. We've given you `slope(x)`, which says how steep the ground is at `x`. You'll learn where it comes from later on, and all you need now is that it's positive when the bottom is to the left.
+
+
+      You'll build this in three steps, using only what's in this unit.
+
+  - type: write
+    id: step
+    prompt: >-
+      Step 1 of 3. Write `loss(x)`, which gives back `(x - 3) ** 2`. Then write `step(x, lr=0.1)`, which gives back the new position after one step downhill: `x - lr * slope(x)`.
+    starter: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      # Write loss and step here
+    solution: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      def step(x, lr=0.1):
+          return x - lr * slope(x)
+    tests:
+      - { call: loss(5), expect: '4' }
+      - { call: loss(3), expect: '0' }
+      - { call: step(0), expect: '0.6' }
+      - { call: 'step(0, 0.5)', expect: '3.0' }
+      - { call: step(3), expect: '3.0' }
+    why: >-
+      `lr` stands for learning rate, the size of each step. It's one of the most important settings in machine learning.
+    hints:
+      - Both functions have to `return`, and the body of each is one line.
+
+  - type: write
+    id: descend
+    prompt: >-
+      Step 2 of 3. Write `descend(x, steps, lr=0.1)`, which starts at `x`, takes that many steps using your `step` function, and gives back the final position.
+    starter: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      def step(x, lr=0.1):
+          return x - lr * slope(x)
+
+      # Write descend here
+    solution: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      def step(x, lr=0.1):
+          return x - lr * slope(x)
+
+      def descend(x, steps, lr=0.1):
+          for i in range(steps):
+              x = step(x, lr)
+          return x
+    tests:
+      - { call: 'descend(0, 1)', expect: '0.6' }
+      - { call: 'descend(0, 2)', expect: '1.08' }
+      - { call: 'descend(0, 0)', expect: '0' }
+      - { call: 'round(descend(0, 100), 3)', expect: '3.0' }
+      - { call: 'round(descend(10, 100), 3)', expect: '3.0' }
+    why: >-
+      You know the number of steps in advance, so it's a `for` loop. Each pass replaces `x` with its new value. Check that it found 3 from both sides of the valley, without ever being told the answer.
+    hints:
+      - The new value of `x` comes from calling `step(x, lr)`.
+      - Remember to pass `lr` along, and to return after the loop.
+
+  - type: write
+    id: until-small
+    prompt: >-
+      Step 3 of 3. Real training often runs until the error is small enough. Write `steps_needed(x, lr=0.1)`, which keeps stepping while `loss(x)` is at least `0.01`, and gives back how many steps that took.
+    starter: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      def step(x, lr=0.1):
+          return x - lr * slope(x)
+
+      def descend(x, steps, lr=0.1):
+          for i in range(steps):
+              x = step(x, lr)
+          return x
+
+      # Write steps_needed here
+    solution: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      def step(x, lr=0.1):
+          return x - lr * slope(x)
+
+      def descend(x, steps, lr=0.1):
+          for i in range(steps):
+              x = step(x, lr)
+          return x
+
+      def steps_needed(x, lr=0.1):
+          count = 0
+          while loss(x) >= 0.01:
+              x = step(x, lr)
+              count += 1
+          return count
+    tests:
+      - { call: steps_needed(3), expect: '0' }
+      - { call: steps_needed(0), expect: '16' }
+      - { call: 'steps_needed(0, 0.4)', expect: '3' }
+    why: >-
+      You don't know how many steps it'll take, so it's a `while` loop with a counter. Compare the last two tests: a bigger learning rate got there in far fewer steps.
+    hints:
+      - You only know when to stop, so which loop fits?
+      - The count starts at 0 and goes up once per pass.
+
+  - type: learn
+    id: too-big
+    label: One more thing
+    title: When steps are too big
+    body: >-
+      If bigger steps are faster, why not use huge ones? Run this to find out. With a learning rate of 1.1, each step jumps clean over the bottom of the valley and lands higher up on the other side. So the error grows, and it keeps growing with every step. This really does happen in machine learning: when the loss suddenly shoots up, a learning rate that's too high is the first thing to suspect.
+
+
+      You've now written the loop at the heart of machine learning. Real models have millions of settings rather than one `x`, and working out the slope takes real work, which is what micrograd will show you. But the idea is what you just built: measure, step downhill, repeat.
+    code: |
+      def slope(x):
+          return 2 * (x - 3)
+
+      def loss(x):
+          return (x - 3) ** 2
+
+      x = 0
+      for i in range(5):
+          x = x - 1.1 * slope(x)
+          print(f"Step {i}: x = {round(x, 2)}, loss = {round(loss(x), 2)}")
+    subgoals:
+      - { line: 9, label: 'A step that is too big' }
+      - { line: 10, label: 'Watch the loss grow' }
+    predict: Will the loss go up or down?

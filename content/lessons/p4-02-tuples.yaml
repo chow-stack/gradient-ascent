@@ -1,0 +1,372 @@
+id: p4-tuples
+track: ml
+unit: 4
+order: 2
+title: Tuples and unpacking
+summary: Fixed groups of values, and how to pull them apart.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Values that belong together
+    body: >-
+      A point has an x and a y. A training example has an input and a label. A table of data has a number of rows and a number of columns. Machine learning code is full of small groups of values like these, and it passes them around constantly.
+
+
+      By the end of this lesson you'll be able to make a tuple, pull one apart into separate names, and give back several values from a function.
+
+  - type: learn
+    id: what
+    title: A fixed group of values
+    body: >-
+      A tuple is like a list that can't be changed. You write it with commas, usually inside parentheses: `point = (3, 4)`. Indexes, slices, `len` and `for` all work as they do with a list.
+
+
+      Trying to change one fails. `point[0] = 9` gives a `TypeError`, and there's no `append`. That's useful: when something is a tuple, you know that no other part of the program can change it. Use a list for a collection that grows, and a tuple for a fixed record.
+
+
+      It's the comma that makes a tuple, not the parentheses. `(5)` is just the number 5, because parentheses also group maths. A tuple of one item needs a comma: `(5,)`. Python also shows you tuples a lot: `.shape` on a NumPy array, which you'll meet next unit, is a tuple like `(2, 3)`.
+    code: |
+      point = (3, 4)
+      print(point[0], len(point))
+      print(type((5)))
+      print(type((5,)))
+      print(point + (5,))
+      point[0] = 9
+    expectError: TypeError
+    subgoals:
+      - { line: 2, label: 'Reads like a list' }
+      - { line: 3, label: 'Only parentheses: a plain number' }
+      - { line: 4, label: 'The comma makes it a tuple' }
+      - { line: 5, label: 'This builds a new tuple' }
+      - { line: 6, label: "Changing one isn't allowed" }
+    predict: Which line will crash?
+
+  - type: choice
+    id: tuple-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = (1, 2, 3)
+      print(a[-1], len(a))
+    choices: ['3 3', '3 2', '1 3', 'Error']
+    answer: '3 3'
+    why: >-
+      Reading from a tuple works just as it does for a list.
+    variants:
+      - code: |
+          a = (5)
+          b = (5,)
+          print(a + 1, len(b))
+        choices: ['6 1', '6 5', 'Error', '(6,) 1']
+        answer: '6 1'
+        why: >-
+          `(5)` is a plain number. `(5,)` is a tuple with one item.
+      - code: |
+          a = (1, 2)
+          b = a + (3,)
+          print(a, b)
+        choices: ['(1, 2) (1, 2, 3)', '(1, 2, 3) (1, 2, 3)', '(1, 2) (3,)', 'Error']
+        answer: '(1, 2) (1, 2, 3)'
+        why: >-
+          `+` builds a new tuple, and the old one can't change.
+      - code: |
+          t = 1, 2
+          print(type(t).__name__)
+        choices: ['tuple', 'int', 'list', 'Error']
+        answer: 'tuple'
+        why: >-
+          The commas are enough, and the parentheses are optional.
+
+  - type: learn
+    id: unpack
+    title: Unpacking
+    body: >-
+      Unpacking pulls a group apart into names, all in one line. `x, y = point` gets the first item into `x` and the second into `y`. You've already done this with `a, b = "2 3".split()` and with `for k, v in d.items()`, and now you know what's going on: each item from `.items()` is a tuple.
+
+
+      The number of names has to match the number of items. If it doesn't, you get `ValueError: too many values to unpack`, or `not enough values`.
+
+
+      Unpacking also gives you a neat way of swapping. `a, b = b, a` builds a tuple from the right side first, using the old values, and then unpacks it. There's no need for a temporary variable. By convention, a name of `_` means "I don't need this one", as in `x, _ = point`.
+    code: |
+      point = (3, 4)
+      x, y = point
+      print(x + y)
+
+      a = 1
+      b = 2
+      a, b = b, a
+      print(a, b)
+
+      pairs = [("ox", 2), ("yak", 3)]
+      for word, size in pairs:
+          print(word, size)
+
+      x, y = (1, 2, 3)
+    expectError: ValueError
+    subgoals:
+      - { line: 2, label: 'One name for each item' }
+      - { line: 7, label: 'The right side is worked out first' }
+      - { line: 11, label: 'Unpacks each item as you loop' }
+      - { line: 14, label: "Three items, two names: an error" }
+    predict: What will `print(a, b)` show?
+
+  - type: choice
+    id: unpack-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a, b = 1, 2
+      a, b = b, a + b
+      print(a, b)
+    choices: ['2 3', '2 4', '3 2', '1 3']
+    answer: '2 3'
+    why: >-
+      The right side uses the old values, giving `(2, 3)`, and only then are the names updated.
+    variants:
+      - code: |
+          x, _ = (7, 8)
+          print(x)
+        choices: ['7', '8', '(7, 8)', 'Error']
+        answer: '7'
+        why: >-
+          `_` is an ordinary name, used by convention for a value you don't need.
+      - code: |
+          total = 0
+          for a, b in [(1, 2), (3, 4)]:
+              total += a * b
+          print(total)
+        choices: ['14', '10', '24', '3']
+        answer: '14'
+        why: >-
+          1 × 2 + 3 × 4 = 14. Each tuple is unpacked as the loop goes.
+      - code: |
+          d = {"a": 1}
+          for item in d.items():
+              print(item)
+        choices: ["('a', 1)", 'a 1', 'a', '1']
+        answer: "('a', 1)"
+        why: >-
+          With one name and no unpacking, you can see the tuple itself.
+
+  - type: explain
+    id: explain-swap
+    prompt: Why does this show `2 1`, when the first assignment seems to overwrite `a`?
+    code: |
+      a = 1
+      b = 2
+      a, b = b, a
+      print(a, b)
+    model: >-
+      Python works out the whole right side first, building a tuple of the old values, `(2, 1)`. Only then does it assign them to `a` and `b`, so nothing is lost.
+    keyPoints:
+      - The right side is worked out first, using the old values
+      - Then the tuple is unpacked into the names
+
+  - type: learn
+    id: returning
+    title: Giving back several values
+    body: >-
+      A function can only give back one thing, but that thing can be a tuple. So `return low, high` gives back a tuple of two values, and the caller usually unpacks it straight away: `low, high = min_max(nums)`.
+
+
+      This is everywhere in machine learning code. A function might give back a loss and a prediction, or a training set and a test set, as your `split_data` did in the worked example on libraries.
+
+
+      Forgetting to unpack is the usual mistake. `result = min_max(nums)` is fine, but `result` is a tuple, so `result + 1` gives a `TypeError`. Tuples can also be dict keys, while lists can't, because they can't change. That makes them a natural way of storing pairs, as `counts[("a", "b")]`.
+    code: |
+      def min_max(nums):
+          return min(nums), max(nums)
+
+      low, high = min_max([3, 1, 2])
+      print(low, high)
+
+      result = min_max([3, 1, 2])
+      print(result)
+
+      seen = {(0, 1): "start"}
+      print(seen[(0, 1)])
+    subgoals:
+      - { line: 2, label: 'One tuple, with two values' }
+      - { line: 4, label: 'Unpack it right away' }
+      - { line: 7, label: 'Or keep the tuple' }
+      - { line: 10, label: 'A tuple can be a dict key' }
+    predict: What will `print(result)` show?
+
+  - type: blank
+    id: fill-unpack
+    prompt: Fill in the blank so this shows `3 4`.
+    code: |
+      point = (3, 4)
+      ____ = point
+      print(x, y)
+    answers: [['x, y', 'x,y', '(x, y)']]
+    expectOutput: 3 4
+    why: >-
+      Two names on the left, one for each item.
+    variants:
+      - prompt: Fill in the blank to make a tuple with one item, so this shows `1`.
+        code: |
+          t = ____
+          print(len(t))
+        answers: [['(5,)', '5,', '(1,)', '1,']]
+        expectOutput: '1'
+        why: >-
+          The comma is what makes it a tuple.
+      - prompt: Fill in the blank so the function gives back both values, and this shows `5 6`.
+        code: |
+          def pair(n):
+              return ____
+
+          a, b = pair(5)
+          print(a, b)
+        answers: [['n, n + 1', 'n, n+1', '(n, n + 1)', '(n, n+1)']]
+        expectOutput: 5 6
+        why: >-
+          A comma between values makes a tuple, and the caller unpacks it.
+
+  - type: fix
+    id: fix-tuple
+    prompt: '`first_last([1, 2, 3])` should give back `(1, 3)`, but it crashes with a `TypeError`, because tuples can''t be changed. Fix it.'
+    code: |
+      def first_last(items):
+          result = (0, 0)
+          result[0] = items[0]
+          result[1] = items[-1]
+          return result
+    solution: |
+      def first_last(items):
+          return items[0], items[-1]
+    highlightLine: 3
+    tests:
+      - { call: 'first_last([1, 2, 3])', expect: '(1, 3)' }
+      - { call: 'first_last(["a"])', expect: "('a', 'a')" }
+    why: >-
+      You don't fill in a tuple afterwards. Make it all at once, with its final values.
+    hints:
+      - Can you build the tuple in the `return` line?
+    variants:
+      - prompt: This should show `3`, but it crashes, because `stats` gives back a tuple. Fix the line that calls it.
+        code: |
+          def stats(nums):
+              return min(nums), max(nums)
+
+          high = stats([1, 3])
+          print(high + 0)
+        solution: |
+          def stats(nums):
+              return min(nums), max(nums)
+
+          _, high = stats([1, 3])
+          print(high + 0)
+        highlightLine: 4
+        tests: []
+        expectOutput: '3'
+        why: >-
+          Unpack the tuple so that `high` holds only the second value.
+        hints:
+          - The function gives back two values, so how many names do you need?
+      - prompt: This should show `1 2`, but it crashes with a `ValueError`. Fix the unpacking, so that the last item is ignored.
+        code: |
+          a, b = (1, 2, 3)
+          print(a, b)
+        solution: |
+          a, b, _ = (1, 2, 3)
+          print(a, b)
+        highlightLine: 1
+        tests: []
+        expectOutput: 1 2
+        why: >-
+          There has to be a name for every item, and `_` is the one for an item you don't need.
+        hints:
+          - How many items are there, and how many names?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Counting pairs, with tuples as keys
+    body: >-
+      In Unit 3 you counted pairs of letters by joining them into one string. That works for single characters, but it can't always be undone: is `"abc"` the pair `a` and `bc`, or `ab` and `c`? A tuple keeps the two parts separate.
+
+
+      So the key becomes `(a, b)`. The rest is the counting pattern you already know. When reading the results, `.items()` gives you a key and a count, and the key is a tuple, so it can be unpacked as well: `for (a, b), n in counts.items():`. The parentheses on the left match the shape of each item.
+
+
+      This is almost exactly the first bigram code you'll see in the makemore unit.
+    code: |
+      text = "banana"
+      counts = {}
+      for i in range(len(text) - 1):
+          pair = (text[i], text[i + 1])
+          counts[pair] = counts.get(pair, 0) + 1
+
+      print(counts[("a", "n")])
+      for (a, b), n in counts.items():
+          print(a, "then", b, ":", n)
+    subgoals:
+      - { line: 4, label: 'The key is a tuple of two letters' }
+      - { line: 5, label: 'The usual counting pattern' }
+      - { line: 7, label: 'Look up with a tuple' }
+      - { line: 8, label: 'Unpack the key and the count together' }
+    predict: How many times does `a` followed by `n` appear?
+
+  - type: write
+    id: write-minmax
+    prompt: Write `range_of(nums)`, which gives back a tuple of the smallest number, the largest number and the difference between them. So `range_of([3, 1, 2])` gives back `(1, 3, 2)`.
+    starter: |
+      def range_of(nums):
+          # Your code here
+    solution: |
+      def range_of(nums):
+          low = min(nums)
+          high = max(nums)
+          return low, high, high - low
+    tests:
+      - { call: 'range_of([3, 1, 2])', expect: '(1, 3, 2)' }
+      - { call: 'range_of([5])', expect: '(5, 5, 0)' }
+    why: >-
+      Commas in the `return` line make a tuple.
+    hints:
+      - '`min` and `max` work on a list, and commas make the tuple.'
+    variants:
+      - prompt: Write `swap_pairs(pairs)`, which takes a list of two-item tuples and gives back a new list with each tuple's items swapped. So `swap_pairs([(1, "a")])` gives back `[("a", 1)]`.
+        starter: |
+          def swap_pairs(pairs):
+              # Your code here
+        solution: |
+          def swap_pairs(pairs):
+              out = []
+              for a, b in pairs:
+                  out.append((b, a))
+              return out
+        tests:
+          - { call: 'swap_pairs([(1, "a")])', expect: "[('a', 1)]" }
+          - { call: 'swap_pairs([])', expect: '[]' }
+        hints:
+          - Unpack in the `for` line. `append` takes one thing, so the tuple needs its own parentheses.
+
+  - type: choice
+    id: remember-neuron
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def neuron(x, w, bias):
+          return w * x + bias
+
+      print(neuron(3, 2, 1))
+    choices: ['7', '6', '5', '9']
+    answer: '7'
+    why: >-
+      A neuron is a weighted input plus a bias, so 2 × 3 + 1.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A tuple is a group of values that can't change, and the comma makes it. `x, y = point` unpacks one, with a name for each item. `return a, b` gives back a tuple. `a, b = b, a` swaps, because the right side is worked out first. Tuples can be dict keys.
+
+
+      Next: walking through two lists at once.

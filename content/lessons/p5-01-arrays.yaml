@@ -1,0 +1,404 @@
+id: p5-arrays
+track: ml
+unit: 5
+order: 1
+title: Why NumPy
+summary: Arrays do maths on whole lists at once, and do it fast.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Maths on whole lists
+    body: >-
+      You built a `Vec` class so that lists could do maths. NumPy is the professional version of that idea, and almost every ML library is built on it. PyTorch's tensors copy its design so closely that much of what you learn here carries straight over.
+
+
+      By the end of this lesson you'll be able to make an array, do arithmetic on it without a loop, and explain how an array differs from a list.
+
+  - type: learn
+    id: first
+    title: An array is a grid of numbers
+    body: >-
+      NumPy is a library, and everyone imports it the same way: `import numpy as np`. `np.array([1, 2, 3])` makes an array from a list.
+
+
+      Arithmetic on an array happens to every item. `a * 2` doubles each number, and `a + b` adds matching items, with no loop in sight. Compare that with lists, where `[1, 2] * 2` repeats the list, and `[1, 2] + [3, 4]` joins them. Mixing the two up is a common source of bugs, so always check which you have.
+
+
+      Arrays print without commas, as in `[1 2 3]`, and that's the quickest way to tell one from a list. As with your `Vec`, operators give back a new array, and the original doesn't change.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 2, 3])
+      b = np.array([10, 20, 30])
+
+      print(a * 2)
+      print(a + b)
+      print(a * b)
+      print(a ** 2)
+
+      print([1, 2, 3] * 2)
+      print(a)
+    subgoals:
+      - { line: 3, label: 'An array, made from a list' }
+      - { line: 6, label: 'Applies to every item' }
+      - { line: 7, label: 'Matching items are added' }
+      - { line: 8, label: 'Matching items are multiplied' }
+      - { line: 11, label: 'A list repeats instead' }
+    predict: What will `a * b` show?
+
+  - type: choice
+    id: first-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2])
+      print(a * 3)
+    choices: ['[3 6]', '[1, 2, 1, 2, 1, 2]', '[1 2 1 2 1 2]', '9']
+    answer: '[3 6]'
+    why: >-
+      Arithmetic on an array applies to each item.
+    variants:
+      - code: |
+          print([1, 2] * 2)
+        choices: ['[1, 2, 1, 2]', '[2, 4]', '[2 4]', 'Error']
+        answer: '[1, 2, 1, 2]'
+        why: >-
+          That's a list, not an array, so `*` repeats it.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = np.array([3, 4])
+          print(a + b)
+        choices: ['[4 6]', '[1 2 3 4]', '10', '[1, 2, 3, 4]']
+        answer: '[4 6]'
+        why: >-
+          `+` adds matching items, where it would join two lists.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = a + 1
+          print(a, b)
+        choices: ['[1 2] [2 3]', '[2 3] [2 3]', '[1 2] [1 2]', 'Error']
+        answer: '[1 2] [2 3]'
+        why: >-
+          `+` makes a new array, and `a` doesn't change.
+
+  - type: learn
+    id: types
+    title: One type, fixed length
+    body: >-
+      A list can hold anything, and each item is a separate Python object, stored somewhere in memory. An array is a single block of memory, holding numbers of one type side by side. That one difference gives you both its speed and its limits.
+
+
+      `a.dtype` tells you the type. A list of whole numbers gives `int64`, and any float makes them all floats, so `np.array([1, 2.5])` prints `[1.  2.5]`. Beware: putting a float into an integer array cuts off the decimal. `a[0] = 2.9` stores 2, with no warning. It's safer to start with floats: `np.array([1, 2], dtype=float)`.
+
+
+      Division with `/` always gives floats. And arrays can't grow. There's no `append` method, so you collect values in a list, and convert it at the end.
+
+
+      The numbers you get out are NumPy's own type. They print normally, but a list of them shows as `[np.int64(1)]`. `.tolist()` and `float(x)` turn them back into plain Python.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 2, 3])
+      print(a.dtype)
+      print(np.array([1, 2.5]))
+      print(a / 2)
+
+      a[0] = 2.9
+      print(a)
+
+      print(a.tolist())
+      print(float(a[1]))
+      print(type(a[1]).__name__)
+    subgoals:
+      - { line: 4, label: 'Whole numbers' }
+      - { line: 5, label: 'One float makes them all floats' }
+      - { line: 6, label: 'Division gives floats' }
+      - { line: 8, label: 'Cut off, with no warning' }
+      - { line: 11, label: 'Back to a plain list' }
+    predict: What will `a[0]` hold after the assignment?
+
+  - type: choice
+    id: types-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2])
+      a[0] = 3.7
+      print(a)
+    choices: ['[3 2]', '[3.7 2. ]', '[4 2]', 'Error']
+    answer: '[3 2]'
+    why: >-
+      The array holds whole numbers, so the decimal is silently cut off.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.array([1, 2]) / 2)
+        choices: ['[0.5 1. ]', '[0 1]', '[0.5, 1.0]', 'Error']
+        answer: '[0.5 1. ]'
+        why: >-
+          `/` always gives floats, and NumPy prints `1.` for 1.0.
+      - code: |
+          import numpy as np
+          print(np.array([1, 2.5]).dtype)
+        choices: ['float64', 'int64', 'object', 'list']
+        answer: 'float64'
+        why: >-
+          One float makes the whole array floats.
+      - code: |
+          import numpy as np
+          print(np.array([1, 2]).tolist())
+        choices: ['[1, 2]', '[1 2]', '(1, 2)', 'Error']
+        answer: '[1, 2]'
+        why: >-
+          `.tolist()` gives back a plain list, which you can tell by the commas.
+
+  - type: explain
+    id: explain-why-array
+    prompt: Why does this show `[1, 2, 1, 2]` for one and `[2 4]` for the other, and how can you tell them apart when printed?
+    code: |
+      import numpy as np
+      print([1, 2] * 2)
+      print(np.array([1, 2]) * 2)
+    model: >-
+      For a list, `*` means repeat, so you get the list twice. For an array, `*` applies to each item, so each number doubles. Lists print with commas, and arrays print without them.
+    keyPoints:
+      - On a list, `*` repeats, and on an array it applies to each item
+      - Lists print with commas, and arrays without
+
+  - type: learn
+    id: speed
+    title: Why it's fast
+    body: >-
+      A Python loop checks the type of each item on each pass. A NumPy operation runs a loop written in C over that one block of numbers, without any of those checks. It's commonly 10 to 100 times faster, and training a network is mostly this kind of arithmetic.
+
+
+      Replacing a loop with an array operation is called vectorising. It's the main skill of this unit. So when you see a loop over numbers, ask whether the array can do it for you.
+
+
+      The code below does the same sum both ways, and times them with `time`. Run it a few times. The exact numbers will vary, and in this browser everything's slower than on a normal computer, but the gap stays large.
+
+
+      Don't convert in a loop, though. Pulling items out one at a time with `a[i]` is slower than using a list, so loop over a NumPy array only when you have no other option.
+    code: |
+      import numpy as np
+      import time
+
+      nums = list(range(20000))
+      arr = np.array(nums)
+
+      start = time.time()
+      total = 0
+      for n in nums:
+          total += n * 2
+      loop_time = time.time() - start
+
+      start = time.time()
+      total2 = (arr * 2).sum()
+      array_time = time.time() - start
+
+      print(total == total2)
+      print(array_time < loop_time)
+    subgoals:
+      - { line: 7, label: 'Time the Python loop' }
+      - { line: 14, label: 'The same sum, with no loop' }
+      - { line: 17, label: 'The same answer' }
+      - { line: 18, label: 'Less time' }
+    predict: Which do you think will be faster?
+
+  - type: blank
+    id: fill-array
+    prompt: Fill in the blank so this makes an array, and shows `[2 4]`.
+    code: |
+      import numpy as np
+      a = ____([1, 2])
+      print(a * 2)
+    answers: [['np.array']]
+    expectOutput: '[2 4]'
+    why: >-
+      `np.array` makes an array from a list.
+    variants:
+      - prompt: Fill in the blank so this adds the matching items, and shows `[4 6]`.
+        code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = np.array([3, 4])
+          print(a ____ b)
+        answers: [['+']]
+        expectOutput: '[4 6]'
+        why: >-
+          Operators apply item by item.
+      - prompt: Fill in the blank so the array holds floats, and this shows `[1. 2.]`.
+        code: |
+          import numpy as np
+          print(np.array([1, 2], dtype=____))
+        answers: [['float', 'np.float64']]
+        expectOutput: '[1. 2.]'
+        why: >-
+          `dtype` sets the type of every item.
+      - prompt: Fill in the blank to import NumPy under its usual name, so this shows `[1 2]`.
+        code: |
+          import numpy ____ np
+          print(np.array([1, 2]))
+        answers: [['as']]
+        expectOutput: '[1 2]'
+        why: >-
+          `as` gives a module a short name.
+
+  - type: fix
+    id: fix-list
+    prompt: '`scale([1, 2], 3)` should give back `[3, 6]`, as numbers multiplied by 3, but it repeats the list. Fix it with NumPy.'
+    code: |
+      import numpy as np
+
+      def scale(items, k):
+          return items * k
+    solution: |
+      import numpy as np
+
+      def scale(items, k):
+          return np.array(items) * k
+    highlightLine: 4
+    tests:
+      - { call: 'scale([1, 2], 3)', expect: '[3, 6]' }
+      - { call: 'scale([0.5], 2)', expect: '[1.0]' }
+    why: >-
+      A list repeats with `*`, so convert it to an array first.
+    hints:
+      - What does `*` do to a list?
+    variants:
+      - prompt: This should show `[1.5 2. ]`, but the decimal gets cut off. Fix the line that makes the array.
+        code: |
+          import numpy as np
+          a = np.array([1, 2])
+          a[0] = 1.5
+          print(a)
+        solution: |
+          import numpy as np
+          a = np.array([1, 2], dtype=float)
+          a[0] = 1.5
+          print(a)
+        highlightLine: 2
+        tests: []
+        expectOutput: '[1.5 2. ]'
+        why: >-
+          An integer array cuts off decimals, so make it hold floats from the start.
+        hints:
+          - What type does this array hold?
+      - prompt: This crashes with an `AttributeError`, since arrays have no `append`. Collect the values in a list first, so that it shows `[1 2]`.
+        code: |
+          import numpy as np
+          out = np.array([])
+          for n in [1, 2]:
+              out.append(n)
+          print(np.array(out))
+        solution: |
+          import numpy as np
+          out = []
+          for n in [1, 2]:
+              out.append(n)
+          print(np.array(out))
+        highlightLine: 2
+        tests: []
+        expectOutput: '[1 2]'
+        why: >-
+          Arrays have a fixed length, so build a list, and convert it at the end.
+        hints:
+          - Which kind of collection can grow?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Your Vec class, in two lines
+    body: >-
+      Remember the `Vec` project? You wrote a whole class to add vectors, scale them, and find a dot product and a length. Here's all of it with NumPy, and you can see what you were building.
+
+
+      Each line replaces a method. `a + b` was `__add__`, `2 * a` was `__rmul__`, `(a * b).sum()` was `dot`, and the length is the square root of the dot product with itself. NumPy also has a few functions that apply to every item, like `np.sqrt`.
+
+
+      Knowing how it works underneath is why you did the project. An array isn't magic. It's a class with special methods, written very efficiently.
+    code: |
+      import numpy as np
+
+      a = np.array([3.0, 4.0])
+      b = np.array([1.0, 2.0])
+
+      print(a + b)
+      print(2 * a)
+      print((a * b).sum())
+      print(np.sqrt((a * a).sum()))
+      print(np.sqrt(a))
+    subgoals:
+      - { line: 6, label: 'Was __add__' }
+      - { line: 7, label: 'Was __rmul__' }
+      - { line: 8, label: 'Was dot' }
+      - { line: 9, label: 'Was length' }
+      - { line: 10, label: 'Applies to each item' }
+    predict: What's the length of `[3, 4]`?
+
+  - type: write
+    id: write-mse
+    prompt: Write `mean_squared_error(preds, targets)`, which takes two lists and gives back the mean of the squared differences, using NumPy and no loop. So `mean_squared_error([1, 2], [1, 4])` gives back `2.0`.
+    starter: |
+      import numpy as np
+
+      def mean_squared_error(preds, targets):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def mean_squared_error(preds, targets):
+          diff = np.array(preds) - np.array(targets)
+          return (diff ** 2).mean()
+    tests:
+      - { call: 'mean_squared_error([1, 2], [1, 4])', expect: '2.0' }
+      - { call: 'mean_squared_error([3], [3])', expect: '0.0' }
+    why: >-
+      Convert first, and the rest reads like the formula. `.mean()` is the average of all the items.
+    hints:
+      - Convert both to arrays, subtract, square, and use `.mean()`.
+    variants:
+      - prompt: Write `normalise(nums)`, which takes a list and gives back an array rescaled from 0 to 1, by subtracting the smallest value and dividing by the range, using no loop. `a.min()` and `a.max()` give the smallest and largest.
+        starter: |
+          import numpy as np
+
+          def normalise(nums):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def normalise(nums):
+              a = np.array(nums)
+              return (a - a.min()) / (a.max() - a.min())
+        tests:
+          - { call: 'normalise([10, 20, 15])', expect: '[0.0, 1.0, 0.5]' }
+          - { call: 'normalise([0, 2])', expect: '[0.0, 1.0]' }
+        hints:
+          - Subtracting a single number from an array takes it from every item.
+
+  - type: choice
+    id: remember-vec
+    prompt: From the last unit. Why did your `Vec` class need `__rmul__`?
+    choices:
+      - For `2 * v`, because the number on the left can't handle it
+      - To multiply two vectors
+      - For `v * 2`
+    answer: For `2 * v`, because the number on the left can't handle it
+    why: >-
+      NumPy arrays have this too, which is why `2 * a` works.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `np.array` makes an array, and arithmetic applies to every item with no loop. Lists repeat and join, and arrays calculate. Arrays hold one type, and integer arrays silently cut off decimals. Replacing a loop with array operations is called vectorising, and it's much faster.
+
+
+      Next: arrays with rows and columns, and the idea you'll use most, their shape.

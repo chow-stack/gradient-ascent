@@ -43,7 +43,7 @@ If reviews keep piling up or checkpoints start failing, that's the signal to do 
 
 ### How a lesson is built
 
-_New format, from the pilot (`a1-03-strings.yaml`). Other lessons still use the older fixed ladder until they're rewritten._
+_The format from the pilot lesson. Units 1 to 4 all use it._
 
 Each lesson is about 15 minutes and about 10–16 cards. It teaches properly, in small pieces, and ends with writing code alone.
 
@@ -96,8 +96,8 @@ Each unit ends with a project: one program built step by step.
 | ----------------------- | ------------------------ | --------------------- | -------------------------------------- |
 | References and aliasing | Python lists (U1)        | Names and copies (U2) | NumPy views (U3)                       |
 | Accumulator loops       | Loop patterns (U1)       | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
-| Functions as values     | Passing functions (U2)   | —                     | `_backward` closures in micrograd (U6) |
-| Operator overloading    | Special methods (U2)     | Vector project (U2)   | `Value.__add__` in micrograd (U6)      |
+| Functions as values     | Passing functions (U4)   | —                     | `_backward` closures in micrograd (U8) |
+| Operator overloading    | Special methods (U4)     | Vector project (U4)   | `Value.__add__` in micrograd (U8)      |
 | Word counts             | Word stats project (U1)  | —                     | Bigram counts (U9, U10)                |
 | Likelihood              | Logistic regression (U5) | Probability (U9)      | makemore's loss (U10)                  |
 
@@ -124,14 +124,7 @@ Each unit ends with a project: one program built step by step.
 
 ### The Python rewrite
 
-The old "Python from Java" unit is being replaced by three units of about 36 lessons, with no Java assumed. Programs and values is
-done. Until the other two are written, the older lessons stand in as one unit, so the app's numbering is temporary: older lessons are
-Unit 2, Python for ML code is Unit 3, and the units below keep their planned numbers. When the rewrite is done, Python for ML code becomes Unit 4.
-
-| Unit                                | Lessons, in order                                                                                                                                                                                                                                   | Errors taught            | Main target mistakes                                                                                  |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Functions and repetition (about 11) | `def`; `return` vs `print`; return with `if`; local variables; `while`; accumulators; off-by-one and infinite loops; `for` and `range`; looping over strings; nested loops; tracebacks through calls                                                | Tracebacks               | Return not exiting, inner calls evaluated last, missing parentheses, when a loop condition is checked |
-| Collections and libraries (12–14)   | Index and slice; list methods; `for` over lists; count, sum, find, best; first aliasing warning; lists of lists; `split`; dicts; counting; looping over dicts; `import`, `math`, `random`; float precision; optional text files; word-stats project | `IndexError`, `KeyError` | Slice end included, `b = a` copying, a "best" that starts at 0, a missing key returning `None`        |
+The old "Python from Java" unit has been replaced by three units with no Java assumed: Programs and values, Functions and repetition, and Collections and libraries. All three are done. Java is gone from the app and from every lesson.
 
 `def` after `if` and before loops is a practical choice: courses disagree, and no controlled study settles it. Spend extra care on
 assignment as a lasting equation, which has the strongest evidence of any novice mistake here (Kohn 2017). Python for ML code stays, with its
@@ -155,82 +148,134 @@ error lesson moving from introduction to consolidation.
 
 **Checkpoint:** built (12 cards). **Project · Trail report** _(built)_: clean and convert the input, rate the hike, build the report.
 
-### Unit 2 (temporary) · Functions, loops and collections _(older lessons, to be replaced)_
+### Unit 2 · Functions and repetition _(built)_
 
-These are the older lessons, moved here unchanged until they're rewritten into the two units above: functions, `while`, `for` and `range`, lists,
-dictionaries, loop patterns, a checkpoint and the Word stats project. They still mention Java in places.
+| #   | Lesson                 | Teaches                                                      | Target mistakes                                                                            |
+| --- | ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1   | Writing a function     | `def`, calling, parameters, arguments, define before calling | A `def` runs its body; missing parentheses; arguments matched by name rather than position |
+| 2   | Giving back a value    | `return`, `None`, `return` ending the function               | `print` is the same as `return`; lines after `return` still run; a lost return value       |
+| 3   | Functions that decide  | `return` inside `if`, every path returning, booleans, guards | A path that falls off the end and gives `None`; `== True`; the order of checks             |
+| 4   | Names inside functions | Local variables, parameters as separate variables, defaults  | A function changing an outside variable; `UnboundLocalError`; defaults placed first        |
+| 5   | Repeating with while   | `while`, tracing with a table                                | The condition is watched all the time; `if` repeats; a line in the wrong block             |
+| 6   | Building up a result   | Accumulators, totals, counts, products, text                 | Resetting inside the loop; `return` inside the loop; starting a product at 0               |
+| 7   | When loops go wrong    | Infinite loops, off-by-one, `break`, debugging with `print`  | Forgetting the update; updating the wrong variable; `<` vs `<=`                            |
+| 8   | Counting with for      | `for`, `range` with start, stop and step, `for` vs `while`   | `range(n)` includes `n`; counting down with no step; changing `i` changes the loop         |
+| 9   | Looping over text      | `for` over a string, `in`, positions, searching              | `else: return False` in a search; `word[i + 1]` past the end                               |
+| 10  | Loops inside loops     | Nested loops, grids, `end=`, every pair                      | Inner loop runs once; a shared variable; an accumulator at the wrong level; `break` scope  |
+| 11  | Reading a traceback    | Tracebacks through calls, finding the cause                  | Reading from the top; assuming the crash line is the bug                                   |
 
-### Unit 3 (temporary) · Python for ML code _(built)_
+**Checkpoint:** built (12 cards). **Project · Find the bottom** _(built)_: gradient descent on one number, using `loss`, `step`, `descend` and `steps_needed`, and then a learning rate that's too big.
 
-Merges the old "How Python works" and "Writing real programs" units, keeping what ML code actually uses. The test
-for each topic was whether micrograd, PyTorch's `nn.Module` and `Dataset`, or nanoGPT's model file needs it.
+### Unit 3 · Collections and libraries _(built)_
 
-| #   | Lesson                          | Teaches                                                                            | Target mistakes                                                                                    |
-| --- | ------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1   | A first look at a neural net    | Guided TensorFlow Playground: layers, curved boundaries, learning rate             | A network with no hidden layer can draw any boundary; lower training loss alone means a good model |
-| 2   | Names and changes               | Names point at objects, `is` vs `==`, mutation vs reassignment, scope              | `x = x.sort()` keeps the list; reassigning a parameter changes the caller's variable               |
-| 3   | Copies                          | `.copy()`, shallow vs deep, `[[0] * 3] * 3`, `sorted`                              | A copy of a list of lists copies the inner lists too                                               |
-| 4   | Functions as values             | Passing functions, `lambda`, `key=`, closures                                      | A name without `()` still calls it; a closure stores a copy of the value                           |
-| 5   | Tuples, zip, comprehensions     | Unpacking, sets, `zip`, `enumerate`, comprehensions, generator expressions         | `(5)` is a tuple; a set keeps order; a comprehension changes the original                          |
-| 6   | Classes and objects             | `class`, `__init__`, `self`, instance vs class attributes                          | `self` is optional; a class attribute is separate for each object                                  |
-| 7   | Special methods                 | `__repr__`, `__eq__`, `__add__`, `__mul__`, `__rmul__`                             | `print(obj)` shows the fields automatically; `2 * v` uses `__mul__`                                |
-| 8   | Objects that act like functions | `__call__`, `__len__`, `__getitem__`, `super().__init__`                           | A child's `__init__` runs the parent's automatically; `model(x)` needs a method named `model`      |
-| 9   | Reading errors                  | Tracebacks bottom to top, common errors, debugging with `print`, `raise`, `assert` | The line in the error is always the line with the bug; bare `except:` is a good default            |
+| #   | Lesson                          | Teaches                                                           | Target mistakes                                                                            |
+| --- | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1   | Lists                           | Making lists, indexes, slices, changing an item, `+` and `*`      | `IndexError`; assigning past the end grows the list; `*` multiplies each number            |
+| 2   | Growing and sorting lists       | `append`, `insert`, `extend`, `pop`, `remove`, `sort`, `sorted`   | `x = a.sort()` gives `None`; methods vs built-ins                                          |
+| 3   | Looping over lists              | `for` over items, positions when you need them                    | Assigning to the loop variable changes the list; removing during a loop                    |
+| 4   | Count, sum, find, best          | The standard list patterns                                        | A best that starts at 0; `else: return False` in a search; an empty list                   |
+| 5   | Two names, one list             | Aliasing, copies, lists passed to functions                       | `b = a` makes a copy; assigning to a parameter changes the caller's list                   |
+| 6   | Lists of lists                  | Grids, rows and columns, nested loops                             | Row and column swapped; `[[0] * n] * m` sharing a row                                      |
+| 7   | From text to lists and back     | `split`, `join`, cleaning, converting pieces                      | Pieces are still strings; `join` on numbers; `join` called on the list                     |
+| 8   | Dictionaries                    | Keys and values, adding, `in`, `.get`, character-to-number tables | `KeyError`; a missing key giving `None` with `[]`; a list as a key                         |
+| 9   | Counting with a dictionary      | The counting pattern, grouping, pairs                             | `counts[w] += 1` on a new key; resetting inside the loop; `The` and `the` as separate keys |
+| 10  | Looping over a dictionary       | Keys, `.values()`, `.items()`, the top item, counts to fractions  | A loop gives values; `max(d)` compares by count; changing a dict's size during a loop      |
+| 11  | Using libraries                 | `import`, `math`, `random`, seeds, `as`, `from`                   | Missing import or prefix; `randint` excludes the end; `shuffle` gives back a list          |
+| 12  | Numbers that don't quite add up | Float precision, tolerance, formatting decimals                   | `==` on floats; `while x != 1.0`; rounding in the middle of a calculation                  |
 
-**Checkpoint:** built. **Project · Vector class** _(built)_: `__init__`/`__repr__`, arithmetic, `dot`/`length`,
-`__eq__` with a float tolerance.
+**Checkpoint:** built (12 cards). **Project · Word stats** _(built)_: `clean`, `word_counts`, `most_common` and `report`. Reading text files was optional and is left out, because the browser runner has no files of the learner's own.
 
-Moved out on purpose: recursion and DFS are taught in micrograd (U6), where they're needed. Custom decorators,
-generator functions, packaging and the `if __name__` check wait until local projects need them.
+### Unit 4 · Python for ML code _(built)_
 
-### Unit 3 · NumPy, shapes and plots _(next)_
+Rewritten in the current format. Each topic had to earn its place: micrograd, PyTorch's `nn.Module` and `Dataset`, or nanoGPT's model file has to need it. Names, copies and reading tracebacks moved out, because Units 2 and 3 now teach them, and this unit no longer assumes that you've seen a class before.
 
-Vectorizing loops, indexing and views, axes, broadcasting, dot product and cosine similarity, the matrix product as
-a table of dot products, transpose, `matplotlib`. **Exit test:** predict shapes and vectorize loops.
+| #   | Lesson                                    | Teaches                                                                           | Target mistakes                                                                                        |
+| --- | ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | A first look at a neural net              | Neurons, layers, loss, TensorFlow Playground                                      | A network with no hidden layer can draw any boundary; low training loss alone means a good model       |
+| 2   | Tuples and unpacking                      | Tuples, unpacking, swapping, returning several values, tuple keys                 | `(5)` is a tuple; filling in a tuple afterwards; the wrong number of names                             |
+| 3   | Walking lists together                    | `zip`, `enumerate`, `zip(text, text[1:])`, dot products                           | `zip` warns about different lengths; position and item the wrong way round                             |
+| 4   | List comprehensions                       | Transforming, filtering, choosing, nested                                         | `if` at the end vs `if`-`else` at the front; a comprehension changes the original                      |
+| 5   | Sets and building dictionaries            | Sets, dict comprehensions, generator expressions, `any`, `all`, encode and decode | A set keeps order; `{}` is an empty set; reusing a generator                                           |
+| 6   | Functions as values                       | Passing functions, `lambda`, `key=`                                               | A name without `()` calls it; `key=len()`; `key` changes what you get back                             |
+| 7   | Functions that remember                   | Closures, `nonlocal`, functions made in a loop                                    | A closure stores a copy of the value; assigning without `nonlocal`; `return f()`                       |
+| 8   | Your first class                          | `class`, `__init__`, attributes, methods, `self`                                  | `self` is optional; `size = size` stores it; `__init__` runs at definition                             |
+| 9   | Objects and shared data                   | Aliases, class attributes, `[]` as a default, objects holding objects, `deepcopy` | `b = a` makes a new object; a class attribute is separate for each object; `self.items = items` copies |
+| 10  | Making operators work                     | `__repr__`, `__add__`, `__eq__`, `__lt__`                                         | `print(obj)` shows the fields; `+` should change `self`; `==` compares values by default               |
+| 11  | Mixing objects and numbers                | `isinstance`, `__rmul__`, `__radd__`, `__rsub__`, `sum`                           | `2 * v` uses `__mul__`; `sum` only needs `__add__`; the order in `__rsub__`                            |
+| 12  | Objects that act like functions and lists | `__call__`, `__len__`, `__getitem__`, a `Dataset`                                 | `model(x)` needs a method named `model`; a `__getitem__` with no end never stops a loop                |
+| 13  | Building on a class                       | Inheritance, overriding, `super().__init__()`, `forward`                          | A child's `__init__` runs the parent's automatically; `self` in a parent's method is the parent        |
+| 14  | Raising and catching errors               | `raise`, `try`, `except`, `assert`, debugging silent bugs                         | Giving back a made-up 0; bare `except:` is a good default; no crash means no bug                       |
 
-### Unit 4 · Calculus refresh and gradient descent
+**Checkpoint:** built (13 cards). **Project · Vector class** _(built)_: `__init__`/`__repr__`, arithmetic, `dot`/`length`, `__eq__` with a float tolerance.
+
+Moved out on purpose: recursion and DFS are taught in micrograd (U8), where they're needed. Custom decorators, generator functions, packaging and the `if __name__` check wait until local projects need them.
+
+### Unit 5 · NumPy, shapes and plots _(built)_
+
+Written in the current format. Each lesson's code runs in real NumPy, and plots appear below the output when you run them.
+
+| #   | Lesson                    | Teaches                                                                                   | Target mistakes                                                                                     |
+| --- | ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1   | Why NumPy                 | `np.array`, item-by-item arithmetic, `dtype`, `.tolist()`, speed                          | `*` repeats an array; an integer array keeps decimals; arrays have `append`                         |
+| 2   | Shapes                    | `.shape`, `.ndim`, `.size`, `zeros`, `arange`, `linspace`, `reshape`, `-1`                | Columns come first; `np.zeros(2, 3)`; `.shape()`; `(3,)` and `(3, 1)` are the same                  |
+| 3   | Indexing and slicing      | `a[r, c]`, `a[:, c]`, blocks, assigning to sections, splitting inputs from labels         | `a[0]` is a column; a number and a slice give the same shape; row and column swapped                |
+| 4   | Views and copies          | Views, `.copy()`, `a += 1` vs `a = a + 1`, `a[:] = 0`, saving weights                     | An array slice is a copy; `w = w - ...` updates the caller; `best = w` saves a snapshot             |
+| 5   | Selecting with conditions | Masks, `&`, `\|`, `~`, `.any()`, counting, accuracy, `np.where`, picking by position      | `and` on arrays; `if a > 2`; `.sum()` for a fraction; `np.where` with one argument gives values     |
+| 6   | Vectorising loops         | Summaries, `argmax`, `np.sqrt`/`exp`/`log`, `nan`, loop recipes, which loops stay         | `max` for a position; `math.sqrt` on an array; `(a.sum()) ** 2`; every loop can go                  |
+| 7   | Axes                      | "The axis vanishes", `argmax(axis=1)`, `keepdims`, standardising                          | `axis=0` gives one per row; `argmax()` with no axis; dropping `keepdims`                            |
+| 8   | Broadcasting              | The right-aligned rule, `(3,)` with `(3, 1)`, `None`, every distance with no loops        | Shapes line up on the left; `preds - y` with `(n, 1)` and `(n,)` is fine; no error means it's right |
+| 9   | Dot product and cosine    | `@`, what it measures, `np.linalg.norm`, normalising, cosine similarity                   | `*` and `@` are the same; size doesn't affect a dot product; missing parentheses in the formula     |
+| 10  | The matrix product        | A table of dot products, the shape rule, `.T`, `X @ w`, a layer, a two-layer forward pass | `*` on matrices; `A @ B` equals `B @ A`; `@` broadcasts; a layer needs a loop                       |
+| 11  | Randomness and batches    | `default_rng`, seeds, `normal`, `permutation`, `choice`, `concatenate`, `stack`, batches  | Shuffling inputs and labels separately; recreating the generator; `integers` includes its end       |
+| 12  | Plots                     | `plot`, `scatter`, `hist`, `imshow`, labels, reading a loss curve                         | Different lengths; `arange` takes a count; flat loss means finished; a mean shows the whole picture |
+
+**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Nearest neighbours** _(built)_: normalise rows, a similarity table, most similar row, a classifier and its accuracy, then a plot.
+
+**Exit test:** predict shapes and vectorise loops. It's the checkpoint.
+
+### Unit 6 · Calculus refresh and gradient descent
 
 Opens with a 5-minute diagnostic (slope, power rule, composition, logs, numeric derivatives) that skips whatever
 survived. Then nudging, the chain rule, partial derivatives and gradients (AB/BC usually skips these two), gradient
 descent. **Project · Fit a line** in NumPy, with a gradient check.
 
-### Unit 5 · First models, judged honestly
+### Unit 7 · First models, judged honestly
 
 Log-odds, logistic regression as one neuron, cross-entropy, train/validation/test splits, baselines, learning curves,
 precision and recall, leakage. The stats background should make metrics quick. **Exit test:** beat a baseline with no
 leakage. **Long block:** a real table in a notebook, with git.
 
-### Unit 6 · micrograd
+### Unit 8 · micrograd
 
 A `Value` class with `+`, `*`, `tanh`, closures for `_backward`, recursion, DFS and topological sort. Main target
 mistake: setting `grad =` instead of adding `grad +=` when a value is used twice. **Exit test:** matches numeric
 gradients. **Long block:** code along with Karpathy's video.
 
-### Unit 7 · MLP and silent bugs
+### Unit 9 · MLP and silent bugs
 
 Neuron → layer → MLP, the training loop, expected initial loss, overfitting one batch, diagnosing loss curves,
 planted bugs. **Long block:** rebuild it in real PyTorch on Colab and compare gradients.
 
 **Decision point at the end of this unit:** review this path, including whether to go on to data science or AI
-engineering, and whether Unit 8 stays here or moves after the GPT.
+engineering, and whether Unit 10 stays here or moves after the GPT.
 
-### Unit 8 · Trees and real tables
+### Unit 10 · Trees and real tables
 
 pandas basics, one small tree by hand, forests, boosting, cross-validation. **Exit test:** an honest comparison of
 logistic regression, boosting and an MLP.
 
-### Unit 9 · Probability for language models
+### Unit 11 · Probability for language models
 
 Starts with a diagnostic, because AP Stats plus college stats should cover distributions, conditional probability and
 sampling. New material is likely softmax, log-likelihood, negative log-likelihood and cross-entropy.
 **Exit test:** compute NLL by hand; a working bigram sampler.
 
-### Unit 10 · makemore in NumPy
+### Unit 12 · makemore in NumPy
 
 Bigrams to an MLP with embeddings. Backprop Ninja becomes optional graded drills; WaveNet is optional.
 **Long block:** makemore in PyTorch.
 
-### Unit 11 · Attention to tiny GPT
+### Unit 13 · Attention to tiny GPT
 
 Masked attention, then a small GPT trained in the browser. Measured on one fast machine: about 30K parameters train
 5,000 steps in about 87 seconds, and about 110K in about 13 minutes. Check text quality on real data before fixing the
@@ -238,26 +283,33 @@ final size. **Long block:** "Let's build GPT" plus nanoGPT on a GPU.
 
 ### After the path
 
-Depends on the goal chosen at the Unit 7 decision point:
+Depends on the goal chosen at the Unit 9 decision point:
 
-| Goal                         | Next                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| Deep understanding (current) | Reproduce a small GPT in PyTorch, read papers                            |
-| AI engineering               | Evals first, then context, retrieval and tools, on a real app            |
-| ML engineering               | PyTorch depth, data pipelines, serving, monitoring, interview track      |
-| Research                     | Paper reproductions; return to eigenvectors, SVD and probability         |
-| Data science                 | Statistics, experiment design, SQL; Unit 8 moves before Unit 6 and grows |
+| Goal                         | Next                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Deep understanding (current) | Reproduce a small GPT in PyTorch, read papers                             |
+| AI engineering               | Evals first, then context, retrieval and tools, on a real app             |
+| ML engineering               | PyTorch depth, data pipelines, serving, monitoring, interview track       |
+| Research                     | Paper reproductions; return to eigenvectors, SVD and probability          |
+| Data science                 | Statistics, experiment design, SQL; Unit 10 moves before Unit 8 and grows |
 
 ---
 
 ## 4. Parked
 
-| What                                    | Status                                              |
-| --------------------------------------- | --------------------------------------------------- |
-| Web track (JS, TS, async, React, SQL)   | Paused. No JS/TS runner, no track rotation          |
-| Linked lists, general trees, sorts, BFS | Optional interview track, only when job hunting     |
-| Practical AI engineering (RAG, evals)   | After the path, or sooner if the goal changes       |
-| Determinants, Gaussian elimination, SVD | Only if a later goal or classical method needs them |
+| What                                              | Status                                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Web track (JS, TS, async, React, SQL)             | Paused. No JS/TS runner, no track rotation                                            |
+| Linked lists, general trees, sorts, BFS           | Optional interview track, only when job hunting                                       |
+| Practical AI engineering (RAG, evals)             | After the path, or sooner if the goal changes                                         |
+| Determinants, Gaussian elimination, SVD           | Only if a later goal or classical method needs them                                   |
+| Applied track (pandas, trees, pre-trained models) | A possible branch after Unit 3, for people who want to use ML on real data. See below |
+
+**Applied track.** A shorter route for students who want to use ML rather than build it from scratch. It would branch after Unit 3, skip the classes in Unit 4 and the
+calculus, and reuse Unit 7 (first models) and Unit 10 (pandas, trees, forests) rather than being a parallel curriculum. Name tracks by goal, not by major. Pandas and scikit-learn
+run in Pyodide, but fine-tuning a pre-trained model needs PyTorch and usually a GPU, so that part would happen outside the app, in Colab. **Start it when:** real students ask for it, or a
+contributor offers to write it, or the main goal changes from understanding ML deeply to serving many students. It needs some engine work too, because the app assumes one line of lessons:
+choosing a track, what counts as next, and what goes in Daily 5.
 
 The test for any math lesson: **name the later line of code that needs it.** If no line does, it waits.
 
@@ -268,7 +320,7 @@ The test for any math lesson: **name the later line of code that needs it.** If 
 The app handles retrieval and small steps. Twenty minutes a day is only about 122 hours a year, and some skills can't
 be auto-graded in a short session.
 
-- From about Unit 5, one weekend block of 90–180 minutes covers first exposures to hard ideas (Karpathy's videos),
+- From about Unit 7, one weekend block of 90–180 minutes covers first exposures to hard ideas (Karpathy's videos),
   real PyTorch and messy data.
 - Long blocks should count toward the streak once they're tracked in the app.
 - **Learning mode vs building mode:** attempt first, use AI only for concepts and hints when learning. Vibecoding is
@@ -288,7 +340,8 @@ Signals that matter more than XP: delayed unaided tasks, completed long blocks, 
 - [ ] **Modify** card type: starting code plus an instruction, checked by tests.
 - [ ] Parsons cards with blanks inside lines.
 - [ ] Feedback for each wrong choice (a `why` per option, naming the mistake).
-- [ ] Plots and shape output (matplotlib) for Unit 3.
+- [x] Plots (matplotlib), shown below a run's output.
+- [ ] A shape viewer. Not built: printing `.shape` is taught as the habit instead, so it may not be needed.
 - [ ] Watch-with-prediction and long-block lesson types.
 - [ ] A "mistake to card" button for errors made in outside projects.
 

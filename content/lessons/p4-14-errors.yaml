@@ -1,0 +1,483 @@
+id: p4-errors
+track: ml
+unit: 4
+order: 14
+title: Raising and catching errors
+summary: Fail loudly on purpose, handle what you expect, and catch silent bugs.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The worst bug makes no noise
+    body: >-
+      So far, an error has been something that happens to you. But most machine learning bugs don't crash at all. The code runs, the numbers look plausible, and the model trains badly. You can lose days to that.
+
+
+      By the end of this lesson you'll be able to raise your own errors, catch the ones you expect, and use `assert` to turn a silent bug into a loud one. These are your main defence.
+
+  - type: learn
+    id: raise
+    title: Raising an error on purpose
+    body: >-
+      `raise ValueError("message")` stops the program with that error, just as if Python had found the problem itself. Nothing after it runs, in that function or in whoever called it.
+
+
+      Why would you crash on purpose? Because the alternative is worse. If `mean([])` gave back a made-up 0, the program would carry on, and that 0 would look like a real answer. The problem would surface much later, somewhere far away. An error right at the source, with a clear message, saves you hours.
+
+
+      Choose the error type that fits. `ValueError` means the type is right but the value is bad, like an empty list. `TypeError` means it's the wrong type altogether. And write a message that includes the actual values, so you know what went wrong: `f"sizes differ: {len(a)} and {len(b)}"`. PyTorch's shape errors look like this.
+    code: |
+      def mean(nums):
+          if len(nums) == 0:
+              raise ValueError("mean of an empty list")
+          return sum(nums) / len(nums)
+
+      print(mean([2, 4]))
+      print(mean([]))
+      print("this never runs")
+    expectError: ValueError
+    subgoals:
+      - { line: 2, label: 'Check first' }
+      - { line: 3, label: 'Stop here, with a clear message' }
+      - { line: 7, label: 'The call that fails' }
+      - { line: 8, label: 'The program has already stopped' }
+    predict: What's the last thing to appear before the error?
+
+  - type: choice
+    id: raise-concept
+    prompt: A function is given an empty list when it needs at least one item. What's the best thing for it to do?
+    choices:
+      - Raise a `ValueError` with a clear message
+      - Give back 0, so the program carries on
+      - Print a warning, and give back `None`
+    answer: Raise a `ValueError` with a clear message
+    why: >-
+      A made-up answer looks real and spreads through the program. Failing loudly shows you the problem right where it starts.
+
+  - type: learn
+    id: try
+    title: Catching what you expect
+    body: >-
+      `try` and `except` let your program deal with an error and carry on. Python runs the `try` block. If an error happens, it jumps straight to the matching `except`, skipping the rest of the block. If nothing goes wrong, the `except` block doesn't run at all.
+
+
+      Catch only the error that you expect, and only where you know what to do about it. A bad line in a data file might be worth skipping: `except ValueError:`. Writing `except ValueError as e:` also gives you the error, so you can print its message.
+
+
+      Avoid a bare `except:`, with nothing after it. It catches everything, including your typos, so a misspelled variable name fails silently, and you'll never hear about it. In machine learning, code that fails silently is the worst kind. If you don't know how to handle an error, let it crash. The traceback is what you want.
+    code: |
+      def to_number(text):
+          try:
+              return float(text)
+          except ValueError:
+              return None
+
+      print(to_number("2.5"))
+      print(to_number("abc"))
+
+      lines = ["1", "oops", "3"]
+      total = 0
+      for line in lines:
+          try:
+              total += float(line)
+          except ValueError as e:
+              print("skipped:", e)
+      print(total)
+    subgoals:
+      - { line: 2, label: 'Run something that might fail' }
+      - { line: 4, label: 'Only this one kind of error' }
+      - { line: 13, label: 'A bad line skips only that line' }
+      - { line: 15, label: 'e holds the error and its message' }
+    predict: What will `total` be?
+
+  - type: choice
+    id: try-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 1}
+      try:
+          print(d["b"])
+      except KeyError:
+          print("key")
+      except IndexError:
+          print("index")
+    choices: ['key', 'index', 'None', "key\nindex"]
+    answer: 'key'
+    why: >-
+      A missing dict key is a `KeyError`, and only the first matching `except` runs.
+    variants:
+      - code: |
+          nums = [1, 2]
+          try:
+              print(nums[5])
+          except KeyError:
+              print("key")
+          except IndexError:
+              print("index")
+        choices: ['index', 'key', 'None', "key\nindex"]
+        answer: 'index'
+        why: >-
+          A list position that doesn't exist is an `IndexError`.
+      - code: |
+          try:
+              print(1 + "2")
+          except ValueError:
+              print("value")
+          except TypeError:
+              print("type")
+        choices: ['type', 'value', '3', "value\ntype"]
+        answer: 'type'
+        why: >-
+          The two types can't be added, so that's a `TypeError`. `ValueError` is for the right type with a bad value.
+      - code: |
+          def f():
+              raise ValueError("no")
+              print("after")
+
+          try:
+              f()
+              print("next")
+          except ValueError:
+              print("caught")
+        choices: ['caught', "after\ncaught", "next\ncaught", "after\nnext"]
+        answer: 'caught'
+        why: >-
+          `raise` stops right there, and jumps to the matching `except`, skipping everything in between.
+      - code: |
+          try:
+              x = 1
+          except ValueError:
+              x = 2
+          print(x)
+        choices: ['1', '2', 'None', 'Error']
+        answer: '1'
+        why: >-
+          Nothing went wrong, so the `except` block didn't run.
+
+  - type: explain
+    id: explain-bare
+    prompt: This program prints `0` and looks fine. What's wrong with it, and how would you change it?
+    code: |
+      def average(nums):
+          try:
+              return sum(nmus) / len(nums)
+          except:
+              return 0
+
+      print(average([1, 2, 3]))
+    model: >-
+      There's a typo: `nmus`, which gives a `NameError`, but the bare `except:` catches every error, so the bug is hidden and the function gives a wrong answer. Catch only the error you expect, such as `ZeroDivisionError`, so that the typo crashes loudly.
+    keyPoints:
+      - A bare `except` catches every error, including typos
+      - Catch only the specific error you expect
+
+  - type: learn
+    id: assert
+    title: Assert what must be true
+    body: >-
+      `assert condition, "message"` says "this must be true at this point". If it's true, nothing happens. If it's false, the program stops with an `AssertionError`. It's a one-line way of checking your own assumptions.
+
+
+      It's aimed at bugs in your own code, unlike `raise`, which usually deals with bad input from outside. Common checks in ML code are that two lists are the same length, that probabilities add up to about 1, and that the shape of the data is what you expected. Use a tolerance with floats, as you learned in Unit 3.
+
+
+      Compare that with the `zip` from earlier in this unit, which silently stopped at the shorter list. One `assert` turns that into a loud error, with a message telling you exactly what happened. Printing values and their sizes is your other main tool: when a result looks wrong, print what went in.
+    code: |
+      def dot(a, b):
+          assert len(a) == len(b), f"sizes differ: {len(a)} and {len(b)}"
+          return sum(x * y for x, y in zip(a, b))
+
+      print(dot([1, 2], [3, 4]))
+
+      probs = [0.2, 0.8]
+      assert abs(sum(probs) - 1) < 1e-9
+
+      print(dot([1, 2, 3], [10, 10]))
+    expectError: AssertionError
+    subgoals:
+      - { line: 2, label: 'Check it before computing' }
+      - { line: 5, label: 'True, so nothing happens' }
+      - { line: 8, label: 'A check with a tolerance' }
+      - { line: 10, label: 'Now it stops, and says why' }
+    predict: Without the assert, what would the last line show?
+
+  - type: choice
+    id: silent-trace
+    kind: predict
+    prompt: This has a bug, but no error. What does it print?
+    code: |
+      def dot(a, b):
+          return sum(x * y for x, y in zip(a, b))
+
+      print(dot([1, 2, 3], [10, 10]))
+    choices: ['30', '60', 'Error', '20']
+    answer: '30'
+    why: >-
+      `zip` stops at the shorter list, so the 3 is silently ignored. That's exactly the kind of bug an `assert` catches.
+    variants:
+      - code: |
+          x = 5
+          assert x > 0, "must be positive"
+          print(x)
+        choices: ['5', 'must be positive', 'True', 'Error']
+        answer: '5'
+        why: >-
+          The condition is true, so `assert` does nothing.
+      - code: |
+          try:
+              assert 1 > 2, "nope"
+          except AssertionError as e:
+              print(e)
+        choices: ['nope', 'False', '1 > 2', 'None']
+        answer: 'nope'
+        why: >-
+          The message is what you get from the error. You'd rarely catch one, but this shows you how it works.
+
+  - type: blank
+    id: fill-raise
+    prompt: Fill in the blank so an empty list stops the function, and this shows `empty`.
+    code: |
+      def first(items):
+          if not items:
+              ____ ValueError("empty")
+          return items[0]
+
+      try:
+          first([])
+      except ValueError as e:
+          print(e)
+    answers: [['raise']]
+    expectOutput: empty
+    why: >-
+      `raise` creates the error.
+    variants:
+      - prompt: Fill in the blank to catch only the expected error, and this shows `None`.
+        code: |
+          def ratio(a, b):
+              try:
+                  return a / b
+              except ____:
+                  return None
+
+          print(ratio(1, 0))
+        answers: [['ZeroDivisionError']]
+        expectOutput: None
+        why: >-
+          Name the one error you expect.
+      - prompt: Fill in the blank to check the lengths, so this shows `ok`.
+        code: |
+          a = [1]
+          b = [2]
+          ____ len(a) == len(b)
+          print("ok")
+        answers: [['assert']]
+        expectOutput: ok
+        why: >-
+          `assert` stops the program if its condition is false.
+
+  - type: fix
+    id: fix-bare
+    prompt: '`safe_ratio` should give back `None` only when dividing by zero, but it hides every other error too. Fix it.'
+    code: |
+      def safe_ratio(a, b):
+          try:
+              return a / b
+          except:
+              return None
+
+      def _raises_type_error():
+          try:
+              safe_ratio("a", 2)
+          except TypeError:
+              return True
+          return False
+    solution: |
+      def safe_ratio(a, b):
+          try:
+              return a / b
+          except ZeroDivisionError:
+              return None
+
+      def _raises_type_error():
+          try:
+              safe_ratio("a", 2)
+          except TypeError:
+              return True
+          return False
+    highlightLine: 4
+    tests:
+      - { call: 'safe_ratio(1, 2)', expect: '0.5' }
+      - { call: 'safe_ratio(1, 0)', expect: 'None' }
+      - { call: '_raises_type_error()', expect: 'True' }
+    why: >-
+      Name the one error you expect. A bare `except` would also hide a typo or a wrong type.
+    hints:
+      - What's the name of the error for dividing by zero?
+    variants:
+      - prompt: This should show `2.0`, skipping the bad value, but the whole program crashes. Add a `try` and `except` inside the loop, so only that value gets skipped.
+        code: |
+          total = 0
+          for s in ["2", "x"]:
+              total += float(s)
+          print(total)
+        solution: |
+          total = 0
+          for s in ["2", "x"]:
+              try:
+                  total += float(s)
+              except ValueError:
+                  pass
+          print(total)
+        highlightLine: 3
+        tests: []
+        expectOutput: '2.0'
+        why: >-
+          Inside the loop, an error only affects that one value. `pass` means "do nothing".
+        hints:
+          - The error from `float` is a `ValueError`.
+      - prompt: '`mean([])` should stop with a `ValueError`, but it gives back a made-up `0`. Fix it.'
+        code: |
+          def mean(nums):
+              if len(nums) == 0:
+                  return 0
+              return sum(nums) / len(nums)
+
+          def _raises():
+              try:
+                  mean([])
+              except ValueError:
+                  return True
+              return False
+        solution: |
+          def mean(nums):
+              if len(nums) == 0:
+                  raise ValueError("empty list")
+              return sum(nums) / len(nums)
+
+          def _raises():
+              try:
+                  mean([])
+              except ValueError:
+                  return True
+              return False
+        highlightLine: 3
+        tests:
+          - { call: 'mean([2, 4])', expect: '3.0' }
+          - { call: '_raises()', expect: 'True' }
+        why: >-
+          A made-up 0 looks like a real answer, while an error shows the problem.
+        hints:
+          - What word creates an error?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Finding a bug that doesn't crash
+    body: >-
+      Here's a realistic debugging session. A function works out how accurate a model is, and it reports 100%, which is suspicious. There's no error, so a traceback can't help. What do you do?
+
+
+      First, add checks for what you believe to be true. Should `preds` and `labels` be the same length? Add an `assert` and find out. Here it fails, and the message shows 2 and 4. That tells you that half the labels aren't being compared.
+
+
+      Then look at the cause. The list of predictions was cut short somewhere earlier, and `zip` hid it. After you've fixed that, the `assert` stays in place. It costs almost nothing, and it'll catch the same bug next time. Good ML code is full of checks like this.
+    code: |
+      def accuracy(preds, labels):
+          right = 0
+          for p, y in zip(preds, labels):
+              if p == y:
+                  right += 1
+          return right / len(preds)
+
+      preds = [1, 0]
+      labels = [1, 0, 1, 1]
+      print(accuracy(preds, labels))
+
+      def checked_accuracy(preds, labels):
+          assert len(preds) == len(labels), f"{len(preds)} and {len(labels)}"
+          return accuracy(preds, labels)
+
+      print(checked_accuracy(preds, labels))
+    expectError: AssertionError
+    subgoals:
+      - { line: 3, label: 'zip hides the difference' }
+      - { line: 10, label: 'Looks perfect, and is wrong' }
+      - { line: 13, label: 'State what you believe' }
+      - { line: 16, label: 'Now the bug makes a noise' }
+    predict: What will the first accuracy show?
+
+  - type: write
+    id: write-checked
+    prompt: Write `dot(a, b)`, which gives back the dot product, and raises a `ValueError` if the lists have different lengths.
+    starter: |
+      def dot(a, b):
+          # Your code here
+
+      def _raises(a, b):
+          try:
+              dot(a, b)
+          except ValueError:
+              return True
+          return False
+    solution: |
+      def dot(a, b):
+          if len(a) != len(b):
+              raise ValueError("sizes differ")
+          return sum(x * y for x, y in zip(a, b))
+
+      def _raises(a, b):
+          try:
+              dot(a, b)
+          except ValueError:
+              return True
+          return False
+    tests:
+      - { call: 'dot([1, 2], [3, 4])', expect: '11' }
+      - { call: 'dot([], [])', expect: '0' }
+      - { call: '_raises([1], [1, 2])', expect: 'True' }
+    why: >-
+      Check first, and then calculate.
+    hints:
+      - Check the lengths first, then calculate.
+    variants:
+      - prompt: Write `parse_all(items)`, which turns each string in `items` into a float and gives back a list, skipping any that can't be converted. So `parse_all(["1", "x", "2.5"])` gives back `[1.0, 2.5]`.
+        starter: |
+          def parse_all(items):
+              # Your code here
+        solution: |
+          def parse_all(items):
+              out = []
+              for s in items:
+                  try:
+                      out.append(float(s))
+                  except ValueError:
+                      pass
+              return out
+        tests:
+          - { call: 'parse_all(["1", "x", "2.5"])', expect: '[1.0, 2.5]' }
+          - { call: 'parse_all([])', expect: '[]' }
+        hints:
+          - The `try` goes inside the loop, and `pass` means "do nothing".
+
+  - type: choice
+    id: remember-super
+    prompt: From the last lesson. A child class defines `__init__`, without calling `super().__init__()`. What happens to the parent's `__init__`?
+    choices:
+      - It never runs
+      - Python runs it automatically, first
+      - Python runs it automatically, last
+    answer: It never runs
+    why: >-
+      The child's method replaces the parent's, unless you call the parent's yourself.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `raise` stops the program with a clear message, which beats a made-up answer. `try` and `except` handle an error you expect, so name the specific one, and never use a bare `except`. `assert` checks what must be true, and turns silent bugs into loud ones.
+
+
+      That's everything you need to read real ML code. Next comes the checkpoint, and then you'll build a vector class.

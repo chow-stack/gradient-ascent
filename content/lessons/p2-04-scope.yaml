@@ -1,0 +1,364 @@
+id: p2-scope
+track: ml
+unit: 2
+order: 4
+title: Names inside functions
+summary: Why variables in a function stay there, and how to set default values.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Each call gets its own room
+    body: >-
+      If every function shared every variable, a big program would be impossible to reason about. Changing a name in one place could break something a thousand lines away. Python avoids this by keeping a function's variables to itself.
+
+
+      By the end of this lesson you'll be able to say which variable a name refers to, explain why a function can't simply change a variable outside it, and give parameters default values. Those defaults are all over machine learning libraries.
+
+  - type: learn
+    id: local
+    title: Local variables
+    body: >-
+      A variable created inside a function, including a parameter, is local. It exists only while that call is running. When the function returns, it's gone, and the next call starts fresh.
+
+
+      So trying to use it outside gives a `NameError`, because that name doesn't exist out there. This is the reason functions have `return`: the only way to get a value out is to hand it back.
+
+
+      A variable inside a function can share a name with one outside, and they're still two separate variables. Below, the `total` inside the function has nothing to do with the `total` outside. It helps to imagine each call happening in its own room: names in the room are found first.
+    code: |
+      def add_tax(price):
+          total = price * 2
+          return total
+
+      total = 100
+      answer = add_tax(5)
+      print(answer)
+      print(total)
+    subgoals:
+      - { line: 2, label: 'A local variable, only in this call' }
+      - { line: 5, label: 'A different variable with the same name' }
+      - { line: 7, label: 'What the function handed back' }
+      - { line: 8, label: 'The outside one is untouched' }
+    predict: What will `print(total)` show?
+
+  - type: choice
+    id: local-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f():
+          x = 5
+          return x + 1
+
+      x = 1
+      y = f()
+      print(x, y)
+    choices: ['1 6', '5 6', '1 2', '6 6']
+    answer: '1 6'
+    why: >-
+      The `x` inside `f` is local, so the outside `x` stays 1. The function returns 6.
+    variants:
+      - code: |
+          def f(n):
+              n = n + 10
+              return n
+
+          n = 1
+          f(n)
+          print(n)
+        choices: ['1', '11', '10', 'None']
+        answer: '1'
+        why: >-
+          The parameter `n` gets a copy of the value, and changing it doesn't change the outside `n`. The return value also isn't stored.
+      - code: |
+          def f(n):
+              n = n + 10
+              return n
+
+          n = 1
+          n = f(n)
+          print(n)
+        choices: ['11', '1', '10', 'None']
+        answer: '11'
+        why: >-
+          This time the return value is stored back in the outside `n`.
+
+  - type: learn
+    id: passing-in
+    title: Passing a value in, and getting one out
+    body: >-
+      When you call `f(n)`, the parameter gets the value that `n` holds. If the function then assigns something new to its parameter, that only changes the local name. The variable outside still holds the old value.
+
+
+      This often surprises people who expect `increase(score)` to change `score`. To change a variable outside, have the function return the new value, and assign it yourself: `score = increase(score)`. You've seen this pattern with `.upper()` and with `abs`.
+
+
+      A function can read a variable from outside, but relying on that makes it hard to follow. And if it assigns to that name anywhere in its body, Python treats the name as local throughout the function. Using it before that assignment gives an `UnboundLocalError`. Run this example to see one. The fix is the same: pass the value in, and return the result.
+    deeper: >-
+      There is a `global` statement that lets a function assign to an outside variable. You'll see it occasionally, but it's best avoided: a function that changes things outside itself is much harder to test, because its result depends on what ran before. Later on, lists will add a twist: a function can change a list passed to it, and you'll see why.
+    code: |
+      count = 0
+
+      def add_one():
+          count = count + 1
+          return count
+
+      print(add_one())
+    expectError: UnboundLocalError
+    subgoals:
+      - { line: 1, label: 'An outside variable' }
+      - { line: 4, label: 'Assigning makes `count` local, but it has no value yet' }
+      - { line: 7, label: 'The crash happens when it is called' }
+    predict: Will this show `1`?
+
+  - type: explain
+    id: explain-unchanged
+    prompt: Why does this show `10` rather than `11`, and how would you change the last two lines so that it shows `11`?
+    code: |
+      def bump(score):
+          score = score + 1
+          return score
+
+      score = 10
+      bump(score)
+      print(score)
+    model: >-
+      The parameter `score` is a separate local variable, so changing it doesn't affect the outside one. The returned 11 isn't stored either. Writing `score = bump(score)` would keep it.
+    keyPoints:
+      - The parameter is a local variable, separate from the outside `score`
+      - The return value must be stored, as in `score = bump(score)`
+
+  - type: blank
+    id: fill-store
+    prompt: Fill in the blank so this shows `11`.
+    code: |
+      def bump(n):
+          return n + 1
+
+      x = 10
+      ____ = bump(x)
+      print(x)
+    answers: [['x']]
+    expectOutput: '11'
+    why: >-
+      The function can't change `x` by itself, so you store what it gives back.
+    variants:
+      - prompt: Fill in the blank so the function uses the value passed to it, and this shows `6`.
+        code: |
+          def twice(n):
+              return ____ * 2
+
+          print(twice(3))
+        answers: [['n']]
+        expectOutput: '6'
+        why: >-
+          Inside the function, the value passed in is called by the name of its parameter.
+
+  - type: learn
+    id: defaults
+    title: Default values
+    body: >-
+      A parameter can have a default, written with `=` in the `def`. If a call leaves out that argument, the default gets used. If it passes one, that value is used instead.
+
+
+      Defaults are how a function can have lots of options without making every call long. In machine learning you'll see things like `train(model, steps=100, lr=0.01)`, and you only pass the settings you want to change.
+
+
+      Parameters with defaults have to come after those without, or you'll get a `SyntaxError`. In a call you can also pass an argument by name, like `power(2, exponent=3)`, which makes it obvious which option you're setting.
+    code: |
+      def power(base, exponent=2):
+          return base ** exponent
+
+      print(power(3))
+      print(power(3, 4))
+      print(power(2, exponent=5))
+    subgoals:
+      - { line: 1, label: 'Required, then optional' }
+      - { line: 4, label: 'Leave it out: uses the default' }
+      - { line: 5, label: 'Pass it: replaces the default' }
+      - { line: 6, label: 'Pass it by name' }
+    predict: What will `power(3)` show?
+
+  - type: choice
+    id: default-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def greet(name, greeting="Hi"):
+          return f"{greeting}, {name}"
+
+      print(greet("Sam"))
+    choices: ['Hi, Sam', 'Sam, Hi', ', Sam', 'Error']
+    answer: 'Hi, Sam'
+    why: >-
+      `greeting` wasn't passed, so it uses its default.
+    variants:
+      - code: |
+          def step(x, lr=0.5):
+              return x - lr
+
+          print(step(3, 1))
+        choices: ['2', '2.5', '3', 'Error']
+        answer: '2'
+        why: >-
+          The second argument replaces the default, so `lr` is 1.
+      - code: |
+          def step(x, lr=0.5):
+              return x - lr
+
+          print(step(lr=2, x=3))
+        choices: ['1', '-1', '2.5', 'Error']
+        answer: '1'
+        why: >-
+          Arguments passed by name can be in any order, so `x` is 3 and `lr` is 2.
+
+  - type: fix
+    id: fix-local-outside
+    prompt: This crashes with a `NameError`, because `total` only exists inside the function. Fix it so it shows `7`.
+    code: |
+      def add(a, b):
+          total = a + b
+          return total
+
+      add(3, 4)
+      print(total)
+    solution: |
+      def add(a, b):
+          total = a + b
+          return total
+
+      total = add(3, 4)
+      print(total)
+    highlightLine: 5
+    expectOutput: '7'
+    why: >-
+      A local variable disappears when the call ends. Store the return value in a variable outside.
+    hints:
+      - How do you get a value out of a function?
+    variants:
+      - prompt: This should show `2`, but it crashes with an `UnboundLocalError`. Fix it by passing the value in.
+        code: |
+          steps = 1
+
+          def walk():
+              steps = steps + 1
+              return steps
+
+          print(walk())
+        solution: |
+          steps = 1
+
+          def walk(steps):
+              steps = steps + 1
+              return steps
+
+          print(walk(steps))
+        highlightLine: 3
+        expectOutput: '2'
+        why: >-
+          With a parameter, the function has its own `steps` with a value from the start.
+        hints:
+          - The function needs to get `steps` from the call.
+      - prompt: This `def` line gives a `SyntaxError`. Fix it so the program shows `20`.
+        code: |
+          def scale(by=10, x):
+              return x * by
+
+          print(scale(2))
+        solution: |
+          def scale(x, by=10):
+              return x * by
+
+          print(scale(2))
+        highlightLine: 1
+        expectOutput: '20'
+        why: >-
+          Parameters with defaults have to come after those without.
+        hints:
+          - Which kind of parameter has to come first?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Tracing two calls
+    body: >-
+      When a program has several functions, trace it the way Python runs it. When a call happens, make a new box for it, and write its parameters inside. When it returns, cross the box out and carry the answer back to the line that called it.
+
+
+      Below, both functions have an `n`, and there's also an `n` outside. Follow the value: the outside `n` is 2. `outer(2)` gets a box with its own `n`, also 2. That box calls `inner(3)`, which gets another box where `n` is 3 and which gives back 30. Back in the `outer` box, `n` is still 2, so the result is 32.
+
+
+      At the end, the outside `n` is still 2. No call ever changed it, however many functions used the same name.
+    code: |
+      def inner(n):
+          return n * 10
+
+      def outer(n):
+          result = inner(n + 1)
+          return result + n
+
+      n = 2
+      print(outer(n))
+      print(n)
+    subgoals:
+      - { line: 1, label: 'Its own `n`' }
+      - { line: 5, label: 'Call inner with 3, and wait for the answer' }
+      - { line: 6, label: 'This `n` is still 2' }
+      - { line: 10, label: 'The outside `n` was never changed' }
+    predict: What two numbers will this show?
+
+  - type: write
+    id: discounted
+    prompt: >-
+      Write `discounted(price, percent=10)`, which gives back the price after taking off that percentage. So `discounted(50)` gives back `45.0`, and `discounted(50, 20)` gives back `40.0`.
+    starter: |
+      # Write discounted here
+    solution: |
+      def discounted(price, percent=10):
+          return price - price * percent / 100
+    tests:
+      - { call: discounted(50), expect: '45.0' }
+      - { call: 'discounted(50, 20)', expect: '40.0' }
+    why: >-
+      The default goes in the `def`, and the rest is an ordinary calculation.
+    hints:
+      - Write `percent=10` in the parentheses of the `def`.
+    variants:
+      - prompt: Write `repeat_word(word, times=2)`, which gives back the word repeated, so `repeat_word("go")` gives back `"gogo"`.
+        starter: |
+          # Write repeat_word here
+        solution: |
+          def repeat_word(word, times=2):
+              return word * times
+        tests:
+          - { call: 'repeat_word("go")', expect: "'gogo'" }
+          - { call: 'repeat_word("a", 3)', expect: "'aaa'" }
+        hints:
+          - Multiplying text by a number repeats it.
+
+  - type: choice
+    id: remember-path
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def f(n):
+          if n > 5:
+              return "big"
+
+      print(f(3))
+    choices: ['None', 'big', '3', 'Error']
+    answer: 'None'
+    why: >-
+      3 isn't greater than 5, so the function reaches its end with no `return`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Variables in a function, including parameters, are local to that call, and they're separate from any outside variable with the same name. To change something outside, return the new value and store it. Defaults, like `lr=0.5`, make an argument optional.
+
+
+      Next: you can name a job now, so it's time to repeat one.

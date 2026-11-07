@@ -1,0 +1,447 @@
+id: p5-views
+track: ml
+unit: 5
+order: 4
+title: Views and copies
+summary: A NumPy slice shares memory with the original. A list's slice doesn't.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: One rule that's different
+    body: >-
+      In Unit 3 you learned that a slice of a list is a new list. It's safe to change. With NumPy, that isn't true, and it's the most dangerous difference between the two.
+
+
+      By the end of this lesson you'll be able to tell when two arrays share memory, make a real copy when you need one, and tell an in-place change from one that makes a new array. That last skill matters a lot once you're training models.
+
+  - type: learn
+    id: views
+    title: A slice is a view
+    body: >-
+      When you slice an array, NumPy doesn't copy any numbers. It gives you a new array object that looks at the same block of memory, which is called a view. Changing the view changes the original, and changing the original changes the view.
+
+
+      NumPy does it this way for speed. Your data might take up gigabytes, and copying it on every slice would be ruinous. Taking a slice of any size is nearly instant.
+
+
+      Rows and columns are views too, so `row = a[0]` and `row[0] = 9` changes `a`. `reshape` gives you a view as well. It's the same numbers, arranged differently. `b.base` tells you where it came from, and `np.shares_memory(a, b)` checks directly.
+
+
+      So here's the rule. If you want to change part of an array without affecting the original, ask for a copy: `a[1:3].copy()`.
+    code: |
+      import numpy as np
+
+      lst = [1, 2, 3]
+      part = lst[0:2]
+      part[0] = 99
+      print(lst)
+
+      a = np.array([1, 2, 3])
+      view = a[0:2]
+      view[0] = 99
+      print(a)
+
+      b = np.array([1, 2, 3])
+      safe = b[0:2].copy()
+      safe[0] = 99
+      print(b)
+
+      print(np.shares_memory(a, view), np.shares_memory(b, safe))
+    subgoals:
+      - { line: 4, label: 'A list slice is a new list' }
+      - { line: 9, label: 'An array slice shares memory' }
+      - { line: 10, label: 'This also changes a' }
+      - { line: 14, label: 'A real copy' }
+      - { line: 18, label: 'Check directly' }
+    predict: What will `print(a)` show?
+
+  - type: choice
+    id: views-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2, 3, 4])
+      b = a[1:3]
+      b[0] = 0
+      print(a)
+    choices: ['[1 0 3 4]', '[1 2 3 4]', '[0 2 3 4]', '[1 0 0 4]']
+    answer: '[1 0 3 4]'
+    why: >-
+      `b` is a view, and `b[0]` is the same memory as `a[1]`.
+    variants:
+      - code: |
+          a = [1, 2, 3, 4]
+          b = a[1:3]
+          b[0] = 0
+          print(a)
+        choices: ['[1, 2, 3, 4]', '[1, 0, 3, 4]', '[0, 2, 3, 4]', 'Error']
+        answer: '[1, 2, 3, 4]'
+        why: >-
+          This is a list, so the slice is a new list. Only arrays share memory this way.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          row = a[1]
+          row[0] = 9
+          print(a[1, 0])
+        choices: ['9', '3', '1', 'Error']
+        answer: '9'
+        why: >-
+          A row is a view too.
+      - code: |
+          import numpy as np
+          a = np.arange(4)
+          m = a.reshape(2, 2)
+          m[0, 0] = 7
+          print(a[0])
+        choices: ['7', '0', '4', 'Error']
+        answer: '7'
+        why: >-
+          `reshape` gives the same numbers, arranged differently.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          b = a[:2].copy()
+          a[0] = 5
+          print(b[0])
+        choices: ['1', '5', '2', 'Error']
+        answer: '1'
+        why: >-
+          `.copy()` makes a separate array, so changes to `a` don't reach it.
+
+  - type: explain
+    id: explain-view
+    prompt: Why did this change `data`, when the code only assigned to `first_two`? What would you change?
+    code: |
+      import numpy as np
+      data = np.array([5, 6, 7])
+      first_two = data[:2]
+      first_two[0] = 0
+      print(data)
+    model: >-
+      A NumPy slice is a view that shares memory with the original, so changing `first_two` changes `data`. To keep `data` safe, make a separate array with `data[:2].copy()`.
+    keyPoints:
+      - A NumPy slice shares memory with the original
+      - '`.copy()` makes a separate array'
+
+  - type: learn
+    id: new-vs-inplace
+    title: A new array, or the same one?
+    body: >-
+      You've met this before, with lists. `a = a + 1` builds a new array, and moves the name to it. Any other name for the old array still sees the old values. `a += 1` changes the existing array in place, so every view and every other name sees the change.
+
+
+      It's usually a small difference, but in training it's a big one. Updating weights in a function with `weights -= lr * grad` changes the caller's array, because it's in place. `weights = weights - lr * grad` only moves the local name, so the caller's weights never change, and the model mysteriously doesn't learn.
+
+
+      Also, `b = a` is just a second name, as always. `a[:] = 0` assigns into the array itself, filling every item, while `a = 0` just moves the name to a number.
+
+
+      There's another in-place trap you've seen: `a.sort()` sorts in place, and gives back `None`. `np.sort(a)` gives back a sorted copy.
+    code: |
+      import numpy as np
+
+      def update_inplace(w):
+          w -= 1
+
+      def update_new(w):
+          w = w - 1
+
+      w = np.array([5.0, 6.0])
+      update_new(w)
+      print(w)
+      update_inplace(w)
+      print(w)
+
+      a = np.array([1, 2])
+      b = a
+      a = a + 1
+      print(b)
+      c = b
+      b += 1
+      print(c)
+    subgoals:
+      - { line: 4, label: 'Changes the array you were given' }
+      - { line: 7, label: 'Only moves the local name' }
+      - { line: 10, label: 'No effect on the caller' }
+      - { line: 17, label: 'New array: b keeps the old one' }
+      - { line: 20, label: 'In place: c sees it' }
+    predict: What will `w` be after `update_new`?
+
+  - type: choice
+    id: inplace-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      def step(w, grad):
+          w = w - 0.5 * grad
+
+      w = np.array([1.0])
+      step(w, np.array([2.0]))
+      print(w)
+    choices: ['[1.]', '[0.]', '[2.]', 'None']
+    answer: '[1.]'
+    why: >-
+      `w = ...` only moves the local name, so the caller's array doesn't change. This is the "my model isn't learning" bug.
+    variants:
+      - code: |
+          import numpy as np
+
+          def step(w, grad):
+              w -= 0.5 * grad
+
+          w = np.array([1.0])
+          step(w, np.array([2.0]))
+          print(w)
+        choices: ['[0.]', '[1.]', '[2.]', 'None']
+        answer: '[0.]'
+        why: >-
+          `-=` changes the array in place, so the caller sees it.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = a
+          a[:] = 0
+          print(b)
+        choices: ['[0 0]', '[1 2]', '0', 'Error']
+        answer: '[0 0]'
+        why: >-
+          `a[:] = 0` fills the array itself, and `b` names the same array.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = a
+          a = 0
+          print(b)
+        choices: ['[1 2]', '[0 0]', '0', 'Error']
+        answer: '[1 2]'
+        why: >-
+          `a = 0` only moves the name `a`.
+      - code: |
+          import numpy as np
+          a = np.array([2, 1])
+          b = np.sort(a)
+          print(a, b)
+        choices: ['[2 1] [1 2]', '[1 2] [1 2]', '[1 2] None', '[2 1] None']
+        answer: '[2 1] [1 2]'
+        why: >-
+          `np.sort` gives back a sorted copy. `a.sort()` would change `a`, and give back `None`.
+
+  - type: blank
+    id: fill-copy
+    prompt: Fill in the blank so the original stays the same, and this shows `[1 2 3]`.
+    code: |
+      import numpy as np
+      a = np.array([1, 2, 3])
+      b = a[:2]____
+      b[0] = 9
+      print(a)
+    answers: [['.copy()']]
+    expectOutput: '[1 2 3]'
+    why: >-
+      Without `.copy()`, `b` shares memory with `a`.
+    variants:
+      - prompt: Fill in the blank to change the array in place, so the caller sees `[0.]`.
+        code: |
+          import numpy as np
+
+          def step(w):
+              w ____ 1
+
+          w = np.array([1.0])
+          step(w)
+          print(w)
+        answers: [['-=']]
+        expectOutput: '[0.]'
+        why: >-
+          `-=` changes the array itself.
+      - prompt: Fill in the blank to fill the existing array with zeros, so this shows `[0 0]`.
+        code: |
+          import numpy as np
+          a = np.array([1, 2])
+          b = a
+          ____ = 0
+          print(b)
+        answers: [['a[:]', 'b[:]']]
+        expectOutput: '[0 0]'
+        why: >-
+          `a[:]` means every item of this array, so it doesn't move the name.
+
+  - type: fix
+    id: fix-view
+    prompt: '`with_zero_first(a)` should give back a new array with its first item set to 0, and leave `a` alone. But it changes `a`. Fix it.'
+    code: |
+      import numpy as np
+
+      def with_zero_first(a):
+          out = a[:]
+          out[0] = 0
+          return out
+    solution: |
+      import numpy as np
+
+      def with_zero_first(a):
+          out = a.copy()
+          out[0] = 0
+          return out
+    highlightLine: 4
+    tests:
+      - { call: 'with_zero_first(np.array([1, 2]))', expect: '[0, 2]' }
+      - { call: '(lambda a: (with_zero_first(a), a)[1])(np.array([1, 2]))', expect: '[1, 2]', hidden: true }
+    why: >-
+      `a[:]` copies a list, but for an array it's only a view.
+    hints:
+      - Does a slice of an array make a new one?
+    variants:
+      - prompt: '`train_step(w, g)` should change the caller''s weights, so this shows `[0.5]`. But they never change. Fix it.'
+        code: |
+          import numpy as np
+
+          def train_step(w, g):
+              w = w - 0.1 * g
+
+          w = np.array([1.0])
+          train_step(w, np.array([5.0]))
+          print(w)
+        solution: |
+          import numpy as np
+
+          def train_step(w, g):
+              w -= 0.1 * g
+
+          w = np.array([1.0])
+          train_step(w, np.array([5.0]))
+          print(w)
+        highlightLine: 4
+        tests: []
+        expectOutput: '[0.5]'
+        why: >-
+          `w = ...` only moves the local name, and `w -= ...` changes the array.
+        hints:
+          - Which form changes the array in place?
+      - prompt: This should show `[3 1 2]` and then `[1 2 3]`, but `sorted_copy` changes its input. Fix it.
+        code: |
+          import numpy as np
+
+          def sorted_copy(a):
+              a.sort()
+              return a
+
+          x = np.array([3, 1, 2])
+          y = sorted_copy(x)
+          print(x)
+          print(y)
+        solution: |
+          import numpy as np
+
+          def sorted_copy(a):
+              return np.sort(a)
+
+          x = np.array([3, 1, 2])
+          y = sorted_copy(x)
+          print(x)
+          print(y)
+        highlightLine: 4
+        tests: []
+        expectOutput: "[3 1 2]\n[1 2 3]"
+        why: >-
+          `np.sort` gives back a sorted copy, and `a.sort()` changes the array.
+        hints:
+          - Which version gives back a new array?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: The classic training bug
+    body: >-
+      Here's a bug that combines everything in this lesson. You want to save the best weights you've seen during training, so you can go back to them at the end.
+
+
+      The first version does `best = w`, which is only a second name. Training then changes `w` in place with `-=`, so `best` changes too. At the end, `best` is just the final weights, whichever they were. Nothing crashes, and you'd only notice if you looked closely.
+
+
+      The fix is `best = w.copy()`. It's one short call, and it's the difference between saving a snapshot and saving a label. PyTorch has the same issue, and the fix there is `copy.deepcopy`, or `.clone()`.
+    code: |
+      import numpy as np
+
+      w = np.array([1.0, 2.0])
+      best = w
+      w -= 0.5
+      print(best)
+
+      w = np.array([1.0, 2.0])
+      best = w.copy()
+      w -= 0.5
+      print(best, w)
+    subgoals:
+      - { line: 4, label: 'Only a second name' }
+      - { line: 5, label: 'In place, so best changes too' }
+      - { line: 9, label: 'A real snapshot' }
+      - { line: 11, label: 'They are separate now' }
+    predict: What will `best` be in the first version?
+
+  - type: write
+    id: write-clip
+    prompt: Write `clipped(a, low)`, which gives back a new array with the first `low` items of `a` removed, leaving a separate copy, so that changing the result never changes `a`. So `clipped(np.array([1, 2, 3]), 1)` gives back `[2, 3]`.
+    starter: |
+      import numpy as np
+
+      def clipped(a, low):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def clipped(a, low):
+          return a[low:].copy()
+    tests:
+      - { call: 'clipped(np.array([1, 2, 3]), 1)', expect: '[2, 3]' }
+      - { call: '(lambda a: not np.shares_memory(clipped(a, 1), a))(np.zeros(3))', expect: 'True', hidden: true }
+    why: >-
+      Slice it to get the items, and copy it to break the link.
+    hints:
+      - A slice alone would still share memory.
+    variants:
+      - prompt: Write `nudge(w, grad, lr)`, which changes `w` in place by subtracting `lr * grad`, and gives back nothing.
+        starter: |
+          import numpy as np
+
+          def nudge(w, grad, lr):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def nudge(w, grad, lr):
+              w -= lr * grad
+        tests:
+          - { call: 'nudge(np.array([1.0]), np.array([1.0]), 0.5)', expect: 'None' }
+          - { call: '(lambda w: (nudge(w, np.array([2.0]), 0.5), w)[1])(np.array([1.0]))', expect: '[0.0]', hidden: true }
+        hints:
+          - Which operator changes an array in place?
+
+  - type: choice
+    id: remember-col
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      a = np.zeros((3, 4))
+      print(a[:, 0].shape)
+    choices: ['(3,)', '(4,)', '(3, 1)', '(1, 4)']
+    answer: '(3,)'
+    why: >-
+      Every row, and one column. A single number removes that axis.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A NumPy slice is a view that shares memory, unlike a list slice. `.copy()` makes a separate array. `a = a + 1` makes a new array, and `a += 1` changes the array in place, which is what a weight update needs. To save weights, take a copy.
+
+
+      Next: picking items with conditions.

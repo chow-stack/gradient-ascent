@@ -1,0 +1,412 @@
+id: p5-shapes
+track: ml
+unit: 5
+order: 2
+title: Shapes
+summary: Rows, columns and reshape. Most ML bugs are shape bugs.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The first thing to check
+    body: >-
+      Ask anyone who trains models what goes wrong most, and they'll say shapes. An array's shape tells you how its numbers are arranged, and reading it is the first step in debugging nearly any model.
+
+
+      By the end of this lesson you'll be able to read a shape, create arrays of any shape, and rearrange one with `reshape`. You'll also know the difference between shapes `(3,)` and `(3, 1)`, which trips up nearly everyone.
+
+  - type: learn
+    id: shape
+    title: Reading a shape
+    body: >-
+      A list of lists becomes a 2D array, with rows and columns. `a.shape` gives a tuple with its size along each direction, called an axis. `(2, 3)` means 2 rows and 3 columns. The rows always come first.
+
+
+      `a.ndim` is the number of axes, which is the length of the shape. `a.size` is the total number of items, which is the shape's numbers multiplied together. `len(a)` gives only the first number.
+
+
+      An image might be `(28, 28)`, a batch of 32 images `(32, 28, 28)`. A 3D array is a stack of grids, and it works the same way. You'll often see the word tensor, which is just an array with any number of axes.
+
+
+      Every row must be the same length. `np.array([[1, 2], [3]])` gives a `ValueError`.
+    code: |
+      import numpy as np
+
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+      print(a)
+      print(a.shape)
+      print(a.ndim, a.size, len(a))
+
+      v = np.array([1, 2, 3])
+      print(v.shape)
+
+      batch = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 0], [1, 2]]])
+      print(batch.shape)
+    subgoals:
+      - { line: 3, label: 'Two rows of three' }
+      - { line: 5, label: 'Rows first, then columns' }
+      - { line: 6, label: 'Axes, total items, first size' }
+      - { line: 9, label: 'One axis: note the comma' }
+      - { line: 11, label: 'Three grids, each 2 by 2' }
+    predict: What will `v.shape` look like?
+
+  - type: choice
+    id: shape-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([[1, 2], [3, 4], [5, 6]])
+      print(a.shape)
+    choices: ['(3, 2)', '(2, 3)', '(6,)', '6']
+    answer: '(3, 2)'
+    why: >-
+      There are 3 rows, each with 2 columns, and rows come first.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.array([5, 6, 7, 8]).shape)
+        choices: ['(4,)', '(1, 4)', '(4, 1)', '4']
+        answer: '(4,)'
+        why: >-
+          It has one axis, so the shape is a tuple with one number.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(len(a), a.size)
+        choices: ['2 6', '3 6', '6 6', '2 3']
+        answer: '2 6'
+        why: >-
+          `len` gives the first axis, the rows, and `size` counts every item.
+      - code: |
+          import numpy as np
+          a = np.array([[[1], [2]]])
+          print(a.shape, a.ndim)
+        choices: ['(1, 2, 1) 3', '(2, 1) 2', '(1, 1, 2) 3', '(2,) 1']
+        answer: '(1, 2, 1) 3'
+        why: >-
+          Count the brackets from the outside in: 1 grid, with 2 rows, each with 1 item.
+
+  - type: learn
+    id: making
+    title: Making arrays
+    body: >-
+      You rarely type arrays by hand. `np.zeros((2, 3))` makes an array of zeros, and `np.ones` makes one of ones. Note the double parentheses: the shape is one argument, a tuple. `np.zeros(2, 3)` gives a `TypeError`. These give you floats by default, and they're how you start a table of counts or a set of weights.
+
+
+      `np.arange(5)` works like `range`, and gives `[0 1 2 3 4]`. `np.linspace(0, 1, 5)` gives 5 evenly spaced numbers, and unlike `arange`, it includes the end. That's what you use to plot a function. `np.zeros_like(a)` makes zeros with the same shape as `a`.
+
+
+      Unlike `[[0] * 3] * 2`, there's no shared row trap. It's all one block of memory, and each cell is separate.
+    code: |
+      import numpy as np
+
+      print(np.zeros((2, 3)))
+      print(np.ones(2))
+      print(np.arange(5))
+      print(np.arange(1, 10, 2))
+      print(np.linspace(0, 1, 5))
+
+      a = np.array([[1, 2], [3, 4]])
+      print(np.zeros_like(a).shape)
+    subgoals:
+      - { line: 3, label: 'The shape is a tuple' }
+      - { line: 5, label: 'Like range' }
+      - { line: 6, label: 'Start, stop and step' }
+      - { line: 7, label: 'Five points, including the end' }
+      - { line: 10, label: 'Copies the shape of a' }
+    predict: What numbers will `linspace` give?
+
+  - type: choice
+    id: making-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      print(np.zeros((3, 2)).shape, np.arange(4).shape)
+    choices: ['(3, 2) (4,)', '(2, 3) (4,)', '(3, 2) (1, 4)', 'Error']
+    answer: '(3, 2) (4,)'
+    why: >-
+      `zeros` takes the shape you give it, and `arange` always gives one axis.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.arange(2, 8, 2))
+        choices: ['[2 4 6]', '[2 4 6 8]', '[2 3 4 5 6 7]', '[2, 4, 6]']
+        answer: '[2 4 6]'
+        why: >-
+          Like `range`, it stops before the end.
+      - code: |
+          import numpy as np
+          print(np.linspace(0, 2, 3))
+        choices: ['[0. 1. 2.]', '[0 1]', '[0. 2. 4.]', '[0.  0.5 1. ]']
+        answer: '[0. 1. 2.]'
+        why: >-
+          Three evenly spaced values, and the end is included.
+
+  - type: learn
+    id: reshape
+    title: reshape
+    body: >-
+      `a.reshape(2, 3)` arranges the same numbers in a new shape. It reads the items row by row, and fills in the new shape row by row. The total number of items has to stay the same, so 6 items can be `(2, 3)`, `(3, 2)` or `(6,)`, but `(4, 2)` gives `ValueError: cannot reshape array of size 6 into shape (4,2)`.
+
+
+      A `-1` means "work this one out". `a.reshape(2, -1)` has 2 rows, with as many columns as needed. `a.reshape(-1)` flattens it to one axis. To feed a batch of 28 × 28 images to a simple network, you'd write `images.reshape(len(images), -1)`, which gives each image one long row.
+
+
+      Here's the distinction that matters. `(3,)` is a plain vector, with one axis. `(3, 1)` is a grid with 3 rows and 1 column. `(1, 3)` is a grid with 1 row. They hold the same numbers, but they behave differently, and you'll see why in the lesson on broadcasting.
+    code: |
+      import numpy as np
+
+      a = np.arange(6)
+      print(a.reshape(2, 3))
+      print(a.reshape(3, -1).shape)
+
+      m = a.reshape(2, 3)
+      print(m.reshape(-1))
+
+      print(a[:3].reshape(3, 1).shape)
+      print(a[:3].reshape(1, 3).shape)
+
+      a.reshape(4, 2)
+    expectError: ValueError
+    subgoals:
+      - { line: 4, label: 'The same numbers, in rows' }
+      - { line: 5, label: 'Work out the columns' }
+      - { line: 8, label: 'Flatten it' }
+      - { line: 10, label: '3 rows of 1' }
+      - { line: 13, label: '6 items cannot fill 8 cells' }
+    predict: Where does the number 3 end up in the 2 by 3 version?
+
+  - type: choice
+    id: reshape-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.arange(12)
+      print(a.reshape(3, -1).shape)
+    choices: ['(3, 4)', '(3, 12)', '(3, 1)', '(4, 3)']
+    answer: '(3, 4)'
+    why: >-
+      12 items in 3 rows leaves 4 columns.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.arange(4).reshape(2, 2))
+        choices: ["[[0 1]\n [2 3]]", "[[0 2]\n [1 3]]", '[0 1 2 3]', "[[0 1 2 3]]"]
+        answer: "[[0 1]\n [2 3]]"
+        why: >-
+          It fills row by row.
+      - code: |
+          import numpy as np
+          a = np.zeros((2, 3, 4))
+          print(a.reshape(2, -1).shape)
+        choices: ['(2, 12)', '(2, 24)', '(2, 3, 4)', '(24, 2)']
+        answer: '(2, 12)'
+        why: >-
+          24 items in 2 rows leaves 12. This is how you flatten a batch.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a.reshape(-1))
+        choices: ['[1 2 3 4]', '[1 3 2 4]', "[[1 2 3 4]]", '-1']
+        answer: '[1 2 3 4]'
+        why: >-
+          `-1` on its own flattens it, reading row by row.
+
+  - type: explain
+    id: explain-reshape
+    prompt: Why does the first reshape work, and the second one crash?
+    code: |
+      import numpy as np
+      a = np.arange(6)
+      print(a.reshape(2, 3).shape)
+      print(a.reshape(2, 2).shape)
+    expectError: ValueError
+    model: >-
+      `reshape` can only rearrange items, and it can't add or remove any. 2 × 3 is 6, which matches the array's 6 items, but 2 × 2 is only 4, so that gives a `ValueError`.
+    keyPoints:
+      - The total number of items has to stay the same
+      - The sizes in a shape multiply to give the total
+
+  - type: blank
+    id: fill-shape
+    prompt: Fill in the blank so this shows `(2, 3)`.
+    code: |
+      import numpy as np
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+      print(a.____)
+    answers: [['shape']]
+    expectOutput: (2, 3)
+    why: >-
+      `.shape` has no parentheses, because it's an attribute, not a method.
+    variants:
+      - prompt: Fill in the blank to make zeros with 2 rows and 3 columns, so this shows `(2, 3)`.
+        code: |
+          import numpy as np
+          print(np.zeros(____).shape)
+        answers: [['(2, 3)', '(2,3)']]
+        expectOutput: (2, 3)
+        why: >-
+          The shape is a single tuple.
+      - prompt: Fill in the blank to let NumPy work out the columns, so this shows `(2, 5)`.
+        code: |
+          import numpy as np
+          print(np.arange(10).reshape(2, ____).shape)
+        answers: [['-1', '5']]
+        expectOutput: (2, 5)
+        why: >-
+          `-1` means "work this one out".
+      - prompt: Fill in the blank so this has 3 rows and 1 column, and shows `(3, 1)`.
+        code: |
+          import numpy as np
+          print(np.arange(3).reshape(____).shape)
+        answers: [['3, 1', '-1, 1', '3,1', '(3, 1)']]
+        expectOutput: (3, 1)
+        why: >-
+          Rows come first, then columns.
+
+  - type: fix
+    id: fix-zeros
+    prompt: This should make a grid of zeros with 2 rows and 3 columns, and show `(2, 3)`, but it gives a `TypeError`. Fix it.
+    code: |
+      import numpy as np
+      print(np.zeros(2, 3).shape)
+    solution: |
+      import numpy as np
+      print(np.zeros((2, 3)).shape)
+    highlightLine: 2
+    expectOutput: (2, 3)
+    why: >-
+      The shape is one argument, a tuple, so it needs its own parentheses.
+    hints:
+      - How many arguments should the shape be?
+    variants:
+      - prompt: This should show `(2, 3)`, but it gives a `TypeError`, because `.shape` isn't a method. Fix it.
+        code: |
+          import numpy as np
+          print(np.ones((2, 3)).shape())
+        solution: |
+          import numpy as np
+          print(np.ones((2, 3)).shape)
+        highlightLine: 2
+        expectOutput: (2, 3)
+        why: >-
+          `.shape` is an attribute, so it has no parentheses.
+        hints:
+          - What's after `.shape`?
+      - prompt: '`flatten_batch(images)` should give each image one long row, so this batch of 3 images should show `(3, 4)`. It shows `(2, 6)`, because the batch size is hard-coded. Fix it.'
+        code: |
+          import numpy as np
+
+          def flatten_batch(images):
+              return images.reshape(2, -1)
+
+          print(flatten_batch(np.zeros((3, 2, 2))).shape)
+        solution: |
+          import numpy as np
+
+          def flatten_batch(images):
+              return images.reshape(len(images), -1)
+
+          print(flatten_batch(np.zeros((3, 2, 2))).shape)
+        highlightLine: 4
+        expectOutput: (3, 4)
+        why: >-
+          Don't hard-code the batch size. Using `len` means that it works for any batch.
+        hints:
+          - What gives the number of images?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Tracking shapes through a program
+    body: >-
+      Here's a habit that will save you hours. Follow the shape through each line, writing it as a comment. Professional ML code is full of comments like these.
+
+
+      Start with a batch of 4 images, each 2 pixels by 3 pixels, so `(4, 2, 3)`. A simple network needs each image as one row, so flatten it to `(4, 6)`. The network has one weight per pixel, so `weights` has 6 items. When a shape goes wrong, you can go down the comments and see which one doesn't match.
+
+
+      Printing `x.shape` is the best debugging tool for this kind of code. When you see an error, print the shape of everything on that line before you do anything else.
+    code: |
+      import numpy as np
+
+      images = np.zeros((4, 2, 3))       # (batch, height, width)
+      print(images.shape)
+
+      flat = images.reshape(len(images), -1)   # (batch, pixels)
+      print(flat.shape)
+
+      pixels = flat.shape[1]
+      weights = np.ones(pixels)          # (pixels,)
+      print(weights.shape)
+    subgoals:
+      - { line: 3, label: 'Note what each axis means' }
+      - { line: 6, label: 'Keep the batch, flatten the rest' }
+      - { line: 9, label: 'A shape is a tuple, so you can index it' }
+      - { line: 10, label: 'One weight per pixel' }
+    predict: What's the shape after flattening?
+
+  - type: write
+    id: write-flatten
+    prompt: Write `grid(n_rows, n_cols)`, which gives back an array with the numbers 0 upwards, in that many rows and columns. So `grid(2, 2)` gives back `[[0, 1], [2, 3]]`.
+    starter: |
+      import numpy as np
+
+      def grid(n_rows, n_cols):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def grid(n_rows, n_cols):
+          return np.arange(n_rows * n_cols).reshape(n_rows, n_cols)
+    tests:
+      - { call: 'grid(2, 2)', expect: '[[0, 1], [2, 3]]' }
+      - { call: 'grid(1, 3).shape', expect: '(1, 3)' }
+    why: >-
+      Make the right number of items, and then arrange them.
+    hints:
+      - How many items do you need in total?
+    variants:
+      - prompt: Write `describe(a)`, which gives back a tuple of an array's number of axes, its total number of items and its number of rows. So `describe(np.zeros((2, 3)))` gives back `(2, 6, 2)`.
+        starter: |
+          import numpy as np
+
+          def describe(a):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def describe(a):
+              return a.ndim, a.size, len(a)
+        tests:
+          - { call: 'describe(np.zeros((2, 3)))', expect: '(2, 6, 2)' }
+          - { call: 'describe(np.zeros(4))', expect: '(1, 4, 4)' }
+        hints:
+          - All three are in this lesson's first code example.
+
+  - type: choice
+    id: remember-truncate
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2])
+      print(a + a)
+    choices: ['[2 4]', '[1 2 1 2]', '[1, 2, 1, 2]', '6']
+    answer: '[2 4]'
+    why: >-
+      `+` adds matching items in an array, and would join two lists.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `.shape` is a tuple, with rows first. `.ndim` counts the axes, and `.size` counts the items. `np.zeros((2, 3))` takes a tuple. `reshape` rearranges the items, and has to keep the total the same, and `-1` works out one size for you. `(3,)` and `(3, 1)` are different. When in doubt, print the shape.
+
+
+      Next: reaching into an array to get rows, columns and cells.

@@ -1,0 +1,368 @@
+id: p3-imports
+track: ml
+unit: 3
+order: 11
+title: Using libraries
+summary: Import code that others wrote, starting with math and random.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: You don't have to write everything
+    body: >-
+      Python comes with a large library of ready-made tools, and thousands more are available to install. Machine learning work is mostly about putting these together. NumPy and PyTorch are libraries, and you use them the same way as the small ones here.
+
+
+      By the end of this lesson you'll be able to import a module, use its functions, generate random numbers and make those random numbers repeatable. That last one matters a lot when you're training models.
+
+  - type: learn
+    id: import
+    title: Importing a module
+    body: >-
+      A module is a file of code that someone else has written. `import math` loads it, and then you reach what's inside with a dot: `math.sqrt(9)`, `math.pi`. The dot means "the thing called `sqrt` inside `math`". The module's name keeps its tools from clashing with your own names.
+
+
+      Forget the import, and `math.sqrt` gives a `NameError`, since Python has no idea what `math` is. Forget the prefix after importing, and `sqrt(9)` gives a `NameError` too. Imports go at the top of a file by convention.
+
+
+      There are two other forms. `from math import sqrt` lets you write `sqrt(9)` directly. `import numpy as np` gives a module a short nickname, and you'll see that everywhere in ML code.
+    deeper: >-
+      `math.log` is worth noticing, because it's in the loss function of nearly every classifier. With one argument, it's the natural logarithm: `math.log(1)` is 0, and it gets very negative as its input gets close to 0. `math.log(0)` gives a `ValueError`, and that's a real bug you'll see when a model gives a probability of exactly 0. `math.exp` is its opposite.
+    code: |
+      import math
+      print(math.sqrt(16))
+      print(math.floor(2.7), math.ceil(2.1))
+      print(round(math.pi, 2))
+      print(math.log(1))
+
+      from math import sqrt
+      print(sqrt(25))
+
+      import math as m
+      print(m.sqrt(9))
+    subgoals:
+      - { line: 1, label: 'Load the module' }
+      - { line: 2, label: 'Reach inside with a dot' }
+      - { line: 3, label: 'Round down, and round up' }
+      - { line: 7, label: 'Bring in one name directly' }
+      - { line: 10, label: 'A nickname, as with numpy and np' }
+    predict: Will `math.sqrt(16)` show `4` or `4.0`?
+
+  - type: choice
+    id: math-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import math
+      print(math.sqrt(9) + 1)
+    choices: ['4.0', '4', '10', 'Error']
+    answer: '4.0'
+    why: >-
+      `sqrt` gives back a float, even for a perfect square.
+    variants:
+      - code: |
+          import math
+          print(math.floor(3.9), math.ceil(3.1))
+        choices: ['3 4', '4 3', '3 3', '4 4']
+        answer: '3 4'
+        why: >-
+          `floor` always goes down, and `ceil` always goes up. `round` goes to the nearest.
+      - code: |
+          from math import floor
+          print(floor(-1.5))
+        choices: ['-2', '-1', '-1.5', 'Error']
+        answer: '-2'
+        why: >-
+          Going down from -1.5 means going to -2.
+      - code: |
+          import math as m
+          print(m.log(1))
+        choices: ['0.0', '1.0', '1', 'Error']
+        answer: '0.0'
+        why: >-
+          The log of 1 is 0, and `m` is just a nickname for `math`.
+
+  - type: learn
+    id: random
+    title: Random numbers
+    body: >-
+      The `random` module is at the heart of training: initial weights, shuffled data and sampled text all use it. `random.random()` gives a float from 0 up to, but not including, 1. `random.randint(a, b)` gives a whole number from `a` to `b`. And here's a catch: both ends are included, unlike `range`.
+
+
+      `random.choice(items)` picks one item from a list. `random.shuffle(items)` reorders a list in place. It's a list tool in spirit, so it changes the list and gives back `None`. `x = random.shuffle(items)` leaves you with `None`.
+
+
+      A warning: don't name your own file `random.py` or `math.py`. Python will import your file in place of the real one, and you'll get baffling errors.
+    code: |
+      import random
+
+      n = random.randint(1, 6)
+      print(1 <= n <= 6)
+      print(0 <= random.random() < 1)
+
+      items = ["a", "b", "c"]
+      print(random.choice(items) in items)
+
+      result = random.shuffle(items)
+      print(result)
+      print(len(items))
+    subgoals:
+      - { line: 3, label: 'Includes both 1 and 6' }
+      - { line: 5, label: 'Below 1, never equal to it' }
+      - { line: 8, label: 'Pick one' }
+      - { line: 10, label: 'Shuffles in place, and gives back None' }
+    predict: What will `print(result)` show?
+
+  - type: choice
+    id: random-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import random
+      a = [1, 2, 3]
+      b = random.shuffle(a)
+      print(b, sorted(a))
+    choices: ['None [1, 2, 3]', '[1, 2, 3] [1, 2, 3]', 'None None', 'Error']
+    answer: 'None [1, 2, 3]'
+    why: >-
+      `shuffle` gives back `None`. The items in `a` are still there, in some order, and sorting them gets back to the original.
+    variants:
+      - code: |
+          import random
+          print(random.randint(3, 3))
+        choices: ['3', 'Error', '0', '4']
+        answer: '3'
+        why: >-
+          Both ends are included, so the only possibility is 3.
+      - code: |
+          import random
+          print(random.choice(["x"]))
+        choices: ['x', "['x']", '0', 'Error']
+        answer: 'x'
+        why: >-
+          `choice` gives back an item, not a list.
+
+  - type: learn
+    id: seed
+    title: Repeatable randomness
+    body: >-
+      Computers don't really produce random numbers. They calculate a sequence that looks random, starting from a number called the seed. So if you set the same seed, you get the same sequence. `random.seed(42)` does this.
+
+
+      This sounds minor, but it's essential in machine learning. A model starts from random weights, and if every run were different, you couldn't tell whether a change helped or you just got lucky. With a fixed seed, you can compare runs fairly, and someone else can reproduce your results. A bug that only appears sometimes becomes a bug you can reproduce.
+
+
+      The seed has to be set before the numbers you want to repeat. Each new random number moves the sequence along.
+    code: |
+      import random
+
+      random.seed(42)
+      a = random.random()
+      b = random.random()
+
+      random.seed(42)
+      c = random.random()
+
+      print(a == c)
+      print(a == b)
+    subgoals:
+      - { line: 3, label: 'Set the starting point' }
+      - { line: 5, label: 'The sequence moves on' }
+      - { line: 7, label: 'Go back to the same starting point' }
+      - { line: 10, label: 'The same first number' }
+      - { line: 11, label: 'A different next number' }
+    predict: Which of these will show `True`?
+
+  - type: explain
+    id: explain-seed
+    prompt: Why does this show `True`? And why would an ML researcher want to do this?
+    code: |
+      import random
+      random.seed(7)
+      x = random.randint(1, 100)
+      random.seed(7)
+      y = random.randint(1, 100)
+      print(x == y)
+    model: >-
+      Setting the same seed restarts the same sequence, so both draws give the same number. Researchers do this so a run can be repeated, and so they can tell whether a change really helped.
+    keyPoints:
+      - The same seed restarts the same sequence of numbers
+      - Fixed seeds make experiments repeatable and comparable
+
+  - type: blank
+    id: fill-import
+    prompt: Fill in the blank so this shows `3.0`.
+    code: |
+      ____ math
+      print(math.sqrt(9))
+    answers: [['import']]
+    expectOutput: '3.0'
+    why: >-
+      `import` loads a module.
+    variants:
+      - prompt: Fill in the blank so this shows `5.0`.
+        code: |
+          from math import sqrt
+          print(____(25))
+        answers: [['sqrt']]
+        expectOutput: '5.0'
+        why: >-
+          After `from math import sqrt`, the name works without a prefix.
+      - prompt: Fill in the blank so the sequence is repeatable, and this shows `True`.
+        code: |
+          import random
+          random.____(1)
+          a = random.random()
+          random.seed(1)
+          print(a == random.random())
+        answers: [['seed']]
+        expectOutput: 'True'
+        why: >-
+          Both draws need the same seed before them.
+
+  - type: fix
+    id: fix-missing-import
+    prompt: This crashes with a `NameError`. Fix it so it shows `4.0`.
+    code: |
+      print(math.sqrt(16))
+    solution: |
+      import math
+      print(math.sqrt(16))
+    highlightLine: 1
+    expectOutput: '4.0'
+    why: >-
+      A module has to be imported before you can use it.
+    hints:
+      - What does Python know about `math` at this point?
+    variants:
+      - prompt: This crashes with a `NameError`, because the prefix is missing. Fix it so it shows `2`.
+        code: |
+          import math
+          print(floor(2.5))
+        solution: |
+          import math
+          print(math.floor(2.5))
+        highlightLine: 2
+        expectOutput: '2'
+        why: >-
+          After `import math`, its tools are reached through `math.`.
+        hints:
+          - Where does `floor` live?
+      - prompt: This should show a list of 3 items, but it crashes, because `shuffle` gives back `None`. Fix it.
+        code: |
+          import random
+          a = [1, 2, 3]
+          a = random.shuffle(a)
+          print(len(a))
+        solution: |
+          import random
+          a = [1, 2, 3]
+          random.shuffle(a)
+          print(len(a))
+        highlightLine: 3
+        expectOutput: '3'
+        why: >-
+          `shuffle` changes the list in place, just like `.sort()`.
+        hints:
+          - What does `shuffle` give back?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Splitting data for training
+    body: >-
+      Here's a job you'll do at the start of every ML project: shuffling your data and splitting it into a training set and a test set. You train on one, and you measure on the other, so that you find out whether the model really learned or just memorised.
+
+
+      Follow the steps. Copy the data, so that the original stays in order, since `shuffle` works in place. Set a seed, so the split is repeatable. Work out where to cut, and use `int` because a position has to be a whole number. Then slice.
+
+
+      Each of these lines is simple, and all of them guard against a real mistake: changing your original data, getting a different split each run, or testing on data the model has already seen.
+    code: |
+      import random
+
+      def split_data(data, train_fraction, seed=0):
+          shuffled = data.copy()
+          random.seed(seed)
+          random.shuffle(shuffled)
+          cut = int(len(shuffled) * train_fraction)
+          return shuffled[:cut], shuffled[cut:]
+
+      data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      train, test = split_data(data, 0.8)
+      print(len(train), len(test))
+      print(sorted(train + test) == data)
+    subgoals:
+      - { line: 4, label: 'Keep the original safe' }
+      - { line: 5, label: 'Make it repeatable' }
+      - { line: 7, label: 'A position must be whole' }
+      - { line: 8, label: 'The two slices, with no overlap' }
+      - { line: 13, label: 'Check that nothing was lost' }
+    predict: How many items go in each part?
+
+  - type: write
+    id: dist
+    prompt: Write `distance(x1, y1, x2, y2)`, which gives back the straight-line distance between two points, using `math.sqrt`. It's the square root of the difference in `x` squared plus the difference in `y` squared.
+    starter: |
+      import math
+
+      def distance(x1, y1, x2, y2):
+          # Your code here
+    solution: |
+      import math
+
+      def distance(x1, y1, x2, y2):
+          return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    tests:
+      - { call: 'distance(0, 0, 3, 4)', expect: '5.0' }
+      - { call: 'distance(1, 1, 1, 1)', expect: '0.0' }
+    why: >-
+      Distances like this one are how models measure how far apart two things are.
+    hints:
+      - Square each difference with `**` before adding.
+    variants:
+      - prompt: Write `roll_many(n, seed)`, which sets the seed, then gives back a list of `n` dice rolls using `random.randint(1, 6)`.
+        starter: |
+          import random
+
+          def roll_many(n, seed):
+              # Your code here
+        solution: |
+          import random
+
+          def roll_many(n, seed):
+              random.seed(seed)
+              out = []
+              for i in range(n):
+                  out.append(random.randint(1, 6))
+              return out
+        tests:
+          - { call: 'len(roll_many(5, 1))', expect: '5' }
+          - { call: 'roll_many(5, 1) == roll_many(5, 1)', expect: 'True' }
+          - { call: 'min(roll_many(50, 2)) >= 1 and max(roll_many(50, 2)) <= 6', expect: 'True' }
+          - { call: 'roll_many(0, 1)', expect: '[]' }
+        hints:
+          - Set the seed once, before the loop.
+
+  - type: choice
+    id: remember-items
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      d = {"a": 3, "z": 1}
+      print(max(d), max(d.values()))
+    choices: ['z 3', 'a 3', 'z 1', 'a 1']
+    answer: 'z 3'
+    why: >-
+      `max(d)` compares the keys, and `max(d.values())` compares the values.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `import math` loads a module, and `math.sqrt` reaches inside it. `from math import sqrt` brings in one name, and `import numpy as np` gives a nickname. `random.randint` includes both ends. `shuffle` works in place. `random.seed` makes random numbers repeatable.
+
+
+      Next: one last surprise about numbers, and then the checkpoint.

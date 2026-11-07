@@ -1,0 +1,473 @@
+id: p5-random
+track: ml
+unit: 5
+order: 11
+title: Randomness and batches
+summary: Random numbers you can repeat, joining arrays, and mini-batches.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Controlled chance
+    body: >-
+      Machine learning uses random numbers everywhere: to set the starting weights, to shuffle the data, and to pick batches. But you also need to be able to repeat a run exactly, or you can't tell whether a change helped or you just got lucky.
+
+
+      By the end of this lesson you'll be able to make random arrays of any shape, repeat them with a seed, shuffle data safely, join arrays together and cut a dataset into mini-batches.
+
+  - type: learn
+    id: rng
+    title: A generator with a seed
+    body: >-
+      `rng = np.random.default_rng(42)` makes a random number generator. The number is its seed, and the same seed always gives the same sequence. The numbers aren't truly random. They come from a formula that only looks random, which is why they can be repeated.
+
+
+      Each call moves the generator along, so two calls on the same `rng` give different numbers. Making a new generator with the same seed starts the sequence again.
+
+
+      `rng.random(3)` gives floats from 0 up to 1. `rng.integers(0, 10, size=5)` gives whole numbers, and as with `range`, it stops before the end, so this never gives 10. `rng.normal(0, 1, size=(2, 3))` gives numbers from a bell curve, here with a mean of 0 and a spread of 1, which is how weights usually start. Each one takes a shape.
+
+
+      You'll see the older `np.random.seed(42)` and `np.random.rand(3)` in a lot of code. They still work, but `default_rng` is what's recommended now.
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(42)
+      a = rng.random(3)
+      b = rng.random(3)
+      print((a == b).all())
+
+      rng2 = np.random.default_rng(42)
+      c = rng2.random(3)
+      print((a == c).all())
+
+      print(rng.integers(0, 10, size=5))
+      weights = rng.normal(0, 1, size=(2, 3))
+      print(weights.shape)
+      print(rng.normal(0, 1, size=10000).mean().round(1))
+    subgoals:
+      - { line: 3, label: 'Set the seed once' }
+      - { line: 6, label: 'The generator moved on' }
+      - { line: 10, label: 'The same seed, the same numbers' }
+      - { line: 13, label: 'Starting weights' }
+      - { line: 15, label: 'Close to the mean you asked for' }
+    predict: Will `a` and `c` be the same?
+
+  - type: choice
+    id: rng-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.random.default_rng(1).random(2)
+      b = np.random.default_rng(1).random(2)
+      print((a == b).all())
+    choices: ['True', 'False', 'Error', 'It changes each run']
+    answer: 'True'
+    why: >-
+      The same seed gives the same sequence, every time.
+    variants:
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(1)
+          a = rng.random(2)
+          b = rng.random(2)
+          print((a == b).all())
+        choices: ['False', 'True', 'Error', 'It changes each run']
+        answer: 'False'
+        why: >-
+          The generator moves along, so the second call gives new numbers.
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          print(rng.integers(0, 2, size=1000).max())
+        choices: ['1', '2', '0', '1000']
+        answer: '1'
+        why: >-
+          Like `range`, it stops before the end.
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          print(rng.normal(0, 1, size=(4, 2)).shape)
+        choices: ['(4, 2)', '(2, 4)', '(0, 1)', '(8,)']
+        answer: '(4, 2)'
+        why: >-
+          `size` sets the shape.
+
+  - type: learn
+    id: shuffle
+    title: Shuffling and choosing
+    body: >-
+      `rng.permutation(5)` gives the numbers 0 to 4 in a random order. That's the safe way to shuffle a dataset. Use it as an index on both the inputs and the labels: `X[order]` and `y[order]`. Rows stay matched, because both use the same order.
+
+
+      This is important. If you shuffle `X` and `y` separately, the labels no longer belong to their examples, and the model can't learn anything. It doesn't crash, and the accuracy just sits at chance.
+
+
+      `rng.choice(a, size=2, replace=False)` picks 2 items without repeats. With `replace=True`, which is the default, an item can be picked twice. You can also give it a probability for each item, with `p=[0.9, 0.1]`, and that's exactly how a language model picks its next character. You'll use that in makemore.
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(0)
+      X = np.array([[1, 10], [2, 20], [3, 30], [4, 40]])
+      y = np.array([1, 2, 3, 4])
+
+      order = rng.permutation(4)
+      print(order)
+      print(X[order])
+      print(y[order])
+
+      print(rng.choice(y, size=2, replace=False))
+      print(rng.choice(np.array([0, 1]), size=8, p=[0.9, 0.1]))
+    subgoals:
+      - { line: 7, label: 'A shuffled list of positions' }
+      - { line: 9, label: 'Use the order on the inputs' }
+      - { line: 10, label: 'The same order on the labels' }
+      - { line: 12, label: 'No repeats' }
+      - { line: 13, label: 'Mostly zeros' }
+    predict: Will each label still match its row?
+
+  - type: choice
+    id: shuffle-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      rng = np.random.default_rng(3)
+      print(np.sort(rng.permutation(4)))
+    choices: ['[0 1 2 3]', '[1 2 3 4]', '[0 1 2 3 4]', 'It changes each run']
+    answer: '[0 1 2 3]'
+    why: >-
+      A permutation has each position exactly once, so sorting gets back the original order.
+    variants:
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(3)
+          a = np.arange(5)
+          order = rng.permutation(5)
+          print((a[order][np.argsort(order)] == a).all())
+        choices: ['True', 'False', 'Error', 'It changes each run']
+        answer: 'True'
+        why: >-
+          `np.argsort` gives the order that undoes a shuffle. Shuffling never loses an item.
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          y = np.arange(10)
+          x = y * 2
+          order = rng.permutation(10)
+          print((x[order] == y[order] * 2).all())
+        choices: ['True', 'False', 'Error', 'It changes each run']
+        answer: 'True'
+        why: >-
+          The same order on both keeps each pair together.
+      - code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          print(len(set(rng.choice(np.arange(5), size=5, replace=False).tolist())))
+        choices: ['5', '1', 'Fewer than 5', 'Error']
+        answer: '5'
+        why: >-
+          With `replace=False`, there are no repeats.
+
+  - type: learn
+    id: joining
+    title: Joining arrays
+    body: >-
+      `np.concatenate([a, b])` joins arrays along an existing axis, so the number of axes stays the same. It's along axis 0 by default, so `(2, 3)` and `(2, 3)` give `(4, 3)`, one under the other. With `axis=1`, they go side by side, giving `(2, 6)`. The other sizes have to match.
+
+
+      `np.stack([a, b])` adds a new axis, and the arrays have to have exactly the same shape. Two `(2, 3)` arrays give `(2, 2, 3)`. That's how you'd build a batch: `np.stack` on a list of 32 images of `(28, 28)` gives `(32, 28, 28)`.
+
+
+      So this is what you do when you can't know the size in advance. Collect arrays in a list, and then join them at the end, once. Don't call `concatenate` in a loop, since it copies everything on every pass, which gets very slow.
+    code: |
+      import numpy as np
+
+      a = np.zeros((2, 3))
+      b = np.ones((2, 3))
+
+      print(np.concatenate([a, b]).shape)
+      print(np.concatenate([a, b], axis=1).shape)
+      print(np.stack([a, b]).shape)
+
+      parts = []
+      for i in range(4):
+          parts.append(np.array([i, i * 2]))
+      print(np.stack(parts).shape)
+      print(np.concatenate(parts).shape)
+    subgoals:
+      - { line: 6, label: 'One under the other' }
+      - { line: 7, label: 'Side by side' }
+      - { line: 8, label: 'A new axis' }
+      - { line: 10, label: 'Collect in a list' }
+      - { line: 13, label: 'Then join once, at the end' }
+    predict: What's the shape of `np.stack(parts)`?
+
+  - type: choice
+    id: joining-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.zeros((3, 2))
+      print(np.concatenate([a, a]).shape, np.stack([a, a]).shape)
+    choices: ['(6, 2) (2, 3, 2)', '(3, 4) (2, 3, 2)', '(6, 2) (6, 2)', '(3, 2) (3, 2)']
+    answer: '(6, 2) (2, 3, 2)'
+    why: >-
+      `concatenate` extends an axis, and `stack` adds a new one.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.zeros((3, 2))
+          print(np.concatenate([a, a], axis=1).shape)
+        choices: ['(3, 4)', '(6, 2)', '(2, 3, 2)', 'Error']
+        answer: '(3, 4)'
+        why: >-
+          Along axis 1, so they sit side by side.
+      - code: |
+          import numpy as np
+          print(np.concatenate([np.array([1, 2]), np.array([3])]))
+        choices: ['[1 2 3]', "[[1 2]\n [3]]", 'Error', '[4 2]']
+        answer: '[1 2 3]'
+        why: >-
+          With `concatenate`, the lengths along the joined axis can differ.
+      - code: |
+          import numpy as np
+          imgs = [np.zeros((4, 4)) for _ in range(8)]
+          print(np.stack(imgs).shape)
+        choices: ['(8, 4, 4)', '(4, 4, 8)', '(32, 4)', '(8, 16)']
+        answer: '(8, 4, 4)'
+        why: >-
+          This is how you build a batch.
+
+  - type: explain
+    id: explain-shuffle
+    prompt: What's wrong with this shuffle, and how would the model behave if you trained on it?
+    code: |
+      import numpy as np
+      rng = np.random.default_rng(0)
+      X = np.arange(6).reshape(3, 2)
+      y = np.array([0, 1, 2])
+      X_s = X[rng.permutation(3)]
+      y_s = y[rng.permutation(3)]
+      print(y_s)
+    model: >-
+      It makes two different orders, one for `X` and one for `y`, so the labels no longer belong to their rows. Nothing crashes, but the model would learn nothing useful, and its accuracy would stay near chance. It should make one `order`, and use it on both.
+    keyPoints:
+      - Two different orders separate the inputs from their labels
+      - Use one order for both, because this fails silently
+
+  - type: blank
+    id: fill-rng
+    prompt: Fill in the blank to make a generator with a seed, so this shows `True`.
+    code: |
+      import numpy as np
+      a = np.random.____(7).random(2)
+      b = np.random.default_rng(7).random(2)
+      print((a == b).all())
+    answers: [['default_rng']]
+    expectOutput: 'True'
+    why: >-
+      `default_rng` with the same seed gives the same numbers.
+    variants:
+      - prompt: Fill in the blank to get a shuffled order of positions, so this shows `[0 1 2]` once it's sorted.
+        code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          print(np.sort(rng.____(3)))
+        answers: [['permutation']]
+        expectOutput: '[0 1 2]'
+        why: >-
+          `permutation` gives each position once.
+      - prompt: Fill in the blank to put the arrays side by side, so this shows `(2, 4)`.
+        code: |
+          import numpy as np
+          a = np.zeros((2, 2))
+          print(np.concatenate([a, a], axis=____).shape)
+        answers: [['1', '-1']]
+        expectOutput: (2, 4)
+        why: >-
+          Axis 1 is the columns.
+      - prompt: Fill in the blank to add a new first axis, so this shows `(2, 3)`.
+        code: |
+          import numpy as np
+          a = np.zeros(3)
+          print(np.____([a, a]).shape)
+        answers: [['stack', 'vstack', 'array']]
+        expectOutput: (2, 3)
+        why: >-
+          `stack` makes a new axis.
+
+  - type: fix
+    id: fix-shuffle
+    prompt: This shuffle should keep each `x` with its `y`, so it should show `True`. Fix it.
+    code: |
+      import numpy as np
+      rng = np.random.default_rng(0)
+      x = np.arange(20)
+      y = x * 2
+      x_s = x[rng.permutation(20)]
+      y_s = y[rng.permutation(20)]
+      print((y_s == x_s * 2).all())
+    solution: |
+      import numpy as np
+      rng = np.random.default_rng(0)
+      x = np.arange(20)
+      y = x * 2
+      order = rng.permutation(20)
+      x_s = x[order]
+      y_s = y[order]
+      print((y_s == x_s * 2).all())
+    highlightLine: 5
+    expectOutput: 'True'
+    why: >-
+      One order for both keeps the pairs together.
+    hints:
+      - How many different orders does this make?
+    variants:
+      - prompt: These should be two different draws, so this should show `False`. But the generator gets recreated each time. Fix it.
+        code: |
+          import numpy as np
+
+          def draw():
+              rng = np.random.default_rng(0)
+              return rng.random()
+
+          print(draw() == draw())
+        solution: |
+          import numpy as np
+
+          rng = np.random.default_rng(0)
+
+          def draw():
+              return rng.random()
+
+          print(draw() == draw())
+        highlightLine: 4
+        expectOutput: 'False'
+        why: >-
+          Make the generator once, and keep using it.
+        hints:
+          - The same seed restarts the same sequence.
+      - prompt: These dice rolls should include a 6, so this should show `6`, but the highest is always 5. Fix it.
+        code: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          rolls = rng.integers(1, 6, size=1000)
+          print(rolls.max())
+        solution: |
+          import numpy as np
+          rng = np.random.default_rng(0)
+          rolls = rng.integers(1, 7, size=1000)
+          print(rolls.max())
+        highlightLine: 3
+        expectOutput: '6'
+        why: >-
+          `integers` stops before the end, like `range`.
+        hints:
+          - Does the range include its end?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Mini-batches
+    body: >-
+      Real training doesn't use the whole dataset on every step. It takes a small random group of examples, called a mini-batch, updates the weights, and moves on to the next group. One pass through all the data is called an epoch.
+
+
+      Here's the pattern. At the start of each epoch, make a new shuffled `order`. Then go through it in steps, using `range(0, n, batch_size)`. Each `start` gives a slice of positions, and those pick the rows. Slicing never fails at the end, so the last batch is just smaller.
+
+
+      Every example is used exactly once per epoch, in a different order each time. That line, `X[batch]`, is everything you learned about picking by position. PyTorch's `DataLoader` does this for you later, but it does nothing more than this.
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(0)
+      X = np.arange(14).reshape(7, 2)
+      y = np.arange(7)
+      n = len(X)
+      batch_size = 3
+
+      for epoch in range(2):
+          order = rng.permutation(n)
+          for start in range(0, n, batch_size):
+              batch = order[start:start + batch_size]
+              X_b, y_b = X[batch], y[batch]
+              print(epoch, X_b.shape, y_b)
+    subgoals:
+      - { line: 9, label: 'One pass through the data' }
+      - { line: 10, label: 'A new shuffle each epoch' }
+      - { line: 11, label: 'Go through it in steps' }
+      - { line: 12, label: 'The next group of positions' }
+      - { line: 13, label: 'The same rows of both' }
+    predict: How big will the last batch of each epoch be?
+
+  - type: write
+    id: write-split
+    prompt: Write `shuffled_split(X, y, n_test, seed)`, which shuffles the rows using that seed, and gives back `X_train, y_train, X_test, y_test`, with the last `n_test` shuffled rows as the test set.
+    starter: |
+      import numpy as np
+
+      def shuffled_split(X, y, n_test, seed):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def shuffled_split(X, y, n_test, seed):
+          rng = np.random.default_rng(seed)
+          order = rng.permutation(len(X))
+          X, y = X[order], y[order]
+          cut = len(X) - n_test
+          return X[:cut], y[:cut], X[cut:], y[cut:]
+    tests:
+      - { call: 'shuffled_split(np.zeros((10, 2)), np.zeros(10), 3, 0)[0].shape', expect: '(7, 2)' }
+      - { call: 'shuffled_split(np.zeros((10, 2)), np.zeros(10), 3, 0)[3].shape', expect: '(3,)' }
+      - { call: '(lambda r: (r[0][:, 0] == r[1]).all() and (r[2][:, 0] == r[3]).all())(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))', expect: 'True', hidden: true }
+      - { call: '(lambda r: r[1].tolist() != list(range(0, 14, 2)))(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))', expect: 'True', hidden: true }
+    why: >-
+      One order for both keeps the pairs together, and a fixed seed makes the split repeatable.
+    hints:
+      - Make one `order`, use it on both, and then slice.
+      - The cut is at `len(X) - n_test`.
+    variants:
+      - prompt: Write `batches(n, batch_size, seed)`, which gives back a list of arrays of positions, one for each mini-batch, from one shuffled order. So `batches(5, 2, 0)` has 3 batches, of sizes 2, 2 and 1.
+        starter: |
+          import numpy as np
+
+          def batches(n, batch_size, seed):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def batches(n, batch_size, seed):
+              order = np.random.default_rng(seed).permutation(n)
+              return [order[s:s + batch_size] for s in range(0, n, batch_size)]
+        tests:
+          - { call: '[len(b) for b in batches(5, 2, 0)]', expect: '[2, 2, 1]' }
+          - { call: 'sorted(np.concatenate(batches(6, 4, 1)).tolist())', expect: '[0, 1, 2, 3, 4, 5]' }
+        hints:
+          - Step through the order with `range(0, n, batch_size)`.
+
+  - type: choice
+    id: remember-matmul
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print((np.ones((6, 4)) @ np.ones((4, 3))).shape)
+    choices: ['(6, 3)', '(4, 4)', '(3, 6)', 'Error']
+    answer: '(6, 3)'
+    why: >-
+      The inner numbers match and vanish, and the outer numbers remain.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `default_rng(seed)` makes repeatable random numbers. `integers`, `random` and `normal` take a shape, and `permutation` gives a shuffled order. Use one order for both inputs and labels. `concatenate` extends an axis, and `stack` adds one. A mini-batch is a slice of a shuffled order.
+
+
+      Next: seeing your numbers, with plots.

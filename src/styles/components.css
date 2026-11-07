@@ -719,6 +719,9 @@
   .ga-editor:focus-within {
     border-color: color-mix(in oklab, var(--color-sky) 55%, transparent);
   }
+  .ga-editor .ga-editor-mark-line {
+    background: color-mix(in oklab, var(--color-sky) 14%, transparent);
+  }
   .ga-editor .ga-editor-error-line {
     background: color-mix(in oklab, var(--color-danger) 16%, transparent);
   }

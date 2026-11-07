@@ -1,0 +1,474 @@
+id: p4-special
+track: ml
+unit: 4
+order: 10
+title: Making operators work
+summary: Teach your objects to work with +, ==, and print. This is how micrograd works.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Objects that act like numbers
+    body: >-
+      In PyTorch, you can write `loss = (a * b + c) ** 2`, where each letter is an object holding a lot of data. It reads like ordinary maths because the classes teach Python what `*` and `+` mean. The core of micrograd is a class that does this.
+
+
+      By the end of this lesson you'll be able to make your objects print readably, work with `+`, and compare with `==`.
+
+  - type: learn
+    id: repr
+    title: Showing an object
+    body: >-
+      Print an object from your own class, and you get something like `<__main__.Money object at 0x10a2>`. That's the class name and a memory address, which is no help when debugging. Python doesn't show the attributes automatically.
+
+
+      Methods with double underscores, called special methods or "dunder" methods, are hooks that Python calls by itself in certain situations. You've met `__init__`. `__repr__` is the one for showing an object: it should give back a string, and Python uses it whenever it needs to show your object, in `print`, in a list and in `repr(x)`.
+
+
+      A good habit is to make it look like the code that would create the object, as in `Money(5)`. Give it back, and don't print it. A `__repr__` that prints and has no `return` gives a `TypeError`. It's one of the first things worth adding to any class, since you'll spend a lot of time printing objects to see what's wrong.
+    code: |
+      class Plain:
+          def __init__(self, cents):
+              self.cents = cents
+
+      class Money:
+          def __init__(self, cents):
+              self.cents = cents
+
+          def __repr__(self):
+              return f"Money({self.cents})"
+
+      print(type(Plain(5)).__name__)
+      print(Money(5))
+      print([Money(1), Money(2)])
+      print(repr(Money(3)))
+    subgoals:
+      - { line: 9, label: 'Python calls this to show the object' }
+      - { line: 10, label: 'Give back a string' }
+      - { line: 13, label: 'print uses it' }
+      - { line: 14, label: 'So does showing a list of them' }
+    predict: What will the list on line 14 look like?
+
+  - type: choice
+    id: repr-concept
+    prompt: A class has no `__repr__`. What does `print(obj)` show?
+    choices:
+      - Something like `<__main__.Thing object at 0x10>`
+      - All its attributes and their values
+      - An error
+      - Nothing
+    answer: Something like `<__main__.Thing object at 0x10>`
+    why: >-
+      Python doesn't show the attributes automatically. Without `__repr__`, you get the class name and an address.
+
+  - type: learn
+    id: add
+    title: Operators are method calls
+    body: >-
+      When Python sees `a + b`, it runs `a.__add__(b)`. That's the entire mechanism. The object on the left becomes `self`, and the one on the right becomes `other`, the conventional name for it. If the class has no `__add__`, you get a `TypeError`.
+
+
+      There's one for each operator: `__sub__` for `-`, `__mul__` for `*`, `__truediv__` for `/`, `__pow__` for `**` and `__neg__` for `-x`. You only define the ones that make sense.
+
+
+      Here's a rule to keep to: an operator should give back a new object, and not change either of the originals. If `2 + 3` changed the 2, nothing would make sense. So write `return Money(self.cents + other.cents)`. Don't assign to `self.cents`.
+
+
+      Python's usual order of operations still applies, so `*` runs before `+`, and chains work: `a + b + c` adds `a` and `b` first, and the new object is added to `c`.
+    code: |
+      class Money:
+          def __init__(self, cents):
+              self.cents = cents
+
+          def __repr__(self):
+              return f"Money({self.cents})"
+
+          def __add__(self, other):
+              return Money(self.cents + other.cents)
+
+      a = Money(5)
+      b = Money(7)
+      print(a + b)
+      print(a.__add__(b))
+      print(a + b + a)
+      print(a)
+    subgoals:
+      - { line: 8, label: 'Runs for +, with a as self' }
+      - { line: 9, label: 'Makes a new object' }
+      - { line: 14, label: 'What the + really does' }
+      - { line: 15, label: 'Chains work, since + gives back a Money' }
+      - { line: 16, label: 'The original is unchanged' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: add-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+          def __add__(self, other):
+              return V(self.x + other.x)
+          def __mul__(self, k):
+              return V(self.x * k)
+
+      print((V(2) + V(3) * 2).x)
+    choices: ['8', '10', '7', 'Error']
+    answer: '8'
+    why: >-
+      The usual order still applies, so `*` runs first. V(3) × 2 is V(6), and V(2) + V(6) is V(8).
+    variants:
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __add__(self, other):
+                  return V(self.x + other.x)
+              def __mul__(self, k):
+                  return V(self.x * k)
+
+          print(((V(2) + V(3)) * 2).x)
+        choices: ['10', '8', '7', 'Error']
+        answer: '10'
+        why: >-
+          The parentheses make `+` run first, so V(5) × 2 is V(10).
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __add__(self, other):
+                  return V(self.x + other.x)
+
+          a = V(1)
+          b = a + a
+          a.x = 100
+          print(b.x)
+        choices: ['2', '200', '101', 'Error']
+        answer: '2'
+        why: >-
+          `__add__` gave back a new object, so changing `a` afterwards doesn't touch it.
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __add__(self, other):
+                  return self.x + other.x
+
+          print(V(1) + V(2))
+        choices: ['3', 'V(3)', 'None', 'Error']
+        answer: '3'
+        why: >-
+          `+` gives back whatever `__add__` gives back, and here that's a plain number.
+
+  - type: explain
+    id: explain-add
+    prompt: What actually happens on the last line, step by step?
+    code: |
+      class Num:
+          def __init__(self, data):
+              self.data = data
+
+          def __add__(self, other):
+              return Num(self.data + other.data)
+
+      a = Num(1)
+      b = Num(2)
+      c = a + b
+    model: >-
+      Python runs `a.__add__(b)`, so `self` is `a` and `other` is `b`. The method adds their `data` to get 3, and makes a new `Num` holding it, which `c` then names. `a` and `b` don't change.
+    keyPoints:
+      - '`a + b` runs `a.__add__(b)`'
+      - It gives back a new object, and the originals don't change
+
+  - type: learn
+    id: eq
+    title: What equal means
+    body: >-
+      Without any further work, `==` on your own objects asks whether they're the same object. So `Money(5) == Money(5)` is `False`, even though they look identical, because they're two objects. This is a very common surprise.
+
+
+      `__eq__` lets you define what equal means, and it should give back `True` or `False`. Usually it compares attributes. If they're floats, compare with a tolerance, as you learned in Unit 3.
+
+
+      `is` doesn't change, and it always asks whether two names refer to the same object. So with `__eq__` defined, you can have `a == b` but not `a is b`. There are matching methods for comparing order: `__lt__` for `<` and `__gt__` for `>`. Once you've defined `__lt__`, `sorted` and `min` work on your objects.
+    code: |
+      class Plain:
+          def __init__(self, x):
+              self.x = x
+
+      print(Plain(1) == Plain(1))
+
+      class P:
+          def __init__(self, x):
+              self.x = x
+
+          def __eq__(self, other):
+              return self.x == other.x
+
+          def __lt__(self, other):
+              return self.x < other.x
+
+      a = P(1)
+      b = P(1)
+      print(a == b, a is b)
+      print(P(1) < P(2))
+      print(min([P(3), P(2)]).x)
+    subgoals:
+      - { line: 5, label: 'By default: the same object?' }
+      - { line: 11, label: 'Runs for ==' }
+      - { line: 14, label: 'Runs for <' }
+      - { line: 19, label: 'Equal, but still two objects' }
+      - { line: 21, label: 'min can compare them now' }
+    predict: What will the first `print` show?
+
+  - type: blank
+    id: fill-add
+    prompt: Fill in the method name so `+` works, and this shows `3`.
+    code: |
+      class Pair:
+          def __init__(self, a):
+              self.a = a
+
+          def ____(self, other):
+              return Pair(self.a + other.a)
+
+      print((Pair(1) + Pair(2)).a)
+    answers: [['__add__']]
+    expectOutput: '3'
+    why: >-
+      Python looks for `__add__` when it sees `+`.
+    variants:
+      - prompt: Fill in the method name so `print` shows `Num(2)`.
+        code: |
+          class Num:
+              def __init__(self, n):
+                  self.n = n
+
+              def ____(self):
+                  return f"Num({self.n})"
+
+          print(Num(2))
+        answers: [['__repr__', '__str__']]
+        expectOutput: Num(2)
+        why: >-
+          `__repr__` is how Python shows an object.
+      - prompt: Fill in the blank so the operator gives back a new object, and this shows `3 1`.
+        code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+
+              def __add__(self, other):
+                  return ____
+
+          a = V(1)
+          print((a + V(2)).x, a.x)
+        answers: [['V(self.x + other.x)', 'V(self.x+other.x)', 'V(other.x + self.x)']]
+        expectOutput: 3 1
+        why: >-
+          Make a new `V`, and don't touch `self`.
+      - prompt: Fill in the method name so `==` compares values, and this shows `True`.
+        code: |
+          class P:
+              def __init__(self, x):
+                  self.x = x
+
+              def ____(self, other):
+                  return self.x == other.x
+
+          print(P(1) == P(1))
+        answers: [['__eq__']]
+        expectOutput: 'True'
+        why: >-
+          `__eq__` replaces the default same-object check.
+
+  - type: fix
+    id: fix-mutating
+    prompt: '`a + b` should leave `a` unchanged, but `a` changes. Fix `__add__`.'
+    code: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __add__(self, other):
+              self.x = self.x + other.x
+              return self
+    solution: |
+      class V:
+          def __init__(self, x):
+              self.x = x
+
+          def __add__(self, other):
+              return V(self.x + other.x)
+    highlightLine: 6
+    tests:
+      - { call: '(V(1) + V(2)).x', expect: '3' }
+      - { call: '(lambda a: (a + V(2), a.x)[1])(V(1))', expect: '1', hidden: true }
+    why: >-
+      `+` should make a new object. micrograd relies on this, because each result has to stay separate.
+    hints:
+      - What should `__add__` give back, and should it change `self`?
+    variants:
+      - prompt: '`repr(Num(1))` should give back `"Num(1)"`, but it crashes with a `TypeError`, because the method prints. Fix it.'
+        code: |
+          class Num:
+              def __init__(self, n):
+                  self.n = n
+
+              def __repr__(self):
+                  print(f"Num({self.n})")
+        solution: |
+          class Num:
+              def __init__(self, n):
+                  self.n = n
+
+              def __repr__(self):
+                  return f"Num({self.n})"
+        highlightLine: 6
+        tests:
+          - { call: 'repr(Num(1))', expect: "'Num(1)'" }
+        why: >-
+          `__repr__` has to give back a string, and printing gives back `None`.
+        hints:
+          - Should this `print` or `return`?
+      - prompt: '`P(1) == P(1)` should be `True`, but it''s `False`. Add an `__eq__` method that compares `x`.'
+        code: |
+          class P:
+              def __init__(self, x):
+                  self.x = x
+        solution: |
+          class P:
+              def __init__(self, x):
+                  self.x = x
+
+              def __eq__(self, other):
+                  return self.x == other.x
+        highlightLine: 1
+        tests:
+          - { call: 'P(1) == P(1)', expect: 'True' }
+          - { call: 'P(1) == P(2)', expect: 'False' }
+        why: >-
+          Without `__eq__`, `==` asks whether they're the same object.
+        hints:
+          - The method takes `self` and `other`.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: The start of micrograd
+    body: >-
+      This class is the first version of micrograd's `Value`, the object you'll build a whole neural network from. For now, it wraps one number.
+
+
+      Follow how it's built. `__init__` stores the number as `.data`. `__repr__` makes it readable. `__add__` and `__mul__` each make a new `Value`.
+
+
+      Here's the clever bit, which you'll finish in the micrograd unit. Each new `Value` can also remember the two values it came from, in `._prev`. So `d = a * b + c` doesn't only work out a number. It quietly builds a record of the whole calculation. To train a network, you walk back through that record to find out how much each number affected the result.
+    code: |
+      class Value:
+          def __init__(self, data, prev=()):
+              self.data = data
+              self._prev = prev
+
+          def __repr__(self):
+              return f"Value({self.data})"
+
+          def __add__(self, other):
+              return Value(self.data + other.data, (self, other))
+
+          def __mul__(self, other):
+              return Value(self.data * other.data, (self, other))
+
+      a = Value(2)
+      b = Value(3)
+      c = Value(10)
+      d = a * b + c
+      print(d)
+      print(d._prev)
+    subgoals:
+      - { line: 2, label: 'prev defaults to an empty tuple' }
+      - { line: 10, label: 'Remembers where it came from' }
+      - { line: 18, label: 'The * runs first, then the +' }
+      - { line: 20, label: 'The two values that made d' }
+    predict: What will `d._prev` hold?
+
+  - type: write
+    id: write-num
+    prompt: Write a class `Num`, which holds `.data`, and supports `+` with another `Num`, `*` with another `Num`, and a `__repr__` that gives `Num(3)`.
+    starter: |
+      # Write the Num class here
+    solution: |
+      class Num:
+          def __init__(self, data):
+              self.data = data
+
+          def __add__(self, other):
+              return Num(self.data + other.data)
+
+          def __mul__(self, other):
+              return Num(self.data * other.data)
+
+          def __repr__(self):
+              return f"Num({self.data})"
+    tests:
+      - { call: '(Num(2) + Num(3)).data', expect: '5' }
+      - { call: '(Num(2) * Num(3)).data', expect: '6' }
+      - { call: 'repr(Num(3))', expect: "'Num(3)'" }
+      - { call: '(lambda a: (a + a, a.data)[1])(Num(1))', expect: '1', hidden: true }
+    why: >-
+      Each operator gives back a new `Num`, so the originals stay as they were.
+    hints:
+      - Each operator gives back a new `Num`.
+    variants:
+      - prompt: Write a class `Vec2`, with `.x` and `.y`. `Vec2(1, 2) + Vec2(3, 4)` gives a new `Vec2` with the items added, `==` compares both items, and `repr` gives `Vec2(1, 2)`.
+        starter: |
+          # Write the Vec2 class here
+        solution: |
+          class Vec2:
+              def __init__(self, x, y):
+                  self.x = x
+                  self.y = y
+
+              def __add__(self, other):
+                  return Vec2(self.x + other.x, self.y + other.y)
+
+              def __eq__(self, other):
+                  return self.x == other.x and self.y == other.y
+
+              def __repr__(self):
+                  return f"Vec2({self.x}, {self.y})"
+        tests:
+          - { call: 'repr(Vec2(1, 2) + Vec2(3, 4))', expect: "'Vec2(4, 6)'" }
+          - { call: 'Vec2(1, 2) == Vec2(1, 2)', expect: 'True' }
+          - { call: 'Vec2(1, 2) == Vec2(1, 3)', expect: 'False' }
+        hints:
+          - That's three special methods besides `__init__`.
+
+  - type: choice
+    id: remember-shared
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      class C:
+          items = []
+
+      a = C()
+      b = C()
+      a.items.append(1)
+      print(len(b.items))
+    choices: ['1', '0', 'None', 'Error']
+    answer: '1'
+    why: >-
+      A variable in the class body is shared by all the objects.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Special methods are hooks that Python calls for you. `__repr__` gives back a string for showing an object. `a + b` runs `a.__add__(b)`, and it should make a new object. Without `__eq__`, `==` asks whether they're the same object.
+
+
+      Next: what happens when a plain number is on one side of your operator.

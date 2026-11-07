@@ -6,8 +6,14 @@ units:
     title: Programs and values
     summary: What code is, how to read errors, and working with numbers, text and decisions.
   - unit: 2
-    title: Functions, loops and collections
-    summary: Older lessons, being rewritten. They still mention Java in places.
+    title: Functions and repetition
+    summary: Write your own functions, repeat work with loops, and read tracebacks.
   - unit: 3
+    title: Collections and libraries
+    summary: Lists, dictionaries and libraries, and the patterns for using them on real data.
+  - unit: 4
     title: Python for ML code
-    summary: The parts of Python that micrograd and PyTorch rely on.
+    summary: Tuples, comprehensions and classes, the parts of Python that micrograd and PyTorch rely on.
+  - unit: 5
+    title: NumPy, shapes and plots
+    summary: Arrays, vectorising, broadcasting and matrix maths, the way ML code handles numbers.

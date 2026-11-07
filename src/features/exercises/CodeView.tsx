@@ -23,6 +23,8 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
   const shown = result ?? scratch
   const visibleTests = card.tests?.filter((t) => !t.hidden) ?? []
   const original = card.type === 'fix' ? card.code : card.starter
+  // Points at the bug only until the code changes, because after that the line may have moved.
+  const markLine = card.type === 'fix' && code === card.code ? (card.highlightLine ?? null) : null
 
   const run = async () => {
     setRunning(true)
@@ -54,11 +56,13 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
           <pre className="font-mono text-[13.5px] text-syn-str">{card.expectOutput.replace(/\n$/, '')}</pre>
         </div>
       )}
+      {markLine && <p className="sr-only">Look at line {markLine}.</p>}
       <CodeEditor
         value={code}
         onChange={(v) => setAnswer({ type: 'code', code: v })}
         readOnly={locked(phase)}
         errorLine={shown?.error?.line ?? null}
+        markLine={markLine}
         onSubmit={(latest) => {
           setAnswer({ type: 'code', code: latest })
           onSubmit({ type: 'code', code: latest })

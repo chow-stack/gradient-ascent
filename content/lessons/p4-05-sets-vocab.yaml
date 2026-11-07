@@ -1,0 +1,369 @@
+id: p4-sets-vocab
+track: ml
+unit: 4
+order: 5
+title: Sets and building dictionaries
+summary: Keep one of each, and build the vocabulary every language model starts from.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: From text to numbers
+    body: >-
+      Neural networks only work with numbers. So every language model starts the same way: find the distinct characters in the text, and give each one a number. It takes about three lines, and those lines contain three new ideas.
+
+
+      By the end of this lesson you'll be able to remove repeats with a set, build a dict with a comprehension, get a total without building a list, and write those lines yourself.
+
+  - type: learn
+    id: sets
+    title: One of each
+    body: >-
+      A set holds distinct values. `set("banana")` gives you `{'a', 'b', 'n'}`, with the repeats gone. You write one with braces, `{1, 2, 3}`, and `in` and `len` work as you'd expect. `.add(x)` adds an item, and adding one that's already there does nothing.
+
+
+      A set has no order, and no positions. `s[0]` gives a `TypeError`, and it may print in a different order from the one you expect, which can even change between runs. So if the order matters, use `sorted(s)`, which gives you a list.
+
+
+      Checking `x in s` is very fast, however large the set is, for the same reason as with a dict's keys. Checking `x in a_list` has to look through the items one by one.
+
+
+      One small trap: `{}` makes an empty dict, not an empty set. For an empty set, write `set()`.
+    code: |
+      letters = set("banana")
+      print(len(letters))
+      print(sorted(letters))
+      print("a" in letters)
+
+      seen = set()
+      seen.add("yak")
+      seen.add("yak")
+      print(len(seen))
+      print(type({}).__name__)
+    subgoals:
+      - { line: 1, label: 'The repeats are gone' }
+      - { line: 3, label: 'Sorted gives a fixed order, as a list' }
+      - { line: 6, label: 'The empty set' }
+      - { line: 8, label: 'Adding it twice changes nothing' }
+      - { line: 10, label: 'Empty braces make a dict' }
+    predict: What will `len(letters)` be?
+
+  - type: choice
+    id: set-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      s = set([1, 1, 2])
+      s.add(2)
+      s.add(3)
+      print(len(s))
+    choices: ['3', '5', '4', '2']
+    answer: '3'
+    why: >-
+      A set keeps one of each, so it holds 1, 2 and 3.
+    variants:
+      - code: |
+          print(sorted(set("hello")))
+        choices: ["['e', 'h', 'l', 'o']", "['h', 'e', 'l', 'o']", "['e', 'h', 'l', 'l', 'o']", 'hello']
+        answer: "['e', 'h', 'l', 'o']"
+        why: >-
+          The repeated `l` is gone, and `sorted` gives a list in order.
+      - code: |
+          words = ["a", "b", "a"]
+          print(len(words), len(set(words)))
+        choices: ['3 2', '2 2', '3 3', '2 3']
+        answer: '3 2'
+        why: >-
+          A quick way of counting distinct items is `len(set(items))`.
+      - code: |
+          a = {}
+          b = set()
+          print(type(a).__name__, type(b).__name__)
+        choices: ['dict set', 'set set', 'dict dict', 'set dict']
+        answer: 'dict set'
+        why: >-
+          Empty braces make a dict.
+
+  - type: learn
+    id: dict-comp
+    title: Dict comprehensions
+    body: >-
+      A comprehension with braces and a colon builds a dict: `{key: value for ...}`. It works the same way as a list comprehension, with two things to keep in the first part. So `{w: len(w) for w in words}` maps each word to its length.
+
+
+      This makes short work of the jobs you did with loops in Unit 3. To swap keys and values, use `{v: k for k, v in d.items()}`. To filter a dict, add an `if` at the end. If two items produce the same key, the later one wins, so swapping loses data if the values repeat.
+
+
+      With `enumerate`, it gives you exactly what a language model needs, a table from each character to a number: `{ch: i for i, ch in enumerate(chars)}`. Braces without a colon, as in `{w[0] for w in words}`, build a set.
+    code: |
+      words = ["ox", "yak"]
+      print({w: len(w) for w in words})
+
+      codes = {ch: i for i, ch in enumerate("abc")}
+      print(codes)
+      print({i: ch for ch, i in codes.items()})
+
+      print({k: v for k, v in codes.items() if v > 0})
+      print(sorted({w[0] for w in ["ox", "owl"]}))
+    subgoals:
+      - { line: 2, label: 'A key and a value, with a colon' }
+      - { line: 4, label: 'Each character gets a number' }
+      - { line: 6, label: 'Swap keys and values' }
+      - { line: 8, label: 'Filter a dict' }
+      - { line: 9, label: 'No colon: a set' }
+    predict: What will `codes` hold?
+
+  - type: choice
+    id: dict-comp-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print({ch: i for i, ch in enumerate("ab")})
+    choices: ["{'a': 0, 'b': 1}", "{0: 'a', 1: 'b'}", "['a', 'b']", "{'a', 'b'}"]
+    answer: "{'a': 0, 'b': 1}"
+    why: >-
+      What's before the colon is the key, whatever order `enumerate` gives them in.
+    variants:
+      - code: |
+          d = {"a": 1, "b": 1}
+          print({v: k for k, v in d.items()})
+        choices: ["{1: 'b'}", "{1: 'a'}", "{1: 'a', 1: 'b'}", 'Error']
+        answer: "{1: 'b'}"
+        why: >-
+          Keys are distinct, so the later one wins, and `a` is lost.
+      - code: |
+          d = {"a": 1, "b": 5}
+          print({k: v * 2 for k, v in d.items() if v > 2})
+        choices: ["{'b': 10}", "{'b': 5}", "{'a': 2, 'b': 10}", '[10]']
+        answer: "{'b': 10}"
+        why: >-
+          The filter keeps `b`, and its value gets doubled.
+      - code: |
+          print(len({n % 2 for n in [1, 2, 3, 4]}))
+        choices: ['2', '4', '1', 'Error']
+        answer: '2'
+        why: >-
+          With no colon, it's a set, and the only remainders are 0 and 1.
+
+  - type: explain
+    id: explain-sorted
+    prompt: Why does language model code sort the characters before giving them numbers, instead of using the set directly?
+    code: |
+      chars = sorted(set("banana"))
+      codes = {ch: i for i, ch in enumerate(chars)}
+      print(codes)
+    model: >-
+      A set has no fixed order, so the numbers could be different from one run to the next, and a saved model wouldn't match them. Sorting gives the same order every time, so each character always gets the same number.
+    keyPoints:
+      - A set has no fixed order, and it can change between runs
+      - Sorting makes sure each character always gets the same number
+
+  - type: learn
+    id: generators
+    title: Totals without a list
+    body: >-
+      If you only want a total, you don't need the list. `sum(n * n for n in nums)` has no square brackets, and it adds the values one at a time, without storing them. This is called a generator expression. It's a comprehension in parentheses, and it's what you'll normally see inside `sum`, `min` and `max`.
+
+
+      Two more built-ins go well with it. `any(...)` is `True` if at least one value is true, and `all(...)` is `True` if every value is true. They stop as soon as they know the answer. They replace the find loops you wrote in Unit 3.
+
+
+      A generator can only be used once, so if you store one, it's empty the second time. If you need the items more than once, use a list. On an empty input, `sum` gives 0, `any` gives `False` and `all` gives `True`.
+    code: |
+      nums = [1, 2, 3]
+      print(sum(n * n for n in nums))
+      print(any(n > 2 for n in nums))
+      print(all(n > 2 for n in nums))
+
+      a = [1, 2]
+      b = [3, 4]
+      print(sum(x * y for x, y in zip(a, b)))
+
+      g = (n for n in nums)
+      print(sum(g), sum(g))
+    subgoals:
+      - { line: 2, label: 'No list is built' }
+      - { line: 3, label: 'At least one is true' }
+      - { line: 4, label: 'All of them are true' }
+      - { line: 8, label: 'A dot product in one line' }
+      - { line: 11, label: 'The second use finds it empty' }
+    predict: What will the last line show?
+
+  - type: blank
+    id: fill-vocab
+    prompt: Fill in the blank so this gets the distinct letters in order, and shows `['a', 'b']`.
+    code: |
+      print(sorted(____("abba")))
+    answers: [['set']]
+    expectOutput: "['a', 'b']"
+    why: >-
+      `set` removes the repeats, and `sorted` puts them in order.
+    variants:
+      - prompt: >-
+          Fill in the blank so this builds a dict from each word to its length, and shows `{'ox': 2}`.
+        code: |
+          print({____ for w in ["ox"]})
+        answers: [['w: len(w)', 'w:len(w)']]
+        expectOutput: "{'ox': 2}"
+        why: >-
+          The key comes before the colon, and the value after it.
+      - prompt: Fill in the blank so this checks whether every number is positive, and shows `True`.
+        code: |
+          print(____(n > 0 for n in [1, 2]))
+        answers: [['all']]
+        expectOutput: 'True'
+        why: >-
+          `all` needs every value to be true.
+      - prompt: Fill in the blank so this shows `5`, without building a list.
+        code: |
+          print(____(x * y for x, y in zip([1, 1], [2, 3])))
+        answers: [['sum']]
+        expectOutput: '5'
+        why: >-
+          `sum` adds up the values as they're produced.
+
+  - type: fix
+    id: fix-vocab
+    prompt: '`vocab("ba")` should give back `{"a": 0, "b": 1}`, with letters in sorted order, but it crashes with a `TypeError`, because a set has no positions. Fix it.'
+    code: |
+      def vocab(text):
+          chars = set(text)
+          out = {}
+          for i in range(len(chars)):
+              out[chars[i]] = i
+          return out
+    solution: |
+      def vocab(text):
+          chars = sorted(set(text))
+          out = {}
+          for i in range(len(chars)):
+              out[chars[i]] = i
+          return out
+    highlightLine: 2
+    tests:
+      - { call: 'vocab("ba")', expect: "{'a': 0, 'b': 1}" }
+      - { call: 'vocab("")', expect: '{}' }
+    why: >-
+      `sorted` turns the set into a list with a fixed order.
+    hints:
+      - What gives you a list in a fixed order?
+    variants:
+      - prompt: This should show `set`, for an empty set. Fix it.
+        code: |
+          seen = {}
+          print(type(seen).__name__)
+        solution: |
+          seen = set()
+          print(type(seen).__name__)
+        highlightLine: 1
+        tests: []
+        expectOutput: set
+        why: >-
+          Empty braces make a dict.
+        hints:
+          - Which call makes an empty set?
+      - prompt: This should show `6 6`, but it shows `6 0`, because the generator gets used up. Fix the first line.
+        code: |
+          g = (n for n in [1, 2, 3])
+          print(sum(g), sum(g))
+        solution: |
+          g = [n for n in [1, 2, 3]]
+          print(sum(g), sum(g))
+        highlightLine: 1
+        tests: []
+        expectOutput: 6 6
+        why: >-
+          A list can be used as many times as you like, and a generator only once.
+        hints:
+          - Which brackets make something you can reuse?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Encoding and decoding text
+    body: >-
+      Here are the opening lines of Karpathy's GPT from scratch, written the way you now know how. Every language model begins with something like this.
+
+
+      First, get the vocabulary: the distinct characters, in sorted order. Then build two tables. `stoi`, short for string to integer, goes from a character to its number. `itos` goes the other way. `encode` turns text into a list of numbers, ready for a model, and `decode` turns the model's numbers back into text.
+
+
+      Nothing here is new any more. It's `set`, `sorted`, `enumerate`, two dict comprehensions, a list comprehension and `join`. A useful check is that decoding what you encoded gets back the original text.
+    code: |
+      text = "hello there"
+      chars = sorted(set(text))
+      stoi = {ch: i for i, ch in enumerate(chars)}
+      itos = {i: ch for i, ch in enumerate(chars)}
+
+      def encode(s):
+          return [stoi[ch] for ch in s]
+
+      def decode(nums):
+          return "".join(itos[i] for i in nums)
+
+      print(len(chars))
+      print(encode("the"))
+      print(decode(encode("the")))
+    subgoals:
+      - { line: 2, label: 'The vocabulary' }
+      - { line: 3, label: 'Character to number' }
+      - { line: 4, label: 'Number to character' }
+      - { line: 7, label: 'Text to numbers' }
+      - { line: 10, label: 'Numbers back to text' }
+      - { line: 14, label: 'Check: you get back what you started with' }
+    predict: What will the last line show?
+
+  - type: write
+    id: write-vocab
+    prompt: >-
+      Write `char_to_index(text)`, which gives back a dict from each distinct character, in sorted order, to its position. So `char_to_index("bab")` gives back `{'a': 0, 'b': 1}`.
+    starter: |
+      def char_to_index(text):
+          # Your code here
+    solution: |
+      def char_to_index(text):
+          return {ch: i for i, ch in enumerate(sorted(set(text)))}
+    tests:
+      - { call: 'char_to_index("bab")', expect: "{'a': 0, 'b': 1}" }
+      - { call: 'char_to_index("")', expect: '{}' }
+      - { call: 'char_to_index("cca")', expect: "{'a': 0, 'c': 1}" }
+    why: >-
+      This exact line builds the vocabulary in makemore and GPT.
+    hints:
+      - '`set` removes repeats, `sorted` fixes the order, and `enumerate` gives positions.'
+    variants:
+      - prompt: Write `all_shared(a, b)`, which gives back `True` if every item in list `a` is also in list `b`. So `all_shared([1], [1, 2])` gives back `True`.
+        starter: |
+          def all_shared(a, b):
+              # Your code here
+        solution: |
+          def all_shared(a, b):
+              return all(x in b for x in a)
+        tests:
+          - { call: 'all_shared([1], [1, 2])', expect: 'True' }
+          - { call: 'all_shared([3], [1, 2])', expect: 'False' }
+          - { call: 'all_shared([], [])', expect: 'True' }
+        hints:
+          - '`all` with a generator is one line.'
+
+  - type: choice
+    id: remember-comp
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      print([n if n > 1 else 0 for n in [1, 2, 3]])
+    choices: ['[0, 2, 3]', '[2, 3]', '[1, 2, 3]', 'Error']
+    answer: '[0, 2, 3]'
+    why: >-
+      An `if` at the front picks a value for every item.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A set keeps one of each, with no order, so use `sorted` when order matters. `{}` is an empty dict, and `set()` is an empty set. `{k: v for ...}` builds a dict. `sum(x for ...)` adds without building a list, and `any` and `all` check conditions. `sorted(set(text))` is how a vocabulary starts.
+
+
+      Next: functions as values, which you can pass around like numbers.

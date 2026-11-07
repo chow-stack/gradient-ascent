@@ -1,5 +1,5 @@
 import { CheckCircle2, CircleX, EyeOff, Play } from 'lucide-react'
-import { normalizeOutput, type RunResult } from '../runner/harness'
+import { normalizeOutput, type RunError, type RunResult } from '../runner/harness'
 import { usePythonStatus } from '../runner/python'
 import { inline } from './inline'
 
@@ -27,6 +27,13 @@ export function Prompt({ tag, text }: { tag: string; text: string }) {
 }
 
 /** Output panel: printed text, the error (with line), and test rows. */
+/** A crash inside a function shows the real traceback, because the call chain is the useful part. */
+function errorText({ type, line, message, trace = [] }: RunError) {
+  if (trace.length < 2) return `${type}${line ? ` (line ${line})` : ''}: ${message}`
+  const frames = trace.map((f) => `  File "main.py", line ${f.line}, in ${f.where}\n    ${f.code}`)
+  return ['Traceback (most recent call last):', ...frames, `${type}: ${message}`].join('\n')
+}
+
 export function RunOutput({ result, expectOutput }: { result: RunResult; expectOutput?: string }) {
   const hasTests = result.tests.length > 0
   const outputWrong =
@@ -44,15 +51,22 @@ export function RunOutput({ result, expectOutput }: { result: RunResult; expectO
       <pre>
         {result.stdout
           ? result.stdout.replace(/\n$/, '')
-          : !result.error && <span className="text-faint">(nothing printed)</span>}
+          : !result.error && !result.figures?.length && <span className="text-faint">(nothing printed)</span>}
         {result.error && (
           <span className="ga-output-error">
             {result.stdout ? '\n' : ''}
-            {result.error.type}
-            {result.error.line ? ` (line ${result.error.line})` : ''}: {result.error.message}
+            {errorText(result.error)}
           </span>
         )}
       </pre>
+      {result.figures?.map((png, i) => (
+        <img
+          key={i}
+          src={`data:image/png;base64,${png}`}
+          alt="The plot your code drew"
+          className="mx-4 mb-4 max-w-[calc(100%-2rem)] rounded-lg bg-white"
+        />
+      ))}
       {outputWrong && (
         <div className="ga-test">
           <CircleX size={16} className="mt-0.5 flex-none text-danger" aria-hidden />

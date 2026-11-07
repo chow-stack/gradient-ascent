@@ -1,0 +1,434 @@
+id: p4-closures
+track: ml
+unit: 4
+order: 7
+title: Functions that remember
+summary: A function defined inside another keeps access to its variables. micrograd is built on this.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Functions that carry data with them
+    body: >-
+      In the micrograd unit, every number stores a small function that says how to send its gradient back. That function needs to remember which numbers it came from, long after they were added together. The tool for that is a closure.
+
+
+      By the end of this lesson you'll be able to write a function that builds and gives back another function, explain how it remembers things, and avoid the classic closure bug in loops.
+
+  - type: learn
+    id: inner
+    title: A function inside a function
+    body: >-
+      You can use `def` inside another function. The inner function can read the outer function's variables, in the same way that any function can read names from outside itself.
+
+
+      The surprise comes when the outer function gives back the inner one. Normally, a function's local variables are gone once it finishes. But here the inner function still needs `n`, so Python keeps it. The inner function together with the variables it remembers is called a closure.
+
+
+      Each call of the outer function creates new variables, so each closure has its own. `make_adder(2)` and `make_adder(10)` give two functions that remember different numbers. Note `return add` with no parentheses: you're giving back the function. `return add(n)` would call it straight away.
+    code: |
+      def make_adder(n):
+          def add(x):
+              return x + n
+          return add
+
+      add2 = make_adder(2)
+      add10 = make_adder(10)
+      print(add2(5))
+      print(add10(5))
+      print(make_adder(1)(1))
+    subgoals:
+      - { line: 2, label: 'Defining it does not run it' }
+      - { line: 3, label: 'Uses a variable from outside' }
+      - { line: 4, label: 'Give back the function' }
+      - { line: 6, label: 'make_adder is finished, but n lives on' }
+      - { line: 10, label: 'Build one and call it in one line' }
+    predict: What will `add2(5)` and `add10(5)` show?
+
+  - type: choice
+    id: closure-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def make_scaler(k):
+          def scale(x):
+              return x * k
+          return scale
+
+      double = make_scaler(2)
+      triple = make_scaler(3)
+      print(double(triple(1)))
+    choices: ['6', '5', '3', 'Error']
+    answer: '6'
+    why: >-
+      Each one remembers its own `k`. `triple(1)` is 3, and `double(3)` is 6.
+    variants:
+      - code: |
+          def outer():
+              msg = "hi"
+              def inner():
+                  return msg
+              return inner
+
+          print(outer()())
+        choices: ['hi', 'inner', 'None', 'Error']
+        answer: 'hi'
+        why: >-
+          `outer()` gives back `inner`, and the second pair of parentheses calls it.
+      - code: |
+          def make(k):
+              def f():
+                  return k
+              return f()
+
+          print(make(4))
+        choices: ['4', 'f', 'None', 'Error']
+        answer: '4'
+        why: >-
+          This one has `return f()`, so it calls the inner function right away, and gives back a number.
+      - code: |
+          def make(k):
+              return lambda x: x + k
+
+          print(make(1)(2))
+        choices: ['3', '12', 'None', 'Error']
+        answer: '3'
+        why: >-
+          A lambda can be a closure too.
+
+  - type: explain
+    id: explain-remember
+    prompt: How does `step` still know `amount` after `make_step` has finished?
+    code: |
+      def make_step(amount):
+          def step(x):
+              return x + amount
+          return step
+
+      s = make_step(2)
+      print(s(1))
+    model: >-
+      `step` is a closure. It keeps access to the variables of the function it was defined in, so `amount` stays available after `make_step` has finished. Each call to `make_step` has its own `amount`.
+    keyPoints:
+      - An inner function keeps access to the outer function's variables
+      - That lasts after the outer function has finished
+
+  - type: learn
+    id: nonlocal
+    title: Changing what's remembered
+    body: >-
+      A closure can read an outer variable with no extra work. Assigning to one is different. You'll remember from Unit 2 that assigning to a name inside a function makes it local. So `count += 1` in the inner function gives an `UnboundLocalError`, for exactly the same reason it did there.
+
+
+      `nonlocal count` says "this name belongs to the function outside". Then the assignment changes the remembered variable, and the change lasts between calls. So here a function has its own private state.
+
+
+      You don't need `nonlocal` to change a list that's remembered, because `items.append(x)` doesn't assign to the name. It's the same difference you learned between changing an object and reassigning a name.
+
+
+      When a function needs a lot of state, a class is usually a better fit, and that's the topic of the next lesson.
+    code: |
+      def make_counter():
+          count = 0
+          def step():
+              nonlocal count
+              count += 1
+              return count
+          return step
+
+      tick = make_counter()
+      tock = make_counter()
+      print(tick(), tick(), tock())
+    subgoals:
+      - { line: 2, label: 'The private state' }
+      - { line: 4, label: 'Needed to assign to the outer variable' }
+      - { line: 7, label: 'Give back the function' }
+      - { line: 10, label: 'A second counter, with its own count' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: nonlocal-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def make():
+          total = 0
+          def add(x):
+              nonlocal total
+              total += x
+              return total
+          return add
+
+      a = make()
+      a(2)
+      print(a(3))
+    choices: ['5', '3', '2', 'Error']
+    answer: '5'
+    why: >-
+      `total` lasts between calls, so it goes from 0 to 2 to 5.
+    variants:
+      - code: |
+          def make():
+              items = []
+              def add(x):
+                  items.append(x)
+                  return len(items)
+              return add
+
+          a = make()
+          a(1)
+          print(a(1))
+        choices: ['2', '1', '0', 'Error']
+        answer: '2'
+        why: >-
+          `append` changes the list, and doesn't assign to the name, so no `nonlocal` is needed.
+      - code: |
+          def make():
+              n = 1
+              def get():
+                  return n
+              n = 5
+              return get
+
+          print(make()())
+        choices: ['5', '1', 'None', 'Error']
+        answer: '5'
+        why: >-
+          A closure keeps the variable itself, not a copy of its value at the time of the `def`.
+
+  - type: learn
+    id: late
+    title: The loop trap
+    body: >-
+      A closure remembers the variable, and not the value that it had at the time. It looks up the current value each time it runs. Usually that's what you'd expect, but it causes one famous bug.
+
+
+      If you make functions in a loop, they all share the one loop variable. By the time you call them, the loop has finished, so they all see its final value. In the code below, all three functions use the same `i`, and they all give 2.
+
+
+      The standard fix is to give the lambda its own parameter with a default value, as in `lambda i=i: i`. Default values are worked out when the function is defined, so each one gets the value `i` has at that moment. Alternatively, you can build each one using a separate function like `make_adder`, since each call has its own variables.
+    code: |
+      fs = []
+      for i in range(3):
+          fs.append(lambda: i)
+      print([f() for f in fs])
+
+      gs = []
+      for i in range(3):
+          gs.append(lambda i=i: i)
+      print([g() for g in gs])
+    subgoals:
+      - { line: 3, label: 'All of these share one i' }
+      - { line: 4, label: 'The loop has ended, so i is 2' }
+      - { line: 8, label: 'A default copies the value now' }
+    predict: What will the first list hold?
+
+  - type: blank
+    id: fill-closure
+    prompt: Fill in the blank so this gives back the inner function, and shows `7`.
+    code: |
+      def make_adder(n):
+          def add(x):
+              return x + n
+          return ____
+
+      print(make_adder(2)(5))
+    answers: [['add']]
+    expectOutput: '7'
+    why: >-
+      With no parentheses, you're giving back the function itself.
+    variants:
+      - prompt: Fill in the blank so the inner function can change `n`, and this shows `2`.
+        code: |
+          def make():
+              n = 0
+              def up():
+                  ____ n
+                  n += 1
+                  return n
+              return up
+
+          f = make()
+          f()
+          print(f())
+        answers: [['nonlocal']]
+        expectOutput: '2'
+        why: >-
+          Without `nonlocal`, assigning would make a new local `n`.
+      - prompt: Fill in the blank so each function remembers its own value, and this shows `[0, 1]`.
+        code: |
+          fs = []
+          for i in range(2):
+              fs.append(lambda ____: i)
+          print([f() for f in fs])
+        answers: [['i=i', 'i = i']]
+        expectOutput: '[0, 1]'
+        why: >-
+          A default value is worked out at the time the lambda is made.
+
+  - type: fix
+    id: fix-return
+    prompt: '`make_multiplier(3)` should give back a function, so that `make_multiplier(3)(4)` is `12`. But it crashes, because the inner function gets called too early. Fix it.'
+    code: |
+      def make_multiplier(n):
+          def multiply(x):
+              return x * n
+          return multiply()
+    solution: |
+      def make_multiplier(n):
+          def multiply(x):
+              return x * n
+          return multiply
+    highlightLine: 4
+    tests:
+      - { call: 'make_multiplier(3)(4)', expect: '12' }
+    why: >-
+      `multiply()` calls it right away. `multiply` gives back the function.
+    hints:
+      - Should there be parentheses on the last line?
+    variants:
+      - prompt: This should show `1`, then `2`, but it crashes with an `UnboundLocalError`. Fix it.
+        code: |
+          def make_counter():
+              count = 0
+              def step():
+                  count += 1
+                  return count
+              return step
+
+          t = make_counter()
+          print(t())
+          print(t())
+        solution: |
+          def make_counter():
+              count = 0
+              def step():
+                  nonlocal count
+                  count += 1
+                  return count
+              return step
+
+          t = make_counter()
+          print(t())
+          print(t())
+        highlightLine: 3
+        tests: []
+        expectOutput: "1\n2"
+        why: >-
+          Assigning to a name makes it local, unless you say `nonlocal`.
+        hints:
+          - The name belongs to the outer function, so how do you tell Python?
+      - prompt: This should show `[0, 10, 20]`, but it shows `[20, 20, 20]`. Fix the lambda.
+        code: |
+          fs = []
+          for k in range(3):
+              fs.append(lambda x: x * k)
+          print([f(10) for f in fs])
+        solution: |
+          fs = []
+          for k in range(3):
+              fs.append(lambda x, k=k: x * k)
+          print([f(10) for f in fs])
+        highlightLine: 3
+        tests: []
+        expectOutput: '[0, 10, 20]'
+        why: >-
+          All the lambdas shared one `k`. A default value gives each one its own.
+        hints:
+          - What's the value of `k` when these are finally called?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Remembering how to go backwards
+    body: >-
+      Here's a simplified version of the idea in micrograd. To train a network, you first run it forwards to get an answer. Then you go backwards through the steps, to work out how each number affected the answer.
+
+
+      So, at the moment each step happens, it records how to undo it. The `steps` list stores small functions, and each one is a closure that remembers the values from its own step. When you're done, you go through the list in reverse, and call each one.
+
+
+      `add` is written as a closure inside a function, so that `n` is captured separately each time. If you wrote the lambda directly in a loop, you'd hit the loop trap. micrograd stores a closure called `_backward` on each number, for this same reason.
+    code: |
+      steps = []
+
+      def add(x, n):
+          def undo(y):
+              return y - n
+          steps.append(undo)
+          return x + n
+
+      value = 1
+      value = add(value, 2)
+      value = add(value, 10)
+      print(value)
+
+      for undo in reversed(steps):
+          value = undo(value)
+      print(value)
+    subgoals:
+      - { line: 4, label: 'A closure that remembers n' }
+      - { line: 6, label: 'Save it to use later' }
+      - { line: 10, label: 'Forwards: each step records itself' }
+      - { line: 14, label: 'Backwards: the last step goes first' }
+    predict: What's the final value?
+
+  - type: write
+    id: write-closure
+    prompt: Write `make_power(p)`, which gives back a function that raises its input to the power of `p`. So `make_power(2)(5)` gives back `25`.
+    starter: |
+      def make_power(p):
+          # Your code here
+    solution: |
+      def make_power(p):
+          def power(x):
+              return x ** p
+          return power
+    tests:
+      - { call: 'make_power(2)(5)', expect: '25' }
+      - { call: 'make_power(0)(9)', expect: '1' }
+      - { call: '[make_power(2)(3), make_power(3)(2)]', expect: '[9, 8]', hidden: true }
+    why: >-
+      Define the function inside, and give it back without parentheses. A `lambda` works too.
+    hints:
+      - Define a function inside the function, and give it back with no parentheses.
+    variants:
+      - prompt: Write `make_total()`, which gives back a function. Each time that function is called with a number, it adds it to a running total, and gives back the total. So after `t = make_total()`, `t(2)` gives `2`, and then `t(3)` gives `5`.
+        starter: |
+          def make_total():
+              # Your code here
+        solution: |
+          def make_total():
+              total = 0
+              def add(x):
+                  nonlocal total
+                  total += x
+                  return total
+              return add
+        tests:
+          - { call: '[(t := make_total())(2), t(3)]', expect: '[2, 5]', hidden: true }
+          - { call: 'make_total()(1)', expect: '1' }
+        hints:
+          - The inner function assigns to the total, so it needs `nonlocal`.
+
+  - type: choice
+    id: remember-key
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      print(sorted(["bb", "a"], key=len))
+    choices: ["['a', 'bb']", '[1, 2]', "['bb', 'a']", 'Error']
+    answer: "['a', 'bb']"
+    why: >-
+      `key` decides what's compared, and you get back the original items.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An inner function can use the outer function's variables, even after the outer one has finished. Give it back without parentheses. Each call of the outer function makes new variables. Assigning needs `nonlocal`. A closure sees the current value, so functions made in a loop share the loop variable, unless you use a default.
+
+
+      Next: classes, the way nearly all ML code holds data and behaviour together.

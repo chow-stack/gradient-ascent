@@ -1,0 +1,355 @@
+id: p3-split-join
+track: ml
+unit: 3
+order: 7
+title: From text to lists and back
+summary: Split text into pieces, clean them up, and join them back together.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Raw text becomes data
+    body: >-
+      Data usually starts out as text. A language model begins by splitting text into pieces, and a CSV file is lines of text with commas in them.
+
+
+      By the end of this lesson you'll be able to split text into a list, clean each piece, convert pieces to numbers and join a list back into a string. These few tools handle a surprising amount of real data cleaning.
+
+  - type: learn
+    id: split
+    title: Splitting text
+    body: >-
+      `text.split()`, with nothing in the parentheses, breaks a string apart at any run of spaces, tabs or new lines, and gives back a list of strings. So extra spaces don't produce empty pieces, and that's normally what you want for words.
+
+
+      `text.split(",")` breaks at every comma, exactly. Here, nothing gets merged: two commas in a row give you an empty string between them.
+
+
+      The pieces are always strings, even if they look like numbers. `"3,4".split(",")` gives you `["3", "4"]`, and adding those joins them into `"34"`. Convert with `int()` or `float()` first. Note also that `split` is a string tool, so `text` itself is unchanged, and you'll want to store the result.
+    code: |
+      words = "the  quick fox".split()
+      print(words)
+      print(len(words))
+
+      parts = "3,4,,5".split(",")
+      print(parts)
+
+      nums = "3,4".split(",")
+      print(nums[0] + nums[1])
+      print(int(nums[0]) + int(nums[1]))
+    subgoals:
+      - { line: 1, label: 'Any run of spaces counts as one break' }
+      - { line: 5, label: 'Exact: empty pieces are kept' }
+      - { line: 8, label: 'Still strings, so + joins' }
+      - { line: 9, label: 'Convert first, and + adds' }
+    predict: How many items will `parts` have?
+
+  - type: choice
+    id: split-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      w = "up the hill".split()
+      print(len(w), w[1])
+    choices: ['3 the', '11 p', '3 up', '2 the']
+    answer: '3 the'
+    why: >-
+      There are 3 words, and the word at index 1 is `the`.
+    variants:
+      - code: |
+          print("a,b".split(","))
+        choices: ["['a', 'b']", "['a,b']", 'a b', "['a', ',', 'b']"]
+        answer: "['a', 'b']"
+        why: >-
+          The comma is where it breaks, and it isn't kept.
+      - code: |
+          a, b = "2 3".split()
+          print(a + b)
+        choices: ['23', '5', '2 3', 'Error']
+        answer: '23'
+        why: >-
+          Two names can take the two items, as you did in a swap. But they're strings, so `+` joins them.
+      - code: |
+          print(len("".split()), len("a  b".split(" ")))
+        choices: ['0 3', '1 2', '0 2', '1 3']
+        answer: '0 3'
+        why: >-
+          With no argument, an empty string has no words. Splitting at each single space keeps an empty piece between the two spaces.
+
+  - type: learn
+    id: clean
+    title: Cleaning the pieces
+    body: >-
+      Real text is messy. `.strip()` removes spaces and new lines from both ends of a string, but it leaves any in the middle. `.strip(".,!?")` removes those characters from the ends instead. `.lower()` and `.replace(old, new)` you've already met.
+
+
+      These all give back new strings, because strings can't change. Since each one returns a string, you can chain them: `text.strip().lower().split()` reads left to right, and each step works on the result of the one before.
+
+
+      To clean every word, use the pattern from earlier: an empty list, a loop over the pieces, and an append of each cleaned word. A word left with nothing after cleaning, like a lone `"..."`, becomes an empty string, so you'll often want an `if word:` to skip those. An empty string counts as false.
+    code: |
+      text = "  The cat. The DOG?  "
+      print(text.strip())
+
+      words = []
+      for word in text.lower().split():
+          words.append(word.strip(".,!?"))
+      print(words)
+
+      kept = []
+      for piece in "a ... b".split():
+          piece = piece.strip(".")
+          if piece:
+              kept.append(piece)
+      print(kept)
+    subgoals:
+      - { line: 2, label: 'Only trims the ends' }
+      - { line: 5, label: 'Each step works on the last result' }
+      - { line: 6, label: 'Clean each word' }
+      - { line: 12, label: 'An empty string counts as False' }
+    predict: What will `words` be?
+
+  - type: choice
+    id: clean-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print("  hi there  ".strip())
+    choices: ['hi there', 'hithere', '  hi there', "['hi', 'there']"]
+    answer: 'hi there'
+    why: >-
+      `strip` only removes from the two ends.
+    variants:
+      - code: |
+          print("Wow!!".strip("!").lower())
+        choices: ['wow', 'WOW', 'Wow', 'wow!!']
+        answer: 'wow'
+        why: >-
+          Each step works on the result of the one before.
+      - code: |
+          print("a!b!".strip("!"))
+        choices: ['a!b', 'ab', 'a!b!', "['a', 'b']"]
+        answer: 'a!b'
+        why: >-
+          Only the ends get stripped, so the middle `!` stays.
+
+  - type: learn
+    id: join
+    title: Joining a list back together
+    body: >-
+      `join` goes the other way, turning a list of strings into one string. Its form surprises people: the separator goes first, as in `", ".join(words)`. You're asking the string `", "` to join the items. `words.join(", ")` gives an `AttributeError`, because a list has no such method.
+
+
+      Every item has to be a string already. `",".join([1, 2])` gives a `TypeError`. So convert them first, for example by building a new list using `str()`.
+
+
+      `split` and `join` are close to being opposites, so `" ".join(text.split())` is a neat way of cleaning up extra spaces. Joining with an empty string glues the pieces straight together, and is a good way of building up text from many pieces.
+    code: |
+      words = ["up", "the", "hill"]
+      print(" ".join(words))
+      print("-".join(words))
+      print("".join(words))
+
+      nums = [1, 2, 3]
+      strs = []
+      for n in nums:
+          strs.append(str(n))
+      print(",".join(strs))
+
+      print(" ".join("too   many    spaces".split()))
+    subgoals:
+      - { line: 2, label: 'The separator comes first' }
+      - { line: 4, label: 'An empty separator glues them together' }
+      - { line: 9, label: 'Items must be strings' }
+      - { line: 12, label: 'Split and join tidy the spacing' }
+    predict: What will the last line show?
+
+  - type: explain
+    id: explain-join
+    prompt: This crashes with a `TypeError`. Why, and what would you do about it?
+    code: |
+      ages = [4, 5]
+      print(", ".join(ages))
+    expectError: TypeError
+    model: >-
+      `join` only works with strings, and `ages` holds numbers. Convert each number with `str()` first, by building a new list and joining that.
+    keyPoints:
+      - '`join` needs every item to be a string'
+      - Convert each number with `str()` before joining
+
+  - type: blank
+    id: fill-text
+    prompt: Fill in the blank so this shows `2`, the number of words.
+    code: |
+      words = "goat hill".____()
+      print(len(words))
+    answers: [['split']]
+    expectOutput: '2'
+    why: >-
+      `split` gives back a list of the words.
+    variants:
+      - prompt: Fill in the blank so this shows `a-b`.
+        code: |
+          print(____.join(["a", "b"]))
+        answers: [['"-"', "'-'"]]
+        expectOutput: a-b
+        why: >-
+          The separator goes first, as a string.
+      - prompt: Fill in the blank so this shows `7`.
+        code: |
+          parts = "3,4".split(",")
+          print(____(parts[0]) + int(parts[1]))
+        answers: [['int']]
+        expectOutput: '7'
+        why: >-
+          The pieces are strings, so convert them before adding.
+
+  - type: fix
+    id: fix-join
+    prompt: This gives an `AttributeError`. Fix it so it shows `a b`.
+    code: |
+      words = ["a", "b"]
+      print(words.join(" "))
+    solution: |
+      words = ["a", "b"]
+      print(" ".join(words))
+    highlightLine: 2
+    expectOutput: a b
+    why: >-
+      `join` belongs to the separator string, and it takes the list.
+    hints:
+      - Which comes first, the separator or the list?
+    variants:
+      - prompt: This should show the sum, `10`, but it shows `37`. Fix it.
+        code: |
+          parts = "3 7".split()
+          print(parts[0] + parts[1])
+        solution: |
+          parts = "3 7".split()
+          print(int(parts[0]) + int(parts[1]))
+        highlightLine: 2
+        expectOutput: '10'
+        why: >-
+          The pieces are strings, so `+` joined them.
+        hints:
+          - What type does `split` give you?
+      - prompt: This should show `['hi', 'you']`, but the punctuation stays. Fix it.
+        code: |
+          out = []
+          for w in "hi, you!".split():
+              w.strip(",!")
+              out.append(w)
+          print(out)
+        solution: |
+          out = []
+          for w in "hi, you!".split():
+              out.append(w.strip(",!"))
+          print(out)
+        highlightLine: 3
+        expectOutput: "['hi', 'you']"
+        why: >-
+          String tools give back a new string, so you have to use the result.
+        hints:
+          - What does `strip` do with its result?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Reading a line of CSV
+    body: >-
+      A CSV file is a text file where each line is a row, with commas between the values. In a later unit you'll use pandas for this, but it's worth seeing that it's only `split` and `float`.
+
+
+      Below, each line has a name and a score. First split the text at new lines, which gives you a list of rows. Then split each row at the comma. Then convert the score, since it's a string. And there's a header line to skip, which a slice handles neatly.
+
+
+      Nothing here is new. Once you've seen this, a CSV is just text and a couple of loops. The real-world problems, like commas inside values and missing data, are why pandas exists.
+    code: |
+      data = "name,score\nAda,90\nGrace,85"
+      lines = data.split("\n")
+      total = 0
+      for line in lines[1:]:
+          parts = line.split(",")
+          name = parts[0]
+          score = float(parts[1])
+          print(name, score)
+          total += score
+      print(total / len(lines[1:]))
+    subgoals:
+      - { line: 2, label: 'Rows, from the new lines' }
+      - { line: 4, label: 'Skip the header' }
+      - { line: 5, label: 'Columns, from the commas' }
+      - { line: 7, label: 'Text to a number' }
+      - { line: 10, label: 'The mean of the scores' }
+    predict: What's the mean score?
+
+  - type: write
+    id: parse-sum
+    prompt: Write `sum_csv(text)`, which takes a string of numbers with commas between them, and gives back their sum as a number. So `sum_csv("1,2,3")` gives back `6`.
+    starter: |
+      def sum_csv(text):
+          # Your code here
+    solution: |
+      def sum_csv(text):
+          total = 0
+          for piece in text.split(","):
+              total += int(piece)
+          return total
+    tests:
+      - { call: 'sum_csv("1,2,3")', expect: '6' }
+      - { call: 'sum_csv("10")', expect: '10' }
+    why: >-
+      Split, convert each piece, and add. Using `float` works as well.
+    hints:
+      - The pieces are strings, so what do you need to do before adding?
+    variants:
+      - prompt: Write `acronym(text)`, which gives back the first letter of each word in uppercase. So `acronym("graphics processing unit")` gives back `"GPU"`.
+        starter: |
+          def acronym(text):
+              # Your code here
+        solution: |
+          def acronym(text):
+              out = ""
+              for word in text.split():
+                  out += word[0].upper()
+              return out
+        tests:
+          - { call: 'acronym("graphics processing unit")', expect: "'GPU'" }
+          - { call: 'acronym("")', expect: "''" }
+        hints:
+          - Split into words, and take `word[0]` from each.
+      - prompt: Write `tidy(text)`, which gives back `text` in lowercase, with a single space between words and none at the ends.
+        starter: |
+          def tidy(text):
+              # Your code here
+        solution: |
+          def tidy(text):
+              return " ".join(text.lower().split())
+        tests:
+          - { call: 'tidy("  Up   THE hill ")', expect: "'up the hill'" }
+          - { call: 'tidy("")', expect: "''" }
+        hints:
+          - It can be done in one line with `split` and `join`.
+
+  - type: choice
+    id: remember-grid
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      g = [[1, 2], [3, 4]]
+      print(g[0][1] + g[1][0])
+    choices: ['5', '3', '7', '10']
+    answer: '5'
+    why: >-
+      Row 0, column 1 is 2. Row 1, column 0 is 3.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `text.split()` breaks at spaces and `text.split(",")` at each comma, and the pieces are always strings. `strip` cleans the ends. `sep.join(items)` joins a list of strings, with the separator first.
+
+
+      Next: lists find things by position. A dictionary finds them by name.

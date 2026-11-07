@@ -1,0 +1,392 @@
+id: p3-dict-loops
+track: ml
+unit: 3
+order: 10
+title: Looping over a dictionary
+summary: Go through keys, values and pairs, and find the top item.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Answering questions about a dict
+    body: >-
+      Once you've counted things, you'll want answers: which word is most common, what's the total, which items appear more than once? All of those need you to go through the dict.
+
+
+      By the end of this lesson you'll be able to loop over keys, values and pairs, find the key with the largest value, and avoid the error you get from changing a dict during a loop.
+
+  - type: learn
+    id: three-ways
+    title: Keys, values and pairs
+    body: >-
+      `for k in d:` goes through the keys, not the values. That's the part people get wrong, since it feels natural to expect the values. Inside, `d[k]` gets you the value.
+
+
+      `for v in d.values():` goes through the values, and it's what you want when you don't care about the keys, as in `sum(d.values())`. `for k, v in d.items():` gives you both at once, with two variables, which is usually the clearest way.
+
+
+      The two names work the same way as `a, b = "2 3".split()`: each item from `.items()` is a pair, split between them. Python goes through a dict in the order keys were first added. And `sorted(d)` gives you a list of the keys, in order.
+    code: |
+      ages = {"Ada": 36, "Grace": 85}
+      for k in ages:
+          print(k)
+      for k in ages:
+          print(ages[k])
+      for v in ages.values():
+          print(v)
+      for name, age in ages.items():
+          print(f"{name} is {age}")
+      print(sum(ages.values()))
+    subgoals:
+      - { line: 2, label: 'Keys by default' }
+      - { line: 5, label: 'Use each key to look up its value' }
+      - { line: 6, label: 'Only the values' }
+      - { line: 8, label: 'Both, with two names' }
+      - { line: 10, label: 'Built-ins work on the values' }
+    predict: What does the first loop show?
+
+  - type: choice
+    id: keys-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 1, "b": 2}
+      for x in d:
+          print(x)
+    choices: ["a\nb", "1\n2", "a 1\nb 2", "('a', 1)\n('b', 2)"]
+    answer: "a\nb"
+    why: >-
+      Looping over a dict gives you its keys.
+    variants:
+      - code: |
+          d = {"a": 1, "b": 2}
+          total = 0
+          for x in d.values():
+              total += x
+          print(total)
+        choices: ['3', 'ab', '2', 'Error']
+        answer: '3'
+        why: >-
+          `.values()` gives the numbers.
+      - code: |
+          d = {"a": 1, "b": 2}
+          for k, v in d.items():
+              print(v, k)
+        choices: ["1 a\n2 b", "a 1\nb 2", "a b\n1 2", "1 2\na b"]
+        answer: "1 a\n2 b"
+        why: >-
+          Each pass gives one pair, and the `print` shows the value first.
+      - code: |
+          d = {"b": 1, "a": 2}
+          print(sorted(d))
+        choices: ["['a', 'b']", "['b', 'a']", '[1, 2]', "{'a': 2, 'b': 1}"]
+        answer: "['a', 'b']"
+        why: >-
+          `sorted` on a dict gives a list of the keys, in order.
+
+  - type: learn
+    id: best-key
+    title: The most common item
+    body: >-
+      To find the key with the highest count, use the best-so-far pattern, but keep track of the key. A variable holds the best key so far, and you compare its value with each new one. As before, it shouldn't assume a starting value of 0.
+
+
+      The classic mistake is `max(counts)`. That runs without an error and gives you the alphabetically last key, since `max` is looking at keys. And `max(counts.values())` gives you the highest count, but not which word it was.
+
+
+      The tidy built-in version is `max(counts, key=counts.get)`, which compares keys using their values. You'll learn how `key=` works in the next unit. Writing the loop by hand first means you'll know what it's doing.
+    code: |
+      counts = {"yak": 2, "ant": 1, "zebra": 1}
+
+      best = None
+      for word in counts:
+          if best is None or counts[word] > counts[best]:
+              best = word
+      print(best)
+
+      print(max(counts))
+      print(max(counts.values()))
+      print(max(counts, key=counts.get))
+    subgoals:
+      - { line: 3, label: 'No best yet' }
+      - { line: 5, label: 'The first word, or a better one' }
+      - { line: 9, label: 'The bug: compares the keys' }
+      - { line: 10, label: 'The count, with no word' }
+      - { line: 11, label: 'The built-in that does it all' }
+    predict: What will `max(counts)` show, and why is that wrong?
+
+  - type: choice
+    id: best-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 5, "z": 1}
+      print(max(d))
+    choices: ['z', 'a', '5', '1']
+    answer: 'z'
+    why: >-
+      `max` on a dict compares the keys, and `z` comes last alphabetically.
+    variants:
+      - code: |
+          d = {"a": 5, "z": 1}
+          print(max(d.values()))
+        choices: ['5', 'a', 'z', '1']
+        answer: '5'
+        why: >-
+          This gives the largest value, but not its key.
+      - code: |
+          d = {"a": 5, "z": 1}
+          best = "z"
+          for k in d:
+              if d[k] > d[best]:
+                  best = k
+          print(best)
+        choices: ['a', 'z', '5', 'None']
+        answer: 'a'
+        why: >-
+          It compares the values and keeps the key.
+      - code: |
+          d = {"a": 2, "b": 2}
+          best = None
+          for k in d:
+              if best is None or d[k] > d[best]:
+                  best = k
+          print(best)
+        choices: ['a', 'b', '2', 'None']
+        answer: 'a'
+        why: >-
+          With `>`, a tie doesn't replace the best, so the first key added stays.
+
+  - type: explain
+    id: explain-max
+    prompt: Someone wants the most common word, and this shows `zebra`. Why, when `zebra` has the lowest count?
+    code: |
+      counts = {"ant": 9, "zebra": 1}
+      print(max(counts))
+    model: >-
+      `max` on a dict looks at the keys, not the values, so it finds the alphabetically last word. To compare by count, loop and compare `counts[word]`, or use `max(counts, key=counts.get)`.
+    keyPoints:
+      - Going through a dict gives its keys, so `max` compares the words
+      - To compare by count, use the values with a best-so-far loop or `key=counts.get`
+
+  - type: learn
+    id: changing
+    title: Changing a dict while looping
+    body: >-
+      Changing a value during a loop is fine, as long as the keys stay the same. So `for k in d: d[k] = d[k] * 2` works, and it's the way to update every value.
+
+
+      Adding or removing keys during a loop isn't fine. Python stops with `RuntimeError: dictionary changed size during iteration`. Run this code to see it. Unlike with lists, which silently skip items, you at least get told.
+
+
+      The safe way is the same as with lists: build a new dict with the items you want to keep. Or loop over a copy of the keys, with `for k in list(d):`, which lets you delete from `d` safely.
+    code: |
+      d = {"a": 1, "b": 0, "c": 2}
+      for k in d:
+          d[k] = d[k] * 10
+      print(d)
+
+      kept = {}
+      for k, v in d.items():
+          if v > 0:
+              kept[k] = v
+      print(kept)
+
+      for k in d:
+          if d[k] == 0:
+              del d[k]
+    expectError: RuntimeError
+    subgoals:
+      - { line: 3, label: 'Same keys, new values: fine' }
+      - { line: 8, label: 'Build a new dict to filter' }
+      - { line: 14, label: 'Changing the size: not allowed' }
+    predict: What will `kept` hold?
+
+  - type: blank
+    id: fill-items
+    prompt: Fill in the blank so this goes through both keys and values, and shows `a 1`.
+    code: |
+      d = {"a": 1}
+      for k, v in d.____():
+          print(k, v)
+    answers: [['items']]
+    expectOutput: a 1
+    why: >-
+      `.items()` gives you pairs.
+    variants:
+      - prompt: Fill in the blank so this shows the total of the values, `5`.
+        code: |
+          d = {"a": 2, "b": 3}
+          print(sum(d.____()))
+        answers: [['values']]
+        expectOutput: '5'
+        why: >-
+          `sum` needs numbers, so use the values, not the keys.
+      - prompt: >-
+          Fill in the blank so this keeps only the big values, and shows `{'b': 9}`.
+        code: |
+          d = {"a": 1, "b": 9}
+          out = {}
+          for k, v in d.items():
+              if v > 5:
+                  ____ = v
+          print(out)
+        answers: [['out[k]']]
+        expectOutput: "{'b': 9}"
+        why: >-
+          Assigning to a new key adds a pair to the new dict.
+
+  - type: fix
+    id: fix-most-common
+    prompt: '`most_common({"ant": 9, "zebra": 1})` should give back `"ant"`, but it gives back `"zebra"`. Fix it.'
+    code: |
+      def most_common(counts):
+          return max(counts)
+    solution: |
+      def most_common(counts):
+          best = None
+          for word in counts:
+              if best is None or counts[word] > counts[best]:
+                  best = word
+          return best
+    highlightLine: 2
+    tests:
+      - { call: 'most_common({"ant": 9, "zebra": 1})', expect: "'ant'" }
+      - { call: 'most_common({"a": 1, "b": 2})', expect: "'b'" }
+    why: >-
+      `max` on a dict compares keys, so compare the counts yourself. `max(counts, key=counts.get)` works too.
+    hints:
+      - You want to compare the counts, but keep the word.
+    variants:
+      - prompt: This should show `Ada` and `Grace`, but it crashes, because the loop gives only keys. Fix the loop.
+        code: |
+          ages = {"Ada": 36, "Grace": 85}
+          for name, age in ages:
+              print(name)
+        solution: |
+          ages = {"Ada": 36, "Grace": 85}
+          for name, age in ages.items():
+              print(name)
+        highlightLine: 2
+        tests: []
+        expectOutput: "Ada\nGrace"
+        why: >-
+          To get two names on each pass, go through `.items()`.
+        hints:
+          - Which tool gives you pairs?
+      - prompt: '`drop_zeros({"a": 0, "b": 1})` should give back `{"b": 1}`, but it gives a `RuntimeError`. Fix it by building a new dict.'
+        code: |
+          def drop_zeros(d):
+              for k in d:
+                  if d[k] == 0:
+                      del d[k]
+              return d
+        solution: |
+          def drop_zeros(d):
+              out = {}
+              for k in d:
+                  if d[k] != 0:
+                      out[k] = d[k]
+              return out
+        highlightLine: 2
+        tests:
+          - { call: 'drop_zeros({"a": 0, "b": 1})', expect: "{'b': 1}" }
+          - { call: 'drop_zeros({})', expect: '{}' }
+        why: >-
+          You can't change a dict's size while looping over it. A filter avoids that.
+        hints:
+          - What did you do for the same problem with lists?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Turning counts into probabilities
+    body: >-
+      This step turns a table of counts into something that can make predictions. To go from counts to probabilities, divide each count by the total, so all the values add up to 1.
+
+
+      Break it up. The total comes first, using `.values()` and `sum`. It's worked out once, before the loop. Then a loop over the pairs builds a new dict, with the same keys and new values. And a final check is worth having: the values should add up to 1, or very close to it.
+
+
+      In the makemore unit you'll do exactly this for each letter, in a table, and then sample from it to generate new names. The numbers change, and the shape stays the same.
+    code: |
+      counts = {"a": 3, "n": 1}
+      total = sum(counts.values())
+
+      probs = {}
+      for letter, count in counts.items():
+          probs[letter] = count / total
+
+      print(probs)
+      print(sum(probs.values()))
+    subgoals:
+      - { line: 2, label: 'Work out the total once' }
+      - { line: 5, label: 'Both the key and the value' }
+      - { line: 6, label: 'A count becomes a probability' }
+      - { line: 9, label: 'Check: it should add up to 1' }
+    predict: What's the probability of `a`?
+
+  - type: write
+    id: above
+    prompt: >-
+      Write `at_least(counts, n)`, which gives back a list of the keys whose values are at least `n`, in the dict's order. So `at_least({"a": 1, "b": 5}, 2)` gives back `["b"]`.
+    starter: |
+      def at_least(counts, n):
+          # Your code here
+    solution: |
+      def at_least(counts, n):
+          out = []
+          for k, v in counts.items():
+              if v >= n:
+                  out.append(k)
+          return out
+    tests:
+      - { call: 'at_least({"a": 1, "b": 5}, 2)', expect: "['b']" }
+      - { call: 'at_least({}, 2)', expect: '[]' }
+      - { call: 'at_least({"a": 2}, 2)', expect: "['a']" }
+    why: >-
+      It's a filter, with `.items()` so that you have both the key and the value.
+    hints:
+      - You need the key and the value on each pass.
+    variants:
+      - prompt: >-
+          Write `invert(d)`, which gives back a new dict with the keys and values swapped. So `invert({"a": 1})` gives back `{1: "a"}`.
+        starter: |
+          def invert(d):
+              # Your code here
+        solution: |
+          def invert(d):
+              out = {}
+              for k, v in d.items():
+                  out[v] = k
+              return out
+        tests:
+          - { call: 'invert({"a": 1})', expect: "{1: 'a'}" }
+          - { call: 'invert({})', expect: '{}' }
+        hints:
+          - You use this kind of thing to turn characters to numbers and back.
+
+  - type: choice
+    id: remember-count
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      c = {}
+      for w in ["x", "y", "x"]:
+          c[w] = c.get(w, 0) + 1
+      print(c["x"], c["y"])
+    choices: ['2 1', '1 1', '2 2', '3 3']
+    answer: '2 1'
+    why: >-
+      It's the counting pattern. `x` appears twice, and `y` once.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `for k in d` gives keys, `.values()` gives values, and `.items()` gives both. `max(d)` compares keys, so use a best-so-far loop to find the top count. You can change values during a loop, but not add or remove keys, so build a new dict instead.
+
+
+      Next: you've been using what's built into Python. Now for what comes with it.

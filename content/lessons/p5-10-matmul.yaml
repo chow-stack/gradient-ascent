@@ -1,0 +1,452 @@
+id: p5-matmul
+track: ml
+unit: 5
+order: 10
+title: The matrix product
+summary: A table of dot products, and how a neural network layer works.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Many dot products at once
+    body: >-
+      A 2D array of numbers is also called a matrix. Multiplying matrices has a reputation for being mysterious, but you already know everything it does. It's just a lot of dot products, arranged in a table.
+
+
+      By the end of this lesson you'll be able to work out a small product by hand, predict its shape, flip a matrix with a transpose, and write one layer of a neural network as a single line.
+
+  - type: learn
+    id: table
+    title: A table of dot products
+    body: >-
+      In `A @ B`, each cell of the result is a dot product. The cell at row `i`, column `j` takes row `i` of `A`, and dots it with column `j` of `B`. That's the whole definition.
+
+
+      Go through the code below by hand. `A` has rows `[1, 2]` and `[3, 4]`, and `B` has columns `[5, 7]` and `[6, 8]`. The top-left cell is row 0 dot column 0: `1*5 + 2*7`, which is 19. Top-right is row 0 dot column 1: `1*6 + 2*8`, which is 22. It's worth doing all four yourself, once.
+
+
+      Two things follow from this. Order matters, so `A @ B` and `B @ A` usually differ. And `*` is a different thing altogether: `A * B` multiplies matching cells, by broadcasting. Mixing them up is a common bug, because if the shapes are square, both run without an error, and give different answers.
+    code: |
+      import numpy as np
+
+      A = np.array([[1, 2], [3, 4]])
+      B = np.array([[5, 6], [7, 8]])
+
+      print(A @ B)
+      print(A[0] @ B[:, 0])
+      print(A[0] @ B[:, 1])
+      print(A[1] @ B[:, 0])
+
+      print(B @ A)
+      print(A * B)
+    subgoals:
+      - { line: 6, label: 'A table of dot products' }
+      - { line: 7, label: 'Row 0 with column 0' }
+      - { line: 8, label: 'Row 0 with column 1' }
+      - { line: 11, label: 'The other order differs' }
+      - { line: 12, label: 'Matching cells, which is different' }
+    predict: What will the top-left cell be?
+
+  - type: choice
+    id: table-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      A = np.array([[1, 0], [0, 1]])
+      B = np.array([[2, 3], [4, 5]])
+      print(A @ B)
+    choices: ["[[2 3]\n [4 5]]", "[[2 0]\n [0 5]]", "[[3 3]\n [4 6]]", 'Error']
+    answer: "[[2 3]\n [4 5]]"
+    why: >-
+      This `A` is called the identity matrix. Dotting with it gives back the same numbers, like multiplying by 1.
+    variants:
+      - code: |
+          import numpy as np
+          A = np.array([[1, 0], [0, 1]])
+          B = np.array([[2, 3], [4, 5]])
+          print(A * B)
+        choices: ["[[2 0]\n [0 5]]", "[[2 3]\n [4 5]]", "[[0 0]\n [0 0]]", 'Error']
+        answer: "[[2 0]\n [0 5]]"
+        why: >-
+          `*` multiplies matching cells, so the zeros wipe out those cells.
+      - code: |
+          import numpy as np
+          A = np.array([[1, 2]])
+          B = np.array([[3], [4]])
+          print(A @ B)
+        choices: ['[[11]]', '11', "[[3 6]\n [4 8]]", '[3 8]']
+        answer: '[[11]]'
+        why: >-
+          One row dotted with one column is a single dot product, in a 1 × 1 grid.
+      - code: |
+          import numpy as np
+          A = np.array([[1, 2], [3, 4]])
+          B = np.array([[1, 1], [0, 0]])
+          print((A @ B)[1, 0])
+        choices: ['3', '4', '7', '1']
+        answer: '3'
+        why: >-
+          Row 1 of `A` is `[3, 4]`, and column 0 of `B` is `[1, 0]`. So `3*1 + 4*0` is 3.
+
+  - type: learn
+    id: shapes
+    title: The shape rule
+    body: >-
+      A dot product needs two equal-length vectors. So the rows of `A` must be as long as the columns of `B`. That's the rule: for `A @ B`, the last number of `A`'s shape has to equal the first number of `B`'s shape.
+
+
+      `(2, 3) @ (3, 4)` works, and the two 3s are used up. Each row of `A` makes a row in the answer, and each column of `B` makes a column. So the result is `(2, 4)`. The rule to memorise: the inner numbers match and vanish, and the outer numbers remain.
+
+
+      If the inner numbers don't match, you get a `ValueError` that mentions `mismatch in its core dimension`. Unlike broadcasting, `@` doesn't stretch anything, so the shapes must really line up.
+
+
+      A 1D array works too. `(3, 2) @ (2,)` gives `(3,)`. It's treated as a single column, and that extra axis is then removed. So `X @ w` gives one number per row.
+    code: |
+      import numpy as np
+
+      A = np.ones((2, 3))
+      B = np.ones((3, 4))
+      print((A @ B).shape)
+
+      X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+      w = np.array([1.0, 0.0])
+      print(X.shape, w.shape)
+      print(X @ w)
+
+      print((B @ A).shape)
+    expectError: ValueError
+    subgoals:
+      - { line: 5, label: 'The inner 3s vanish' }
+      - { line: 7, label: 'Three examples, two features' }
+      - { line: 10, label: 'One prediction per row' }
+      - { line: 12, label: '(3, 4) with (2, 3): 4 is not 2' }
+    predict: What shape will `X @ w` have?
+
+  - type: choice
+    id: shapes-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      print((np.ones((5, 2)) @ np.ones((2, 7))).shape)
+    choices: ['(5, 7)', '(2, 2)', '(7, 5)', 'Error']
+    answer: '(5, 7)'
+    why: >-
+      The inner 2s match and vanish.
+    variants:
+      - code: |
+          import numpy as np
+          print((np.ones((4, 3)) @ np.ones(3)).shape)
+        choices: ['(4,)', '(3,)', '(4, 3)', 'Error']
+        answer: '(4,)'
+        why: >-
+          One dot product for each row.
+      - code: |
+          import numpy as np
+          X = np.array([[1, 2], [3, 4]])
+          w = np.array([0, 1])
+          print(X @ w)
+        choices: ['[2 4]', '[1 3]', '[3 7]', '[0 4]']
+        answer: '[2 4]'
+        why: >-
+          Each row dotted with `w`, which picks out the second number.
+      - code: |
+          import numpy as np
+          print((np.ones(3) @ np.ones((3, 2))).shape)
+        choices: ['(2,)', '(3,)', '(3, 2)', 'Error']
+        answer: '(2,)'
+        why: >-
+          A 1D array on the left is treated as a single row, and that axis is then removed.
+
+  - type: choice
+    id: shapes-error
+    prompt: What happens here?
+    code: |
+      import numpy as np
+      print((np.ones((2, 3)) @ np.ones((2, 3))).shape)
+    choices: ['ValueError', '(2, 3)', '(2, 2)', '(3, 3)']
+    answer: 'ValueError'
+    why: >-
+      The inner numbers are 3 and 2, which don't match. `@` doesn't stretch anything.
+
+  - type: explain
+    id: explain-matmul
+    prompt: Explain why this gives shape `(3,)`, and what each of those three numbers means in terms of dot products.
+    code: |
+      import numpy as np
+      X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+      w = np.array([0.5, 0.5])
+      print((X @ w).shape)
+    model: >-
+      `X` has 3 rows, each of length 2, and `w` has length 2, so the inner sizes match and vanish. Each of the three numbers is one row of `X` dotted with `w`, which is the prediction for that example.
+    keyPoints:
+      - The inner sizes match and vanish, leaving one number per row
+      - Each number is one row dotted with the weights
+
+  - type: learn
+    id: transpose
+    title: Transpose and layers
+    body: >-
+      `a.T` flips a matrix over its diagonal, so that rows become columns. `(2, 3)` becomes `(3, 2)`, and cell `[i, j]` moves to `[j, i]`. It's a view, like a slice, so it shares memory. It's mainly used for making shapes fit: if `A @ B` fails, then often `A @ B.T` is what you meant.
+
+
+      Here's why it all matters. A layer of a neural network is `X @ W + b`. `X` is `(batch, inputs)`, with one row per example. `W` is `(inputs, outputs)`, with one column per output neuron. So each output is a dot product, a weighted sum of the inputs, and `b` is `(outputs,)`, which broadcasts onto every row. The result is `(batch, outputs)`.
+
+
+      So one line of array maths does the work of every neuron in that layer, on every example in the batch. This is why networks run on matrix hardware. To make a layer deeper, you just feed the outputs into another layer of the same form.
+    code: |
+      import numpy as np
+
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+      print(a.T)
+      print(a.T.shape)
+
+      X = np.ones((4, 3))
+      W = np.ones((3, 2)) * 0.5
+      b = np.array([1.0, -1.0])
+
+      out = X @ W + b
+      print(out.shape)
+      print(out[0])
+    subgoals:
+      - { line: 4, label: 'Rows become columns' }
+      - { line: 7, label: 'Four examples, three inputs' }
+      - { line: 8, label: 'Three inputs, two output neurons' }
+      - { line: 11, label: 'One layer, in one line' }
+      - { line: 13, label: 'Two outputs per example' }
+    predict: What shape will `out` have?
+
+  - type: choice
+    id: transpose-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([[1, 2], [3, 4], [5, 6]])
+      print(a.T[0])
+    choices: ['[1 3 5]', '[1 2]', '[5 6]', '[2 4 6]']
+    answer: '[1 3 5]'
+    why: >-
+      Row 0 of the transpose is column 0 of the original.
+    variants:
+      - code: |
+          import numpy as np
+          print((np.ones((3, 5)).T @ np.ones((3, 2))).shape)
+        choices: ['(5, 2)', '(3, 2)', '(2, 5)', 'Error']
+        answer: '(5, 2)'
+        why: >-
+          The transpose is `(5, 3)`, and the inner 3s vanish.
+      - code: |
+          import numpy as np
+          X = np.ones((8, 4))
+          W = np.ones((4, 16))
+          print((X @ W).shape)
+        choices: ['(8, 16)', '(4, 4)', '(8, 4)', 'Error']
+        answer: '(8, 16)'
+        why: >-
+          A batch of 8 examples, going from 4 inputs to 16 outputs.
+      - code: |
+          import numpy as np
+          X = np.ones((6, 2))
+          print((X @ X.T).shape, (X.T @ X).shape)
+        choices: ['(6, 6) (2, 2)', '(2, 2) (6, 6)', '(6, 2) (2, 6)', 'Error']
+        answer: '(6, 6) (2, 2)'
+        why: >-
+          The outer numbers remain. `X @ X.T` compares every row with every row.
+
+  - type: blank
+    id: fill-matmul
+    prompt: Fill in the blank to flip `B`, so that the product works, and this shows `(2, 2)`.
+    code: |
+      import numpy as np
+      A = np.ones((2, 3))
+      B = np.ones((2, 3))
+      print((A @ ____).shape)
+    answers: [['B.T']]
+    expectOutput: (2, 2)
+    why: >-
+      `(2, 3) @ (3, 2)` lines up, and the outer numbers remain.
+    variants:
+      - prompt: Fill in the blank with the operator for one prediction per row, so this shows `[3. 7.]`.
+        code: |
+          import numpy as np
+          X = np.array([[1.0, 2.0], [3.0, 4.0]])
+          w = np.array([1.0, 1.0])
+          print(X ____ w)
+        answers: [['@']]
+        expectOutput: '[3. 7.]'
+        why: >-
+          `@` gives a dot product for each row.
+      - prompt: Fill in the blank with a shape for `W`, so that this layer gives `(10, 5)`.
+        code: |
+          import numpy as np
+          X = np.ones((10, 3))
+          W = np.ones(____)
+          print((X @ W).shape)
+        answers: [['(3, 5)', '(3,5)']]
+        expectOutput: (10, 5)
+        why: >-
+          The inner sizes must match, and the outer numbers remain.
+      - prompt: Fill in the blank to get a table of every row dotted with every row, so this shows `(4, 4)`.
+        code: |
+          import numpy as np
+          X = np.ones((4, 2))
+          print((X @ ____).shape)
+        answers: [['X.T']]
+        expectOutput: (4, 4)
+        why: >-
+          `(4, 2) @ (2, 4)` gives `(4, 4)`.
+
+  - type: fix
+    id: fix-star
+    prompt: '`predict(X, w)` should give back one number per row, the row dotted with `w`. So `predict(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 1.0]))` is `[3.0, 7.0]`. But it gives back a grid. Fix it.'
+    code: |
+      import numpy as np
+
+      def predict(X, w):
+          return X * w
+    solution: |
+      import numpy as np
+
+      def predict(X, w):
+          return X @ w
+    highlightLine: 4
+    tests:
+      - { call: 'predict(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 1.0]))', expect: '[3.0, 7.0]' }
+    why: >-
+      `*` works item by item, and broadcasts. `@` does dot products.
+    hints:
+      - Which operator gives dot products?
+    variants:
+      - prompt: '`gram(X)` should give back a table of every row dotted with every row, with a shape of `(rows, rows)`. It gives back `(columns, columns)`. Fix it.'
+        code: |
+          import numpy as np
+
+          def gram(X):
+              return X.T @ X
+        solution: |
+          import numpy as np
+
+          def gram(X):
+              return X @ X.T
+        highlightLine: 4
+        tests:
+          - { call: 'gram(np.ones((4, 2))).shape', expect: '(4, 4)' }
+          - { call: 'gram(np.array([[1.0, 0.0], [1.0, 1.0], [0.0, 2.0]]))[1, 2]', expect: '2.0' }
+        hints:
+          - The outer numbers remain.
+      - prompt: '`layer(X, W, b)` should run for a batch `X` of `(n, 3)`, and `W` of `(3, 2)`, and give `(n, 2)`. It gives a `ValueError`. Fix it.'
+        code: |
+          import numpy as np
+
+          def layer(X, W, b):
+              return W @ X + b
+        solution: |
+          import numpy as np
+
+          def layer(X, W, b):
+              return X @ W + b
+        highlightLine: 4
+        tests:
+          - { call: 'layer(np.ones((5, 3)), np.ones((3, 2)), np.zeros(2)).shape', expect: '(5, 2)' }
+        hints:
+          - Write out the two shapes in the order they're used.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A two-layer network
+    body: >-
+      You now know enough to run a real neural network forward. Follow the shapes in the comments, as that's what you should always do with code like this.
+
+
+      `X` is a batch of 4 examples with 3 inputs each. The first layer goes from 3 inputs to 2 hidden neurons. Then comes `np.tanh`, a function applied to every item, which squashes numbers to between -1 and 1. Without a function like this, stacking layers adds nothing, because two matrix products in a row are the same as one. The final layer goes from 2 hidden neurons to 1 output.
+
+
+      That's a forward pass. There are only two things it can't do yet: choose good weights, which takes calculus and comes next unit, and handle the details automatically, which PyTorch does later. The output shape is `(4, 1)`, and now you know how to take that to `(4,)` before comparing it with the labels.
+    code: |
+      import numpy as np
+
+      X = np.ones((4, 3))                # (batch, inputs)
+
+      W1 = np.ones((3, 2)) * 0.1         # (inputs, hidden)
+      b1 = np.zeros(2)                   # (hidden,)
+      W2 = np.ones((2, 1)) * 0.5         # (hidden, outputs)
+      b2 = np.zeros(1)                   # (outputs,)
+
+      h = np.tanh(X @ W1 + b1)           # (batch, hidden)
+      out = h @ W2 + b2                  # (batch, outputs)
+
+      print(h.shape)
+      print(out.shape)
+      print(out.reshape(-1).shape)
+    subgoals:
+      - { line: 3, label: 'Four examples' }
+      - { line: 5, label: 'One column per hidden neuron' }
+      - { line: 10, label: 'The first layer, then squash' }
+      - { line: 11, label: 'The second layer' }
+      - { line: 15, label: 'Avoid the broadcasting trap' }
+    predict: What's the shape of `h`?
+
+  - type: write
+    id: write-layer
+    prompt: Write `linear(X, w, b)`, where `X` has a row per example, `w` has one weight per column, and `b` is a number. It gives back one prediction per row. So `linear(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 0.0]), 1.0)` gives back `[2.0, 4.0]`.
+    starter: |
+      import numpy as np
+
+      def linear(X, w, b):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def linear(X, w, b):
+          return X @ w + b
+    tests:
+      - { call: 'linear(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 0.0]), 1.0)', expect: '[2.0, 4.0]' }
+      - { call: 'linear(np.zeros((5, 2)), np.ones(2), 0.0).shape', expect: '(5,)' }
+    why: >-
+      This is linear regression, and it's a single line for any number of examples or features.
+    hints:
+      - You need one dot product per row, plus the bias.
+    variants:
+      - prompt: Write `row_lengths(X)`, with no loop, which gives back the length of each row, as in `np.linalg.norm`. So `row_lengths(np.array([[3.0, 4.0], [0.0, 2.0]]))` gives back `[5.0, 2.0]`.
+        starter: |
+          import numpy as np
+
+          def row_lengths(X):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def row_lengths(X):
+              return np.sqrt((X ** 2).sum(axis=1))
+        tests:
+          - { call: 'row_lengths(np.array([[3.0, 4.0], [0.0, 2.0]]))', expect: '[5.0, 2.0]' }
+          - { call: 'row_lengths(np.zeros((3, 2))).shape', expect: '(3,)' }
+        hints:
+          - Square, sum along the row, and take the root.
+
+  - type: choice
+    id: remember-dot
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print(np.array([1, 2]) @ np.array([2, 1]))
+    choices: ['4', '[2 2]', '5', '6']
+    answer: '4'
+    why: >-
+      `1*2 + 2*1` is 4.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Each cell of `A @ B` is a row of `A` dotted with a column of `B`. The inner numbers of the shapes must match and vanish, and the outer numbers remain. `*` is different, as it works on matching cells. `.T` swaps rows and columns. `X @ W + b` is one layer of a neural network, on a whole batch.
+
+
+      Next: where the starting numbers come from, with randomness.

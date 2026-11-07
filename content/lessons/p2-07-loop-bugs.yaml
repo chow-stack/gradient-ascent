@@ -1,0 +1,358 @@
+id: p2-loop-bugs
+track: ml
+unit: 2
+order: 7
+title: When loops go wrong
+summary: Loops that never end, loops that are off by one, and how to find out why.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The bugs that loops bring
+    body: >-
+      Loops add a new kind of bug. A program can now run forever, or give an answer that's nearly right. Both happen to everyone, and both have simple causes once you know where to look.
+
+
+      By the end of this lesson you'll be able to recognise an infinite loop and an off-by-one error, test a loop on the cases most likely to break it, and leave a loop early with `break`.
+
+  - type: learn
+    id: infinite
+    title: Loops that never end
+    body: >-
+      A `while` loop only ends when its condition becomes false. If nothing in the block can make that happen, the program runs forever. This is called an infinite loop.
+
+
+      The usual causes are forgetting the update, updating the wrong variable, or moving in the wrong direction, like `n = n + 1` in a loop waiting for `n` to reach 0. A program stuck like this doesn't crash, and it gives no message. It just never finishes. In this app, a run is stopped after a few seconds, and you'll see a message saying so. On your own computer, you press Ctrl+C.
+
+
+      Whenever you write a `while`, ask: what changes on each pass, and does it move towards making the condition false? The code below is what the bug looks like, with the update missing. It has been made safe with a limit on the passes, so you can run it.
+    code: |
+      n = 3
+      passes = 0
+      while n > 0 and passes < 5:
+          print(n)
+          passes += 1
+      print("Stopped by the safety limit")
+    subgoals:
+      - { line: 1, label: 'Nothing below ever changes this' }
+      - { line: 3, label: '`n > 0` stays true forever' }
+      - { line: 5, label: 'Only this counter ends the loop' }
+    predict: Which number will it show, and how many times?
+
+  - type: choice
+    id: spot-infinite
+    kind: concept
+    prompt: Which of these loops never ends?
+    choices:
+      - "n = 5, then `while n > 0:` with `n = n + 1` inside"
+      - "n = 5, then `while n > 0:` with `n = n - 1` inside"
+      - "n = 0, then `while n > 0:` with `n = n + 1` inside"
+      - "n = 0, then `while n < 5:` with `n = n + 1` inside"
+    answer: "n = 5, then `while n > 0:` with `n = n + 1` inside"
+    why: >-
+      `n` starts positive and only gets bigger, so `n > 0` stays true. In the third one, the condition is false from the start, so the block never runs.
+    variants:
+      - prompt: A program has been running for a minute with no output and no error. What's the most likely cause?
+        choices:
+          - 'A `while` condition that never becomes false'
+          - 'A misspelled variable name'
+          - 'A missing colon'
+          - 'A function that has no `return`'
+        answer: 'A `while` condition that never becomes false'
+        why: >-
+          The other three would give an error or a wrong result, and the program would still finish. Only a loop can keep it running.
+
+  - type: learn
+    id: off-by-one
+    title: Off by one
+    body: >-
+      An off-by-one error means a loop runs one time too many or too few. It's probably the most common bug in all of programming, and it has its own name because it's so common.
+
+
+      It comes from the boundaries: `<` or `<=`, starting at 0 or at 1. Here's a quick way to reason about it. For `while n < 5` starting at 0, the values are 0, 1, 2, 3, 4, which is 5 passes. For `while n <= 5` starting at 1, the values are 1 to 5, also 5 passes. And for `while n <= 5` starting at 0, there are 6.
+
+
+      Don't try to work it out in your head by pure thought. Test the smallest possible input. If you want the sum up to `limit`, try `limit = 1` and `limit = 0`, where you can see the right answer immediately.
+    code: |
+      def sum_below(limit):
+          total = 0
+          n = 1
+          while n < limit:
+              total += n
+              n += 1
+          return total
+
+      print(sum_below(3))
+      print(sum_below(1))
+    subgoals:
+      - { line: 4, label: 'Stops before reaching `limit`' }
+      - { line: 9, label: 'Adds 1 and 2' }
+      - { line: 10, label: 'The smallest case: no passes at all' }
+    predict: If you wanted to include `limit`, which character would you add?
+
+  - type: choice
+    id: pass-count
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 1
+      while n <= 3:
+          print("hi")
+          n += 1
+    choices: ["hi\nhi\nhi", "hi\nhi", "hi\nhi\nhi\nhi", 'hi']
+    answer: "hi\nhi\nhi"
+    why: >-
+      `n` is 1, 2 and 3 on the passes. At 4 the condition is false.
+    variants:
+      - prompt: What does this print?
+        code: |
+          n = 0
+          count = 0
+          while n <= 3:
+              count += 1
+              n += 1
+          print(count)
+        choices: ['4', '3', '5', '0']
+        answer: '4'
+        why: >-
+          `n` takes the values 0, 1, 2 and 3. Starting at 0 and using `<=` gives one more pass than you might expect.
+      - prompt: What does this print?
+        code: |
+          n = 10
+          count = 0
+          while n > 0:
+              n -= 2
+              count += 1
+          print(count)
+        choices: ['5', '10', '4', '6']
+        answer: '5'
+        why: >-
+          `n` goes 10, 8, 6, 4, 2, 0, so the block runs 5 times.
+
+  - type: explain
+    id: explain-boundary
+    prompt: This should count down from 3 to 1 and stop. What does it do wrong, and how do you know?
+    code: |
+      n = 3
+      while n >= 0:
+          print(n)
+          n -= 1
+    model: >-
+      It also shows 0, so it runs one pass too many. `n >= 0` is still true when `n` is 0. Using `n > 0` would stop after 1.
+    keyPoints:
+      - '`n >= 0` is true when `n` is 0, so the loop also shows 0'
+      - This is an off-by-one error, and `n > 0` would fix it
+
+  - type: learn
+    id: break-stmt
+    title: Leaving early with break
+    body: >-
+      Sometimes you find what you need partway through, and there's no reason to carry on. `break` ends the loop immediately, and Python continues with the first line after the loop.
+
+
+      It's often used with `while True:`, a loop whose condition never becomes false on its own. That looks like a bug, but it's deliberate when the block contains a `break`. It's useful when you only find out whether to stop in the middle of the pass. Be careful, because if the `break` is never reached, you have an infinite loop.
+
+
+      Inside a function, `return` also ends a loop, since it ends the whole function. `break` only ends the loop, and the function carries on after it.
+    code: |
+      n = 1
+      while True:
+          if n * n > 20:
+              break
+          n += 1
+      print(n)
+    subgoals:
+      - { line: 2, label: 'The condition alone never stops this' }
+      - { line: 3, label: 'The real stopping check' }
+      - { line: 4, label: 'Jump out of the loop' }
+      - { line: 6, label: 'Carries on here' }
+    predict: What's the first `n` whose square is above 20?
+
+  - type: blank
+    id: fill-break
+    prompt: Fill in the missing word so the loop stops at the first number divisible by 7, and this shows `14`.
+    code: |
+      n = 8
+      while True:
+          if n % 7 == 0:
+              ____
+          n += 1
+      print(n)
+    answers: [['break']]
+    expectOutput: '14'
+    why: >-
+      `break` jumps straight to the first line after the loop.
+    variants:
+      - prompt: Fill in the update so the loop ends and this shows `Done`.
+        code: |
+          n = 3
+          while n > 0:
+              ____
+          print("Done")
+        answers: [['n -= 1', 'n-=1', 'n = n - 1', 'n=n-1', 'n -= 2', 'n -= 3', 'n = 0']]
+        expectOutput: Done
+        why: >-
+          Something inside the loop has to move `n` towards making the condition false.
+
+  - type: fix
+    id: fix-infinite
+    prompt: This never ends, so it gets stopped after a few seconds. It should show `3`, `2` and `1`. Fix it.
+    code: |
+      n = 3
+      while n > 0:
+          print(n)
+    solution: |
+      n = 3
+      while n > 0:
+          print(n)
+          n -= 1
+    highlightLine: 3
+    expectOutput: "3\n2\n1"
+    why: >-
+      Nothing in the block changed `n`, so the condition stayed true forever.
+    hints:
+      - What changes on each pass?
+    variants:
+      - prompt: This never ends, so it gets stopped after a few seconds. It should show `1`, `2` and `3`. Fix it.
+        code: |
+          i = 1
+          j = 1
+          while i <= 3:
+              print(i)
+              j += 1
+        solution: |
+          i = 1
+          while i <= 3:
+              print(i)
+              i += 1
+        highlightLine: 5
+        expectOutput: "1\n2\n3"
+        why: >-
+          The loop updated the wrong variable, so `i` never changed.
+        hints:
+          - Which variable does the condition look at?
+      - prompt: This should show `3` and then `0`, but it shows `4` and `1`. Fix the loop.
+        code: |
+          def count_to(limit):
+              count = 0
+              n = 0
+              while n <= limit:
+                  count += 1
+                  n += 1
+              return count
+
+          print(count_to(3))
+          print(count_to(0))
+        solution: |
+          def count_to(limit):
+              count = 0
+              n = 1
+              while n <= limit:
+                  count += 1
+                  n += 1
+              return count
+
+          print(count_to(3))
+          print(count_to(0))
+        highlightLine: 3
+        expectOutput: "3\n0"
+        why: >-
+          Starting at 0 with `<=` gives one extra pass. Starting at 1, or using `<`, fixes it.
+        hints:
+          - Try `limit = 0`. How many passes should there be?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Finding a bug by printing
+    body: >-
+      When a loop misbehaves, the fastest tool is a `print` inside the block that shows every variable on every pass. It costs nothing, and you can remove it afterwards. Tracing by hand tells you what the code should do, and printing tells you what it really did. The bug is where they differ.
+
+
+      Below, a savings loop was meant to report the year when the balance reaches 200, but the answer looks wrong. The `print` shows `year` and `balance` on each pass. You can see the balance reaching 200 in year 4, and yet the function gives back 5.
+
+
+      So it's clear what to look at: at exactly 200, `<=` is still true, and the loop goes around once more. This one is an off-by-one in the condition, and changing it to `<` fixes the function.
+    code: |
+      def years_to_reach(goal):
+          balance = 100
+          year = 0
+          while balance <= goal:
+              balance += 25
+              year += 1
+              print(year, balance)
+          return year
+
+      print(years_to_reach(200))
+    subgoals:
+      - { line: 4, label: 'The suspect condition' }
+      - { line: 7, label: 'See every variable on every pass' }
+      - { line: 10, label: 'Compare with what you expected' }
+    predict: In which pass does `balance` first reach 200, and what happens next?
+
+  - type: write
+    id: first-divisible
+    prompt: Write `first_divisible(start, d)`, which gives back the first number from `start` upwards that divides by `d` with no remainder. Use `while True` and leave the loop with either `break` or `return`.
+    starter: |
+      def first_divisible(start, d):
+          # Your code here
+    solution: |
+      def first_divisible(start, d):
+          n = start
+          while True:
+              if n % d == 0:
+                  return n
+              n += 1
+    tests:
+      - { call: 'first_divisible(10, 7)', expect: '14' }
+      - { call: 'first_divisible(14, 7)', expect: '14' }
+      - { call: 'first_divisible(1, 1)', expect: '1' }
+    why: >-
+      The check comes before the update, so `start` itself gets checked. `return` also ends the loop, since it ends the whole function.
+    hints:
+      - What should happen if `start` already divides by `d`?
+    variants:
+      - prompt: Write `steps_to_one(n)`. While `n` is above 1, halve it with `//`. Give back how many steps that took. So `steps_to_one(8)` gives back `3`.
+        starter: |
+          def steps_to_one(n):
+              # Your code here
+        solution: |
+          def steps_to_one(n):
+              steps = 0
+              while n > 1:
+                  n = n // 2
+                  steps += 1
+              return steps
+        tests:
+          - { call: steps_to_one(8), expect: '3' }
+          - { call: steps_to_one(1), expect: '0' }
+          - { call: steps_to_one(9), expect: '3' }
+        hints:
+          - What should it give back when `n` is already 1?
+
+  - type: choice
+    id: remember-accumulator
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      n = 1
+      while n <= 2:
+          total = 10
+          total += n
+          n += 1
+      print(total)
+    choices: ['12', '13', '11', '10']
+    answer: '12'
+    why: >-
+      `total` is reset to 10 on each pass, so at the end it's only 10 plus the last `n`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An infinite loop has a condition that can never become false, so ask what changes on each pass. An off-by-one comes from the boundaries, so test the smallest inputs. `break` leaves a loop early. A `print` inside the block shows you what really happened.
+
+
+      Next: when you know how many times to repeat, there's a much tidier kind of loop.

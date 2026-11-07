@@ -1,0 +1,471 @@
+id: p4-classes
+track: ml
+unit: 4
+order: 8
+title: Your first class
+summary: Bundle data with the functions that use it. Every model you build will be one.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A new kind of value
+    body: >-
+      In the first lesson of this unit, a neuron was a list like `[0.5, -1, 1]`, and a separate function did the work. You had to remember that `n[2]` was the bias, and nothing stopped you passing the wrong list. Classes fix that, and every PyTorch model you'll ever write is one.
+
+
+      By the end of this lesson you'll be able to write a class, create objects from it, and explain what `self` means. It's the biggest new idea in this unit, so take it slowly.
+
+  - type: learn
+    id: objects
+    title: Classes and objects
+    body: >-
+      A class describes a new kind of value. An object is one value of that kind. You've used them all along: `list` is a class, and `[1, 2]` is an object of that class. Think of the class as a recipe, and the objects as the things you make from it. One recipe can make any number of them.
+
+
+      An object can hold named values, called attributes, which you reach with a dot: `n.bias`. It's like a dict with fixed, readable names. `n.bias` tells you far more than `n[2]`.
+
+
+      `__init__` is a special function that Python runs by itself whenever you create an object, and its job is to set up the attributes. Calling the class, as in `Neuron(0.5, 1)`, creates a new object and runs `__init__` on it. The two underscores on each side mark it as a name Python treats specially. `self` is the new object being set up, and `self.weight = weight` stores a value on it.
+    code: |
+      class Neuron:
+          def __init__(self, weight, bias):
+              self.weight = weight
+              self.bias = bias
+
+      a = Neuron(0.5, 1)
+      b = Neuron(2, -1)
+      print(a.weight, a.bias)
+      print(b.weight, b.bias)
+      print(type(a).__name__)
+    subgoals:
+      - { line: 1, label: 'The recipe: nothing is made yet' }
+      - { line: 2, label: 'Runs each time an object is created' }
+      - { line: 3, label: 'Store a value on this object' }
+      - { line: 6, label: 'Make one: self is filled in for you' }
+      - { line: 7, label: 'Make another, with its own values' }
+    predict: What will `b.bias` show?
+
+  - type: choice
+    id: objects-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Point:
+          def __init__(self, x, y):
+              self.x = x
+              self.y = y
+
+      p = Point(3, 4)
+      q = Point(5, 6)
+      print(p.x + q.y)
+    choices: ['9', '8', '7', '18']
+    answer: '9'
+    why: >-
+      Each object has its own attributes, so it's 3 from `p` and 6 from `q`.
+    variants:
+      - code: |
+          class Box:
+              def __init__(self, size):
+                  print("making")
+                  self.size = size
+
+          a = Box(1)
+          b = Box(2)
+        choices: ["making\nmaking", 'making', 'Nothing', '1 2']
+        answer: "making\nmaking"
+        why: >-
+          `__init__` runs once for each object created.
+      - code: |
+          class Box:
+              def __init__(self, size):
+                  print("making")
+
+          print("start")
+        choices: ['start', "making\nstart", "start\nmaking", 'Error']
+        answer: 'start'
+        why: >-
+          Defining a class doesn't make any objects, so `__init__` never runs.
+      - code: |
+          class Pet:
+              def __init__(self, name):
+                  self.label = name
+
+          print(Pet("Adam").label)
+        choices: ['Adam', 'name', 'label', 'Error']
+        answer: 'Adam'
+        why: >-
+          The attribute's name can be different from the parameter's. What matters is what comes after `self.`.
+
+  - type: choice
+    id: forgot-self
+    prompt: This class stores nothing on the object. What happens on the last line?
+    code: |
+      class Box:
+          def __init__(self, size):
+              size = size
+
+      print(Box(3).size)
+    choices: ['AttributeError', '3', 'None', 'size']
+    answer: 'AttributeError'
+    why: >-
+      Without `self.`, `size = size` only reassigns the local parameter, and it disappears when `__init__` ends. Nothing is stored on the object.
+
+  - type: learn
+    id: methods
+    title: Methods and self
+    body: >-
+      A function defined inside a class is called a method. It's what you've been calling all along with `words.append(x)`. Methods sit with the data they work on, so a neuron can calculate its own output.
+
+
+      Every method takes `self` as its first parameter, but you never pass it yourself. When you write `n.output(2)`, Python turns it into `Neuron.output(n, 2)`. The object before the dot becomes `self`, and the remaining arguments follow it. So `self` means "the object this method was called on", and that's how one method can work for every object.
+
+
+      Inside a method, you reach attributes through `self`. Writing `weight` alone gives a `NameError`, because no such variable exists. Leaving `self` out of the `def` line gives you `TypeError: output() takes 1 positional argument but 2 were given`. That message is confusing the first time: the extra argument is the object itself.
+
+
+      Methods can also change attributes. That's how an object keeps track of things over time.
+    code: |
+      class Neuron:
+          def __init__(self, weight, bias):
+              self.weight = weight
+              self.bias = bias
+
+          def output(self, x):
+              return self.weight * x + self.bias
+
+          def nudge(self, amount):
+              self.weight += amount
+
+      n = Neuron(0.5, 1)
+      print(n.output(2))
+      print(Neuron.output(n, 2))
+      n.nudge(1.5)
+      print(n.output(2))
+    subgoals:
+      - { line: 6, label: 'self comes first in every method' }
+      - { line: 7, label: 'Reach attributes through self' }
+      - { line: 10, label: 'A method can change the object' }
+      - { line: 13, label: 'You pass only x' }
+      - { line: 14, label: 'What Python really does' }
+    predict: What will the last line show, after the nudge?
+
+  - type: choice
+    id: methods-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Counter:
+          def __init__(self, start):
+              self.value = start
+
+          def bump(self):
+              self.value += 1
+              return self.value
+
+      c = Counter(5)
+      c.bump()
+      print(c.bump())
+    choices: ['7', '6', '5', 'None']
+    answer: '7'
+    why: >-
+      The attribute lasts between calls, so it goes from 5 to 6 to 7.
+    variants:
+      - code: |
+          class Counter:
+              def __init__(self):
+                  self.value = 0
+
+              def bump(self):
+                  self.value += 1
+
+          a = Counter()
+          b = Counter()
+          a.bump()
+          a.bump()
+          b.bump()
+          print(a.value, b.value)
+        choices: ['2 1', '3 3', '1 1', '2 2']
+        answer: '2 1'
+        why: >-
+          `self` is whichever object is before the dot, so each has its own `value`.
+      - code: |
+          class Counter:
+              def __init__(self):
+                  self.value = 0
+
+              def bump(self):
+                  self.value += 1
+
+          c = Counter()
+          print(c.bump())
+        choices: ['None', '1', '0', 'Error']
+        answer: 'None'
+        why: >-
+          The method changes the attribute, but it has no `return`, so the call gives back `None`.
+      - code: |
+          class Rect:
+              def __init__(self, w, h):
+                  self.w = w
+                  self.h = h
+
+              def area(self):
+                  return self.w * self.h
+
+              def double_area(self):
+                  return self.area() * 2
+
+          print(Rect(2, 3).double_area())
+        choices: ['12', '6', '5', 'Error']
+        answer: '12'
+        why: >-
+          A method can call another method, also through `self`.
+
+  - type: explain
+    id: explain-self
+    prompt: What is `self` when `a.bump()` runs, and why don't you pass it in the parentheses?
+    code: |
+      class Counter:
+          def __init__(self):
+              self.n = 0
+
+          def bump(self):
+              self.n += 1
+
+      a = Counter()
+      a.bump()
+    model: >-
+      `self` is `a`, the object before the dot. Python passes it automatically, turning the call into `Counter.bump(a)`, so the method changes that object's `n`.
+    keyPoints:
+      - '`self` is the object the method was called on'
+      - Python passes it automatically
+
+  - type: parsons
+    id: order-class
+    prompt: Put the lines in order so that `Point(1, 2).total()` gives back 3.
+    code: |
+      class Point:
+          def __init__(self, x, y):
+              self.x = x
+              self.y = y
+          def total(self):
+              return self.x + self.y
+    distractors: ['    def total():', '        return x + y']
+    tests:
+      - { call: 'Point(1, 2).total()', expect: '3' }
+    why: >-
+      Methods take `self` first, and they reach attributes through it.
+
+  - type: blank
+    id: fill-self
+    prompt: Fill in the blank so the method changes the stored value, and this shows `6`.
+    code: |
+      class Weight:
+          def __init__(self, value):
+              self.value = value
+
+          def scale(self, by):
+              ____ = self.value * by
+
+      w = Weight(2)
+      w.scale(3)
+      print(w.value)
+    answers: [['self.value']]
+    expectOutput: '6'
+    why: >-
+      Writing `value` alone would only make a local name, gone when the method ends.
+    variants:
+      - prompt: Fill in the blank so the method can be called on an object, and this shows `2`.
+        code: |
+          class Two:
+              def get(____):
+                  return 2
+
+          print(Two().get())
+        answers: [['self']]
+        expectOutput: '2'
+        why: >-
+          Python always passes the object as the first argument.
+      - prompt: Fill in the blank so this shows `5`.
+        code: |
+          class Box:
+              def __init__(self, size):
+                  self.size = size
+
+          b = Box(5)
+          print(____)
+        answers: [['b.size']]
+        expectOutput: '5'
+        why: >-
+          Reach an attribute from outside using the object's name and a dot.
+      - prompt: Fill in the blank so this special method runs when an object is made, and this shows `1`.
+        code: |
+          class Box:
+              def ____(self):
+                  self.size = 1
+
+          print(Box().size)
+        answers: [['__init__']]
+        expectOutput: '1'
+        why: >-
+          Python looks for `__init__` when you create an object.
+
+  - type: fix
+    id: fix-self
+    prompt: '`Neuron(2, 1).output(3)` should give back `7`, but it gives a `NameError`. Fix the method.'
+    code: |
+      class Neuron:
+          def __init__(self, w, b):
+              self.w = w
+              self.b = b
+
+          def output(self, x):
+              return w * x + b
+    solution: |
+      class Neuron:
+          def __init__(self, w, b):
+              self.w = w
+              self.b = b
+
+          def output(self, x):
+              return self.w * x + self.b
+    highlightLine: 7
+    tests:
+      - { call: 'Neuron(2, 1).output(3)', expect: '7' }
+    why: >-
+      Attributes aren't ordinary variables, so you reach them through `self`.
+    hints:
+      - Where are `w` and `b` stored?
+    variants:
+      - prompt: '`Box(3).size` should give back `3`, but it gives an `AttributeError`. Fix it.'
+        code: |
+          class Box:
+              def __init__(self, size):
+                  size = size
+        solution: |
+          class Box:
+              def __init__(self, size):
+                  self.size = size
+        highlightLine: 3
+        tests:
+          - { call: 'Box(3).size', expect: '3' }
+        why: >-
+          Only `self.size` stores the value on the object.
+        hints:
+          - Where does the value need to end up?
+      - prompt: '`Dog().speak()` should give back `"woof"`, but it gives a `TypeError`. Fix it.'
+        code: |
+          class Dog:
+              def speak():
+                  return "woof"
+        solution: |
+          class Dog:
+              def speak(self):
+                  return "woof"
+        highlightLine: 2
+        tests:
+          - { call: 'Dog().speak()', expect: "'woof'" }
+        why: >-
+          Python passes the object in as the first argument, so a method needs somewhere to receive it.
+        hints:
+          - What does every method's parameter list start with?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A neuron with many inputs
+    body: >-
+      Here's the neuron from earlier, as a proper class. Compare it with the list `[0.5, -1, 1]`. The weights and bias have names, and the calculation is kept with them. You can't pass it the wrong list, since it uses its own.
+
+
+      Build it in two steps. First, ask what each neuron has to remember. That's its weights and its bias, so they go in `__init__`. Next, ask what it can do. It can produce an output from some inputs, so that's a method, using `zip` from earlier in this unit.
+
+
+      Those two questions work for designing any class: what does it remember, and what can it do? Each neuron here is independent, so a list of them is a layer. The next lessons make this tidier still, until it looks like PyTorch.
+    code: |
+      class Neuron:
+          def __init__(self, weights, bias):
+              self.weights = weights
+              self.bias = bias
+
+          def output(self, inputs):
+              total = sum(w * x for w, x in zip(self.weights, inputs))
+              return total + self.bias
+
+      layer = [Neuron([0.5, -1], 1), Neuron([2, 0], -1)]
+      inputs = [2, 3]
+      print([n.output(inputs) for n in layer])
+    subgoals:
+      - { line: 2, label: 'What it remembers' }
+      - { line: 6, label: 'What it can do' }
+      - { line: 7, label: 'A dot product, using its own weights' }
+      - { line: 10, label: 'A layer is a list of neurons' }
+    predict: What's the first neuron's output?
+
+  - type: write
+    id: write-class
+    prompt: Write a class `Rect`. `Rect(w, h)` stores the width as `.w` and the height as `.h`, and `.area()` gives back the width times the height.
+    starter: |
+      # Write the Rect class here
+    solution: |
+      class Rect:
+          def __init__(self, w, h):
+              self.w = w
+              self.h = h
+
+          def area(self):
+              return self.w * self.h
+    tests:
+      - { call: 'Rect(2, 3).w', expect: '2' }
+      - { call: 'Rect(2, 3).area()', expect: '6' }
+      - { call: 'Rect(0, 5).area()', expect: '0' }
+    why: >-
+      What it remembers goes in `__init__`, and what it can do becomes a method.
+    hints:
+      - You need `class`, then `def __init__(self, w, h):`, then a second method.
+    variants:
+      - prompt: Write a class `Tally`. `Tally()` starts `.count` at 0. `.add(n)` adds `n` to the count, and `.reset()` sets it back to 0.
+        starter: |
+          # Write the Tally class here
+        solution: |
+          class Tally:
+              def __init__(self):
+                  self.count = 0
+
+              def add(self, n):
+                  self.count += n
+
+              def reset(self):
+                  self.count = 0
+        tests:
+          - { call: 'Tally().count', expect: '0' }
+          - { call: '(lambda t: (t.add(2), t.add(3), t.count)[2])(Tally())', expect: '5', hidden: true }
+          - { call: '(lambda t: (t.add(2), t.reset(), t.count)[2])(Tally())', expect: '0', hidden: true }
+        hints:
+          - Each method changes `self.count`.
+
+  - type: choice
+    id: remember-closure
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def make(k):
+          def f(x):
+              return x * k
+          return f
+
+      print(make(3)(2))
+    choices: ['6', '5', 'f', 'Error']
+    answer: '6'
+    why: >-
+      The inner function remembers `k`, even after `make` has finished.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A class describes a kind of value, and an object is one of them. `__init__` runs when an object is made, and sets up its attributes. A method is a function in a class, with `self` first, and `self` is the object before the dot. Reach attributes through `self`. Ask what it remembers, and what it can do.
+
+
+      Next: what happens when objects share data.

@@ -270,6 +270,7 @@ cards:
           else:
               print("closed")
           print("Welcome")
+        highlightLine: 6
         solution: |
           hour = 22
           if hour < 18:

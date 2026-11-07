@@ -1,0 +1,523 @@
+id: p4-objects
+track: ml
+unit: 4
+order: 9
+title: Objects and shared data
+summary: Who owns what, and how objects hold other objects.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The same rules, one level up
+    body: >-
+      A model is an object that holds layers, which are objects that hold neurons, which hold weights. Training changes those weights, so you need to know exactly what's shared and what isn't.
+
+
+      By the end of this lesson you'll be able to tell when two names refer to one object, keep data separate for each object, build objects out of other objects, and make a truly independent copy.
+
+  - type: learn
+    id: names
+    title: Objects follow the same rules as lists
+    body: >-
+      Everything you learned about lists in Unit 3 applies to your own objects, because the rule was never about lists. `b = a` doesn't make a new object, and only makes a second name. Calling the class is what makes a new object.
+
+
+      A function's parameter is another name for the caller's object as well, so a function can change an attribute, and the caller sees the change. Assigning to the parameter only moves the local name.
+
+
+      An object holding a list holds a reference to it. So if two objects were given the same list, they share it. This surprises people: `self.items = items` doesn't copy anything. If an object needs its own version, it has to copy it: `self.items = items.copy()`.
+    code: |
+      class Node:
+          def __init__(self, v):
+              self.v = v
+
+      a = Node(1)
+      b = a
+      b.v = 2
+      print(a.v)
+
+      def bump(node):
+          node.v += 1
+
+      bump(a)
+      print(a.v)
+
+      c = Node(a.v)
+      c.v = 100
+      print(a.v, a is b, a is c)
+    subgoals:
+      - { line: 6, label: 'A second name, not a new object' }
+      - { line: 11, label: 'The parameter names the same object' }
+      - { line: 16, label: 'Calling the class makes a new object' }
+      - { line: 18, label: 'is asks: the same object?' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: names-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Node:
+          def __init__(self, v):
+              self.v = v
+
+      a = Node(1)
+      b = Node(1)
+      b.v = 2
+      print(a.v)
+    choices: ['1', '2', 'None', 'Error']
+    answer: '1'
+    why: >-
+      Two calls make two objects, each with its own `v`.
+    variants:
+      - code: |
+          class Node:
+              def __init__(self, v):
+                  self.v = v
+
+          def replace(node):
+              node = Node(9)
+
+          n = Node(1)
+          replace(n)
+          print(n.v)
+        choices: ['1', '9', 'None', 'Error']
+        answer: '1'
+        why: >-
+          Assigning to the parameter only moves the local name, and the caller's object isn't touched.
+      - code: |
+          class Box:
+              def __init__(self, items):
+                  self.items = items
+
+          shared = [1]
+          a = Box(shared)
+          b = Box(shared)
+          a.items.append(2)
+          print(b.items)
+        choices: ['[1, 2]', '[1]', '[2]', 'Error']
+        answer: '[1, 2]'
+        why: >-
+          Both objects hold the same list, so a change through `a` shows through `b`.
+      - code: |
+          class Box:
+              def __init__(self, items):
+                  self.items = items.copy()
+
+          shared = [1]
+          a = Box(shared)
+          shared.append(2)
+          print(a.items)
+        choices: ['[1]', '[1, 2]', '[2]', 'Error']
+        answer: '[1]'
+        why: >-
+          The object took its own copy, so later changes to `shared` don't reach it.
+
+  - type: learn
+    id: class-attr
+    title: Belonging to the class
+    body: >-
+      A variable written directly in the class body, not in a method, belongs to the class. All its objects share it. That's fine for a constant, such as `dimensions = 2`. Looking up `obj.x` checks the object first, and then the class.
+
+
+      It's a trap for anything that changes. With `weights = []` in the class body, every layer shares one list, and adding to one adds to all of them. It's a real and hard-to-spot bug, because nothing crashes. So anything that's different for each object goes on `self`, in `__init__`.
+
+
+      There's a similar trap with default values. `def __init__(self, items=[])` makes one list when the `def` runs, and every call that uses the default shares it. The standard fix is a default of `None`: `def __init__(self, items=None):`, and then, inside, `self.items = [] if items is None else items`.
+    code: |
+      class Bad:
+          weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+
+      a = Bad()
+      b = Bad()
+      a.add(1)
+      print(b.weights)
+
+      class Good:
+          dimensions = 2
+
+          def __init__(self):
+              self.weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+
+      a = Good()
+      b = Good()
+      a.add(1)
+      print(b.weights, b.dimensions)
+    subgoals:
+      - { line: 2, label: 'One list, shared by every object' }
+      - { line: 10, label: 'b sees what a added' }
+      - { line: 13, label: 'Fine for a value that never changes' }
+      - { line: 16, label: 'A new list for each object' }
+    predict: What will the first `print` show?
+
+  - type: choice
+    id: class-attr-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Layer:
+          params = []
+
+          def add(self, p):
+              self.params.append(p)
+
+      a = Layer()
+      b = Layer()
+      a.add(1)
+      b.add(2)
+      print(len(a.params))
+    choices: ['2', '1', '0', 'Error']
+    answer: '2'
+    why: >-
+      `params` belongs to the class, so there's one list for all the objects.
+    variants:
+      - code: |
+          class Layer:
+              def __init__(self):
+                  self.params = []
+
+              def add(self, p):
+                  self.params.append(p)
+
+          a = Layer()
+          b = Layer()
+          a.add(1)
+          b.add(2)
+          print(len(a.params))
+        choices: ['1', '2', '0', 'Error']
+        answer: '1'
+        why: >-
+          Each `__init__` makes a new list for that object.
+      - code: |
+          class C:
+              size = 1
+
+          a = C()
+          a.size = 5
+          print(a.size, C.size)
+        choices: ['5 1', '5 5', '1 1', '1 5']
+        answer: '5 1'
+        why: >-
+          Assigning through `a` creates an attribute on that object, and the class's value stays as it was.
+      - code: |
+          class C:
+              def __init__(self, items=[]):
+                  self.items = items
+
+          a = C()
+          b = C()
+          a.items.append(1)
+          print(b.items)
+        choices: ['[1]', '[]', 'None', 'Error']
+        answer: '[1]'
+        why: >-
+          The default list is made once, when the `def` runs, so both objects share it.
+
+  - type: explain
+    id: explain-shared
+    prompt: This program has two layers, and you only added to one. Why does the second one have a weight, and what would you change?
+    code: |
+      class Layer:
+          weights = []
+
+      a = Layer()
+      b = Layer()
+      a.weights.append(0.5)
+      print(b.weights)
+    model: >-
+      `weights` is in the class body, so it belongs to the class, and every object shares one list. Moving it into `__init__`, as `self.weights = []`, gives each object its own.
+    keyPoints:
+      - A variable in the class body is shared by all the objects
+      - Data that's different for each object goes on `self` in `__init__`
+
+  - type: learn
+    id: holding
+    title: Objects holding objects
+    body: >-
+      An attribute can be anything, including another object or a list of them. That's how big programs are built from small parts. A layer holds neurons, and a network holds layers. Each class only needs to know about the level below it.
+
+
+      So you can follow the dots: `layer.neurons[0].weights` means the layer's list of neurons, the first of them, and its weights. Reading it left to right tells you where you're going.
+
+
+      Objects often pass work along. A layer doesn't calculate anything itself. It asks each neuron for an output, using a comprehension. This keeps each class small, and you can test it by itself.
+
+
+      To copy an object along with everything inside it, use `copy.deepcopy`. It follows every reference, all the way down, while `.copy()` and `copy.copy` only go one level. This is how training code saves the best model so far, because otherwise further training would change the "saved" one.
+    code: |
+      import copy
+
+      class Neuron:
+          def __init__(self, w):
+              self.w = w
+
+      class Layer:
+          def __init__(self, weights):
+              self.neurons = [Neuron(w) for w in weights]
+
+      a = Layer([1, 2])
+      print(a.neurons[1].w)
+
+      same = a
+      saved = copy.deepcopy(a)
+      a.neurons[0].w = 99
+      print(same.neurons[0].w, saved.neurons[0].w)
+    subgoals:
+      - { line: 9, label: 'A layer builds its own neurons' }
+      - { line: 12, label: 'Follow the dots, left to right' }
+      - { line: 14, label: 'Only a second name' }
+      - { line: 15, label: 'A separate copy, all the way down' }
+    predict: What will the last line show?
+
+  - type: blank
+    id: fill-init
+    prompt: Fill in the blank so each object gets its own list, and this shows `[]`.
+    code: |
+      class Layer:
+          def __init__(self):
+              ____ = []
+
+      a = Layer()
+      b = Layer()
+      a.weights.append(1)
+      print(b.weights)
+    answers: [['self.weights']]
+    expectOutput: '[]'
+    why: >-
+      Assigning to `self` in `__init__` makes a new list for each object.
+    variants:
+      - prompt: Fill in the blank so this reaches the second neuron's weight, and shows `2`.
+        code: |
+          class N:
+              def __init__(self, w):
+                  self.w = w
+
+          class L:
+              def __init__(self):
+                  self.ns = [N(1), N(2)]
+
+          print(L().____)
+        answers: [['ns[1].w', 'ns[-1].w']]
+        expectOutput: '2'
+        why: >-
+          Follow the dots: the list, then the item, then its attribute.
+      - prompt: Fill in the blank so the backup isn't affected by the change, and this shows `[[1]]`.
+        code: |
+          import copy
+          a = [[1]]
+          b = copy.____(a)
+          a[0][0] = 9
+          print(b)
+        answers: [['deepcopy']]
+        expectOutput: '[[1]]'
+        why: >-
+          A deep copy also copies the inner lists.
+
+  - type: fix
+    id: fix-shared
+    prompt: Each `Layer` should keep its own list of weights, but they all share one. Fix it.
+    code: |
+      class Layer:
+          weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+    solution: |
+      class Layer:
+          def __init__(self):
+              self.weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+    highlightLine: 2
+    tests:
+      - { call: 'Layer().weights', expect: '[]' }
+      - { call: '(lambda a, b: (a.add(1), b.weights)[1])(Layer(), Layer())', expect: '[]', hidden: true }
+      - { call: '(lambda a: (a.add(1), a.weights)[1])(Layer())', expect: '[1]', hidden: true }
+    why: >-
+      A variable in the class body belongs to the class. Data for each object goes on `self`, in `__init__`.
+    hints:
+      - Where should something that's different for each object get created?
+    variants:
+      - prompt: This should show `[]`, but the second box has the first box's item. Fix the default value, so each box gets its own list.
+        code: |
+          class Box:
+              def __init__(self, items=[]):
+                  self.items = items
+
+          a = Box()
+          a.items.append(1)
+          print(Box().items)
+        solution: |
+          class Box:
+              def __init__(self, items=None):
+                  self.items = [] if items is None else items
+
+          a = Box()
+          a.items.append(1)
+          print(Box().items)
+        highlightLine: 2
+        tests: []
+        expectOutput: '[]'
+        why: >-
+          A default of `None` means a new list can be made on each call.
+        hints:
+          - Use `None` as the default, and make the list inside.
+      - prompt: The saved copy should keep the old value, and this should show `1`. Fix the line that saves it.
+        code: |
+          import copy
+
+          class Model:
+              def __init__(self):
+                  self.weights = [1]
+
+          m = Model()
+          best = m
+          m.weights[0] = 9
+          print(best.weights[0])
+        solution: |
+          import copy
+
+          class Model:
+              def __init__(self):
+                  self.weights = [1]
+
+          m = Model()
+          best = copy.deepcopy(m)
+          m.weights[0] = 9
+          print(best.weights[0])
+        highlightLine: 8
+        tests: []
+        expectOutput: '1'
+        why: >-
+          `best = m` is only a second name, so you need a real copy.
+        hints:
+          - The `copy` module is already imported.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A network, level by level
+    body: >-
+      Here's a small network as objects within objects, following the same structure as micrograd. Read from the bottom up.
+
+
+      A `Neuron` remembers its weights, and calculates one number. A `Layer` remembers a list of neurons, and gives back a list of their outputs. An `MLP`, short for multi-layer perceptron, remembers a list of layers, and passes the data through them, with each layer's output becoming the next layer's input.
+
+
+      Notice the line `x = layer.output(x)`. It's the whole idea of a deep network. And notice how little each class knows. `MLP` never touches a weight, and `Neuron` doesn't know that layers exist.
+
+
+      Each neuron needs one weight per input, which is why the second layer's neurons have two weights here: the first layer has two outputs.
+    code: |
+      class Neuron:
+          def __init__(self, weights):
+              self.weights = weights
+
+          def output(self, x):
+              return sum(w * a for w, a in zip(self.weights, x))
+
+      class Layer:
+          def __init__(self, neurons):
+              self.neurons = neurons
+
+          def output(self, x):
+              return [n.output(x) for n in self.neurons]
+
+      class MLP:
+          def __init__(self, layers):
+              self.layers = layers
+
+          def output(self, x):
+              for layer in self.layers:
+                  x = layer.output(x)
+              return x
+
+      first = Layer([Neuron([1, 0]), Neuron([0, 2])])
+      second = Layer([Neuron([1, 1])])
+      net = MLP([first, second])
+      print(net.output([3, 4]))
+    subgoals:
+      - { line: 6, label: 'One number' }
+      - { line: 13, label: 'Asks each neuron' }
+      - { line: 21, label: 'Each output feeds the next layer' }
+      - { line: 24, label: 'Two inputs, two outputs' }
+      - { line: 25, label: 'Two inputs, one output' }
+    predict: What's the output of the first layer, and of the whole network?
+
+  - type: write
+    id: write-layer
+    prompt: Write a class `Layer`. `Layer()` starts `.weights` as its own empty list. `.add(w)` appends a weight, and `.total()` gives back the sum of the weights.
+    starter: |
+      # Write the Layer class here
+    solution: |
+      class Layer:
+          def __init__(self):
+              self.weights = []
+
+          def add(self, w):
+              self.weights.append(w)
+
+          def total(self):
+              return sum(self.weights)
+    tests:
+      - { call: 'Layer().weights', expect: '[]' }
+      - { call: 'Layer().total()', expect: '0' }
+      - { call: '(lambda a: (a.add(2), a.add(3), a.total())[2])(Layer())', expect: '5', hidden: true }
+      - { call: '(lambda a, b: (a.add(1), b.weights)[1])(Layer(), Layer())', expect: '[]', hidden: true }
+    why: >-
+      The list is created in `__init__`, so each layer has its own.
+    hints:
+      - Make the list in `__init__`, using `self.`.
+    variants:
+      - prompt: Write a class `Team`. `Team(people)` stores its own copy of the list as `.people`, so that later changes to the original list don't affect it. `.size()` gives back how many people there are.
+        starter: |
+          # Write the Team class here
+        solution: |
+          class Team:
+              def __init__(self, people):
+                  self.people = people.copy()
+
+              def size(self):
+                  return len(self.people)
+        tests:
+          - { call: 'Team(["a"]).size()', expect: '1' }
+          - { call: 'Team([]).people', expect: '[]' }
+          - { call: '(lambda p: (lambda t: (p.append(2), t.size())[1])(Team(p)))([1])', expect: '1', hidden: true }
+        hints:
+          - Storing the list itself would share it with the caller.
+
+  - type: choice
+    id: remember-self
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      class C:
+          def __init__(self, n):
+              self.n = n
+
+          def twice(self):
+              return self.n * 2
+
+      print(C(4).twice())
+    choices: ['8', '4', 'None', 'Error']
+    answer: '8'
+    why: >-
+      `self` is the object before the dot, so `self.n` is 4.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `b = a` makes a second name for an object, and calling the class makes a new one. A variable in the class body is shared by every object, so per-object data goes on `self`. Avoid `[]` as a default. Objects can hold objects, and each class only needs to know the level below. `copy.deepcopy` copies all the way down.
+
+
+      Next: teaching your objects to work with `+`, `==` and `print`.

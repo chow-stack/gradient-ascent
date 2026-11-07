@@ -27,6 +27,7 @@ self.onmessage = async (e: MessageEvent<RunRequest>) => {
     const py = await pyodide!
     // Packages load on first import (NumPy takes a moment), before the run's time limit starts.
     await py.loadPackagesFromImports(code, { messageCallback: () => {} })
+    if (code.includes('matplotlib')) (py.globals.get('__ga_prepare_plots') as () => void)()
     self.postMessage({ type: 'started', id })
     const run = py.globals.get('__ga_run') as (code: string, tests: string) => string
     const json = run(code, JSON.stringify(tests))

@@ -35,9 +35,29 @@ const problems: string[] = []
 let checks = 0
 
 const py = await loadPyodide({ packageBaseUrl: join(root, 'vendor/pyodide-packages') + '/' })
-await py.loadPackage('numpy', { messageCallback: () => {} })
+await py.loadPackage(['numpy', 'matplotlib'], { messageCallback: () => {} })
 py.runPython(HARNESS_PY)
-const pyRun = py.globals.get('__ga_run') as (code: string, tests: string) => string
+py.runPython('__ga_prepare_plots()')
+// The browser stops a runaway loop by killing its worker. Here, a step limit does the same job.
+py.runPython(`
+import sys
+def __ga_run_limited(code, tests):
+    steps = [0]
+    def tracer(frame, event, arg):
+        if frame.f_code.co_filename != "main.py":
+            return None
+        if event == "line":
+            steps[0] += 1
+            if steps[0] > 200000:
+                raise TimeoutError("ran too long")
+        return tracer
+    sys.settrace(tracer)
+    try:
+        return __ga_run(code, tests)
+    finally:
+        sys.settrace(None)
+`)
+const pyRun = py.globals.get('__ga_run_limited') as (code: string, tests: string) => string
 const run = (code: string, tests: TestCase[] = []): RunResult => JSON.parse(pyRun(code, JSON.stringify(tests)))
 
 const describe = (r: RunResult) =>
@@ -75,6 +95,17 @@ const numpyCheck = run('import numpy as np\nx = np.arange(6).reshape(2, 3)', [
   { call: 'x.sum(axis=0)', expect: '[3, 5, 7]' },
 ])
 expect(runPassed(numpyCheck), 'numpy', `doesn't work: ${describe(numpyCheck)}`)
+const plotCheck = run('import matplotlib.pyplot as plt\nplt.plot([1, 2])\nplt.show()', [])
+expect(runPassed(plotCheck) && plotCheck.figures?.length === 1, 'plots', `don't work: ${describe(plotCheck)}`)
+
+const traceCheck = run('def f():\n    return 1 / 0\nf()')
+expect(
+  traceCheck.error?.trace?.map((t) => t.where).join() === '<module>,f',
+  'tracebacks',
+  `wrong: ${describe(traceCheck)}`,
+)
+const loopCheck = run('while True:\n    pass')
+expect(!runPassed(loopCheck), 'runaway loops', `not stopped: ${describe(loopCheck)}`)
 
 const ids = new Set<string>()
 const orders = new Set<string>()
@@ -131,6 +162,12 @@ function checkCard(card: Card, at: string) {
         break
       }
       case 'fix': {
+        if (card.highlightLine)
+          expect(
+            card.highlightLine <= card.code.trimEnd().split('\n').length,
+            at,
+            `highlightLine ${card.highlightLine} is past the end of the code`,
+          )
         const bad = run(card.code, card.tests)
         expect(!runPassed(bad, card.expectOutput), at, 'the buggy code already passes')
         const good = run(card.solution, card.tests)

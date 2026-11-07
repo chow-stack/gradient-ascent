@@ -1,0 +1,359 @@
+id: p2-while
+track: ml
+unit: 2
+order: 5
+title: Repeating with while
+summary: Keep going as long as a condition is true.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Doing something many times
+    body: >-
+      Computers are good at doing a simple thing many times. Training a model is exactly this: make a guess, measure the error, adjust a little, and repeat thousands of times. Nobody writes thousands of lines for that. They write a loop.
+
+
+      By the end of this lesson you'll be able to write a `while` loop, trace one by hand, and say exactly when it stops.
+
+  - type: learn
+    id: while-loop
+    title: The while loop
+    body: >-
+      A `while` loop looks like an `if`: a condition, a colon and an indented block. The difference is what happens at the end of the block. An `if` carries on with the next line. A `while` goes back and asks its question again.
+
+
+      As long as the answer is `True`, the block runs again. Each run through the block is called a pass or an iteration. When the answer is `False`, Python skips the block and carries on below it.
+
+
+      Three things make a loop work. A variable gets set up before the loop. The condition checks it. And something in the block changes it, so that the condition can eventually become false.
+    code: |
+      count = 1
+      while count <= 3:
+          print(count)
+          count = count + 1
+      print("Done")
+    subgoals:
+      - { line: 1, label: 'Set up before the loop' }
+      - { line: 2, label: 'Ask before every pass' }
+      - { line: 4, label: 'Move towards the end' }
+      - { line: 5, label: 'Runs once, after the loop ends' }
+    predict: What's the last number it shows, and what value does `count` end up with?
+
+  - type: choice
+    id: count-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 3
+      while n > 0:
+          print(n)
+          n = n - 1
+    choices: ["3\n2\n1", "3\n2\n1\n0", "2\n1\n0", '3']
+    answer: "3\n2\n1"
+    why: >-
+      When `n` reaches 0, the condition is false, so the block doesn't run again and 0 is never printed.
+    hints:
+      - Write down `n` before each check.
+    variants:
+      - code: |
+          n = 1
+          while n < 20:
+              n = n * 2
+          print(n)
+        choices: ['32', '16', '20', '64']
+        answer: '32'
+        why: >-
+          `n` goes 1, 2, 4, 8, 16, 32. At 16 the condition is still true, so the block runs once more.
+      - code: |
+          n = 10
+          while n < 5:
+              print(n)
+              n = n + 1
+          print("end")
+        choices: ['end', "10\nend", "10\n11\nend", 'Nothing']
+        answer: 'end'
+        why: >-
+          The condition is false the very first time, so the block never runs at all.
+      - code: |
+          i = 0
+          while i < 6:
+              i = i + 2
+          print(i)
+        choices: ['6', '4', '8', '5']
+        answer: '6'
+        why: >-
+          `i` goes 0, 2, 4, 6. Then `6 < 6` is false, and the loop ends.
+
+  - type: learn
+    id: when-checked
+    title: When the condition is checked
+    body: >-
+      This is the most common misunderstanding about loops. The condition isn't watching all the time. It's checked once, at the top, before each pass. If the condition becomes false halfway through the block, the rest of the block still runs. The loop only ends when Python gets back to the top and asks again.
+
+
+      So below, when `n` becomes 3, the `print` underneath still shows it, even though `n < 3` is already false at that moment.
+
+
+      This also means the order of lines in the block matters. Printing and then updating gives different output from updating and then printing. Compare this example with the one before.
+    code: |
+      n = 0
+      while n < 3:
+          n = n + 1
+          print(n)
+      print("Final:", n)
+    subgoals:
+      - { line: 2, label: 'Only checked here, at the top' }
+      - { line: 3, label: 'Update first this time' }
+      - { line: 4, label: 'Shows the updated value, even 3' }
+    predict: Will this show the number 3?
+
+  - type: choice
+    id: mid-body
+    kind: predict
+    prompt: What does this print?
+    code: |
+      x = 1
+      while x < 2:
+          x = x + 5
+          print("still here")
+      print(x)
+    choices: ["still here\n6", '6', "still here\n1", "6\nstill here"]
+    answer: "still here\n6"
+    why: >-
+      `x` becomes 6 partway through the pass, but the condition isn't checked again until the top. So the `print` still runs.
+    variants:
+      - code: |
+          n = 2
+          while n > 0:
+              print(n)
+              n = n - 1
+          print(n)
+        choices: ["2\n1\n0", "2\n1", "1\n0", "2\n1\n0\n0"]
+        answer: "2\n1\n0"
+        why: >-
+          The block prints 2 and 1. After the loop, `n` still exists and holds 0, so the last line shows it.
+      - code: |
+          n = 2
+          while n > 0:
+              n = n - 1
+              print(n)
+        choices: ["1\n0", "2\n1", "2\n1\n0", '0']
+        answer: "1\n0"
+        why: >-
+          Updating before printing shifts all the output by one.
+
+  - type: explain
+    id: explain-three
+    prompt: How many times does the block run, and what is `n` after the loop? Explain how you can tell.
+    code: |
+      n = 10
+      while n > 4:
+          n = n - 3
+      print(n)
+    model: >-
+      It runs twice. `n` goes from 10 to 7 and then to 4. At 4 the condition `n > 4` is false, so the loop ends and `n` stays 4.
+    keyPoints:
+      - The condition is checked before each pass, and the block runs for 10 and for 7
+      - The loop stops when `n` is 4, because `4 > 4` is false
+
+  - type: blank
+    id: fill-while
+    prompt: Fill in the blank so this shows `5`, then `4`, then `3`.
+    code: |
+      n = 5
+      while n >= 3:
+          print(n)
+          n = ____
+    answers: [['n - 1', 'n-1']]
+    expectOutput: "5\n4\n3"
+    why: >-
+      Each pass has to move `n` towards the end, or the loop would never stop.
+    variants:
+      - prompt: Fill in the missing word so the block repeats, and this shows `4`.
+        code: |
+          n = 1
+          ____ n < 3:
+              n = n + 1
+          print(n + 1)
+        answers: [['while']]
+        expectOutput: '4'
+        why: >-
+          `while` repeats. An `if` would run the block at most once.
+      - prompt: Fill in the condition so this shows `1`, `2`, `3` and `4`.
+        code: |
+          i = 1
+          while ____:
+              print(i)
+              i = i + 1
+        answers: [['i <= 4', 'i<=4', 'i < 5', 'i<5']]
+        expectOutput: "1\n2\n3\n4"
+        why: >-
+          Either `i <= 4` or `i < 5` works. Both are true for 4 and false for 5.
+
+  - type: parsons
+    id: order-loop
+    prompt: Put these lines in order so the program shows `0`, `1`, then `2`, then `Done` at the end.
+    code: |
+      i = 0
+      while i < 3:
+          print(i)
+          i = i + 1
+      print("Done")
+    distractors: ['if i < 3:']
+    expectOutput: "0\n1\n2\nDone"
+    why: >-
+      Set up first, then the loop, then the update inside it. The last `print` isn't indented, so it runs once.
+    hints:
+      - What has to exist before the `while` line asks its question?
+
+  - type: fix
+    id: if-not-while
+    prompt: This should show `1`, `2` and `3`, but it only shows `1`. Fix it.
+    code: |
+      n = 1
+      if n <= 3:
+          print(n)
+          n = n + 1
+    solution: |
+      n = 1
+      while n <= 3:
+          print(n)
+          n = n + 1
+    highlightLine: 2
+    expectOutput: "1\n2\n3"
+    why: >-
+      An `if` checks once and moves on. It's `while` that goes back and asks again.
+    hints:
+      - Which statement goes back to the top after its block?
+    variants:
+      - prompt: This should show the numbers up to and including `3`, but it stops at `2`. Fix the condition.
+        code: |
+          n = 1
+          while n < 3:
+              print(n)
+              n = n + 1
+        solution: |
+          n = 1
+          while n <= 3:
+              print(n)
+              n = n + 1
+        highlightLine: 2
+        expectOutput: "1\n2\n3"
+        why: >-
+          `n < 3` is false when `n` is 3, so that value never gets printed.
+        hints:
+          - Is the condition true when `n` is 3?
+      - prompt: This should show `Done` once, but it's shown after every number. Fix it.
+        code: |
+          n = 1
+          while n <= 2:
+              print(n)
+              n = n + 1
+              print("Done")
+        solution: |
+          n = 1
+          while n <= 2:
+              print(n)
+              n = n + 1
+          print("Done")
+        highlightLine: 5
+        expectOutput: "1\n2\nDone"
+        why: >-
+          Indented lines are part of the loop. To run once at the end, the line has to come out of the block.
+        hints:
+          - Which lines belong to the loop?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Tracing a loop on paper
+    body: >-
+      You can work out any loop with a small table. Write a column for each variable, and add a row each time something changes. It sounds slow, but it's the most reliable way to understand what a loop is doing, and even experienced programmers do it for tricky code.
+
+
+      Below, a balance grows by 10% a year, and we want to know how long it takes to pass 150. The table goes like this. Start: `money` 100, `years` 0. After one pass: 110, 1. After two: 121, 2. Then 133.1 with 3, then 146.41 with 4, then 161.051 with 5. Now `money < 150` is false, so the loop ends.
+
+
+      A `while` loop suits this job because you don't know the number of passes in advance. You only know when to stop. Training a model until its error is small enough has the same shape.
+    code: |
+      money = 100
+      years = 0
+      while money < 150:
+          money = money * 1.1
+          years = years + 1
+      print(years)
+    subgoals:
+      - { line: 1, label: 'Set up what the loop needs' }
+      - { line: 3, label: 'Keep going until it passes 150' }
+      - { line: 4, label: 'One year of growth' }
+      - { line: 5, label: 'Count the passes' }
+    predict: After the table above, what will this show?
+
+  - type: write
+    id: halvings
+    prompt: >-
+      Write `halvings(n)`, which gives back how many times you can divide `n` by 2 before it drops below 1. For example, `halvings(8)` gives back `4`, since 8 goes to 4, 2, 1 and then 0.5.
+    starter: |
+      def halvings(n):
+          # Your code here
+    solution: |
+      def halvings(n):
+          count = 0
+          while n >= 1:
+              n = n / 2
+              count = count + 1
+          return count
+    tests:
+      - { call: halvings(8), expect: '4' }
+      - { call: halvings(1), expect: '1' }
+      - { call: halvings(0.5), expect: '0' }
+    why: >-
+      A loop to do the work, a counter for the passes, and a `return` after the loop.
+    hints:
+      - You need a second variable that counts, starting at 0.
+      - The `return` should go after the loop, so it isn't indented as far as the loop's block.
+    variants:
+      - prompt: Write `first_square_over(limit)`, which gives back the smallest square number greater than `limit`. So `first_square_over(10)` gives back `16`.
+        starter: |
+          def first_square_over(limit):
+              # Your code here
+        solution: |
+          def first_square_over(limit):
+              n = 1
+              while n * n <= limit:
+                  n = n + 1
+              return n * n
+        tests:
+          - { call: first_square_over(10), expect: '16' }
+          - { call: first_square_over(16), expect: '25' }
+          - { call: first_square_over(0), expect: '1' }
+        hints:
+          - Start `n` at 1, and keep going while `n * n` is too small.
+
+  - type: choice
+    id: remember-scope
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def f(n):
+          n = n * 2
+          return n
+
+      n = 4
+      m = f(n)
+      print(n, m)
+    choices: ['4 8', '8 8', '4 4', '8 4']
+    answer: '4 8'
+    why: >-
+      The `n` inside the function is local, so the outside `n` stays 4.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `while` runs its block as long as its condition is true, going back to ask again after each pass. The condition is only checked at the top. If it's false at the start, the block never runs. Set up a variable before the loop, and change it inside.
+
+
+      Next: using a loop to build up a result, which is the job most loops have.

@@ -1,0 +1,223 @@
+id: p2-checkpoint
+track: ml
+unit: 2
+order: 12
+kind: checkpoint
+title: Unit 2 checkpoint
+summary: Functions and loops, mixed up. Get 80% right to move on.
+
+cards:
+  - type: choice
+    id: print-vs-return
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f(n):
+          print(n + 1)
+
+      x = f(1)
+      print(x)
+    choices: ["2\nNone", "2\n2", 'None', '2']
+    answer: "2\nNone"
+    why: >-
+      The function prints 2, and with no `return` it gives back `None`.
+    variants:
+      - code: |
+          def f(n):
+              return n + 1
+              print(n)
+
+          print(f(1))
+        choices: ['2', "2\n1", "1\n2", 'None']
+        answer: '2'
+        why: >-
+          `return` ends the function, so the line under it never runs.
+
+  - type: choice
+    id: local-name
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f(x):
+          x = x + 1
+          return x
+
+      x = 1
+      f(x)
+      print(x)
+    choices: ['1', '2', 'None', 'Error']
+    answer: '1'
+    why: >-
+      The parameter is a separate variable, and the return value isn't stored.
+
+  - type: choice
+    id: inner-first
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def add(a, b=1):
+          return a + b
+
+      print(add(add(2), 3))
+    choices: ['6', '5', '4', '3']
+    answer: '6'
+    why: >-
+      The inner call uses the default and gives back 3. Then `add(3, 3)` is 6.
+
+  - type: choice
+    id: mid-pass
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 0
+      while n < 2:
+          n += 1
+          print(n)
+    choices: ["1\n2", "0\n1", "0\n1\n2", '2']
+    answer: "1\n2"
+    why: >-
+      The update comes before the `print`, and the condition is only checked at the top.
+
+  - type: choice
+    id: range-stop
+    kind: predict
+    prompt: What does this print?
+    code: |
+      total = 0
+      for n in range(1, 5, 2):
+          total += n
+      print(total)
+    choices: ['4', '9', '6', '10']
+    answer: '4'
+    why: >-
+      The values are 1 and 3. The next would be 5, and the stop is left out.
+
+  - type: choice
+    id: inner-resets
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for a in range(2):
+          count = 0
+          for b in range(3):
+              count += 1
+      print(count)
+    choices: ['3', '6', '2', '0']
+    answer: '3'
+    why: >-
+      `count` is reset for each outer pass, so at the end it only holds the count for the last one.
+
+  - type: choice
+    id: read-trace
+    kind: concept
+    prompt: 'Which function should you look at first here, given that `clean` and `tidy` both look correct?'
+    code: |
+      Traceback (most recent call last):
+        File "main.py", line 10, in <module>
+          print(clean(load()))
+        File "main.py", line 6, in clean
+          return tidy(text)
+        File "main.py", line 2, in tidy
+          return text.strip()
+      AttributeError: 'NoneType' object has no attribute 'strip'
+    choices: ['load', 'tidy', 'clean', 'print']
+    answer: 'load'
+    why: >-
+      `text` was `None`, and it came from `load()`, on line 10. The crash is only where it was noticed.
+
+  - type: blank
+    id: fill-stop
+    prompt: Fill in the blank so this shows `5`, `4` and `3`.
+    code: |
+      for n in range(____):
+          print(n)
+    answers: [['5, 2, -1', '5,2,-1']]
+    expectOutput: "5\n4\n3"
+    why: >-
+      Counting down needs a negative step, and the stop is left out.
+
+  - type: fix
+    id: fix-early
+    prompt: '`has_upper("aB")` should give back `True`. Fix it.'
+    code: |
+      def has_upper(text):
+          for ch in text:
+              if ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                  return True
+              else:
+                  return False
+    solution: |
+      def has_upper(text):
+          for ch in text:
+              if ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                  return True
+          return False
+    tests:
+      - { call: 'has_upper("aB")', expect: 'True' }
+      - { call: 'has_upper("ab")', expect: 'False' }
+    why: >-
+      A search can only say no after checking everything.
+
+  - type: fix
+    id: fix-loop
+    prompt: This never ends. Fix it so it gives back the sum of 1 to `limit`, and `sum_to(3)` gives back `6`.
+    code: |
+      def sum_to(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              total += n
+          return total
+    solution: |
+      def sum_to(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              total += n
+              n += 1
+          return total
+    tests:
+      - { call: sum_to(3), expect: '6' }
+      - { call: sum_to(0), expect: '0' }
+    why: >-
+      Nothing in the block changed `n`, so the condition stayed true.
+
+  - type: write
+    id: write-count
+    prompt: Write `count_multiples(limit, d)`, which gives back how many numbers from 1 up to and including `limit` divide by `d` with no remainder.
+    starter: |
+      def count_multiples(limit, d):
+          # Your code here
+    solution: |
+      def count_multiples(limit, d):
+          count = 0
+          for n in range(1, limit + 1):
+              if n % d == 0:
+                  count += 1
+          return count
+    tests:
+      - { call: 'count_multiples(10, 3)', expect: '3' }
+      - { call: 'count_multiples(6, 6)', expect: '1' }
+      - { call: 'count_multiples(2, 5)', expect: '0' }
+    why: >-
+      A counter, a `for` loop that includes `limit`, and a `return` after the loop.
+
+  - type: write
+    id: write-compress
+    prompt: Write `no_vowels(text)`, which gives back `text` with every lowercase vowel removed. So `no_vowels("goat")` gives back `"gt"`.
+    starter: |
+      def no_vowels(text):
+          # Your code here
+    solution: |
+      def no_vowels(text):
+          out = ""
+          for ch in text:
+              if ch not in "aeiou":
+                  out += ch
+          return out
+    tests:
+      - { call: 'no_vowels("goat")', expect: "'gt'" }
+      - { call: 'no_vowels("sky")', expect: "'sky'" }
+      - { call: 'no_vowels("")', expect: "''" }
+    why: >-
+      A string accumulator starts at `""`. `not (ch in "aeiou")` works too.

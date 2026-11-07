@@ -1,0 +1,354 @@
+id: p4-comprehensions
+track: ml
+unit: 4
+order: 4
+title: List comprehensions
+summary: Build a new list in one readable line.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A loop in one line
+    body: >-
+      You've written the same loop many times now: start an empty list, go through some items, and append something. Python has a short form of it, called a comprehension, and ML code uses it constantly. You can't read a real training script without knowing it.
+
+
+      By the end of this lesson you'll be able to read and write comprehensions, filter with them, and tell when a plain loop would be clearer.
+
+  - type: learn
+    id: shape
+    title: From loop to comprehension
+    body: >-
+      A comprehension rearranges the loop you already know. Take what you'd append, and put it first. Then comes the `for` line. Wrap it all in square brackets. So `[n * n for n in nums]` means "a list of `n * n`, for each `n` in `nums`".
+
+
+      Read it in the same order as the loop, starting from the `for`: go through `nums`, call each one `n`, and keep `n * n`.
+
+
+      It always builds a new list, and it never changes the original, so it's safe to use on data you want to keep. If you don't assign the result to something, it's thrown away. The `n` belongs to the comprehension alone, and it doesn't exist afterwards. You can use anything that gives a value in the first part, including function calls and f-strings.
+    code: |
+      nums = [1, 2, 3]
+
+      squares = []
+      for n in nums:
+          squares.append(n * n)
+      print(squares)
+
+      squares = [n * n for n in nums]
+      print(squares)
+
+      print([len(w) for w in ["ox", "yak"]])
+      print([x * w for x, w in zip([1, 2], [3, 4])])
+      print(nums)
+    subgoals:
+      - { line: 3, label: 'The long way' }
+      - { line: 8, label: 'The same thing in one line' }
+      - { line: 11, label: 'Any expression works' }
+      - { line: 12, label: 'Unpacking works too' }
+      - { line: 13, label: 'The original is unchanged' }
+    predict: What will the `zip` line show?
+
+  - type: choice
+    id: comp-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      nums = [1, 2]
+      doubled = [n * 2 for n in nums]
+      print(nums, doubled)
+    choices: ['[1, 2] [2, 4]', '[2, 4] [2, 4]', '[1, 2] [1, 2]', 'Error']
+    answer: '[1, 2] [2, 4]'
+    why: >-
+      A comprehension makes a new list, and `nums` doesn't change.
+    variants:
+      - code: |
+          nums = [1, 2]
+          [n * 10 for n in nums]
+          print(nums)
+        choices: ['[1, 2]', '[10, 20]', 'None', 'Error']
+        answer: '[1, 2]'
+        why: >-
+          Nothing saved the new list, and `nums` never changes.
+      - code: |
+          print([c.upper() for c in "ab"])
+        choices: ["['A', 'B']", 'AB', "['a', 'b']", "'AB'"]
+        answer: "['A', 'B']"
+        why: >-
+          It goes through a string, but a comprehension in square brackets always builds a list.
+      - code: |
+          print([0 for _ in range(3)])
+        choices: ['[0, 0, 0]', '[0, 1, 2]', '[0]', '[3]']
+        answer: '[0, 0, 0]'
+        why: >-
+          The first part doesn't have to use the loop variable. Each pass just adds a 0.
+
+  - type: learn
+    id: filter
+    title: Filtering, and choosing
+    body: >-
+      Add `if` at the end to keep only some items: `[n for n in nums if n > 0]`. This is the filter pattern from Unit 3 in one line. If the condition is false, nothing is added for that item, so the new list can be shorter.
+
+
+      There's a second, different form. If you want to keep every item, but choose between two values, write `x if condition else y` at the front: `[n if n > 0 else 0 for n in nums]`. The list stays the same length.
+
+
+      These two get mixed up all the time. An `if` at the end filters, and it has no `else`. An `if` at the front picks a value, and it must have an `else`. Writing `[n if n > 0 for n in nums]` gives a `SyntaxError`.
+    code: |
+      nums = [3, -1, 2]
+
+      print([n for n in nums if n > 0])
+      print([n if n > 0 else 0 for n in nums])
+      print([n * 2 for n in nums if n > 0])
+
+      print("big" if nums[0] > 2 else "small")
+    subgoals:
+      - { line: 3, label: 'At the end: keep some items' }
+      - { line: 4, label: 'At the front: choose a value for every item' }
+      - { line: 5, label: 'Transform and filter together' }
+      - { line: 7, label: 'The choosing form works anywhere' }
+    predict: How many items will the first and second lists have?
+
+  - type: choice
+    id: filter-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print([n for n in [1, 2, 3, 4] if n % 2 == 0])
+    choices: ['[2, 4]', '[1, 3]', '[False, True, False, True]', '[0, 2]']
+    answer: '[2, 4]'
+    why: >-
+      An `if` at the end keeps only the items that pass.
+    variants:
+      - code: |
+          print([n if n > 1 else 0 for n in [1, 2]])
+        choices: ['[0, 2]', '[2]', '[1, 2]', 'Error']
+        answer: '[0, 2]'
+        why: >-
+          An `if` at the front picks a value for every item, so the length stays the same.
+      - code: |
+          print([w[0] for w in ["ox", "yak"] if len(w) > 2])
+        choices: ["['y']", "['o', 'y']", "['yak']", "['o']"]
+        answer: "['y']"
+        why: >-
+          The filter runs first, leaving `yak`, and then the first part takes its first letter.
+      - code: |
+          pairs = [(1, "a"), (2, "b")]
+          print([s for n, s in pairs if n > 1])
+        choices: ["['b']", '[2]', "[(2, 'b')]", "['a']"]
+        answer: "['b']"
+        why: >-
+          Each tuple gets unpacked, and the comprehension keeps only `s`.
+
+  - type: explain
+    id: explain-if
+    prompt: Why does the first list have 2 items and the second have 3?
+    code: |
+      nums = [5, -1, 2]
+      a = [n for n in nums if n > 0]
+      b = [n if n > 0 else 0 for n in nums]
+      print(a, b)
+    model: >-
+      An `if` at the end is a filter, so items that fail are left out. An `if` with an `else` at the front picks a value for every item, so nothing is dropped, and -1 becomes 0.
+    keyPoints:
+      - An `if` at the end filters, so the list can be shorter
+      - An `if` with `else` at the front chooses a value, and keeps every item
+
+  - type: learn
+    id: nested
+    title: Nested, and when to stop
+    body: >-
+      You can put a comprehension inside a comprehension, and it's the safe way of building a grid. `[[0] * cols for _ in range(rows)]` runs `[0] * cols` once for each row, so every row is a separate list, unlike the `[[0] * cols] * rows` trap from Unit 3.
+
+
+      The inner comprehension can use the outer variable too, so `[[x * 2 for x in row] for row in grid]` doubles every cell, and keeps the shape.
+
+
+      Two `for`s in one pair of brackets, as in `[x for row in grid for x in row]`, flatten a grid into one list. Read them left to right, in the same order as the nested loops you'd write.
+
+
+      Don't overdo it. A comprehension is for building a list, and not for printing or for side effects. If one gets hard to read, or doesn't fit on a line, use a plain loop. Nobody will think less of you, and it's easier to debug.
+    code: |
+      rows = 2
+      grid = [[0] * 3 for _ in range(rows)]
+      grid[0][0] = 1
+      print(grid)
+
+      m = [[1, 2], [3, 4]]
+      print([[x * 2 for x in row] for row in m])
+      print([x for row in m for x in row])
+    subgoals:
+      - { line: 2, label: 'A new row on each pass' }
+      - { line: 3, label: 'Only one row changes' }
+      - { line: 7, label: 'Keeps the shape' }
+      - { line: 8, label: 'Flattens it: the outer for comes first' }
+    predict: What does the flattened list look like?
+
+  - type: blank
+    id: fill-comp
+    prompt: Fill in the blank so this shows `[1, 4, 9]`.
+    code: |
+      print([____ for n in [1, 2, 3]])
+    answers: [['n * n', 'n*n', 'n ** 2', 'n**2']]
+    expectOutput: '[1, 4, 9]'
+    why: >-
+      What to keep comes first.
+    variants:
+      - prompt: Fill in the blank so this keeps the positive numbers, and shows `[2]`.
+        code: |
+          print([n for n in [-1, 2] ____])
+        answers: [['if n > 0', 'if n>0', 'if n >= 0']]
+        expectOutput: '[2]'
+        why: >-
+          A filter goes at the end.
+      - prompt: Fill in the blank so this makes separate rows, and shows `[[1, 0], [0, 0]]`.
+        code: |
+          g = [[0, 0] ____]
+          g[0][0] = 1
+          print(g)
+        answers: [['for _ in range(2)', 'for i in range(2)']]
+        expectOutput: '[[1, 0], [0, 0]]'
+        why: >-
+          Each pass makes a new `[0, 0]`, so the rows aren't shared.
+
+  - type: fix
+    id: fix-filter
+    prompt: '`positives([1, -2, 3])` should give back `[1, 3]`, but it gives a `SyntaxError`. Fix it.'
+    code: |
+      def positives(nums):
+          return [n if n > 0 for n in nums]
+    solution: |
+      def positives(nums):
+          return [n for n in nums if n > 0]
+    highlightLine: 2
+    tests:
+      - { call: 'positives([1, -2, 3])', expect: '[1, 3]' }
+      - { call: 'positives([-1])', expect: '[]' }
+    why: >-
+      A filter goes after the `for`. An `if` before the `for` needs an `else`, because it picks a value and doesn't filter.
+    hints:
+      - Where does the `if` go when you're keeping only some items?
+    variants:
+      - prompt: '`clip([5, -1])` should give back `[5, 0]`, replacing negatives with 0, but it gives back `[5]`. Fix it.'
+        code: |
+          def clip(nums):
+              return [n for n in nums if n > 0]
+        solution: |
+          def clip(nums):
+              return [n if n > 0 else 0 for n in nums]
+        highlightLine: 2
+        tests:
+          - { call: 'clip([5, -1])', expect: '[5, 0]' }
+          - { call: 'clip([])', expect: '[]' }
+        why: >-
+          To keep every item, choose a value at the front. A filter drops items.
+        hints:
+          - The new list should be the same length as the old one.
+      - prompt: '`double([1, 2])` should give back `[2, 4]`, but it gives back `None`. Fix it.'
+        code: |
+          def double(nums):
+              [n * 2 for n in nums]
+        solution: |
+          def double(nums):
+              return [n * 2 for n in nums]
+        highlightLine: 2
+        tests:
+          - { call: 'double([1, 2])', expect: '[2, 4]' }
+        why: >-
+          A comprehension only builds a list. You still need to `return` it.
+        hints:
+          - What happens to the list that this line builds?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Normalising data
+    body: >-
+      Models train better when their inputs are on a similar scale, so a common first step is normalising: rescaling the numbers so that they run from 0 to 1. To do that, subtract the smallest value, and divide by the size of the range.
+
+
+      Each step is one short line. Work out the low and the high once, before the comprehension, so they aren't recalculated for every item. Then the comprehension says what happens to each number.
+
+
+      The `if` guards against a real bug. If all the values are equal, the range is 0, and you'd get a `ZeroDivisionError`. The input list isn't touched, because a comprehension makes a new one.
+    code: |
+      def normalise(nums):
+          low = min(nums)
+          high = max(nums)
+          if high == low:
+              return [0.0 for _ in nums]
+          return [(n - low) / (high - low) for n in nums]
+
+      data = [10, 20, 15]
+      print(normalise(data))
+      print(normalise([3, 3]))
+      print(data)
+    subgoals:
+      - { line: 2, label: 'Work these out once' }
+      - { line: 4, label: 'Avoid dividing by zero' }
+      - { line: 6, label: 'Rescale each number' }
+      - { line: 11, label: 'The input is unchanged' }
+    predict: What does `15` become?
+
+  - type: write
+    id: write-comp
+    prompt: Write `lengths(words)`, using a comprehension, which gives back the lengths of the words with more than one letter. So `lengths(["a", "bb", "ccc"])` gives back `[2, 3]`.
+    starter: |
+      def lengths(words):
+          # Your code here
+    solution: |
+      def lengths(words):
+          return [len(w) for w in words if len(w) > 1]
+    tests:
+      - { call: 'lengths(["a", "bb", "ccc"])', expect: '[2, 3]' }
+      - { call: 'lengths([])', expect: '[]' }
+    why: >-
+      What to keep goes first, then the `for`, and the filter goes last.
+    hints:
+      - What to keep is `len(w)`, and the filter also uses `len(w)`.
+    variants:
+      - prompt: Write `scale_grid(grid, k)`, which gives back a new grid with every number multiplied by `k`, using a comprehension. So `scale_grid([[1], [2]], 3)` gives back `[[3], [6]]`.
+        starter: |
+          def scale_grid(grid, k):
+              # Your code here
+        solution: |
+          def scale_grid(grid, k):
+              return [[x * k for x in row] for row in grid]
+        tests:
+          - { call: 'scale_grid([[1], [2]], 3)', expect: '[[3], [6]]' }
+          - { call: 'scale_grid([], 3)', expect: '[]' }
+        hints:
+          - Put a comprehension for one row inside one that goes through the rows.
+      - prompt: Write `labels(scores)`, using a comprehension, which gives back `"yes"` for each score of at least 0.5, and `"no"` for each other score. So `labels([0.9, 0.1])` gives back `["yes", "no"]`.
+        starter: |
+          def labels(scores):
+              # Your code here
+        solution: |
+          def labels(scores):
+              return ["yes" if s >= 0.5 else "no" for s in scores]
+        tests:
+          - { call: 'labels([0.9, 0.1])', expect: "['yes', 'no']" }
+          - { call: 'labels([0.5])', expect: "['yes']" }
+        hints:
+          - Every score gets a label, so this is the choosing form, with `else`.
+
+  - type: choice
+    id: remember-zip
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      print(list(zip([1, 2, 3], [4])))
+    choices: ['[(1, 4)]', '[(1, 4), (2, None), (3, None)]', 'Error', '[1, 4]']
+    answer: '[(1, 4)]'
+    why: >-
+      `zip` stops at the shorter list, without an error.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `[expr for x in items]` builds a new list, and leaves the original alone. An `if` at the end filters. `a if c else b` at the front chooses a value for every item. A comprehension inside a comprehension makes a safe grid. Use a plain loop if one gets hard to read.
+
+
+      Next: more shapes that this form can build, including the vocabulary of a language model.

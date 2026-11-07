@@ -1,0 +1,405 @@
+id: p3-grids
+track: ml
+unit: 3
+order: 6
+title: Lists of lists
+summary: Rows and columns, the shape behind every table and matrix.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Tables in Python
+    body: >-
+      A spreadsheet has rows and columns. So does a grayscale image, and so does the matrix at the core of a neural network. In plain Python, you store this as a list of lists, and when you get to NumPy, you'll think in the same way.
+
+
+      By the end of this lesson you'll be able to read and change any cell in a grid, go through it with nested loops, and add up its rows and columns.
+
+  - type: learn
+    id: indexing
+    title: Two indexes
+    body: >-
+      A list can hold anything, including other lists. In the code below, `grid` has 2 items, and each of them is a list of 3 numbers. It helps to write it across several lines, so that it looks like what it is.
+
+
+      `grid[1]` gives you the second row, which is a list. Since that's a list, you can index it again: `grid[1][2]` is row 1, column 2. Read it left to right: first pick the row, then pick from that row. Rows come first, and that's also the convention in NumPy.
+
+
+      `len(grid)` counts the rows, and `len(grid[0])` counts the columns in the first row. A common slip is writing `grid[1, 2]`, which gives a `TypeError` here, though it's right for NumPy. Plain lists need two separate pairs of brackets.
+    code: |
+      grid = [
+          [1, 2, 3],
+          [4, 5, 6],
+      ]
+      print(grid[1])
+      print(grid[1][2])
+      print(len(grid))
+      print(len(grid[0]))
+      grid[0][1] = 99
+      print(grid)
+    subgoals:
+      - { line: 1, label: 'A list of two rows' }
+      - { line: 5, label: 'Row 1 is a list' }
+      - { line: 6, label: 'Row 1, then column 2' }
+      - { line: 7, label: 'Number of rows' }
+      - { line: 8, label: 'Number of columns' }
+      - { line: 9, label: 'Change one cell' }
+    predict: What will `print(grid[1][2])` show?
+
+  - type: choice
+    id: index-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      g = [[1, 2], [3, 4], [5, 6]]
+      print(g[2][0])
+    choices: ['5', '2', '6', '3']
+    answer: '5'
+    why: >-
+      Row 2 is `[5, 6]`, and its column 0 is 5.
+    hints:
+      - Pick the row first, then the column.
+    variants:
+      - code: |
+          g = [[1, 2], [3, 4], [5, 6]]
+          print(len(g), len(g[0]))
+        choices: ['3 2', '2 3', '6 2', '3 3']
+        answer: '3 2'
+        why: >-
+          There are 3 rows, and the first row has 2 columns.
+      - code: |
+          g = [[1, 2], [3, 4]]
+          print(g[-1][-1])
+        choices: ['4', '1', '3', '2']
+        answer: '4'
+        why: >-
+          The last row, and the last item in it.
+      - code: |
+          g = [[1, 2], [3, 4]]
+          r = g[0]
+          print(r[1] + g[1][1])
+        choices: ['6', '5', '3', '7']
+        answer: '6'
+        why: >-
+          A row can be stored in a variable and used like any list. It's 2 + 4.
+
+  - type: learn
+    id: looping
+    title: Going through a grid
+    body: >-
+      Nested loops suit a grid, with the outer loop going through rows and the inner one going through the items in a row. If you only need the values, loop directly: `for row in grid:` and `for x in row:`. It's the same as what you've done before, because each `row` is an ordinary list.
+
+
+      If you need positions, say to change a cell, loop over `range(len(grid))` and `range(len(grid[0]))`, and use `r` and `c` as names.
+
+
+      For a total per row, the accumulator resets for each row, so it goes inside the outer loop. For a total for the whole grid, it goes before both. For a row's sum, there's also a shortcut, `sum(row)`, because a row is just a list.
+    code: |
+      grid = [
+          [1, 2, 3],
+          [4, 5, 6],
+      ]
+      total = 0
+      for row in grid:
+          for x in row:
+              total += x
+      print(total)
+
+      for row in grid:
+          print(sum(row))
+
+      for r in range(len(grid)):
+          for c in range(len(grid[0])):
+              grid[r][c] = grid[r][c] * 2
+      print(grid)
+    subgoals:
+      - { line: 5, label: 'A total for the whole grid' }
+      - { line: 7, label: 'Every cell in turn' }
+      - { line: 12, label: 'A row is a list' }
+      - { line: 14, label: 'Positions, in order to change cells' }
+    predict: What does `sum(row)` show for each row?
+
+  - type: choice
+    id: loop-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      g = [[1, 2], [3, 4]]
+      out = []
+      for row in g:
+          out.append(row[0])
+      print(out)
+    choices: ['[1, 3]', '[1, 2]', '[3, 4]', '[[1], [3]]']
+    answer: '[1, 3]'
+    why: >-
+      It takes column 0 from each row, so this is how you read a column.
+    variants:
+      - code: |
+          g = [[1, 2], [3, 4]]
+          n = 0
+          for row in g:
+              for x in row:
+                  n += 1
+          print(n)
+        choices: ['4', '2', '10', '3']
+        answer: '4'
+        why: >-
+          The inner line runs for every cell: 2 rows times 2 columns.
+      - code: |
+          g = [[1, 2], [3, 4]]
+          for row in g:
+              print(sum(row))
+        choices: ["3\n7", '10', "4\n6", "1\n3"]
+        answer: "3\n7"
+        why: >-
+          `sum(row)` adds across a row, not down a column.
+
+  - type: explain
+    id: explain-column
+    prompt: This adds up one column of the grid. Which column, and how does it pick the item from each row?
+    code: |
+      g = [[1, 2], [3, 4], [5, 6]]
+      total = 0
+      for row in g:
+          total += row[1]
+      print(total)
+    model: >-
+      It adds up column 1. Each pass, `row` holds one row, and `row[1]` picks its second item, so it adds 2, 4 and 6.
+    keyPoints:
+      - Each pass, `row` holds one whole row as a list
+      - '`row[1]` picks the same column from each row, so the total is for column 1'
+
+  - type: learn
+    id: columns-making
+    title: Columns, and building a grid
+    body: >-
+      A grid is stored by rows, so columns take a bit more work. To get a column, go through the rows and take the same position from each one. To get all the column totals, loop over the column positions on the outside, and over the rows on the inside. That's flipped from the usual order, and it's fine.
+
+
+      To build a grid from nothing, use the empty list and append pattern, twice: make each row in the outer loop, and append it to the grid once it's finished.
+
+
+      Don't build a grid with `[[0] * 3] * 2`. It looks right, but `* 2` repeats a reference to one row, so there's one row with two names. Change a cell, and it changes in both. It's aliasing again.
+    code: |
+      grid = []
+      for r in range(2):
+          row = []
+          for c in range(3):
+              row.append(r + c)
+          grid.append(row)
+      print(grid)
+
+      for c in range(3):
+          total = 0
+          for r in range(2):
+              total += grid[r][c]
+          print(total)
+
+      bad = [[0] * 2] * 2
+      bad[0][0] = 9
+      print(bad)
+    subgoals:
+      - { line: 3, label: 'A new row each time' }
+      - { line: 6, label: 'Add the finished row' }
+      - { line: 9, label: 'Columns on the outside' }
+      - { line: 15, label: 'One row, twice' }
+      - { line: 16, label: 'Changes both, because it is one row' }
+    predict: What will `print(bad)` show?
+
+  - type: blank
+    id: fill-grid
+    prompt: Fill in the blank so this shows `6`, the bottom-right cell.
+    code: |
+      g = [[1, 2, 3], [4, 5, 6]]
+      print(____)
+    answers: [['g[1][2]', 'g[-1][-1]', 'g[1][-1]', 'g[-1][2]']]
+    expectOutput: '6'
+    why: >-
+      Row first, then column, in two separate pairs of brackets.
+    variants:
+      - prompt: Fill in the blank so this adds up the first column, and shows `4`.
+        code: |
+          g = [[1, 2], [3, 4]]
+          total = 0
+          for row in g:
+              total += ____
+          print(total)
+        answers: [['row[0]']]
+        expectOutput: '4'
+        why: >-
+          `row` is the current row, and `row[0]` is its first column.
+      - prompt: Fill in the blank so this shows the number of columns, `3`.
+        code: |
+          g = [[1, 2, 3], [4, 5, 6]]
+          print(len(____))
+        answers: [['g[0]', 'g[1]', 'g[-1]']]
+        expectOutput: '3'
+        why: >-
+          `len(g)` would count the rows.
+
+  - type: fix
+    id: fix-comma
+    prompt: This crashes with a `TypeError`. Fix it so it shows `4`.
+    code: |
+      g = [[1, 2], [3, 4]]
+      print(g[1, 1])
+    solution: |
+      g = [[1, 2], [3, 4]]
+      print(g[1][1])
+    highlightLine: 2
+    expectOutput: '4'
+    why: >-
+      A list of lists needs two separate indexes. The comma form is for NumPy.
+    hints:
+      - How do you index the row that you get back?
+    variants:
+      - prompt: This should show `[[9, 0], [0, 0]]`, but both rows change. Fix how the grid is built.
+        code: |
+          g = [[0, 0]] * 2
+          g[0][0] = 9
+          print(g)
+        solution: |
+          g = []
+          for r in range(2):
+              g.append([0, 0])
+          g[0][0] = 9
+          print(g)
+        highlightLine: 1
+        expectOutput: '[[9, 0], [0, 0]]'
+        why: >-
+          `* 2` repeated one row. A loop makes a new row each pass.
+        hints:
+          - How many separate rows does line 1 make?
+      - prompt: This should show the totals for each row, `3` and `7`, but it shows `3` and `10`. Fix it.
+        code: |
+          g = [[1, 2], [3, 4]]
+          total = 0
+          for row in g:
+              for x in row:
+                  total += x
+              print(total)
+        solution: |
+          g = [[1, 2], [3, 4]]
+          for row in g:
+              total = 0
+              for x in row:
+                  total += x
+              print(total)
+        highlightLine: 2
+        expectOutput: "3\n7"
+        why: >-
+          A per-row total has to reset for each row, so it starts inside the outer loop.
+        hints:
+          - How often should the total go back to 0?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Multiplying a matrix by a vector
+    body: >-
+      This one's the central operation in neural networks, and you can now write it. A matrix times a vector gives you a new vector. For each row of the matrix, multiply the items by the matching items in the vector and add them up.
+
+
+      So each row gets one output number. That tells you the shape of the loops. The outer loop goes over rows and builds the result. The inner loop goes over positions, with an accumulator that resets for each row.
+
+
+      A neural network layer spends nearly all its time doing this, and much bigger versions of it. NumPy will let you write the whole thing as `m @ v`. But when you see that line later, you'll know what it means, because you've written it by hand.
+    code: |
+      def matrix_times_vector(m, v):
+          out = []
+          for row in m:
+              total = 0
+              for i in range(len(v)):
+                  total += row[i] * v[i]
+              out.append(total)
+          return out
+
+      m = [[1, 2], [3, 4]]
+      v = [10, 1]
+      print(matrix_times_vector(m, v))
+    subgoals:
+      - { line: 2, label: 'One output per row' }
+      - { line: 4, label: 'Reset for each row' }
+      - { line: 6, label: 'Multiply matching items, and add' }
+      - { line: 7, label: 'This row is finished' }
+    predict: What does the first row give? (1 × 10 + 2 × 1)
+
+  - type: write
+    id: row-sums
+    prompt: Write `column_sum(grid, c)`, which gives back the total of column `c`. So `column_sum([[1, 2], [3, 4]], 1)` gives back `6`.
+    starter: |
+      def column_sum(grid, c):
+          # Your code here
+    solution: |
+      def column_sum(grid, c):
+          total = 0
+          for row in grid:
+              total += row[c]
+          return total
+    tests:
+      - { call: 'column_sum([[1, 2], [3, 4]], 1)', expect: '6' }
+      - { call: 'column_sum([[1, 2], [3, 4]], 0)', expect: '4' }
+      - { call: 'column_sum([], 0)', expect: '0' }
+    why: >-
+      It only takes one loop. Each row gives one item from the same position.
+    hints:
+      - Which item of each row do you want?
+    variants:
+      - prompt: Write `flatten(grid)`, which gives back all the items in one flat list, row by row. So `flatten([[1, 2], [3]])` gives back `[1, 2, 3]`.
+        starter: |
+          def flatten(grid):
+              # Your code here
+        solution: |
+          def flatten(grid):
+              out = []
+              for row in grid:
+                  for x in row:
+                      out.append(x)
+              return out
+        tests:
+          - { call: 'flatten([[1, 2], [3]])', expect: '[1, 2, 3]' }
+          - { call: 'flatten([])', expect: '[]' }
+        hints:
+          - One list to build, and two loops.
+      - prompt: Write `zeros(rows, cols)`, which gives back a grid of zeros with separate rows. So `zeros(2, 1)` gives back `[[0], [0]]`.
+        starter: |
+          def zeros(rows, cols):
+              # Your code here
+        solution: |
+          def zeros(rows, cols):
+              out = []
+              for r in range(rows):
+                  out.append([0] * cols)
+              return out
+        tests:
+          - { call: 'zeros(2, 1)', expect: '[[0], [0]]' }
+          - { call: 'zeros(1, 3)', expect: '[[0, 0, 0]]' }
+          - { call: '(lambda g: (g[0].append(1), len(g[1]))[1])(zeros(2, 1))', expect: '1', hidden: true }
+        hints:
+          - Make a new row on each pass of the loop.
+
+  - type: choice
+    id: remember-alias
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      a = [1]
+      b = a
+      c = a.copy()
+      a.append(2)
+      print(len(b), len(c))
+    choices: ['2 1', '1 1', '2 2', '1 2']
+    answer: '2 1'
+    why: >-
+      `b` is the same list as `a`, and `c` is a separate copy.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A grid is a list of rows, and `grid[r][c]` picks a cell, row first. `len(grid)` counts rows, and `len(grid[0])` counts columns. Use nested loops to go through it, and put accumulators at the level where they should reset. Build each row separately, not with `* 2`.
+
+
+      Next: turning raw text into lists you can work with.

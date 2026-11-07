@@ -1,0 +1,228 @@
+id: p4-checkpoint
+track: ml
+unit: 4
+order: 15
+kind: checkpoint
+title: Python for ML checkpoint
+summary: Everything from this unit, mixed up. Get 80% right to move on.
+
+cards:
+  - type: choice
+    id: unpack
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a, b = 1, 2
+      a, b = b, a + b
+      print(a, b)
+    choices: ['2 3', '2 4', '3 2', '1 2']
+    answer: '2 3'
+    why: >-
+      The right side uses the old values, and only then are the names updated.
+
+  - type: choice
+    id: zip-silent
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(sum(x * y for x, y in zip([1, 2, 3], [2, 2])))
+    choices: ['6', '12', 'Error', '4']
+    answer: '6'
+    why: >-
+      `zip` stops at the shorter list, so the 3 is ignored.
+
+  - type: choice
+    id: comp-filter
+    kind: predict
+    prompt: What does this print?
+    code: |
+      pairs = [(1, "a"), (2, "b"), (3, "c")]
+      print([s for n, s in pairs if n % 2 == 1])
+    choices: ["['a', 'c']", "['b']", '[1, 3]', 'Error']
+    answer: "['a', 'c']"
+    why: >-
+      Each tuple is unpacked, the filter keeps odd values of `n`, and each kept `s` goes in the new list.
+
+  - type: choice
+    id: late-closure
+    kind: predict
+    prompt: What does this print?
+    code: |
+      fs = []
+      for i in range(2):
+          fs.append(lambda: i)
+      print(fs[0]())
+    choices: ['1', '0', '2', 'Error']
+    answer: '1'
+    why: >-
+      A closure keeps the variable, not its value at the time, and the loop leaves `i` at 1.
+
+  - type: choice
+    id: alias-class
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Box:
+          def __init__(self, items):
+              self.items = items
+
+      shared = [1]
+      a = Box(shared)
+      b = Box(shared)
+      a.items.append(2)
+      print(b.items)
+    choices: ['[1, 2]', '[1]', '[2]', 'Error']
+    answer: '[1, 2]'
+    why: >-
+      Both objects hold the same list.
+
+  - type: choice
+    id: eq-dunder
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class P:
+          def __init__(self, x):
+              self.x = x
+          def __eq__(self, other):
+              return self.x == other.x
+
+      a = P(1)
+      b = P(1)
+      print(a == b, a is b)
+    choices: ['True False', 'True True', 'False False', 'Error']
+    answer: 'True False'
+    why: >-
+      `__eq__` compares values, while `is` still asks whether they're the same object.
+
+  - type: choice
+    id: rmul-order
+    prompt: '`v` has `__mul__` but no `__rmul__`. What happens with `2 * v`?'
+    choices:
+      - "`TypeError`, since `int` can't do it and there's no fallback"
+      - It uses `__mul__` with the sides swapped
+      - It gives back 2
+    answer: "`TypeError`, since `int` can't do it and there's no fallback"
+    why: >-
+      Python never swaps the sides by itself. It needs `__rmul__` on the right-hand object.
+
+  - type: choice
+    id: forward
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Module:
+          def __call__(self, x):
+              return self.forward(x) + 1
+
+      class Net(Module):
+          def forward(self, x):
+              return x * 2
+
+      print(Net()(3))
+    choices: ['7', '6', '4', 'Error']
+    answer: '7'
+    why: >-
+      Calling the object runs the parent's `__call__`, and `self.forward` finds the child's method.
+
+  - type: choice
+    id: try-order
+    kind: predict
+    prompt: What does this print?
+    code: |
+      try:
+          print(int("x"))
+          print("next")
+      except ValueError:
+          print("caught")
+    choices: ['caught', "next\ncaught", 'next', 'x']
+    answer: 'caught'
+    why: >-
+      The error jumps straight to the `except`, skipping the rest of the `try`.
+
+  - type: fix
+    id: fix-init
+    prompt: '`Net(2)(3)` should give back `6`, but it crashes. Fix it.'
+    code: |
+      class Base:
+          def __init__(self):
+              self.scale = 1
+
+      class Net(Base):
+          def __init__(self, w):
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x * self.scale
+    solution: |
+      class Base:
+          def __init__(self):
+              self.scale = 1
+
+      class Net(Base):
+          def __init__(self, w):
+              super().__init__()
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x * self.scale
+    tests:
+      - { call: 'Net(2)(3)', expect: '6' }
+    why: >-
+      The child's `__init__` replaces the parent's, so call `super().__init__()` yourself.
+
+  - type: fix
+    id: fix-mutation
+    prompt: '`normalize` should give back a new list that sums to 1, and leave its input alone. Fix it.'
+    code: |
+      def normalize(nums):
+          total = sum(nums)
+          for i in range(len(nums)):
+              nums[i] = nums[i] / total
+          return nums
+    solution: |
+      def normalize(nums):
+          total = sum(nums)
+          return [n / total for n in nums]
+    tests:
+      - { call: 'normalize([1, 3])', expect: '[0.25, 0.75]' }
+      - { call: '(lambda a: (normalize(a), a)[1])([1, 3])', expect: '[1, 3]', hidden: true }
+    why: >-
+      A parameter names the caller's list, so assigning to `nums[i]` changes it. A comprehension makes a new list.
+
+  - type: write
+    id: write-vocab
+    prompt: >-
+      Write `encode(text, vocab)`, which turns each character into its number using the dict `vocab`. So `encode("ba", {"a": 0, "b": 1})` gives back `[1, 0]`.
+    starter: |
+      def encode(text, vocab):
+          # Your code here
+    solution: |
+      def encode(text, vocab):
+          return [vocab[ch] for ch in text]
+    tests:
+      - { call: 'encode("ba", {"a": 0, "b": 1})', expect: '[1, 0]' }
+      - { call: 'encode("", {})', expect: '[]' }
+    why: >-
+      A comprehension with a dict lookup does it.
+
+  - type: write
+    id: write-class
+    prompt: Write a class `Batch`. `Batch(items)` stores a list, `len(b)` gives its size, and `b[i]` gives item `i` multiplied by 2.
+    starter: |
+      # Write the Batch class here
+    solution: |
+      class Batch:
+          def __init__(self, items):
+              self.items = items
+
+          def __len__(self):
+              return len(self.items)
+
+          def __getitem__(self, i):
+              return self.items[i] * 2
+    tests:
+      - { call: 'len(Batch([1, 2]))', expect: '2' }
+      - { call: 'Batch([1, 2])[1]', expect: '4' }
+    why: >-
+      `__len__` and `__getitem__` are what let `len` and square brackets work.

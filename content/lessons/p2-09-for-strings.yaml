@@ -1,0 +1,393 @@
+id: p2-for-strings
+track: ml
+unit: 2
+order: 9
+title: Looping over text
+summary: Go through a string one character at a time, and search it.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Reading text one piece at a time
+    body: >-
+      A language model starts by breaking text into pieces and counting them. Before anything like that, you need to be able to go through text yourself.
+
+
+      By the end of this lesson you'll be able to loop over the characters in a string, count and transform them, and search for something. You'll also learn about a bug in searching that catches almost everyone: returning an answer too early.
+
+  - type: learn
+    id: for-chars
+    title: Going through a string
+    body: >-
+      `for` doesn't only work with `range`. It goes through anything that holds a sequence of values, one at a time. A string is a sequence of characters, so `for ch in word:` runs once per character, with `ch` holding the current one. No indexes are needed.
+
+
+      This works with the patterns you already know. Count by adding 1 inside an `if`. Build new text with an accumulator that starts at `""`.
+
+
+      The `in` keyword has a second meaning, inside a condition. `"a" in word` asks whether that text appears in the string, and it gives `True` or `False`. So `ch in "aeiou"` is a neat way of asking whether a character is a vowel, without a long chain of `or`.
+    code: |
+      word = "goat"
+      for ch in word:
+          print(ch)
+
+      vowels = 0
+      for ch in "summit":
+          if ch in "aeiou":
+              vowels += 1
+      print(vowels)
+      print("oa" in word)
+    subgoals:
+      - { line: 2, label: 'One pass per character' }
+      - { line: 5, label: 'An accumulator for counting' }
+      - { line: 7, label: 'Here `in` asks a question' }
+      - { line: 10, label: 'It works on longer text as well' }
+    predict: How many vowels are in `summit`?
+
+  - type: choice
+    id: chars-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      count = 0
+      for ch in "banana":
+          if ch == "a":
+              count += 1
+      print(count)
+    choices: ['3', '6', '2', '1']
+    answer: '3'
+    why: >-
+      The block runs 6 times, and `count` goes up on the 3 passes where `ch` is `a`.
+    variants:
+      - code: |
+          out = ""
+          for ch in "cat":
+              out = out + ch + "-"
+          print(out)
+        choices: ['c-a-t-', 'c-a-t', '-c-a-t', 'cat-']
+        answer: 'c-a-t-'
+        why: >-
+          Each pass adds one character and a dash to the end, including on the last pass.
+      - code: |
+          out = ""
+          for ch in "cat":
+              out = ch + out
+          print(out)
+        choices: ['tac', 'cat', 'c', 't']
+        answer: 'tac'
+        why: >-
+          Each new character goes on the front, so the string comes out reversed.
+      - code: |
+          print("g" in "goat", "z" in "goat")
+        choices: ['True False', 'False True', '0 -1', 'g z']
+        answer: 'True False'
+        why: >-
+          `in` asks whether the text appears in the string.
+
+  - type: learn
+    id: positions
+    title: When you need the position too
+    body: >-
+      Looping directly over characters is simplest, but it doesn't tell you where you are. If you need the position, loop over the indexes: `for i in range(len(word)):`. Then `word[i]` gives you the character, and `i` is its position.
+
+
+      You need this when comparing a character with its neighbour. But be careful at the end of the string. If `i` is on the last character, `word[i + 1]` is past the end, and you get an `IndexError`. To look ahead by one, stop one position early, with `range(len(word) - 1)`.
+
+
+      Use a plain `for ch in word` when you can, and indexes only when you need them. It's shorter, and there's no position to get wrong.
+    code: |
+      word = "summit"
+      for i in range(len(word)):
+          print(i, word[i])
+
+      doubles = 0
+      for i in range(len(word) - 1):
+          if word[i] == word[i + 1]:
+              doubles += 1
+      print(doubles)
+    subgoals:
+      - { line: 2, label: 'Loop over the positions' }
+      - { line: 3, label: 'Both the position and the character' }
+      - { line: 6, label: 'Stop early, so i + 1 stays valid' }
+      - { line: 7, label: 'Compare with the next character' }
+    predict: How many pairs of matching neighbours does `summit` have?
+
+  - type: choice
+    id: positions-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      word = "abc"
+      for i in range(len(word)):
+          print(i)
+    choices: ["0\n1\n2", "a\nb\nc", "1\n2\n3", '3']
+    answer: "0\n1\n2"
+    why: >-
+      `len(word)` is 3, so this is `range(3)`. `i` holds the positions, not the characters.
+    variants:
+      - code: |
+          word = "hat"
+          for i in range(len(word) - 1):
+              print(word[i])
+        choices: ["h\na", "h\na\nt", "a\nt", 'h']
+        answer: "h\na"
+        why: >-
+          `len(word) - 1` is 2, so `i` is 0 and 1. The last character is left out.
+      - code: |
+          word = "hi"
+          out = ""
+          for i in range(len(word)):
+              out += word[i] * (i + 1)
+          print(out)
+        choices: ['hii', 'hi', 'hhi', 'hhii']
+        answer: 'hii'
+        why: >-
+          On pass 0 you add `h` once. On pass 1 you add `i` twice.
+
+  - type: learn
+    id: search
+    title: Searching, and returning too early
+    body: >-
+      A very common job is asking whether something's in the data. A function can go through the items and `return True` as soon as it finds a match, since one match is enough. The `return False` goes after the loop, because you can only say no once you've checked everything.
+
+
+      Here's the classic bug: putting an `else: return False` inside the loop. Then the function gives its answer after looking at just the first item. It looks reasonable, and it works in some tests, which is what makes it hard to spot.
+
+
+      Below, `has_digit_bad` checks only the first character, so it gets the second call wrong. As a rule, when a search says yes, it can stop immediately. When it says no, it has to wait until the end.
+    code: |
+      def has_digit(text):
+          for ch in text:
+              if ch in "0123456789":
+                  return True
+          return False
+
+      def has_digit_bad(text):
+          for ch in text:
+              if ch in "0123456789":
+                  return True
+              else:
+                  return False
+
+      print(has_digit("room7"))
+      print(has_digit_bad("room7"))
+    subgoals:
+      - { line: 4, label: 'One match is enough: stop now' }
+      - { line: 5, label: 'After the loop: all checked, no match' }
+      - { line: 12, label: 'The bug: gives up after one character' }
+    predict: What will `has_digit_bad("room7")` show?
+
+  - type: explain
+    id: explain-search-bug
+    prompt: Why does this give back `False` for `"xa"`, even though the text contains `a`?
+    code: |
+      def has_a(text):
+          for ch in text:
+              if ch == "a":
+                  return True
+              else:
+                  return False
+
+      print(has_a("xa"))
+    model: >-
+      The first character is `x`, which isn't `a`, so the `else` returns `False` and the function ends. It never looks at the second character. The `return False` should go after the loop.
+    keyPoints:
+      - The `else` returns on the first pass, so the rest of the text is never checked
+      - '`return False` belongs after the loop, once everything has been checked'
+
+  - type: blank
+    id: fill-chars
+    prompt: Fill in the blank so this goes through the characters and shows `3`.
+    code: |
+      count = 0
+      for ch in ____:
+          count += 1
+      print(count)
+    answers: [['"sky"', "'sky'", '"abc"', '"xyz"']]
+    expectOutput: '3'
+    why: >-
+      Any three-character string works. The loop runs once per character.
+    variants:
+      - prompt: Fill in the keyword so this counts the vowels, and shows `2`.
+        code: |
+          count = 0
+          for ch in "goat":
+              if ch ____ "aeiou":
+                  count += 1
+          print(count)
+        answers: [['in']]
+        expectOutput: '2'
+        why: >-
+          `in` asks whether the character appears in the string of vowels.
+      - prompt: Fill in the blank so this shows each position, `0`, `1` and `2`.
+        code: |
+          word = "fog"
+          for i in range(____):
+              print(i)
+        answers: [['len(word)', '3', '0, 3', '0, len(word)']]
+        expectOutput: "0\n1\n2"
+        why: >-
+          `len(word)` is better than writing 3, because it keeps working if the word changes.
+
+  - type: fix
+    id: fix-early-return
+    prompt: '`has_space("a b")` should give back `True`, but it gives back `False`. Fix it.'
+    code: |
+      def has_space(text):
+          for ch in text:
+              if ch == " ":
+                  return True
+              else:
+                  return False
+    solution: |
+      def has_space(text):
+          for ch in text:
+              if ch == " ":
+                  return True
+          return False
+    highlightLine: 5
+    tests:
+      - { call: 'has_space("a b")', expect: 'True' }
+      - { call: 'has_space("ab")', expect: 'False' }
+      - { call: 'has_space(" ")', expect: 'True' }
+    why: >-
+      A search can only answer no once it has checked everything, so `return False` goes after the loop.
+    hints:
+      - How many characters get checked before the function ends?
+    variants:
+      - prompt: This crashes with an `IndexError`. Fix the `range` so it shows `0`, as no neighbours match in `abc`.
+        code: |
+          word = "abc"
+          matches = 0
+          for i in range(len(word)):
+              if word[i] == word[i + 1]:
+                  matches += 1
+          print(matches)
+        solution: |
+          word = "abc"
+          matches = 0
+          for i in range(len(word) - 1):
+              if word[i] == word[i + 1]:
+                  matches += 1
+          print(matches)
+        highlightLine: 3
+        tests: []
+        expectOutput: '0'
+        why: >-
+          On the last character, `word[i + 1]` is past the end, so the loop has to stop one position early.
+        hints:
+          - What is `i + 1` on the last pass?
+      - prompt: '`reverse("abc")` should give back `"cba"`, but it gives back `"abc"`. Fix it.'
+        code: |
+          def reverse(text):
+              out = ""
+              for ch in text:
+                  out = out + ch
+              return out
+        solution: |
+          def reverse(text):
+              out = ""
+              for ch in text:
+                  out = ch + out
+              return out
+        highlightLine: 4
+        tests:
+          - { call: 'reverse("abc")', expect: "'cba'" }
+          - { call: 'reverse("")', expect: "''" }
+        why: >-
+          Adding each character to the front is what reverses the order.
+        hints:
+          - Which side does each new character go on?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Cleaning up text
+    body: >-
+      Before a model sees any text, the text gets cleaned: everything lowercase, with odd characters removed. Here's a tiny version of that, and it's a good example of how to approach a task like this.
+
+
+      First, decide what each character should do. Is it a letter or a space? Keep it, in lowercase. Is it anything else? Drop it. Then the code follows directly: an accumulator for the result, a loop over the characters, and an `if` that decides.
+
+
+      Notice the check happens on `ch.lower()`, so capitals are covered without listing them. And nothing's being changed in place: strings can't change, so we build a new one, one character at a time, and return it.
+    code: |
+      def clean(text):
+          allowed = "abcdefghijklmnopqrstuvwxyz "
+          out = ""
+          for ch in text:
+              if ch.lower() in allowed:
+                  out += ch.lower()
+          return out
+
+      print(clean("Hello, World! 123"))
+    subgoals:
+      - { line: 2, label: 'What should be kept' }
+      - { line: 3, label: 'Build the result here' }
+      - { line: 5, label: 'Decide for each character' }
+      - { line: 6, label: 'Keep it, in lowercase' }
+    predict: What about the space before `123`? Will it stay?
+
+  - type: write
+    id: count-char
+    prompt: Write `count_char(text, target)`, which gives back how many times the character `target` appears in `text`. So `count_char("banana", "n")` gives back `2`. Use a loop, not a string method.
+    starter: |
+      def count_char(text, target):
+          # Your code here
+    solution: |
+      def count_char(text, target):
+          count = 0
+          for ch in text:
+              if ch == target:
+                  count += 1
+          return count
+    tests:
+      - { call: 'count_char("banana", "n")', expect: '2' }
+      - { call: 'count_char("banana", "z")', expect: '0' }
+      - { call: 'count_char("", "a")', expect: '0' }
+    why: >-
+      It's an accumulator with an `if`, and no indexes are needed.
+    hints:
+      - Set up a count before the loop, and return it after.
+    variants:
+      - prompt: Write `first_vowel(text)`, which gives back the position of the first vowel, or `-1` if there isn't one. So `first_vowel("hat")` gives back `1`.
+        starter: |
+          def first_vowel(text):
+              # Your code here
+        solution: |
+          def first_vowel(text):
+              for i in range(len(text)):
+                  if text[i] in "aeiou":
+                      return i
+              return -1
+        tests:
+          - { call: 'first_vowel("hat")', expect: '1' }
+          - { call: 'first_vowel("ox")', expect: '0' }
+          - { call: 'first_vowel("sky")', expect: '-1' }
+        hints:
+          - You need the position, so loop over `range(len(text))`.
+          - Where does `return -1` have to go?
+
+  - type: choice
+    id: remember-range
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      for i in range(1, 3):
+          i = i * 10
+          print(i)
+    choices: ["10\n20", "10\n20\n30", "1\n2", '10']
+    answer: "10\n20"
+    why: >-
+      The range gives 1 and 2. Changing `i` only lasts until the next pass, when it's assigned the next value.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `for ch in text:` goes through the characters, and `range(len(text))` goes through the positions. `in` also asks whether something's in a string. In a search, return `True` as soon as you find a match, and `False` only after the loop.
+
+
+      Next: what happens when you put one loop inside another.

@@ -1,0 +1,423 @@
+id: p5-broadcasting
+track: ml
+unit: 5
+order: 8
+title: Broadcasting
+summary: The rule for combining arrays of different shapes, and its silent trap.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Different shapes, together
+    body: >-
+      You've been doing this already. `a * 2` works, and `X - X.mean(axis=0)` works, even though the shapes don't match. NumPy stretches the smaller one to fit, which is called broadcasting.
+
+
+      It's a very short rule, and well worth learning exactly, because when it goes wrong, it often goes wrong silently. By the end of this lesson you'll be able to predict the result of combining any two shapes, and spot the trap that has wasted many days of people's time.
+
+  - type: learn
+    id: rule
+    title: The rule
+    body: >-
+      Write the two shapes one above the other, lined up on the right. Then go through each column of numbers. The pair is fine if the numbers are equal, or if one of them is 1. If one shape is shorter, treat the missing numbers as 1. The result takes the larger number in each column.
+
+
+      So `(3, 2)` and `(2,)` line up as 3 with nothing, and 2 with 2, giving `(3, 2)`. A single number has no axes at all, so it works with everything, which is why `a * 2` works.
+
+
+      But `(3, 2)` and `(3,)` line up as 2 with 3, and that fails: `ValueError: operands could not be broadcast together with shapes (3,2) (3,)`. Lining up on the right is the part people forget. It feels like it should match the 3 with the 3, but it doesn't.
+
+
+      A size-1 axis stretches by repeating its values, though it's done without actually copying anything. `np.broadcast_shapes((3, 2), (2,))` checks the rule for you.
+    code: |
+      import numpy as np
+
+      a = np.ones((3, 2))
+      print((a + 10).shape)
+      print((a + np.array([1, 2])).shape)
+      print(a + np.array([1, 2]))
+
+      print((a + np.ones((3, 1))).shape)
+      print(np.broadcast_shapes((3, 2), (2,)))
+
+      print(a + np.array([1, 2, 3]))
+    expectError: ValueError
+    subgoals:
+      - { line: 4, label: 'A single number fits everything' }
+      - { line: 5, label: 'Line up on the right: 2 with 2' }
+      - { line: 6, label: 'Added to every row' }
+      - { line: 8, label: '1 stretches to 2' }
+      - { line: 11, label: '2 with 3: fails' }
+    predict: Which row does `[1, 2]` get added to?
+
+  - type: choice
+    id: rule-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.zeros((4, 3))
+      b = np.zeros(3)
+      print((a + b).shape)
+    choices: ['(4, 3)', '(3, 4)', '(4, 3, 3)', '(3,)']
+    answer: '(4, 3)'
+    why: >-
+      Line up on the right: 3 with 3 is fine, and the 4 has nothing to match, so it stays.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a * np.array([10, 0]))
+        choices: ["[[10  0]\n [30  0]]", "[[10 20]\n [ 0  0]]", '[10 0]', 'Error']
+        answer: "[[10  0]\n [30  0]]"
+        why: >-
+          The vector lines up with the columns, so it applies to each row.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          b = np.array([[10], [20]])
+          print(a + b)
+        choices: ["[[11 12]\n [23 24]]", "[[11 22]\n [13 24]]", "[[11]\n [23]]", 'Error']
+        answer: "[[11 12]\n [23 24]]"
+        why: >-
+          Shape `(2, 1)` stretches across the columns, so that each row gets its own number.
+      - code: |
+          import numpy as np
+          print((np.zeros((5, 1, 3)) + np.zeros((4, 1))).shape)
+        choices: ['(5, 4, 3)', '(5, 1, 3)', '(5, 4, 1)', '(4, 3)']
+        answer: '(5, 4, 3)'
+        why: >-
+          On the right: 3 with 1, then 1 with 4, then 5 with nothing.
+
+  - type: choice
+    id: rule-error
+    prompt: What happens here?
+    code: |
+      import numpy as np
+      print(np.zeros((3, 2)) + np.zeros(3))
+    choices: ['ValueError', 'An array of shape (3, 2)', 'An array of shape (3, 3)', 'TypeError']
+    answer: 'ValueError'
+    why: >-
+      Shapes line up on the right, so that's 2 with 3. They aren't equal, and neither is 1.
+
+  - type: explain
+    id: explain-keepdims
+    prompt: Use the broadcasting rule to explain why the first line works and the second crashes.
+    code: |
+      import numpy as np
+      a = np.ones((3, 2))
+      print(a / a.sum(axis=1, keepdims=True))
+      print(a / a.sum(axis=1))
+    expectError: ValueError
+    model: >-
+      With `keepdims`, the totals have shape `(3, 1)`, and that lines up with `(3, 2)`: 2 with 1 is fine, and 3 with 3 is fine. Without it, the shape is `(3,)`, which lines up on the right as 2 with 3, so it fails.
+    keyPoints:
+      - Shapes line up on the right
+      - '`keepdims` gives `(3, 1)`, where the 1 can stretch, while `(3,)` lines up against the 2'
+
+  - type: learn
+    id: trap
+    title: The silent trap
+    body: >-
+      This is the bug. Say your labels `y` have shape `(3,)`, and your model's predictions have shape `(3, 1)`. They look the same when you think about them: three numbers each.
+
+
+      Line them up on the right: 3 with 1, then nothing with 3. That's allowed, and the result is `(3, 3)`. `preds - y` gives you a grid of every prediction minus every label, rather than three differences. It doesn't crash. Taking `.mean()` gives you a perfectly normal-looking number, and your model trains badly, for no visible reason.
+
+
+      It gets worse with square data. A vector always lines up with the columns, even if you meant the rows. When a grid has as many rows as columns, that gives a wrong answer with no error at all.
+
+
+      The defence is simple. Print the shapes, and flatten whatever you don't need: `preds.reshape(-1)` or `preds[:, 0]` turns `(3, 1)` into `(3,)`.
+    code: |
+      import numpy as np
+
+      y = np.array([1.0, 2.0, 3.0])
+      preds = np.array([[1.0], [2.0], [3.0]])
+
+      diff = preds - y
+      print(diff.shape)
+      print(diff)
+      print((diff ** 2).mean())
+
+      fixed = preds.reshape(-1) - y
+      print(fixed.shape)
+      print((fixed ** 2).mean())
+    subgoals:
+      - { line: 3, label: 'Shape (3,)' }
+      - { line: 4, label: 'Shape (3, 1), with the same numbers' }
+      - { line: 6, label: 'Gives (3, 3), with no error' }
+      - { line: 9, label: 'A wrong loss that looks fine' }
+      - { line: 11, label: 'Flatten first, then 0, as it should be' }
+    predict: These predictions are perfect. What should the loss be?
+
+  - type: choice
+    id: trap-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.zeros(4)
+      b = np.zeros((4, 1))
+      print((a + b).shape)
+    choices: ['(4, 4)', '(4,)', '(4, 1)', 'Error']
+    answer: '(4, 4)'
+    why: >-
+      On the right, 4 with 1 is allowed. Then 4 with nothing. You get a grid, which is often not what you meant.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.zeros((4, 1))
+          print((a[:, 0] + np.zeros(4)).shape)
+        choices: ['(4,)', '(4, 4)', '(4, 1)', 'Error']
+        answer: '(4,)'
+        why: >-
+          `a[:, 0]` removes the axis, so both are `(4,)`.
+      - code: |
+          import numpy as np
+          y = np.array([1.0, 2.0])
+          p = np.array([[1.0], [2.0]])
+          print(((p - y) ** 2).mean())
+        choices: ['0.5', '0.0', '1.0', 'Error']
+        answer: '0.5'
+        why: >-
+          The predictions match perfectly, but the differences form a 2 × 2 grid, so the loss isn't 0. That's the trap.
+
+  - type: learn
+    id: newaxis
+    title: Adding an axis on purpose
+    body: >-
+      You can also use the trap as a tool. Sometimes you do want every item combined with every other. To add an axis of size 1, index with `None`: `a[:, None]` turns `(3,)` into `(3, 1)`, and `a[None, :]` turns it into `(1, 3)`. `np.newaxis` is another name for `None`, and it's a little more readable.
+
+
+      So `a[:, None] * b`, with `a` of shape `(3,)` and `b` of shape `(4,)`, gives `(3, 4)`, a table of every `a` times every `b`. It's a nested loop, with no loops.
+
+
+      That pattern is how you work out every distance between two sets of points, without any loops. `(n, 1, d) - (1, m, d)` gives `(n, m, d)`, every point minus every other point. It looks strange at first, but if you write out the shapes, the rule explains it fully. Note that `reshape(3, 1)` does the same thing, if you prefer it.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 2, 3])
+      b = np.array([10, 20])
+
+      print(a[:, None].shape)
+      print(a[None, :].shape)
+
+      table = a[:, None] * b
+      print(table.shape)
+      print(table)
+
+      print(a.reshape(3, 1).shape)
+    subgoals:
+      - { line: 6, label: '3 rows of 1' }
+      - { line: 7, label: '1 row of 3' }
+      - { line: 9, label: 'Every a times every b' }
+      - { line: 13, label: 'Another way to add the axis' }
+    predict: What shape will the table be?
+
+  - type: blank
+    id: fill-none
+    prompt: Fill in the blank to add an axis, so that this shows `(3, 1)`.
+    code: |
+      import numpy as np
+      a = np.arange(3)
+      print(a[____].shape)
+    answers: [[':, None', ':,None', ':, np.newaxis', ':,np.newaxis']]
+    expectOutput: (3, 1)
+    why: >-
+      `None` adds an axis of size 1, in that position.
+    variants:
+      - prompt: Fill in the blank with a shape that makes this add 1 to row 0, and 2 to row 1, so it shows `[[1 1]` and `[2 2]]`.
+        code: |
+          import numpy as np
+          a = np.zeros((2, 2), dtype=int)
+          b = np.array([1, 2]).reshape(____)
+          print(a + b)
+        answers: [['2, 1', '2,1', '-1, 1', '-1,1', '(2, 1)']]
+        expectOutput: "[[1 1]\n [2 2]]"
+        why: >-
+          `(2, 1)` stretches across the columns, so that each row gets its own number.
+      - prompt: Fill in the blank so that the shapes broadcast, and this shows `(3, 2)`.
+        code: |
+          import numpy as np
+          a = np.zeros((3, 2))
+          print((a + np.zeros(____)).shape)
+        answers: [['2', '(2,)', '1', '(1,)', '(3, 2)', '(3,2)', '(3, 1)', '(3,1)', '(1, 2)', '(1,2)', '(1, 1)', '(1,1)']]
+        expectOutput: (3, 2)
+        why: >-
+          Shapes line up on the right, so a vector needs to match the columns.
+      - prompt: Fill in the blank with the keyword that makes the shapes line up, so that this shows `(2, 3)`.
+        code: |
+          import numpy as np
+          a = np.ones((2, 3))
+          print((a - a.mean(axis=1, ____=True)).shape)
+        answers: [['keepdims']]
+        expectOutput: (2, 3)
+        why: >-
+          `keepdims` gives `(2, 1)`, which lines up.
+
+  - type: fix
+    id: fix-trap
+    prompt: '`mse(preds, y)` gets `preds` of shape `(n, 1)` and `y` of shape `(n,)`. For perfect predictions it should give `0.0`, but it doesn''t, because the shapes broadcast into a grid. Fix it.'
+    code: |
+      import numpy as np
+
+      def mse(preds, y):
+          return ((preds - y) ** 2).mean()
+    solution: |
+      import numpy as np
+
+      def mse(preds, y):
+          return ((preds.reshape(-1) - y) ** 2).mean()
+    highlightLine: 4
+    tests:
+      - { call: 'mse(np.array([[1.0], [2.0]]), np.array([1.0, 2.0]))', expect: '0.0' }
+      - { call: 'mse(np.array([[2.0], [2.0]]), np.array([1.0, 2.0]))', expect: '0.5' }
+    why: >-
+      Make the two shapes match before you subtract them.
+    hints:
+      - What shape would make the subtraction line up item by item?
+    variants:
+      - prompt: '`centre_rows(a)` should subtract each row''s own mean from that row. It crashes with a `ValueError`, on a shape like `(3, 2)`. Fix it.'
+        code: |
+          import numpy as np
+
+          def centre_rows(a):
+              return a - a.mean(axis=1)
+        solution: |
+          import numpy as np
+
+          def centre_rows(a):
+              return a - a.mean(axis=1, keepdims=True)
+        highlightLine: 4
+        tests:
+          - { call: 'centre_rows(np.array([[1.0, 3.0], [2.0, 2.0], [0.0, 4.0]]))', expect: '[[-1.0, 1.0], [0.0, 0.0], [-2.0, 2.0]]' }
+        hints:
+          - Keep the axis, so that it lines up.
+      - prompt: This should add each row's bias, so it should show `[[11. 11.]` and `[21. 21.]` and `[31. 31.]]`, but it gives a `ValueError`. Fix the line that makes `bias`.
+        code: |
+          import numpy as np
+          a = np.ones((3, 2))
+          bias = np.array([10.0, 20.0, 30.0])
+          print(a + bias)
+        solution: |
+          import numpy as np
+          a = np.ones((3, 2))
+          bias = np.array([10.0, 20.0, 30.0])[:, None]
+          print(a + bias)
+        highlightLine: 3
+        tests: []
+        expectOutput: "[[11. 11.]\n [21. 21.]\n [31. 31.]]"
+        hints:
+          - It needs to have shape `(3, 1)`.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Every distance, with no loops
+    body: >-
+      Here's the pattern in action, and you'll use it in this unit's project. You have 3 points and 2 centres, each with 2 coordinates, and you want the distance from every point to every centre.
+
+
+      Write the shapes down first. `points` is `(3, 2)`, and `centres` is `(2, 2)`. To combine them, add an axis to each: `points[:, None, :]` is `(3, 1, 2)`, and `centres[None, :, :]` is `(1, 2, 2)`. Lined up on the right: 2 with 2, then 1 with 2, and then 3 with 1. The result is `(3, 2, 2)`: for each point and each centre, the two differences.
+
+
+      Now square them and sum the last axis, which vanishes, leaving `(3, 2)`. Then take the root. Finally, `argmin(axis=1)` gives the nearest centre to each point. In a loop, you'd have written three levels of `for`.
+    code: |
+      import numpy as np
+
+      points = np.array([[0.0, 0.0], [1.0, 0.0], [9.0, 9.0]])
+      centres = np.array([[0.0, 0.0], [10.0, 10.0]])
+
+      diff = points[:, None, :] - centres[None, :, :]
+      print(diff.shape)
+
+      dist = np.sqrt((diff ** 2).sum(axis=-1))
+      print(dist.shape)
+      print(dist.round(2))
+
+      print(dist.argmin(axis=1))
+    subgoals:
+      - { line: 6, label: '(3, 1, 2) minus (1, 2, 2)' }
+      - { line: 7, label: 'Each point, each centre, each coordinate' }
+      - { line: 9, label: 'The last axis vanishes' }
+      - { line: 13, label: 'The nearest centre for each point' }
+    predict: Which centre is the third point closest to?
+
+  - type: write
+    id: write-table
+    prompt: Write `times_table(n)`, with no loops, which gives back an `n` by `n` table where the cell in row `i`, column `j` is `(i + 1) * (j + 1)`. So `times_table(2)` gives back `[[1, 2], [2, 4]]`.
+    starter: |
+      import numpy as np
+
+      def times_table(n):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def times_table(n):
+          nums = np.arange(1, n + 1)
+          return nums[:, None] * nums
+    tests:
+      - { call: 'times_table(2)', expect: '[[1, 2], [2, 4]]' }
+      - { call: 'times_table(3).shape', expect: '(3, 3)' }
+    why: >-
+      `(n, 1)` times `(n,)` gives every combination.
+    hints:
+      - Start with `np.arange(1, n + 1)`, and add an axis to one copy.
+    variants:
+      - prompt: Write `standardise(X)`, which takes a grid with a row per example, and gives back each column with its own mean subtracted and divided by its own standard deviation. So `standardise(np.array([[1.0], [3.0]]))` gives back `[[-1.0], [1.0]]`.
+        starter: |
+          import numpy as np
+
+          def standardise(X):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def standardise(X):
+              return (X - X.mean(axis=0)) / X.std(axis=0)
+        tests:
+          - { call: 'standardise(np.array([[1.0], [3.0]]))', expect: '[[-1.0], [1.0]]' }
+          - { call: 'standardise(np.array([[1.0, 2.0], [3.0, 6.0]]))', expect: '[[-1.0, -1.0], [1.0, 1.0]]' }
+        hints:
+          - The result of `axis=0` has shape `(columns,)`, which lines up on the right.
+      - prompt: Write `row_shares(a)`, which gives back each row divided by its own total, so that each row adds up to 1. So `row_shares(np.array([[1.0, 3.0]]))` gives back `[[0.25, 0.75]]`.
+        starter: |
+          import numpy as np
+
+          def row_shares(a):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def row_shares(a):
+              return a / a.sum(axis=1, keepdims=True)
+        tests:
+          - { call: 'row_shares(np.array([[1.0, 3.0]]))', expect: '[[0.25, 0.75]]' }
+          - { call: 'row_shares(np.ones((3, 2))).shape', expect: '(3, 2)' }
+        hints:
+          - The totals need to stay lined up.
+
+  - type: choice
+    id: remember-axis
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print(np.zeros((3, 5)).sum(axis=1).shape)
+    choices: ['(3,)', '(5,)', '(3, 1)', '(1, 5)']
+    answer: '(3,)'
+    why: >-
+      The axis you name vanishes, so the 5 goes.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Line the shapes up on the right. Each pair has to be equal, or one of them must be 1, and missing numbers count as 1. `(3, 2)` and `(3,)` fail, and `(3,)` and `(3, 1)` silently make a grid, which is the bug to look out for. `None` adds an axis, which turns the trap into a tool. When in doubt, print the shapes.
+
+
+      Next: the dot product, which measures how alike two vectors are.

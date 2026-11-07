@@ -1,0 +1,432 @@
+id: p3-aliasing
+track: ml
+unit: 3
+order: 5
+title: Two names, one list
+summary: Why changing one list can change another, and how to make a real copy.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A surprise worth knowing early
+    body: >-
+      Something about lists catches almost everybody out, and it's the cause of some very confusing bugs in real ML code, where a dataset quietly changes because something else touched it.
+
+
+      By the end of this lesson you'll be able to tell when two names refer to the same list, make a real copy, and predict whether a function will change the list you pass it. Python for ML code, the next unit, goes further into this.
+
+  - type: learn
+    id: alias
+    title: Assignment doesn't copy
+    body: >-
+      With numbers, `b = a` seems to make a copy, and changing `b` later doesn't touch `a`. So it's natural to assume that lists work the same way. They don't.
+
+
+      `b = a` doesn't make a new list. It makes a second name for the same list. So there's one list with two names, and a change made through either name shows up through both. This is called aliasing. It doesn't feel like it, but it's not a special rule for lists: assignment never copies anything. It just doesn't matter for numbers and strings, because they can't be changed in place.
+
+
+      Picture a list as a box, and a variable as a label stuck on it. `b = a` sticks a second label on the same box.
+    code: |
+      a = [1, 2, 3]
+      b = a
+      b.append(4)
+      print(a)
+      print(b)
+
+      x = 5
+      y = x
+      y = y + 1
+      print(x, y)
+    subgoals:
+      - { line: 2, label: 'A second name, not a new list' }
+      - { line: 3, label: 'Change it through one name' }
+      - { line: 4, label: 'It shows through the other' }
+      - { line: 9, label: 'This makes a new number, and x is untouched' }
+    predict: What will `print(a)` show?
+
+  - type: choice
+    id: alias-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1, 2]
+      b = a
+      b[0] = 99
+      print(a)
+    choices: ['[99, 2]', '[1, 2]', '[99, 99]', 'Error']
+    answer: '[99, 2]'
+    why: >-
+      `a` and `b` are two names for one list, so changing it through `b` shows through `a`.
+    variants:
+      - code: |
+          a = [1, 2]
+          b = a
+          a.append(3)
+          print(len(b))
+        choices: ['3', '2', '1', 'Error']
+        answer: '3'
+        why: >-
+          It's the same list, whichever name you use.
+      - code: |
+          s = "go"
+          t = s
+          t = t + "at"
+          print(s)
+        choices: ['go', 'goat', 'at', 'Error']
+        answer: 'go'
+        why: >-
+          Strings can't be changed. `t + "at"` makes a new string, and only `t` is moved to it.
+
+  - type: learn
+    id: mutate-vs-reassign
+    title: Changing a list, or moving a name
+    body: >-
+      Two kinds of line look similar, and they do very different things. Changing a list means using a method or assigning to a position: `b.append(4)` or `b[0] = 9`. It affects everybody who has that list. Reassigning means putting a new value after the name: `b = [7, 8]`. It only moves that one name to a new list, and everybody else keeps the old one.
+
+
+      So after `b = a`, the line `b = [7, 8]` doesn't affect `a` at all. Going back to the labels: the label `b` was peeled off and stuck on a new box. The first box still has its `a` label.
+
+
+      And `b = b + [4]` is a reassignment too, since `+` builds a new list. But `b += [4]` changes the list in place. That's a rare case where the two forms really differ.
+    deeper: >-
+      You can check whether two names refer to the same list with `is`. `a is b` asks "the same object?", while `a == b` asks "equal contents?". Two separate lists can be equal without being the same list, as in `[1] == [1]` and `[1] is [1]`, which give `True` and `False`. The next unit looks at this more closely.
+    code: |
+      a = [1, 2]
+      b = a
+      b[0] = 9
+      print(a)
+
+      b = [7, 8]
+      print(a)
+      print(b)
+    subgoals:
+      - { line: 3, label: 'Changes the shared list' }
+      - { line: 4, label: 'So `a` sees it' }
+      - { line: 6, label: 'Moves only the name `b`' }
+      - { line: 7, label: '`a` keeps its list' }
+    predict: What will the second `print(a)` show?
+
+  - type: choice
+    id: reassign-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1]
+      b = a
+      b = [2]
+      print(a, b)
+    choices: ['[1] [2]', '[2] [2]', '[1] [1]', '[1, 2] [2]']
+    answer: '[1] [2]'
+    why: >-
+      `b = [2]` moves the name `b` to a new list, and the original isn't touched.
+    variants:
+      - code: |
+          a = [1]
+          b = a
+          b.append(2)
+          b = [5]
+          print(a)
+        choices: ['[1, 2]', '[5]', '[1]', '[1, 2, 5]']
+        answer: '[1, 2]'
+        why: >-
+          The `append` changed the shared list. Then `b` moved away, and `a` still has that list.
+      - code: |
+          a = [1]
+          b = a
+          b = b + [2]
+          print(a)
+        choices: ['[1]', '[1, 2]', '[2]', 'Error']
+        answer: '[1]'
+        why: >-
+          `+` builds a new list, and `b` moves to it.
+
+  - type: explain
+    id: explain-alias
+    prompt: Someone wanted a backup of `data` before changing it, but the backup changed too. Why, and how would you fix it?
+    code: |
+      data = [3, 1, 2]
+      backup = data
+      data.sort()
+      print(backup)
+    model: >-
+      `backup = data` doesn't copy anything. It's a second name for the same list, so sorting changes what both names see. Writing `backup = data.copy()` makes a real copy.
+    keyPoints:
+      - Assignment gives the same list a second name, and makes no copy
+      - '`data.copy()` makes a separate list'
+
+  - type: learn
+    id: copies
+    title: Making a real copy
+    body: >-
+      To get a separate list, ask for one. `b = a.copy()` makes a new list with the same items. `b = a[:]`, a slice with no start or stop, does the same thing, and you'll see it in other people's code. So does `list(a)`.
+
+
+      Other things also make new lists: any slice, `sorted(a)`, and `a + b`. That's why `sorted` is safe when you want to keep the original, and why you might choose it over `.sort()`.
+
+
+      One limit to keep in mind: this copy is shallow. If the items are lists themselves, the copy shares those inner lists. You'll see lists of lists in the next lesson, and the next unit shows you how to deal with this.
+    code: |
+      a = [1, 2]
+      b = a.copy()
+      b.append(3)
+      print(a)
+      print(b)
+
+      c = a[:]
+      c[0] = 99
+      print(a)
+      print(c)
+    subgoals:
+      - { line: 2, label: 'A separate list' }
+      - { line: 4, label: 'Unchanged' }
+      - { line: 7, label: 'A full slice also copies' }
+      - { line: 9, label: 'Still unchanged' }
+    predict: Will `a` ever change here?
+
+  - type: learn
+    id: functions
+    title: Functions can change your list
+    body: >-
+      Earlier, you saw that a function can't change an outside number by assigning to its parameter. There's a twist with lists, as promised. A parameter is a new name for whatever was passed in. So if you pass a list, the function has a second name for your list, and it's aliasing again.
+
+
+      So `items.append(4)` inside a function changes the caller's list. `items = [4]` inside a function doesn't, because it only moves the local name. It's the same rule as before, with no new ideas.
+
+
+      A function that changes its input can catch people out, so follow one of two conventions. Either change the list and return `None`, as `.sort()` does, or leave the input alone and return a new list, as `sorted()` does. Doing both is confusing. In most cases, prefer returning a new list.
+    code: |
+      def add_item(items):
+          items.append(4)
+
+      def replace(items):
+          items = [4]
+
+      data = [1]
+      add_item(data)
+      print(data)
+      replace(data)
+      print(data)
+    subgoals:
+      - { line: 2, label: 'Changes the list it was passed' }
+      - { line: 5, label: 'Only moves the local name' }
+      - { line: 8, label: '`data` and `items` are the same list' }
+      - { line: 11, label: 'Unchanged by replace' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: function-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f(a):
+          a[0] = 0
+
+      nums = [5, 6]
+      f(nums)
+      print(nums)
+    choices: ['[0, 6]', '[5, 6]', '[0, 0]', 'None']
+    answer: '[0, 6]'
+    why: >-
+      `a` is a second name for `nums`, so the change goes through.
+    variants:
+      - code: |
+          def f(a):
+              a = [0]
+
+          nums = [5, 6]
+          f(nums)
+          print(nums)
+        choices: ['[5, 6]', '[0]', '[0, 6]', 'None']
+        answer: '[5, 6]'
+        why: >-
+          Assigning to `a` only moves the local name.
+      - code: |
+          def f(n):
+              n += 1
+
+          x = 5
+          f(x)
+          print(x)
+        choices: ['5', '6', 'None', 'Error']
+        answer: '5'
+        why: >-
+          Numbers can't be changed in place, so `n += 1` only gives the local name a new number.
+
+  - type: blank
+    id: fill-copy
+    prompt: Fill in the blank so `b` is a separate list, and this shows `[1]`.
+    code: |
+      a = [1]
+      b = ____
+      b.append(2)
+      print(a)
+    answers: [['a.copy()', 'a[:]', 'list(a)']]
+    expectOutput: '[1]'
+    why: >-
+      `b = a` would be a second name for the same list.
+    variants:
+      - prompt: Fill in the blank so the original stays in its order, and this shows `[2, 1]`.
+        code: |
+          a = [2, 1]
+          b = ____(a)
+          print(a)
+        answers: [['sorted', 'list']]
+        expectOutput: '[2, 1]'
+        why: >-
+          `sorted` gives back a new list and leaves `a` alone.
+
+  - type: fix
+    id: fix-backup
+    prompt: This should show the original order in the backup, `[3, 1, 2]`. Fix the backup line.
+    code: |
+      data = [3, 1, 2]
+      backup = data
+      data.sort()
+      print(backup)
+    solution: |
+      data = [3, 1, 2]
+      backup = data.copy()
+      data.sort()
+      print(backup)
+    highlightLine: 2
+    expectOutput: '[3, 1, 2]'
+    why: >-
+      Without a copy, both names refer to the list that got sorted.
+    hints:
+      - How many lists are there at the moment?
+    variants:
+      - prompt: This function shouldn't change the list it's given, but `nums` ends up changed. It should show `[3, 1]` and then `[1, 3]`. Fix the function.
+        code: |
+          def in_order(items):
+              items.sort()
+              return items
+
+          nums = [3, 1]
+          result = in_order(nums)
+          print(nums)
+          print(result)
+        solution: |
+          def in_order(items):
+              return sorted(items)
+
+          nums = [3, 1]
+          result = in_order(nums)
+          print(nums)
+          print(result)
+        highlightLine: 2
+        expectOutput: "[3, 1]\n[1, 3]"
+        why: >-
+          `.sort()` changed the caller's list. `sorted` gives back a new one and leaves it alone.
+        hints:
+          - Which sorting tool makes a new list?
+      - prompt: This should show `[1, 2]`, but it shows `[1]`. The function is meant to change the list it's given. Fix it.
+        code: |
+          def add_two(items):
+              items = items + [2]
+
+          nums = [1]
+          add_two(nums)
+          print(nums)
+        solution: |
+          def add_two(items):
+              items.append(2)
+
+          nums = [1]
+          add_two(nums)
+          print(nums)
+        highlightLine: 2
+        expectOutput: '[1, 2]'
+        why: >-
+          `+` builds a new list, and assigning only moves the local name. `append` changes the shared list.
+        hints:
+          - Does `+` change the list, or build a new one?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Tracing with boxes and labels
+    body: >-
+      When a program surprises you, draw it. Draw each list as a box, and each name as a label pointing at a box. Then step through. Any line with `=` and a bare name moves a label. A method or an index assignment changes what's inside a box.
+
+
+      Follow the code below. After line 2 there's one box with labels `a` and `b`. Line 3 changes the box, so it holds 1 and 2. Line 4 creates a second box, a copy, labelled `c`. Line 5 changes only that box. Line 6 moves `b` to a brand new box holding 9. So at the end, `a` holds `[1, 2]`, `b` holds `[9]`, and `c` holds `[1, 2, 3]`.
+
+
+      That's the whole model, and there are no exceptions. Python Tutor is a free website that draws exactly these diagrams for you, if you ever want to see one.
+    code: |
+      a = [1]
+      b = a
+      b.append(2)
+      c = a.copy()
+      c.append(3)
+      b = [9]
+      print(a)
+      print(b)
+      print(c)
+    subgoals:
+      - { line: 2, label: 'Two labels, one box' }
+      - { line: 3, label: 'Changes the box' }
+      - { line: 4, label: 'A second box' }
+      - { line: 6, label: 'Moves only the label `b`' }
+    predict: Does the output match what's described above?
+
+  - type: write
+    id: with-item
+    prompt: Write `with_item(items, x)`, which gives back a new list with `x` added to the end, and leaves `items` unchanged.
+    starter: |
+      def with_item(items, x):
+          # Your code here
+    solution: |
+      def with_item(items, x):
+          out = items.copy()
+          out.append(x)
+          return out
+    tests:
+      - { call: 'with_item([1], 2)', expect: '[1, 2]' }
+      - { call: 'with_item([], 5)', expect: '[5]' }
+      - { call: '(lambda a: (with_item(a, 2), a)[1])([1])', expect: '[1]', hidden: true }
+    why: >-
+      Copying first means the caller's list stays as it was. `return items + [x]` also works.
+    hints:
+      - What makes a separate list you can safely change?
+    variants:
+      - prompt: Write `clear_negatives(items)`, which changes the list it's given, replacing every negative number with `0`, and gives back nothing.
+        starter: |
+          def clear_negatives(items):
+              # Your code here
+        solution: |
+          def clear_negatives(items):
+              for i in range(len(items)):
+                  if items[i] < 0:
+                      items[i] = 0
+        tests:
+          - { call: '(lambda a: (clear_negatives(a), a)[1])([1, -2, -3])', expect: '[1, 0, 0]' }
+          - { call: 'clear_negatives([1])', expect: None }
+        hints:
+          - To change the list, assign to a position.
+
+  - type: choice
+    id: remember-best
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      best = 0
+      for n in [-3, -1]:
+          if n > best:
+              best = n
+      print(best)
+    choices: ['0', '-1', '-3', 'None']
+    answer: '0'
+    why: >-
+      Nothing beats a start of 0. That's why best-so-far should start from a real item.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Assignment never copies, so `b = a` gives one list two names. Methods and index assignments change the list for everyone. A plain `b = ...` only moves that one name. `.copy()` and `[:]` make a separate list. A function's parameter is another name for what you passed in.
+
+
+      Next: what happens when the items in a list are lists themselves.

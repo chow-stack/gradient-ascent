@@ -1,0 +1,426 @@
+id: p5-vectorising
+track: ml
+unit: 5
+order: 6
+title: Vectorising loops
+summary: Turn the loop patterns you know into one line of array maths.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Loops into lines
+    body: >-
+      In Unit 3 you learned the loop patterns: sum, map, filter, find the best. Each one has a NumPy form, and you've already met a few. This lesson pulls them together, so that you can look at any loop over numbers and rewrite it.
+
+
+      By the end of this lesson you'll be able to use NumPy's summary functions, apply maths functions to whole arrays, rewrite a loop as a single expression, and recognise the loops that have to stay.
+
+  - type: learn
+    id: summaries
+    title: Summaries
+    body: >-
+      Some methods boil a whole array down to one number: `a.sum()`, `a.mean()`, `a.min()`, `a.max()`, and `a.std()` for the standard deviation, which measures how spread out the numbers are. Each one replaces a loop with an accumulator.
+
+
+      The "find the best" loop has two versions. `a.max()` gives the highest value, and `a.argmax()` gives its position. You'll use `argmax` constantly, because a classifier's prediction is the position of its highest score. `a.argmin()` does the same for the lowest. A common mistake is using `max` when you need the position.
+
+
+      These also come as functions, so `np.sum(a)` and `a.sum()` are the same. Python's own `sum(a)` and `max(a)` work on a 1D array too, but they go through it slowly, item by item. Prefer NumPy's.
+
+
+      `np.cumsum(a)` keeps the running total, one number per item, and `np.sort(a)` you've already seen.
+    code: |
+      import numpy as np
+
+      a = np.array([3, 9, 2, 6])
+      print(a.sum(), a.mean())
+      print(a.min(), a.max())
+      print(a.argmax(), a.argmin())
+      print(np.cumsum(a))
+      print(a.std())
+    subgoals:
+      - { line: 4, label: 'Both replace an accumulator' }
+      - { line: 5, label: 'The values' }
+      - { line: 6, label: 'Their positions' }
+      - { line: 7, label: 'A running total' }
+      - { line: 8, label: 'How spread out they are' }
+    predict: What will `a.argmax()` show?
+
+  - type: choice
+    id: summaries-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([4, 8, 1])
+      print(a.max(), a.argmax())
+    choices: ['8 1', '1 8', '8 8', '1 1']
+    answer: '8 1'
+    why: >-
+      `max` gives the value, and `argmax` gives its position.
+    variants:
+      - code: |
+          import numpy as np
+          scores = np.array([0.1, 0.2, 0.7])
+          print(scores.argmax())
+        choices: ['2', '0.7', '1', '3']
+        answer: '2'
+        why: >-
+          This is how a classifier picks its prediction, as the position of the highest score.
+      - code: |
+          import numpy as np
+          print(np.cumsum(np.array([1, 2, 3])))
+        choices: ['[1 3 6]', '6', '[1 2 3]', '[6 5 3]']
+        answer: '[1 3 6]'
+        why: >-
+          It keeps each running total.
+      - code: |
+          import numpy as np
+          print(np.array([2, 4]).mean())
+        choices: ['3.0', '3', '6', '[3 3]']
+        answer: '3.0'
+        why: >-
+          A mean is always a float.
+
+  - type: learn
+    id: ufuncs
+    title: Maths on every item
+    body: >-
+      The `math` module works on one number at a time, so `math.sqrt(a)` on an array gives a `TypeError`. NumPy has its own versions, which apply to every item: `np.sqrt`, `np.exp`, `np.log`, `np.abs`, `np.round` and more. This is the map loop gone.
+
+
+      `np.exp` and `np.log` matter most for ML. `np.exp(x)` turns any number into a positive one, and `np.log` undoes it. Note that `np.log` is the natural log, not base 10. You'll use both in the loss functions to come.
+
+
+      Bad maths doesn't crash here. `np.log(0)` gives `-inf`, and `np.log(-1)` or `0 / 0` gives `nan`, which stands for "not a number". You only get a `RuntimeWarning`, and the program carries on. And any maths with `nan` gives `nan`, so one bad number spreads through everything. A loss of `nan` is a well-known sight in training. `np.isnan(a)` finds them.
+    code: |
+      import numpy as np
+
+      a = np.array([1.0, 4.0, 9.0])
+      print(np.sqrt(a))
+      print(np.abs(np.array([-2, 3])))
+      print(np.log(np.exp(a)))
+
+      x = np.array([1.0, 0.0])
+      y = np.log(x)
+      print(y)
+      print(np.isnan(y))
+      print((y * 0).sum())
+    subgoals:
+      - { line: 4, label: 'The square root of every item' }
+      - { line: 6, label: 'log undoes exp' }
+      - { line: 9, label: 'The log of zero is -inf' }
+      - { line: 11, label: 'Not nan, at least' }
+      - { line: 12, label: 'inf times 0 gives nan' }
+    predict: What's the log of `0`?
+
+  - type: choice
+    id: ufuncs-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      print(np.sqrt(np.array([4.0, 16.0])))
+    choices: ['[2. 4.]', '[2, 4]', '6.0', 'Error']
+    answer: '[2. 4.]'
+    why: >-
+      NumPy's `sqrt` applies to every item.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.abs(np.array([-1, 2])).sum())
+        choices: ['3', '1', '[1 2]', '-3']
+        answer: '3'
+        why: >-
+          First make each one positive, then add them up.
+      - code: |
+          import numpy as np
+          a = np.array([1.0, np.nan])
+          print(a.sum())
+        choices: ['nan', '1.0', '0', 'Error']
+        answer: 'nan'
+        why: >-
+          Any maths with `nan` gives `nan`.
+      - code: |
+          import numpy as np
+          print(np.log(np.exp(2.0)))
+        choices: ['2.0', '7.38', '1.0', '0.0']
+        answer: '2.0'
+        why: >-
+          `log` undoes `exp`.
+
+  - type: choice
+    id: math-crash
+    prompt: What happens here?
+    code: |
+      import math
+      import numpy as np
+      print(math.sqrt(np.array([1.0, 4.0])))
+    choices: ['TypeError', '[1. 2.]', '3.0', 'nan']
+    answer: 'TypeError'
+    why: >-
+      The `math` module handles one number at a time. For arrays, use `np.sqrt`.
+
+  - type: learn
+    id: recipes
+    title: The recipes
+    body: >-
+      Here's how to rewrite a loop, in four recipes. Each loop pattern you know becomes one operation.
+
+
+      A map loop, which appends something for each item, becomes arithmetic: `a * 2`. A filter loop, which appends only some items, becomes a mask: `a[a > 0]`. An accumulator becomes a summary: `a.sum()`. And a "pick either value" loop, with an `if` and `else`, becomes `np.where`.
+
+
+      Two tips. Work out from the inside: replace the innermost line first, and read the result as a formula. And index neighbours with slices: `a[1:] - a[:-1]` gives each item minus the one before it, with no index variable. That's `np.diff` in a single expression. Check that your version gives the same answer as the loop on a small example.
+
+
+      Not every loop can go, though. If each step depends on the last one's result, as in a training loop, then it has to stay. The rule in ML is that the outer loop over steps remains, and everything inside it is array maths.
+    code: |
+      import numpy as np
+
+      nums = [1, -2, 3]
+      a = np.array(nums)
+
+      out = []
+      for n in nums:
+          if n > 0:
+              out.append(n * 10)
+      print(out)
+      print(a[a > 0] * 10)
+
+      total = 0
+      for n in nums:
+          total += n ** 2
+      print(total)
+      print((a ** 2).sum())
+
+      print(a[1:] - a[:-1])
+    subgoals:
+      - { line: 6, label: 'A filter and a map loop' }
+      - { line: 11, label: 'A mask, then arithmetic' }
+      - { line: 13, label: 'An accumulator' }
+      - { line: 17, label: 'Square, then add up' }
+      - { line: 19, label: 'Each item minus the one before' }
+    predict: Will the loop and array versions print the same numbers?
+
+  - type: explain
+    id: explain-loop
+    prompt: Could the loop below be replaced by a single array expression? Say why or why not.
+    code: |
+      x = 10.0
+      for step in range(100):
+          x = x - 0.1 * 2 * x
+      print(x)
+    model: >-
+      No, not as a simple array operation, because each step uses the result of the step before. Array operations work on many values at once, independently, while this is one value updated in sequence. This is what a training loop looks like, so the loop stays, and the maths inside it is what gets vectorised.
+    keyPoints:
+      - Each step depends on the previous result
+      - Array operations handle items independently, so this kind of loop stays
+
+  - type: blank
+    id: fill-vector
+    prompt: Fill in the blank so this does the same as the loop would, adding up the squares, and shows `14`.
+    code: |
+      import numpy as np
+      a = np.array([1, 2, 3])
+      print(____)
+    answers: [['(a ** 2).sum()', '(a**2).sum()', '(a * a).sum()', '(a*a).sum()', 'np.sum(a ** 2)', 'np.sum(a**2)']]
+    expectOutput: '14'
+    why: >-
+      Square every item, and then add them up.
+    variants:
+      - prompt: Fill in the blank to get the position of the highest score, so this shows `1`.
+        code: |
+          import numpy as np
+          scores = np.array([0.2, 0.5, 0.3])
+          print(scores.____())
+        answers: [['argmax']]
+        expectOutput: '1'
+        why: >-
+          `argmax` gives the position, and `max` gives the value.
+      - prompt: Fill in the blank to take the square root of every item, so this shows `[3. 5.]`.
+        code: |
+          import numpy as np
+          print(____(np.array([9.0, 25.0])))
+        answers: [['np.sqrt']]
+        expectOutput: '[3. 5.]'
+        why: >-
+          The `math` version only handles one number.
+      - prompt: Fill in the blank to get each change from the item before, so this shows `[2 3]`.
+        code: |
+          import numpy as np
+          a = np.array([1, 3, 6])
+          print(a[1:] - ____)
+        answers: [['a[:-1]', 'a[:2]', 'a[0:2]', 'a[0:-1]']]
+        expectOutput: '[2 3]'
+        why: >-
+          Both slices are the same length, and shifted by one.
+
+  - type: fix
+    id: fix-order
+    prompt: '`sum_squares(a)` should square each item and then add them up, so `sum_squares(np.array([1, 2]))` is `5`. But it gives `9`. Fix it.'
+    code: |
+      import numpy as np
+
+      def sum_squares(a):
+          return a.sum() ** 2
+    solution: |
+      import numpy as np
+
+      def sum_squares(a):
+          return (a ** 2).sum()
+    highlightLine: 4
+    tests:
+      - { call: 'sum_squares(np.array([1, 2]))', expect: '5' }
+    why: >-
+      The order matters. This code adds first, and then squares.
+    hints:
+      - Read the expression from the inside. What happens first?
+    variants:
+      - prompt: '`best_class(scores)` should give back the position of the highest score, so `best_class(np.array([0.2, 0.8]))` is `1`. Fix it.'
+        code: |
+          import numpy as np
+
+          def best_class(scores):
+              return scores.max()
+        solution: |
+          import numpy as np
+
+          def best_class(scores):
+              return scores.argmax()
+        highlightLine: 4
+        tests:
+          - { call: 'best_class(np.array([0.2, 0.8]))', expect: '1' }
+        hints:
+          - One method gives a value, and the other a position.
+      - prompt: >-
+          `rms(a)` should give back the square root of the mean of the squares, so `rms(np.array([1.0, 7.0]))` is `5.0`. It gives back `4.0`, because the steps are in the wrong order. Fix it.
+        code: |
+          import numpy as np
+
+          def rms(a):
+              return np.sqrt(a ** 2).mean()
+        solution: |
+          import numpy as np
+
+          def rms(a):
+              return np.sqrt((a ** 2).mean())
+        highlightLine: 4
+        tests:
+          - { call: 'rms(np.array([1.0, 7.0]))', expect: '5.0' }
+        hints:
+          - The formula is the root of the mean, so the mean goes on the inside.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A loss, vectorised
+    body: >-
+      In your descent project, you trained on a single number. Real data has many examples. Take a line, `y = w * x + b`, and the mean squared error across a dataset. Here's the loop version first, the way you'd have written it in Unit 2.
+
+
+      Now go from the inside out. The prediction for one example is `w * x + b`, and on an array that gives every prediction at once. The error is `preds - y`, the square is `** 2`, and `.mean()` replaces the running total and the division. You end up with the formula as it would appear in a textbook.
+
+
+      There's a bonus. This code doesn't care how many examples there are. It works unchanged with 4 or 4 million, and with far less waiting. So `w` and `b` stay as plain numbers, and the outer training loop would stay as a loop. Everything inside it is one line.
+    code: |
+      import numpy as np
+
+      xs = [1.0, 2.0, 3.0]
+      ys = [3.0, 5.0, 8.0]
+      w, b = 2.0, 1.0
+
+      total = 0
+      for x, y in zip(xs, ys):
+          pred = w * x + b
+          total += (pred - y) ** 2
+      print(total / len(xs))
+
+      X = np.array(xs)
+      Y = np.array(ys)
+      preds = w * X + b
+      print(((preds - Y) ** 2).mean())
+    subgoals:
+      - { line: 7, label: 'An accumulator over examples' }
+      - { line: 11, label: 'The mean, by hand' }
+      - { line: 15, label: 'Every prediction at once' }
+      - { line: 16, label: 'The formula, in one line' }
+    predict: Will these give the same loss?
+
+  - type: write
+    id: write-dist
+    prompt: Rewrite this loop as one line of NumPy. Write `total_abs(nums)`, which takes an array and gives back the same answer as adding `abs(n)` for each number. So `total_abs(np.array([-1, 2]))` gives back `3`.
+    starter: |
+      import numpy as np
+
+      def total_abs(nums):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def total_abs(nums):
+          return np.abs(nums).sum()
+    tests:
+      - { call: 'total_abs(np.array([-1, 2]))', expect: '3' }
+      - { call: 'total_abs(np.array([0]))', expect: '0' }
+    why: >-
+      A map and an accumulator become one function and one summary.
+    hints:
+      - Make them all positive, and then add them up.
+    variants:
+      - prompt: Write `distance(a, b)`, with no loop, which gives back the straight-line distance between two arrays, the square root of the sum of the squared differences. So `distance(np.array([0.0, 0.0]), np.array([3.0, 4.0]))` gives back `5.0`.
+        starter: |
+          import numpy as np
+
+          def distance(a, b):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def distance(a, b):
+              return np.sqrt(((a - b) ** 2).sum())
+        tests:
+          - { call: 'distance(np.array([0.0, 0.0]), np.array([3.0, 4.0]))', expect: '5.0' }
+          - { call: 'distance(np.array([1.0]), np.array([1.0]))', expect: '0.0' }
+        hints:
+          - Work from the inside out. Subtract, square, sum, then take the root.
+      - prompt: Write `count_rises(a)`, with no loop, which gives back how many items are greater than the item before. So `count_rises(np.array([1, 3, 2, 5]))` gives back `2`.
+        starter: |
+          import numpy as np
+
+          def count_rises(a):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def count_rises(a):
+              return (a[1:] > a[:-1]).sum()
+        tests:
+          - { call: 'count_rises(np.array([1, 3, 2, 5]))', expect: '2' }
+          - { call: 'count_rises(np.array([2, 1]))', expect: '0' }
+        hints:
+          - Compare two shifted slices, and count the matches.
+
+  - type: choice
+    id: remember-mean
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2, 3, 4])
+      print((a > 1).sum())
+    choices: ['3', '9', '0.75', '[2 3 4]']
+    answer: '3'
+    why: >-
+      `True` counts as 1 in a sum, so this counts the matches.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Summaries replace accumulators, and `argmax` gives the position of the highest. `np.sqrt`, `np.exp` and `np.log` apply to every item, and bad maths gives `nan` rather than a crash. Map loops become arithmetic, filter loops become masks, and neighbours become slices. A loop stays only if each step depends on the last one.
+
+
+      Next: doing these summaries on one direction of a grid.

@@ -1,0 +1,372 @@
+id: p2-def
+track: ml
+unit: 2
+order: 1
+title: Writing a function
+summary: Give a job a name, and run it whenever you want.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Your own tools
+    body: >-
+      So far you've used functions other people wrote, like `len` and `round`. Now you'll write your own. A training program is mostly
+      small functions with clear names: one loads the data, one measures the error, one updates the model.
+
+
+      By the end of this lesson you'll be able to define a function, give it inputs and call it. You'll also know why a function you've
+      defined can sit there and do nothing at all.
+
+  - type: learn
+    id: defining
+    title: Defining and calling
+    body: >-
+      `def` creates a function. It's followed by a name, parentheses and a colon, and the indented lines underneath are the function's
+      body, just like the block under an `if`.
+
+
+      Here's the part that surprises people: defining a function doesn't run it. When Python reaches a `def`, it stores those instructions
+      under that name and moves on. The body only runs when you call the function, by writing its name with parentheses.
+
+
+      You can call a function as often as you like, and every call runs the whole body again from the top. That's the point of a function.
+      You write the steps once, and if you need to change them, you change them in one place.
+    code: |
+      def welcome():
+          print("Welcome to the trail")
+          print("Stay on the path")
+
+      print("Before")
+      welcome()
+      welcome()
+    subgoals:
+      - { line: 1, label: 'Store the instructions. Nothing runs yet' }
+      - { line: 5, label: 'The first line that actually runs' }
+      - { line: 6, label: 'Call it: the body runs' }
+      - { line: 7, label: 'Call it again: the body runs again' }
+    predict: How many lines will this show, and which comes first?
+
+  - type: choice
+    id: never-called
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def hello():
+          print("hi")
+
+      print("done")
+    choices: ['done', "hi\ndone", "done\nhi", 'Nothing']
+    answer: 'done'
+    why: >-
+      `def` only stores the instructions. Nothing ever calls `hello`, so `hi` never appears.
+    variants:
+      - code: |
+          def hello():
+              print("hi")
+
+          hello()
+          print("done")
+          hello()
+        choices: ["hi\ndone\nhi", "hi\nhi\ndone", "done\nhi\nhi", 'done']
+        answer: "hi\ndone\nhi"
+        why: >-
+          The program still runs from top to bottom. Each call jumps into the body and then comes back to the next line.
+      - code: |
+          print("a")
+          def f():
+              print("b")
+          print("c")
+        choices: ["a\nc", "a\nb\nc", "a\nb", 'c']
+        answer: "a\nc"
+        why: >-
+          The `def` is skipped over, apart from storing the function. `f` is never called, so `b` never shows.
+
+  - type: learn
+    id: parameters
+    title: Giving a function inputs
+    body: >-
+      A function is more useful when it can work on different values. Names inside the parentheses of the `def` are called parameters. They're
+      variables that get their values when the function is called. The values you pass in the call are the arguments.
+
+
+      So in `greet("Ada")`, the argument `"Ada"` is stored in the parameter `name`, and then the body runs. On the next call, `name` holds whatever
+      that call passed. Several parameters are separated by commas, and arguments are matched to them by position: first to first, second to second.
+
+
+      Pass the wrong number and Python stops with a `TypeError` saying what's missing. Pass them in the wrong order and there may be no error at
+      all, just a wrong result, so give your parameters clear names.
+    deeper: >-
+      You can also name an argument in the call, as in `report(steps=500, name="Ada")`. Then position doesn't matter, and the call explains itself.
+      Library functions in machine learning often have many options, and they're nearly always passed this way. You'll see it a lot in NumPy and PyTorch.
+    code: |
+      def greet(name):
+          print(f"Hello, {name}")
+
+      def report(name, steps):
+          print(f"{name} walked {steps} steps")
+
+      greet("Ada")
+      greet("Grace")
+      report("Ada", 500)
+    subgoals:
+      - { line: 1, label: '`name` is a parameter' }
+      - { line: 4, label: 'Two parameters' }
+      - { line: 7, label: 'Here `name` holds "Ada"' }
+      - { line: 8, label: 'Now `name` holds "Grace"' }
+      - { line: 9, label: 'Matched by position' }
+    predict: What would `report(500, "Ada")` show?
+
+  - type: choice
+    id: args-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def show(a, b):
+          print(a - b)
+
+      show(10, 3)
+      show(3, 10)
+    choices: ["7\n-7", "7\n7", "-7\n7", "10\n3"]
+    answer: "7\n-7"
+    why: >-
+      Arguments go to parameters by position, so the second call has `a` as 3 and `b` as 10.
+    variants:
+      - code: |
+          def show(word):
+              print(word[0])
+
+          x = "goat"
+          show(x)
+          show("summit")
+        choices: ["g\ns", "x\ns", "goat\nsummit", 'Error']
+        answer: "g\ns"
+        why: >-
+          The parameter takes the value of each argument. It doesn't matter that the variable outside is called `x`.
+      - code: |
+          def twice(n):
+              print(n * 2)
+
+          n = 5
+          twice(n + 1)
+        choices: ['12', '10', '11', '6']
+        answer: '12'
+        why: >-
+          The argument is worked out first, giving 6. Then `n` inside the function holds 6.
+
+  - type: explain
+    id: why-nothing
+    prompt: Someone runs this program and nothing appears on the screen. Why, and how would they fix it?
+    code: |
+      def cheer():
+          print("Well done")
+
+      cheer
+    model: >-
+      Nothing appears because the function is never called. `def` only stores it, and the last line only names it, since it has no parentheses. Writing `cheer()`
+      would run the body.
+    keyPoints:
+      - Defining a function does not run its body
+      - The last line has no parentheses, so it never calls the function
+
+  - type: blank
+    id: fill-def
+    prompt: Fill in the blank so this defines the function and shows `Ready`.
+    code: |
+      ____ start():
+          print("Ready")
+
+      start()
+    answers: [['def']]
+    expectOutput: Ready
+    why: >-
+      `def` is the word that starts a function definition.
+    variants:
+      - prompt: Fill in the blank so this calls the function and shows `Ready`.
+        code: |
+          def start():
+              print("Ready")
+
+          ____
+        answers: [['start()']]
+        expectOutput: Ready
+        why: >-
+          A call needs the name and the parentheses, even when there are no arguments.
+      - prompt: Fill in the blank so this shows `9`.
+        code: |
+          def square(____):
+              print(n * n)
+
+          square(3)
+        answers: [['n']]
+        expectOutput: '9'
+        why: >-
+          The body uses `n`, so that has to be the name of the parameter.
+
+  - type: learn
+    id: order
+    title: Define first, then call
+    body: >-
+      Python runs a program from top to bottom, and that includes `def` lines. If you call a function on a line above its `def`, Python hasn't
+      stored it yet, so you get a `NameError`. This is why programs usually put their functions at the top and their main steps at the bottom.
+
+
+      Inside a function's body, the rule is more relaxed. A body can call a function defined further down the file, because the body doesn't run until
+      it's called, and by then every `def` has been reached.
+
+
+      Run this example to see the error. Notice that the first `print` runs, and that the program stops at the call.
+    code: |
+      print("Starting")
+      greet()
+
+      def greet():
+          print("Hello")
+    expectError: NameError
+    subgoals:
+      - { line: 1, label: 'This runs' }
+      - { line: 2, label: 'Python has not reached the def yet' }
+      - { line: 4, label: 'Never reached' }
+    predict: Will `Hello` appear?
+
+  - type: fix
+    id: call-before-def
+    prompt: This crashes with a `NameError`. Fix it so it shows `Packed`.
+    code: |
+      pack()
+
+      def pack():
+          print("Packed")
+    solution: |
+      def pack():
+          print("Packed")
+
+      pack()
+    highlightLine: 1
+    expectOutput: Packed
+    why: >-
+      The `def` has to run before the call does, so the call moves to the bottom.
+    hints:
+      - Python goes from top to bottom. Has it seen `pack` by line 1?
+    variants:
+      - prompt: This should show `Hi Sam`, but it crashes with a `TypeError`. Fix the call.
+        code: |
+          def greet(name):
+              print(f"Hi {name}")
+
+          greet()
+        solution: |
+          def greet(name):
+              print(f"Hi {name}")
+
+          greet("Sam")
+        highlightLine: 4
+        expectOutput: Hi Sam
+        why: >-
+          `greet` has one parameter, so each call has to pass one argument.
+        hints:
+          - What does the function need in order to run?
+      - prompt: This should show `20 km left`, but it shows `km 20 left`. Fix the call without changing the function.
+        code: |
+          def status(distance, unit):
+              print(f"{distance} {unit} left")
+
+          status("km", 20)
+        solution: |
+          def status(distance, unit):
+              print(f"{distance} {unit} left")
+
+          status(20, "km")
+        highlightLine: 4
+        expectOutput: 20 km left
+        why: >-
+          Arguments go to parameters by position, so the distance has to come first.
+        hints:
+          - Which parameter gets the first argument?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Spotting a function
+    body: >-
+      How do you know when to write a function? A strong clue is code that you've written twice with one small change. The part that changes becomes a parameter,
+      and the part that stays the same becomes the body.
+
+
+      Below, two lines report on two hikes. They do the same job with different values, so they turn into one function with two parameters. Now if you want to change
+      the message, you only change it once. A clear name helps too: `report("Ridge", 12)` says what it's doing.
+    code: |
+      # Before: the same line twice
+      print(f"Ridge: {12 * 60} minutes")
+      print(f"Lake: {5 * 60} minutes")
+
+      # After: one function, called twice
+      def report(place, hours):
+          print(f"{place}: {hours * 60} minutes")
+
+      report("Ridge", 12)
+      report("Lake", 5)
+    subgoals:
+      - { line: 2, label: 'What changes? The place and the hours' }
+      - { line: 6, label: 'Those become parameters' }
+      - { line: 7, label: 'What stays the same becomes the body' }
+      - { line: 9, label: 'Call it once for each case' }
+    predict: Will the two versions show the same lines?
+
+  - type: write
+    id: announce
+    prompt: >-
+      Write a function `announce(item, price)` that prints a line like `rope costs 12`. Then call it with `"rope"` and `12`.
+    starter: |
+      # Define announce here, then call it
+    solution: |
+      def announce(item, price):
+          print(f"{item} costs {price}")
+
+      announce("rope", 12)
+    expectOutput: rope costs 12
+    why: >-
+      Two parameters, one f-string and one call. Without the call at the bottom, nothing would print.
+    hints:
+      - Start with `def announce(item, price):`, and indent the line under it.
+      - Don't forget to call it at the end.
+    variants:
+      - prompt: Write a function `shout(word)` that prints `word` in uppercase. Then call it with `"summit"`.
+        starter: |
+          # Define shout here, then call it
+        solution: |
+          def shout(word):
+              print(word.upper())
+
+          shout("summit")
+        expectOutput: SUMMIT
+        hints:
+          - Use the string tool `.upper()` on the parameter.
+
+  - type: choice
+    id: remember-elif
+    kind: predict
+    prompt: From the last unit. What does this print?
+    code: |
+      n = 15
+      if n > 10:
+          print("a")
+      elif n > 5:
+          print("b")
+      if n > 12:
+          print("c")
+    choices: ["a\nc", 'a', "a\nb\nc", 'c']
+    answer: "a\nc"
+    why: >-
+      The chain stops at its first match, so `b` never runs. The last `if` is a separate question.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `def` stores a function, and the body only runs when you call it with parentheses. Parameters are variables that get their values from the arguments in the call,
+      matched by position. Define a function before the line that calls it.
+
+
+      Next: so far these functions can only show things. They can't hand a result back to your program. That's what `return` is for.

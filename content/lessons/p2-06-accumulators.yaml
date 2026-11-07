@@ -1,0 +1,403 @@
+id: p2-accumulators
+track: ml
+unit: 2
+order: 6
+title: Building up a result
+summary: Totals, counts and products. One pattern behind most loops.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The pattern behind most loops
+    body: >-
+      Most loops exist to produce one answer from many steps: a total, a count, the largest value so far. In machine learning, average loss is exactly this: add up the error on each example, then divide.
+
+
+      By the end of this lesson you'll know the accumulator pattern, which appears in nearly every program, and the two mistakes that break it.
+
+  - type: learn
+    id: pattern
+    title: The accumulator pattern
+    body: >-
+      An accumulator is a variable that collects a result as the loop runs. It always has the same three parts. Before the loop, set it to a starting value. Inside the loop, update it using its old value. After the loop, use it.
+
+
+      You've met the update before: `total = total + n`, or its short form, `total += n`. It reads the old value, adds to it, and stores the result. Remember that the right side is worked out first.
+
+
+      The starting value depends on the job. For adding or counting, start at 0, since adding to 0 changes nothing. For multiplying, start at 1, because anything multiplied by 0 stays 0, and your answer would be 0 no matter what.
+    code: |
+      total = 0
+      n = 1
+      while n <= 4:
+          total += n
+          n += 1
+      print(total)
+    subgoals:
+      - { line: 1, label: 'Start the accumulator' }
+      - { line: 2, label: 'Start the counter' }
+      - { line: 4, label: 'Add this value to the running total' }
+      - { line: 5, label: 'Move on to the next value' }
+      - { line: 6, label: 'Use it after the loop' }
+    predict: What will it show? Try keeping a table of `total` and `n`.
+
+  - type: choice
+    id: total-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      total = 0
+      n = 1
+      while n <= 3:
+          total += n * 2
+          n += 1
+      print(total)
+    choices: ['12', '6', '14', '3']
+    answer: '12'
+    why: >-
+      `total` goes 0, 2, 6, 12. Each pass adds `n * 2` to what's already there.
+    hints:
+      - Keep a table with `total` and `n`.
+    variants:
+      - code: |
+          product = 1
+          n = 1
+          while n <= 4:
+              product *= n
+              n += 1
+          print(product)
+        choices: ['24', '10', '0', '4']
+        answer: '24'
+        why: >-
+          `product` goes 1, 1, 2, 6, 24. That's 4 factorial, and it starts at 1 for multiplying.
+      - code: |
+          count = 0
+          n = 1
+          while n <= 10:
+              if n % 3 == 0:
+                  count += 1
+              n += 1
+          print(count)
+        choices: ['3', '10', '18', '4']
+        answer: '3'
+        why: >-
+          `count` goes up only for 3, 6 and 9. An `if` in the loop decides when the accumulator changes.
+      - code: |
+          text = ""
+          n = 1
+          while n <= 3:
+              text += "ab"
+              n += 1
+          print(text)
+        choices: ['ababab', 'ab', 'ab3', 'Nothing']
+        answer: 'ababab'
+        why: >-
+          Accumulators can build text as well. For text, the starting value is the empty string `""`.
+
+  - type: learn
+    id: two-bugs
+    title: The two classic mistakes
+    body: >-
+      Both mistakes come from putting a line in the wrong place, and neither gives an error. You just get a wrong number.
+
+
+      The first is starting the accumulator inside the loop. Then it gets reset on every pass, so it only ever remembers the last value. The second is a `return` inside the loop's block. Remember that `return` ends the function right away, so the function leaves on its first pass and gives back only the first value.
+
+
+      The fix for both is about indentation and order: set up before the `while`, update inside it, and return after it. When a loop gives a suspicious number, these are the first two things to check. Compare the wrong version below with the shape you saw earlier.
+    code: |
+      def bad_sum(limit):
+          n = 1
+          while n <= limit:
+              total = 0
+              total += n
+              n += 1
+          return total
+
+      def early_sum(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              total += n
+              n += 1
+              return total
+
+      print(bad_sum(4))
+      print(early_sum(4))
+    subgoals:
+      - { line: 4, label: 'Mistake: reset on every pass' }
+      - { line: 15, label: 'Mistake: leaves on the first pass' }
+      - { line: 17, label: 'Remembers only the last value' }
+      - { line: 18, label: 'Only gets through one pass' }
+    predict: What will each call give back, instead of the correct 10?
+
+  - type: choice
+    id: reset-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      n = 1
+      while n <= 3:
+          total = 0
+          total += n
+          n += 1
+      print(total)
+    choices: ['3', '6', '0', '1']
+    answer: '3'
+    why: >-
+      `total` goes back to 0 on every pass, so at the end it only holds the last value added.
+    variants:
+      - code: |
+          def f():
+              total = 0
+              n = 1
+              while n <= 5:
+                  total += n
+                  n += 1
+                  return total
+
+          print(f())
+        choices: ['1', '15', '5', 'None']
+        answer: '1'
+        why: >-
+          The `return` is inside the loop, so the function leaves after the first pass.
+
+  - type: explain
+    id: explain-return-place
+    prompt: This function should give back 6 for `add_up(3)`, but it gives back 1. What's wrong, and what's the smallest change that fixes it?
+    code: |
+      def add_up(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              total += n
+              n += 1
+              return total
+
+      print(add_up(3))
+    model: >-
+      The `return` is indented inside the loop, so the function leaves after the first pass, with `total` at 1. Moving it out of the block by one level lets the loop finish first.
+    keyPoints:
+      - The `return` is inside the loop, so the function ends on its first pass
+      - The fix is to indent the `return` one level less, so it runs after the loop
+
+  - type: blank
+    id: fill-start
+    prompt: Fill in the starting value so this gives back the product, and shows `6`.
+    code: |
+      product = ____
+      n = 1
+      while n <= 3:
+          product *= n
+          n += 1
+      print(product)
+    answers: [['1']]
+    expectOutput: '6'
+    why: >-
+      Multiplying starts at 1. If it started at 0, it would stay at 0.
+    variants:
+      - prompt: Fill in the update so this shows the sum `15`.
+        code: |
+          total = 0
+          n = 1
+          while n <= 5:
+              ____
+              n += 1
+          print(total)
+        answers: [['total += n', 'total+=n', 'total = total + n', 'total = n + total']]
+        expectOutput: '15'
+        why: >-
+          Add the current value to what's already in the accumulator.
+      - prompt: Fill in the condition so this counts only the even numbers, and shows `3`.
+        code: |
+          count = 0
+          n = 1
+          while n <= 6:
+              if ____:
+                  count += 1
+              n += 1
+          print(count)
+        answers: [['n % 2 == 0', 'n%2==0', 'n % 2 != 1']]
+        expectOutput: '3'
+        why: >-
+          A number is even when the remainder after dividing by 2 is 0.
+
+  - type: fix
+    id: fix-reset
+    prompt: '`sum_to(4)` should give back `10`, but it gives back `4`. Fix it.'
+    code: |
+      def sum_to(limit):
+          n = 1
+          while n <= limit:
+              total = 0
+              total += n
+              n += 1
+          return total
+    solution: |
+      def sum_to(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              total += n
+              n += 1
+          return total
+    highlightLine: 4
+    tests:
+      - { call: sum_to(4), expect: '10' }
+      - { call: sum_to(1), expect: '1' }
+    why: >-
+      The accumulator has to start before the loop. Inside it, it gets reset on every pass.
+    hints:
+      - How many times does line 4 run?
+    variants:
+      - prompt: '`sum_to(4)` should give back `10`, but it gives back `1`. Fix it.'
+        code: |
+          def sum_to(limit):
+              total = 0
+              n = 1
+              while n <= limit:
+                  total += n
+                  n += 1
+                  return total
+        solution: |
+          def sum_to(limit):
+              total = 0
+              n = 1
+              while n <= limit:
+                  total += n
+                  n += 1
+              return total
+        highlightLine: 7
+        why: >-
+          The `return` has to come after the loop, or the function leaves on the first pass.
+        hints:
+          - How many passes happen before the function leaves?
+      - prompt: '`factorial(4)` should give back `24`, but it gives back `0`. Fix it.'
+        code: |
+          def factorial(limit):
+              product = 0
+              n = 1
+              while n <= limit:
+                  product *= n
+                  n += 1
+              return product
+        solution: |
+          def factorial(limit):
+              product = 1
+              n = 1
+              while n <= limit:
+                  product *= n
+                  n += 1
+              return product
+        highlightLine: 2
+        tests:
+          - { call: factorial(4), expect: '24' }
+          - { call: factorial(1), expect: '1' }
+        why: >-
+          Anything multiplied by 0 is 0, so multiplying has to start at 1.
+        hints:
+          - What happens when you multiply by the starting value?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Two accumulators at once
+    body: >-
+      A loop can keep several accumulators at once. Finding a mean takes two: a running total and a count. Each has its own starting value and its own update, and you combine them after the loop.
+
+
+      Below, we'll go through the amounts that the loop generates and find the mean of those above a threshold. An `if` in the block decides which values count. Both updates go inside it, so that the total and the count stay in step.
+
+
+      There's one more awkward case to check. If nothing passes the `if`, the count stays 0, and dividing would crash. So a guard clause goes after the loop. Every time you divide by a count, ask whether that count could be 0.
+    code: |
+      def mean_above(limit, threshold):
+          total = 0
+          count = 0
+          n = 1
+          while n <= limit:
+              if n > threshold:
+                  total += n
+                  count += 1
+              n += 1
+          if count == 0:
+              return 0
+          return total / count
+
+      print(mean_above(5, 2))
+      print(mean_above(5, 99))
+    subgoals:
+      - { line: 2, label: 'Two accumulators, both starting at 0' }
+      - { line: 6, label: 'Only some values count' }
+      - { line: 7, label: 'Update both together' }
+      - { line: 10, label: 'Guard against dividing by zero' }
+      - { line: 12, label: 'Combine them after the loop' }
+    predict: Which numbers count towards `mean_above(5, 2)`, and what's their mean?
+
+  - type: write
+    id: sum-odds
+    prompt: Write `sum_odds(limit)`, which gives back the sum of the odd numbers from 1 up to and including `limit`. So `sum_odds(5)` gives back `9`, from 1 + 3 + 5.
+    starter: |
+      def sum_odds(limit):
+          # Your code here
+    solution: |
+      def sum_odds(limit):
+          total = 0
+          n = 1
+          while n <= limit:
+              if n % 2 == 1:
+                  total += n
+              n += 1
+          return total
+    tests:
+      - { call: sum_odds(5), expect: '9' }
+      - { call: sum_odds(1), expect: '1' }
+      - { call: sum_odds(6), expect: '9' }
+    why: >-
+      The usual three parts, plus an `if` that chooses which values to add.
+    hints:
+      - Set up before the loop, update inside, and return after.
+      - '`n` has to move on every pass, so `n += 1` goes outside the `if`.'
+    variants:
+      - prompt: Write `count_digits(n)`, which gives back how many digits a positive whole number has, by dividing with `//` until nothing is left. So `count_digits(407)` gives back `3`.
+        starter: |
+          def count_digits(n):
+              # Your code here
+        solution: |
+          def count_digits(n):
+              count = 0
+              while n > 0:
+                  n = n // 10
+                  count += 1
+              return count
+        tests:
+          - { call: count_digits(407), expect: '3' }
+          - { call: count_digits(9), expect: '1' }
+          - { call: count_digits(10000), expect: '5' }
+        hints:
+          - '`407 // 10` is `40`. How many times can you do that before reaching 0?'
+
+  - type: choice
+    id: remember-while
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      n = 5
+      while n < 5:
+          n += 1
+      print(n)
+    choices: ['5', '6', '4', 'Nothing']
+    answer: '5'
+    why: >-
+      The condition is false the first time, so the block never runs. The last line is outside the loop.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      An accumulator is set up before the loop, updated inside it, and used after it. Start at 0 for adding and counting, at 1 for multiplying, and at `""` for text. Resetting inside the loop, and returning inside it, are the two classic bugs.
+
+
+      Next: what to do when a loop never stops, or stops one step too soon.

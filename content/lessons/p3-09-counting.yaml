@@ -1,0 +1,393 @@
+id: p3-counting
+track: ml
+unit: 3
+order: 9
+title: Counting with a dictionary
+summary: The pattern behind word counts, histograms and the first language models.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: How often does each thing appear?
+    body: >-
+      "How many of each?" is one of the most common questions in data work. It's also how the first language model in this course will work: count which letter tends to follow which, and use those counts to generate new text.
+
+
+      By the end of this lesson you'll be able to count anything with a dict, explain why the usual mistake crashes, and group items by a key.
+
+  - type: learn
+    id: pattern
+    title: The counting pattern
+    body: >-
+      You don't know in advance which words will appear, so you can't set up a variable for each. A dict solves this, with a key for each distinct item, and its count as the value. Start with an empty dict, and go through the items.
+
+
+      The first thing most people try is `counts[word] += 1`. It crashes with a `KeyError` the first time a word appears, because there's no old value to add to yet.
+
+
+      There are two fixes. One's an explicit check: if the word's already in the dict, add 1, and otherwise set it to 1. The other's the standard one-liner: `counts[word] = counts.get(word, 0) + 1`. `.get` gives the count so far, or 0 for a new word. Read it from the right: find the old count, add 1, and store it. Both forms do the same job.
+    code: |
+      words = ["goat", "yak", "goat"]
+
+      counts = {}
+      for word in words:
+          if word in counts:
+              counts[word] += 1
+          else:
+              counts[word] = 1
+      print(counts)
+
+      counts = {}
+      for word in words:
+          counts[word] = counts.get(word, 0) + 1
+      print(counts)
+    subgoals:
+      - { line: 3, label: 'Start empty' }
+      - { line: 5, label: 'Seen before: add to it' }
+      - { line: 8, label: 'First time: start at 1' }
+      - { line: 13, label: 'The same in one line' }
+    predict: What will `counts["goat"]` be?
+
+  - type: choice
+    id: count-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      counts = {}
+      for ch in "aba":
+          counts[ch] = counts.get(ch, 0) + 1
+      print(counts)
+    choices: ["{'a': 2, 'b': 1}", "{'a': 1, 'b': 1}", "{'a': 2}", '3']
+    answer: "{'a': 2, 'b': 1}"
+    why: >-
+      Keys appear in the order they were first added, and each one holds its count.
+    variants:
+      - code: |
+          counts = {}
+          for n in [1, 1, 2, 1]:
+              counts[n] = counts.get(n, 0) + 1
+          print(counts[1], len(counts))
+        choices: ['3 2', '3 4', '1 2', '2 3']
+        answer: '3 2'
+        why: >-
+          The number 1 appears 3 times, and there are 2 distinct keys.
+      - code: |
+          counts = {"a": 5}
+          counts["a"] = counts.get("a", 0) + 1
+          print(counts["a"])
+        choices: ['6', '1', '5', 'Error']
+        answer: '6'
+        why: >-
+          The key exists, so `.get` gives 5 and ignores the default.
+      - code: |
+          counts = {}
+          for w in "up up and up".split():
+              counts[w] = counts.get(w, 0) + 1
+          print(counts["up"])
+        choices: ['3', '4', '1', 'Error']
+        answer: '3'
+        why: >-
+          Splitting gives the words, and there's one count for each distinct word.
+
+  - type: explain
+    id: explain-keyerror
+    prompt: Why does this crash on the first word, and what would you change?
+    code: |
+      counts = {}
+      for w in ["a", "b"]:
+          counts[w] += 1
+    expectError: KeyError
+    model: >-
+      `counts[w] += 1` has to read the old value first, and on a new word there's no old value, so it gives a `KeyError`. Writing `counts[w] = counts.get(w, 0) + 1` fixes it, since a new word starts from 0.
+    keyPoints:
+      - '`+=` reads the old value first, and a new key has none'
+      - '`.get(w, 0)` gives 0 for a new word, so the update works'
+
+  - type: learn
+    id: bugs
+    title: Other ways this goes wrong
+    body: >-
+      Two more bugs come up all the time. The first is starting the dict inside the loop, which empties it on every pass. It's the same mistake as resetting any accumulator, and the result is a dict with only one entry.
+
+
+      The second is counting things that look different but shouldn't be. `"The"` and `"the"` are separate keys, and so are `"goat"` and `"goat."`. So clean your text first, by lowering it and stripping punctuation. In real data work, this cleaning often matters more than the counting.
+
+
+      Remember too that a count isn't a probability. To get a fraction, divide each count by the total. That's exactly the step that turns counts into a language model.
+    code: |
+      text = "The goat saw the goat."
+      counts = {}
+      for word in text.lower().split():
+          word = word.strip(".")
+          counts[word] = counts.get(word, 0) + 1
+      print(counts)
+
+      total = sum(counts.values())
+      print(counts["goat"] / total)
+    subgoals:
+      - { line: 2, label: 'Before the loop' }
+      - { line: 3, label: 'Lowercase, so The and the match' }
+      - { line: 4, label: 'Strip punctuation, so goat. and goat match' }
+      - { line: 8, label: 'The total of all the counts' }
+      - { line: 9, label: 'A count becomes a fraction' }
+    predict: What fraction of the words are `goat`?
+
+  - type: choice
+    id: bugs-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for w in ["a", "b", "a"]:
+          counts = {}
+          counts[w] = counts.get(w, 0) + 1
+      print(counts)
+    choices: ["{'a': 1}", "{'a': 2, 'b': 1}", "{'a': 2}", "{'b': 1}"]
+    answer: "{'a': 1}"
+    why: >-
+      The dict is emptied on every pass, so only the last word survives, with a count of 1.
+    variants:
+      - code: |
+          counts = {}
+          for w in "Go go".split():
+              counts[w] = counts.get(w, 0) + 1
+          print(len(counts))
+        choices: ['2', '1', '3', '0']
+        answer: '2'
+        why: >-
+          `Go` and `go` are different keys, unless you lowercase them first.
+      - code: |
+          counts = {"a": 3, "b": 1}
+          print(counts["a"] / sum(counts.values()))
+        choices: ['0.75', '3', '0.25', '1.5']
+        answer: '0.75'
+        why: >-
+          3 out of a total of 4.
+
+  - type: learn
+    id: grouping
+    title: Grouping and pairs
+    body: >-
+      Values can be anything, so counting has a close cousin: grouping. In place of a count, each key holds a list of items, and you append to it. If the key is new, start it with an empty list. It's the same shape as counting, with `[]` in place of 0 and `append` in place of `+ 1`.
+
+
+      Keys can also be built from your data. If you join two neighbouring characters into a key, you're counting pairs, also called bigrams. `"th"` is common in English, and `"qz"` isn't. Counts like these are the entire basis of the first language model you'll build, in the makemore unit.
+
+
+      It's still a single loop over positions, using `range(len(text) - 1)` so that `i + 1` stays valid. All the pieces you already know, in a new arrangement.
+    code: |
+      groups = {}
+      for word in ["ox", "yak", "elk", "up"]:
+          size = len(word)
+          if size not in groups:
+              groups[size] = []
+          groups[size].append(word)
+      print(groups)
+
+      pairs = {}
+      text = "banana"
+      for i in range(len(text) - 1):
+          pair = text[i] + text[i + 1]
+          pairs[pair] = pairs.get(pair, 0) + 1
+      print(pairs)
+    subgoals:
+      - { line: 4, label: 'New key: start an empty list' }
+      - { line: 6, label: 'Add to this group' }
+      - { line: 11, label: 'Stop early, so i + 1 is valid' }
+      - { line: 12, label: 'The key is two neighbouring characters' }
+    predict: How many times does the pair `an` appear in `banana`?
+
+  - type: blank
+    id: fill-count
+    prompt: Fill in the blank so this counts each letter, and shows `2`.
+    code: |
+      c = {}
+      for ch in "tot":
+          c[ch] = ____ + 1
+      print(c["t"])
+    answers: [['c.get(ch, 0)', 'c.get(ch,0)']]
+    expectOutput: '2'
+    why: >-
+      `.get` gives the count so far, or 0 for a new letter.
+    variants:
+      - prompt: Fill in the blank so a new key starts with an empty list, and this shows `['a']`.
+        code: |
+          g = {}
+          for w in ["a"]:
+              if w not in g:
+                  g[w] = ____
+              g[w].append(w)
+          print(g["a"])
+        answers: [['[]', 'list()']]
+        expectOutput: "['a']"
+        why: >-
+          For grouping, the starting value is an empty list.
+      - prompt: Fill in the blank so this starts the dict in the right place, and shows `2`.
+        code: |
+          ____
+          for w in ["a", "b"]:
+              c[w] = 1
+          print(len(c))
+        answers: [['c = {}', 'c={}', 'c = dict()']]
+        expectOutput: '2'
+        why: >-
+          An accumulator is set up before the loop.
+
+  - type: fix
+    id: fix-count
+    prompt: '`count_words(["a", "a"])` should give back `{"a": 2}`, but it crashes with a `KeyError`. Fix it.'
+    code: |
+      def count_words(words):
+          counts = {}
+          for word in words:
+              counts[word] += 1
+          return counts
+    solution: |
+      def count_words(words):
+          counts = {}
+          for word in words:
+              counts[word] = counts.get(word, 0) + 1
+          return counts
+    highlightLine: 4
+    tests:
+      - { call: 'count_words(["a", "a"])', expect: "{'a': 2}" }
+      - { call: 'count_words([])', expect: '{}' }
+    why: >-
+      A new word has no old value to add to. `.get` gives it one.
+    hints:
+      - What is the old value the first time a word appears?
+    variants:
+      - prompt: '`count_words(["a", "a"])` should give back `{"a": 2}`, but it gives back `{"a": 1}`. Fix it.'
+        code: |
+          def count_words(words):
+              for word in words:
+                  counts = {}
+                  counts[word] = counts.get(word, 0) + 1
+              return counts
+        solution: |
+          def count_words(words):
+              counts = {}
+              for word in words:
+                  counts[word] = counts.get(word, 0) + 1
+              return counts
+        highlightLine: 3
+        why: >-
+          The dict was emptied on every pass, so it has to start before the loop.
+        hints:
+          - How many times does line 3 run?
+      - prompt: '`count_clean("Go go")` should give back `{"go": 2}`. Fix the loop so words are compared in lowercase.'
+        code: |
+          def count_clean(text):
+              counts = {}
+              for word in text.split():
+                  counts[word] = counts.get(word, 0) + 1
+              return counts
+        solution: |
+          def count_clean(text):
+              counts = {}
+              for word in text.lower().split():
+                  counts[word] = counts.get(word, 0) + 1
+              return counts
+        highlightLine: 3
+        tests:
+          - { call: 'count_clean("Go go")', expect: "{'go': 2}" }
+        why: >-
+          Clean the text before counting, or the two forms get separate keys.
+        hints:
+          - Where can you make the text lowercase?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A tiny language model
+    body: >-
+      Here's a preview of makemore, using only what you know. To guess the next letter, look at which letter most often came next in your training text.
+
+
+      First, count. For each letter, keep a dict of what followed it, so the values are dicts themselves: `follows["a"]` is a dict of letters and their counts. Each new letter needs its inner dict started, which is the same check as for grouping.
+
+
+      Then, predict. Given a letter, look up its inner dict, and find the key with the highest count. That's a best-so-far loop, which you'll tidy up in the next lesson. Real language models are much more sophisticated, but they answer the same question: given what came before, what's likely next?
+    code: |
+      text = "banana"
+      follows = {}
+      for i in range(len(text) - 1):
+          a = text[i]
+          b = text[i + 1]
+          if a not in follows:
+              follows[a] = {}
+          follows[a][b] = follows[a].get(b, 0) + 1
+      print(follows)
+
+      print(follows["a"])
+      print(follows["a"]["n"])
+    subgoals:
+      - { line: 4, label: 'This letter, and the one after it' }
+      - { line: 7, label: 'A new letter gets its own dict' }
+      - { line: 8, label: 'Counting, one level down' }
+      - { line: 12, label: 'Two lookups, as with a grid' }
+    predict: After an `a`, which letter always comes next in `banana`?
+
+  - type: write
+    id: letter-counts
+    prompt: >-
+      Write `letter_counts(text)`, which gives back a dict counting each letter, ignoring case and skipping anything else. So `letter_counts("Aa b!")` gives back `{"a": 2, "b": 1}`.
+    starter: |
+      def letter_counts(text):
+          # Your code here
+    solution: |
+      def letter_counts(text):
+          counts = {}
+          for ch in text.lower():
+              if ch in "abcdefghijklmnopqrstuvwxyz":
+                  counts[ch] = counts.get(ch, 0) + 1
+          return counts
+    tests:
+      - { call: 'letter_counts("Aa b!")', expect: "{'a': 2, 'b': 1}" }
+      - { call: 'letter_counts("123")', expect: '{}' }
+    why: >-
+      Clean first, filter with an `if`, and count with the usual pattern. `ch.isalpha()` is another way of checking.
+    hints:
+      - Lowercase the text first, and only count if the character is a letter.
+    variants:
+      - prompt: >-
+          Write `group_by_first(words)`, which gives back a dict from each first letter to the list of words starting with it. So `group_by_first(["ox", "ant", "owl"])` gives back `{"o": ["ox", "owl"], "a": ["ant"]}`.
+        starter: |
+          def group_by_first(words):
+              # Your code here
+        solution: |
+          def group_by_first(words):
+              groups = {}
+              for word in words:
+                  first = word[0]
+                  if first not in groups:
+                      groups[first] = []
+                  groups[first].append(word)
+              return groups
+        tests:
+          - { call: 'group_by_first(["ox", "ant", "owl"])', expect: "{'o': ['ox', 'owl'], 'a': ['ant']}" }
+          - { call: 'group_by_first([])', expect: '{}' }
+        hints:
+          - It's the counting shape, with a list in place of a number.
+
+  - type: choice
+    id: remember-get
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      d = {"a": 1}
+      print(d.get("z"))
+    choices: ['None', '0', 'z', 'Error']
+    answer: 'None'
+    why: >-
+      With no default given, `.get` gives `None` for a missing key. Only `d["z"]` would crash.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `counts[x] = counts.get(x, 0) + 1` counts anything, starting from an empty dict made before the loop. `counts[x] += 1` crashes on a new key. Clean the data first, or similar items get separate keys. For grouping, use lists as the values.
+
+
+      Next: going through a dict, and finding the most common item.

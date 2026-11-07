@@ -1,0 +1,360 @@
+id: p3-lists
+track: ml
+unit: 3
+order: 1
+title: Lists
+summary: Keep many values in one variable, in order.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Many values, one name
+    body: >-
+      So far, each variable has held one value. Real programs work with collections: every word in a document, every score in a class, the loss after each training step. You can't make a separate variable for each of those.
+
+
+      By the end of this lesson you'll be able to create a list, read any item from it, and change an item. The good news is that you already know most of this, because lists work a lot like strings.
+
+  - type: learn
+    id: basics
+    title: Making and reading a list
+    body: >-
+      A list is a sequence of values inside square brackets, separated by commas. The order is kept, and repeats are fine. A list can hold numbers, strings, a mixture, or nothing at all: `[]` is an empty list.
+
+
+      Everything you learned about string positions applies here. Indexes start at 0, `[-1]` is the last item, `len()` counts the items, and a slice like `scores[1:3]` gives a new list, stopping just before the end index. Asking for a position past the end gives the same `IndexError`.
+
+
+      `in` also works, and it asks whether an item is in the list. One difference from strings: with a string, `in` can find a piece of text. With a list, it looks for a whole item, so `"go" in ["goat"]` is `False`.
+    code: |
+      scores = [70, 85, 92, 60]
+      print(scores[0])
+      print(scores[-1])
+      print(len(scores))
+      print(scores[1:3])
+      print(85 in scores)
+    subgoals:
+      - { line: 1, label: 'Four values under one name' }
+      - { line: 2, label: 'First item, at index 0' }
+      - { line: 3, label: 'Last item' }
+      - { line: 5, label: 'A slice is a new list' }
+      - { line: 6, label: 'Is this item in the list?' }
+    predict: What will `print(scores[1:3])` show?
+
+  - type: choice
+    id: read-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      nums = [10, 20, 30, 40]
+      print(nums[1] + nums[-1])
+    choices: ['60', '50', '30', 'Error']
+    answer: '60'
+    why: >-
+      Index 1 is the second item, 20, and index -1 is the last, 40.
+    variants:
+      - code: |
+          nums = [5, 6, 7, 8, 9]
+          print(nums[1:3])
+        choices: ['[6, 7]', '[6, 7, 8]', '[5, 6]', '6 7']
+        answer: '[6, 7]'
+        why: >-
+          It starts at index 1 and stops just before index 3. A slice of a list is a list.
+      - code: |
+          words = ["up", "goat", "hill"]
+          print(len(words), len(words[1]))
+        choices: ['3 4', '3 3', '4 3', '10 4']
+        answer: '3 4'
+        why: >-
+          The list has 3 items, and the item at index 1, `goat`, has 4 characters.
+      - code: |
+          words = ["goat"]
+          print("go" in words, "go" in words[0])
+        choices: ['False True', 'True True', 'False False', 'True False']
+        answer: 'False True'
+        why: >-
+          In a list, `in` looks for a whole item. In a string, it looks for a piece of text.
+
+  - type: learn
+    id: changing
+    title: Lists can change
+    body: >-
+      Here's the big difference from strings. Strings can't change once they exist, so `word[0] = "G"` fails. Lists can. `scores[1] = 99` replaces the item at index 1, in the same list. A value that can be changed in place like this is called mutable.
+
+
+      The index has to exist already, though. Assigning to `scores[10]` on a shorter list gives an `IndexError`, and it doesn't grow the list. In the next lesson, you'll see how to add new items.
+
+
+      The usual update patterns work on an item too: `scores[1] += 5` reads that item, adds 5 and stores the result back.
+    deeper: >-
+      You can also join lists with `+`, which makes a new list, and repeat them with `*`. So `[1, 2] + [3]` is `[1, 2, 3]`, and `[0] * 3` is `[0, 0, 0]`. That last one is a common way of starting a list of zeros. Be careful in maths-heavy code: `*` on a list repeats it, and it doesn't multiply each number. NumPy arrays do the multiplying, and you'll meet them in a later unit.
+    code: |
+      scores = [70, 85, 92]
+      scores[1] = 99
+      print(scores)
+      scores[0] += 5
+      print(scores)
+      word = "goat"
+      print(word.upper())
+      print(word)
+    subgoals:
+      - { line: 2, label: 'Replace one item' }
+      - { line: 4, label: 'Update an item from its old value' }
+      - { line: 7, label: 'A string tool makes a new string' }
+      - { line: 8, label: 'The string itself never changed' }
+    predict: What will the second `print(scores)` show?
+
+  - type: choice
+    id: change-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1, 2, 3]
+      a[0] = a[2]
+      print(a)
+    choices: ['[3, 2, 3]', '[1, 2, 1]', '[3, 2, 1]', 'Error']
+    answer: '[3, 2, 3]'
+    why: >-
+      The item at index 0 is replaced with the value at index 2, and the other items stay as they were.
+    variants:
+      - code: |
+          a = [4, 5]
+          a[-1] *= 2
+          print(a)
+        choices: ['[4, 10]', '[8, 5]', '[4, 5, 4, 5]', 'Error']
+        answer: '[4, 10]'
+        why: >-
+          `[-1]` is the last item, and only that item is doubled.
+      - code: |
+          a = [1, 2]
+          print(a + [3])
+          print(a)
+        choices: ["[1, 2, 3]\n[1, 2]", "[1, 2, 3]\n[1, 2, 3]", "[4, 5]\n[1, 2]", 'Error']
+        answer: "[1, 2, 3]\n[1, 2]"
+        why: >-
+          `+` makes a new list, and it doesn't change `a`.
+      - code: |
+          print([1, 2] * 2)
+        choices: ['[1, 2, 1, 2]', '[2, 4]', '[1, 2, 2]', 'Error']
+        answer: '[1, 2, 1, 2]'
+        why: >-
+          `*` repeats a list. It doesn't multiply the numbers inside.
+
+  - type: explain
+    id: explain-difference
+    prompt: One of these two lines crashes. Which one, and why does the other one work?
+    code: |
+      letters = ["g", "o"]
+      letters[0] = "G"
+      word = "go"
+      word[0] = "G"
+    expectError: TypeError
+    model: >-
+      The last line crashes with a `TypeError`, because strings can't be changed in place. Line 2 works because lists can be changed, so it replaces an item in the same list.
+    keyPoints:
+      - Lists are mutable, so assigning to an index works
+      - Strings can't be changed in place, so `word[0] = "G"` gives a `TypeError`
+
+  - type: learn
+    id: list-args
+    title: Lists and functions
+    body: >-
+      Lists work like any other value when you pass them to functions. A function can take a list as an argument, and it can return one too. `len`, `max`, `min` and `sum` all take a list directly, so `sum(scores)` adds them all up. You can't use `max` on an empty list, because it has no largest item, and you'll get a `ValueError`.
+
+
+      This means the mean of a list is just `sum(scores) / len(scores)`, as long as the list isn't empty. In machine learning, this line is everywhere, since the loss over a batch is usually the mean of the losses for each example.
+
+
+      As ever with dividing by a length, guard against the empty case first.
+    code: |
+      def mean(values):
+          if len(values) == 0:
+              return 0
+          return sum(values) / len(values)
+
+      losses = [0.5, 0.25, 0.75]
+      print(max(losses))
+      print(mean(losses))
+      print(mean([]))
+    subgoals:
+      - { line: 2, label: 'Guard the awkward case' }
+      - { line: 4, label: 'Total divided by count' }
+      - { line: 7, label: 'Built-ins take a list' }
+      - { line: 9, label: 'The guard in action' }
+    predict: What's the mean of those three losses?
+
+  - type: blank
+    id: fill-list
+    prompt: Fill in the blank so this shows the last item, `9`, however long the list is.
+    code: |
+      nums = [3, 5, 9]
+      print(nums[____])
+    answers: [['-1', 'len(nums) - 1', 'len(nums)-1']]
+    expectOutput: '9'
+    why: >-
+      `[-1]` always gives the last item.
+    variants:
+      - prompt: Fill in the blank so this shows the total, `12`.
+        code: |
+          nums = [3, 4, 5]
+          print(____(nums))
+        answers: [['sum']]
+        expectOutput: '12'
+        why: >-
+          `sum` adds up all the items in a list.
+      - prompt: Fill in the blank to replace the middle item, so this shows `[1, 0, 3]`.
+        code: |
+          a = [1, 2, 3]
+          a[____] = 0
+          print(a)
+        answers: [['1', '-2']]
+        expectOutput: '[1, 0, 3]'
+        why: >-
+          The middle item is at index 1, and you can also count from the end.
+      - prompt: Fill in the slice so this shows the first two items, `[7, 8]`.
+        code: |
+          a = [7, 8, 9]
+          print(a[____])
+        answers: [[':2', '0:2', ':-1', '0:-1']]
+        expectOutput: '[7, 8]'
+        why: >-
+          The slice stops just before index 2.
+
+  - type: fix
+    id: past-end
+    prompt: This should change the last item to `0` and show `[1, 2, 0]`, but it crashes with an `IndexError`. Fix it.
+    code: |
+      a = [1, 2, 3]
+      a[3] = 0
+      print(a)
+    solution: |
+      a = [1, 2, 3]
+      a[2] = 0
+      print(a)
+    highlightLine: 2
+    expectOutput: '[1, 2, 0]'
+    why: >-
+      A list of 3 items has indexes 0 to 2. `a[-1]` also works.
+    hints:
+      - What are the valid indexes for 3 items?
+    variants:
+      - prompt: This should show the mean, `2.0`, but it shows `6`. Fix it.
+        code: |
+          a = [1, 2, 3]
+          print(sum(a))
+        solution: |
+          a = [1, 2, 3]
+          print(sum(a) / len(a))
+        highlightLine: 2
+        expectOutput: '2.0'
+        why: >-
+          The mean is the total divided by the count.
+        hints:
+          - Which tool counts the items?
+      - prompt: This should show `True`, because `goat` is one of the items, but it crashes. Fix the line.
+        code: |
+          animals = ["goat", "yak"]
+          print("goat" in animals[2])
+        solution: |
+          animals = ["goat", "yak"]
+          print("goat" in animals)
+        highlightLine: 2
+        expectOutput: 'True'
+        why: >-
+          To ask about the whole list, use the list itself, with no index.
+        hints:
+          - You want to look through all the items, not one of them.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Swapping two items
+    body: >-
+      Here's a small problem that shows why order matters. You want to swap the first and last items. The obvious attempt is `a[0] = a[-1]`, and then `a[-1] = a[0]`, but it doesn't work. The first line overwrites the first item, so by the second line the old value is gone. Both ends end up the same.
+
+
+      The fix is the one you'd use with any two variables: keep the old value in a temporary variable before you overwrite it. Python also has a shorthand, `a[0], a[-1] = a[-1], a[0]`, which works out the whole right side first.
+
+
+      Whenever an assignment destroys a value that you still need, this is the pattern to reach for. Shuffling data before training is built from swaps exactly like this.
+    code: |
+      a = [1, 2, 3]
+      first = a[0]
+      a[0] = a[-1]
+      a[-1] = first
+      print(a)
+      a[0], a[-1] = a[-1], a[0]
+      print(a)
+    subgoals:
+      - { line: 2, label: 'Save the value about to be lost' }
+      - { line: 3, label: 'Overwrite it' }
+      - { line: 4, label: 'Put the saved value at the other end' }
+      - { line: 6, label: 'The shorthand swaps them straight back' }
+    predict: What will each `print` show?
+
+  - type: write
+    id: first-last
+    prompt: Write `ends(items)`, which gives back the first item plus the last item. So `ends([2, 5, 7])` gives back `9`.
+    starter: |
+      def ends(items):
+          # Your code here
+    solution: |
+      def ends(items):
+          return items[0] + items[-1]
+    tests:
+      - { call: 'ends([2, 5, 7])', expect: '9' }
+      - { call: 'ends([4])', expect: '8' }
+    why: >-
+      With one item, the first and the last are the same item, so it's added to itself.
+    hints:
+      - Which index gives the last item, whatever the length?
+    variants:
+      - prompt: Write `spread(items)`, which gives back the largest item minus the smallest. So `spread([3, 9, 4])` gives back `6`.
+        starter: |
+          def spread(items):
+              # Your code here
+        solution: |
+          def spread(items):
+              return max(items) - min(items)
+        tests:
+          - { call: 'spread([3, 9, 4])', expect: '6' }
+          - { call: 'spread([5])', expect: '0' }
+        hints:
+          - '`max` and `min` both take a list.'
+      - prompt: Write `middle_out(items)`, which gives back a new list without its first and last items. So `middle_out([1, 2, 3, 4])` gives back `[2, 3]`.
+        starter: |
+          def middle_out(items):
+              # Your code here
+        solution: |
+          def middle_out(items):
+              return items[1:-1]
+        tests:
+          - { call: 'middle_out([1, 2, 3, 4])', expect: '[2, 3]' }
+          - { call: 'middle_out([1, 2])', expect: '[]' }
+        hints:
+          - A slice can use a negative stop.
+
+  - type: choice
+    id: remember-range
+    kind: predict
+    prompt: From the last unit. What does this print?
+    code: |
+      total = 0
+      for i in range(2, 5):
+          total += i
+      print(total)
+    choices: ['9', '14', '5', '7']
+    answer: '9'
+    why: >-
+      The values are 2, 3 and 4, because the stop is left out.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A list keeps values in order, and it's read just like a string, with indexes, slices, `len` and `in`. Unlike strings, lists are mutable, so you can assign to an index. `sum`, `max` and `min` take a list directly.
+
+
+      Next: lists can grow and shrink, with tools that work differently from the string tools you know.

@@ -1,0 +1,418 @@
+id: p5-dot
+track: ml
+unit: 5
+order: 9
+title: Dot product and cosine similarity
+summary: One number for how much two vectors agree.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Comparing vectors
+    body: >-
+      A vector can stand for a word, a song, or a person's taste. Embeddings turn things into vectors, so that things with similar meanings end up pointing the same way. So you need a way of asking how alike two vectors are.
+
+
+      By the end of this lesson you'll be able to work out a dot product, a vector's length, and cosine similarity, and use them to find the closest match. You wrote `dot` by hand in your `Vec` project, and now it gets a meaning.
+
+  - type: learn
+    id: dot
+    title: The dot product
+    body: >-
+      The dot product multiplies matching items, and adds the results. For `[1, 2]` and `[3, 4]`, that's `1*3 + 2*4`, which is 11. In NumPy, write `a @ b`, or `np.dot(a, b)`, or `(a * b).sum()`. They all do the same thing. The result is one number, and the vectors must be the same length.
+
+
+      Keep `a * b` and `a @ b` apart. `*` works item by item and gives you an array, and `@` adds them up and gives you one number.
+
+
+      It has a meaning, too. Each pair of items gives a large positive number when both have the same sign and are large. So the dot product is big when the two vectors point the same way, zero when they're unrelated, which is called perpendicular, and negative when they point in opposite directions.
+
+
+      It's also what a neuron does. `w @ x + b` multiplies each input by a weight, and adds them up. Each weight says how much that input counts, and the sign says in which direction.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 2])
+      b = np.array([3, 4])
+
+      print(a * b)
+      print(a @ b)
+      print((a * b).sum())
+
+      east = np.array([1, 0])
+      print(east @ np.array([5, 0]))
+      print(east @ np.array([0, 5]))
+      print(east @ np.array([-5, 0]))
+    subgoals:
+      - { line: 6, label: 'Item by item: an array' }
+      - { line: 7, label: 'Added up: one number' }
+      - { line: 11, label: 'The same direction: positive' }
+      - { line: 12, label: 'Perpendicular: zero' }
+      - { line: 13, label: 'Opposite: negative' }
+    predict: What will `a @ b` show?
+
+  - type: choice
+    id: dot-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      print(np.array([2, 3]) @ np.array([4, 1]))
+    choices: ['11', '[8 3]', '10', '24']
+    answer: '11'
+    why: >-
+      `2*4 + 3*1` is 11.
+    variants:
+      - code: |
+          import numpy as np
+          print(np.array([2, 3]) * np.array([4, 1]))
+        choices: ['[8 3]', '11', '[6 4]', 'Error']
+        answer: '[8 3]'
+        why: >-
+          `*` works item by item, with no adding up.
+      - code: |
+          import numpy as np
+          print(np.array([1, -1]) @ np.array([1, 1]))
+        choices: ['0', '2', '[1 -1]', '-1']
+        answer: '0'
+        why: >-
+          `1 - 1` is 0, so these two are perpendicular.
+      - code: |
+          import numpy as np
+          w = np.array([2.0, -1.0])
+          x = np.array([3.0, 4.0])
+          print(w @ x + 1)
+        choices: ['3.0', '2.0', '[7. -3.]', '11.0']
+        answer: '3.0'
+        why: >-
+          `6 - 4 + 1`. It's one neuron's output, with weights and a bias.
+
+  - type: learn
+    id: norm
+    title: Length and normalising
+    body: >-
+      A vector's length, also called its norm, is the square root of its dot product with itself. It's Pythagoras: for `[3, 4]`, that's the root of `9 + 16`, which is 5. NumPy has it ready as `np.linalg.norm(a)`.
+
+
+      Dividing a vector by its length gives it a length of exactly 1, and keeps its direction. That's called normalising, and the result is called a unit vector.
+
+
+      Why does that matter? The raw dot product mixes up two things: direction and size. A loud vector scores high with everything, just by being big. If you want to compare direction alone, normalise first, so that size is out of the picture.
+
+
+      Be careful with zero vectors. A vector of zeros has length 0, so dividing by it gives `nan`, and a warning. Real code guards against this, for example by adding a very small number, `1e-8`, to the bottom.
+    code: |
+      import numpy as np
+
+      a = np.array([3.0, 4.0])
+
+      print(np.sqrt(a @ a))
+      print(np.linalg.norm(a))
+
+      unit = a / np.linalg.norm(a)
+      print(unit)
+      print(np.linalg.norm(unit))
+
+      big = a * 100
+      print(big / np.linalg.norm(big))
+    subgoals:
+      - { line: 5, label: 'The length, from the dot product' }
+      - { line: 6, label: 'The ready-made version' }
+      - { line: 8, label: 'Divide by the length' }
+      - { line: 10, label: 'Its length is now 1' }
+      - { line: 13, label: 'The same direction, the same result' }
+    predict: What will `unit` be?
+
+  - type: choice
+    id: norm-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      print(np.linalg.norm(np.array([6.0, 8.0])))
+    choices: ['10.0', '14.0', '100.0', '[6. 8.]']
+    answer: '10.0'
+    why: >-
+      The root of `36 + 64`.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([0.0, 2.0])
+          print(a / np.linalg.norm(a))
+        choices: ['[0. 1.]', '[0. 2.]', '[0.  0.5]', '1.0']
+        answer: '[0. 1.]'
+        why: >-
+          Dividing by the length, 2, gives a length of 1.
+      - code: |
+          import numpy as np
+          a = np.array([5.0, 0.0])
+          print(a @ a)
+        choices: ['25.0', '5.0', '[25.  0.]', '10.0']
+        answer: '25.0'
+        why: >-
+          A vector's dot product with itself is its length squared.
+
+  - type: learn
+    id: cosine
+    title: Cosine similarity
+    body: >-
+      Put those two ideas together. Normalise both vectors and take the dot product, and you've got cosine similarity: `a @ b / (norm(a) * norm(b))`. The name comes from it being the cosine of the angle between the vectors.
+
+
+      The result always lies between -1 and 1. 1 means they point exactly the same way, 0 means they're unrelated, and -1 means they're opposite. And size doesn't matter, so `[1, 1]` and `[100, 100]` score exactly 1. For text, that means a long document and a short one on the same subject can still match.
+
+
+      This is the standard way of comparing embeddings, and it's what sits under search engines and "similar songs" features. Tools that let a language model look things up find the relevant text in this way.
+
+
+      Remember the parentheses. `a @ b / norm(a) * norm(b)` runs from left to right, so it divides by the first and then multiplies by the second, which is wrong.
+    code: |
+      import numpy as np
+
+      def cosine(a, b):
+          return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+      a = np.array([1.0, 1.0])
+
+      print(round(cosine(a, a), 2))
+      print(round(cosine(a, np.array([100.0, 100.0])), 2))
+      print(round(cosine(a, np.array([1.0, -1.0])), 2))
+      print(round(cosine(a, np.array([-1.0, -1.0])), 2))
+      print(round(cosine(a, np.array([1.0, 0.0])), 2))
+    subgoals:
+      - { line: 4, label: 'Dot product over both lengths' }
+      - { line: 8, label: 'Identical: 1' }
+      - { line: 9, label: 'Size has no effect' }
+      - { line: 10, label: 'Perpendicular: 0' }
+      - { line: 11, label: 'Opposite: -1' }
+    predict: What will the second line show?
+
+  - type: choice
+    id: cosine-trace
+    prompt: Two vectors have a cosine similarity of -1. What does that mean?
+    choices:
+      - They point in exactly opposite directions
+      - They're unrelated
+      - One is much shorter than the other
+      - They're identical
+    answer: They point in exactly opposite directions
+    why: >-
+      1 is the same direction, 0 is unrelated, and -1 is opposite. Length has no effect.
+    variants:
+      - prompt: Which pair has the higher cosine similarity, and why?
+        choices:
+          - '`[1, 2]` and `[10, 20]`, because they point the same way'
+          - '`[1, 2]` and `[1, 3]`, because their numbers are closer'
+          - They're the same, because cosine only looks at sizes
+        answer: '`[1, 2]` and `[10, 20]`, because they point the same way'
+        why: >-
+          They point in exactly the same direction, so they score 1. Cosine ignores size.
+      - prompt: Why normalise before comparing embeddings?
+        choices:
+          - So that size doesn't affect the score, only direction
+          - So that the arithmetic runs faster
+          - So that the vectors become the same length as the data
+        answer: So that size doesn't affect the score, only direction
+        why: >-
+          Otherwise a large vector would score highly with everything.
+
+  - type: explain
+    id: explain-cosine
+    prompt: Why is `[1, 2]` a better match for `doc` than `[50, 0]`, even though its raw dot product is smaller?
+    code: |
+      import numpy as np
+      doc = np.array([1.0, 2.0])
+      print(doc @ np.array([1.0, 2.0]))
+      print(doc @ np.array([50.0, 0.0]))
+    model: >-
+      The raw dot product depends on size as well as direction, and `[50, 0]` is big, so it scores high without really agreeing. `[1, 2]` points in exactly the same direction as `doc`, so its cosine similarity is a perfect 1, while the other's is lower. Cosine similarity divides by the lengths, and compares direction alone.
+    keyPoints:
+      - The raw dot product is affected by the vectors' size
+      - Cosine similarity compares direction, ignoring size
+
+  - type: blank
+    id: fill-dot
+    prompt: Fill in the blank to work out the dot product, so this shows `11`.
+    code: |
+      import numpy as np
+      a = np.array([1, 2])
+      b = np.array([3, 4])
+      print(a ____ b)
+    answers: [['@']]
+    expectOutput: '11'
+    why: >-
+      `@` multiplies matching items, and adds them up.
+    variants:
+      - prompt: Fill in the blank to normalise the vector, so this shows `[1. 0.]`.
+        code: |
+          import numpy as np
+          a = np.array([4.0, 0.0])
+          print(a / ____)
+        answers: [['np.linalg.norm(a)', 'np.sqrt(a @ a)', 'np.sqrt((a * a).sum())', 'np.sqrt((a**2).sum())', 'np.sqrt((a ** 2).sum())']]
+        expectOutput: '[1. 0.]'
+        why: >-
+          Dividing by its length gives a length of 1.
+      - prompt: Fill in the blank to finish cosine similarity, so this shows `1.0`.
+        code: |
+          import numpy as np
+          a = np.array([2.0, 0.0])
+          b = np.array([5.0, 0.0])
+          print(a @ b / (np.linalg.norm(a) ____ np.linalg.norm(b)))
+        answers: [['*']]
+        expectOutput: '1.0'
+        why: >-
+          Divide by the two lengths multiplied together.
+
+  - type: fix
+    id: fix-parens
+    prompt: '`cosine(a, b)` gives wrong answers, because of the order of operations. `cosine(np.array([1.0, 0.0]), np.array([5.0, 0.0]))` should be `1.0`. Fix it.'
+    code: |
+      import numpy as np
+
+      def cosine(a, b):
+          return a @ b / np.linalg.norm(a) * np.linalg.norm(b)
+    solution: |
+      import numpy as np
+
+      def cosine(a, b):
+          return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+    highlightLine: 4
+    tests:
+      - { call: 'cosine(np.array([1.0, 0.0]), np.array([5.0, 0.0]))', expect: '1.0' }
+    why: >-
+      Without parentheses, it divides by the first length and multiplies by the second.
+    hints:
+      - What does `x / y * z` do, from left to right?
+    variants:
+      - prompt: '`neuron(w, x, b)` should give back one number, the dot product plus the bias. So `neuron(np.array([1.0, 2.0]), np.array([3.0, 4.0]), 1.0)` is `12.0`. It gives back an array. Fix it.'
+        code: |
+          import numpy as np
+
+          def neuron(w, x, b):
+              return w * x + b
+        solution: |
+          import numpy as np
+
+          def neuron(w, x, b):
+              return w @ x + b
+        highlightLine: 4
+        tests:
+          - { call: 'neuron(np.array([1.0, 2.0]), np.array([3.0, 4.0]), 1.0)', expect: '12.0' }
+        hints:
+          - Which operator adds the products up?
+      - prompt: '`unit(a)` should give back a vector of length 1, so `unit(np.array([3.0, 4.0]))` is `[0.6, 0.8]`. It divides by the wrong thing. Fix it.'
+        code: |
+          import numpy as np
+
+          def unit(a):
+              return a / a.sum()
+        solution: |
+          import numpy as np
+
+          def unit(a):
+              return a / np.linalg.norm(a)
+        highlightLine: 4
+        tests:
+          - { call: 'unit(np.array([3.0, 4.0]))', expect: '[0.6, 0.8]' }
+        hints:
+          - The length isn't the same as the total.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Finding the closest word
+    body: >-
+      Real word vectors have hundreds of numbers, but two will do to show how it works. Imagine these two numbers measure "how much it's an animal" and "how much it's a machine". You'll train real ones when you build makemore.
+
+
+      To find the closest word to `cat`, go through the others, and work out the cosine similarity with each. You've written this "find the best" loop before, using `max` with a `key`. Remember to skip the word itself, or it would always win, with a perfect score of 1.
+
+
+      Notice the numbers. `dog` scores nearly 1, and `car` scores below 0. The scores give you a meaning you could never get by comparing the words' spellings. Next lesson shows how to do this for all of them at once, with no loop.
+    code: |
+      import numpy as np
+
+      def cosine(a, b):
+          return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+      words = {
+          "cat": np.array([0.9, 0.1]),
+          "dog": np.array([0.8, 0.2]),
+          "car": np.array([-0.1, 0.9]),
+      }
+
+      query = words["cat"]
+      for w in words:
+          print(w, round(cosine(query, words[w]), 2))
+
+      others = [w for w in words if w != "cat"]
+      print(max(others, key=lambda w: cosine(query, words[w])))
+    subgoals:
+      - { line: 6, label: 'Each word is a vector' }
+      - { line: 14, label: 'Compare with each one' }
+      - { line: 16, label: 'Skip the word itself' }
+      - { line: 17, label: 'The highest similarity wins' }
+    predict: Which word is closest to `cat`?
+
+  - type: write
+    id: write-cosine
+    prompt: Write `cosine(a, b)`, which gives back the cosine similarity of two arrays. So `cosine(np.array([1.0, 0.0]), np.array([2.0, 0.0]))` gives back `1.0`.
+    starter: |
+      import numpy as np
+
+      def cosine(a, b):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def cosine(a, b):
+          return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+    tests:
+      - { call: 'cosine(np.array([1.0, 0.0]), np.array([2.0, 0.0]))', expect: '1.0' }
+      - { call: 'cosine(np.array([1.0, 0.0]), np.array([0.0, 3.0]))', expect: '0.0' }
+      - { call: 'cosine(np.array([1.0, 0.0]), np.array([-4.0, 0.0]))', expect: '-1.0' }
+    why: >-
+      The dot product over both lengths, with parentheses around the bottom.
+    hints:
+      - You need `@` and `np.linalg.norm`.
+    variants:
+      - prompt: Write `closest(query, options)`, where `options` is a list of arrays. It gives back the position of the option with the highest dot product with `query`. So `closest(np.array([1.0, 0.0]), [np.array([0.0, 1.0]), np.array([2.0, 0.0])])` gives back `1`.
+        starter: |
+          import numpy as np
+
+          def closest(query, options):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def closest(query, options):
+              scores = [query @ o for o in options]
+              return int(np.argmax(scores))
+        tests:
+          - { call: 'closest(np.array([1.0, 0.0]), [np.array([0.0, 1.0]), np.array([2.0, 0.0])])', expect: '1' }
+          - { call: 'closest(np.array([0.0, 1.0]), [np.array([0.0, 1.0]), np.array([2.0, 0.0])])', expect: '0' }
+        hints:
+          - Build a list of scores, and take `np.argmax`.
+
+  - type: choice
+    id: remember-broadcast
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print((np.zeros(3) + np.zeros((3, 1))).shape)
+    choices: ['(3, 3)', '(3,)', '(3, 1)', 'Error']
+    answer: '(3, 3)'
+    why: >-
+      On the right, 3 with 1 is allowed, so you silently get a grid.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `a @ b` multiplies matching items and adds them, giving one number. It's large when vectors agree, and it's what a neuron computes. `np.linalg.norm` gives the length, and dividing by it normalises. Cosine similarity is the dot product over both lengths, from -1 to 1, and it ignores size.
+
+
+      Next: what happens when you use `@` on whole grids, the operation at the heart of neural networks.

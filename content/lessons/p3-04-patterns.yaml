@@ -1,0 +1,446 @@
+id: p3-patterns
+track: ml
+unit: 3
+order: 4
+title: Count, sum, find, best
+summary: Four loop shapes that solve most list problems.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A few shapes, used everywhere
+    body: >-
+      Experienced programmers don't work out every loop from nothing. They recognise the shape of the problem. A small number of shapes covers most list tasks, and you've already seen pieces of them.
+
+
+      By the end of this lesson you'll know the four main ones: count, sum, find and best. You'll also know the classic bug in the last one, and when a built-in like `max` can do the job for you.
+
+  - type: learn
+    id: count-sum
+    title: Count and sum
+    body: >-
+      Both of these use an accumulator that starts at 0 and goes through every item. Count adds 1 when the item qualifies. Sum adds the item itself. The only difference is one line, and mixing them up gives you a number that looks reasonable, so check which you've written.
+
+
+      Without an `if`, you don't need them: `len(items)` counts all, and `sum(items)` adds all. You need the loop when only some items qualify, like the positive ones.
+
+
+      Any question of the form "how many..." or "what's the total of..." is one of these two.
+    code: |
+      temps = [12, -3, 8, -1, 5]
+
+      warm = 0
+      for t in temps:
+          if t > 0:
+              warm += 1
+      print(warm)
+
+      warm_total = 0
+      for t in temps:
+          if t > 0:
+              warm_total += t
+      print(warm_total)
+    subgoals:
+      - { line: 3, label: 'Count starts at 0' }
+      - { line: 6, label: 'Add 1 for each match' }
+      - { line: 12, label: 'Sum adds the item itself' }
+    predict: What will each `print` show?
+
+  - type: choice
+    id: count-sum-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      c = 0
+      for n in [5, 10, 15]:
+          if n > 6:
+              c += n
+      print(c)
+    choices: ['25', '2', '30', '15']
+    answer: '25'
+    why: >-
+      It adds the item itself, so this is a sum of 10 and 15, not a count.
+    variants:
+      - code: |
+          c = 0
+          for n in [5, 10, 15]:
+              if n > 6:
+                  c += 1
+          print(c)
+        choices: ['2', '25', '3', '1']
+        answer: '2'
+        why: >-
+          It adds 1 for each match, so this is a count.
+      - code: |
+          c = 0
+          for w in ["a", "bb", "a"]:
+              if w == "a":
+                  c += 1
+          print(c)
+        choices: ['2', '1', '3', 'a']
+        answer: '2'
+        why: >-
+          Counting works on any kind of item.
+
+  - type: learn
+    id: find
+    title: Find
+    body: >-
+      Find asks whether something's in the list, or where. You met this with strings. Go through the items, and the moment one matches, you have your answer, so stop with `return`. `return False`, or `return -1` if you want a position, goes after the loop, since you can only say no at the end.
+
+
+      In a loop without a function, use `break`. Without one, the loop carries on to the end, and you might get the last match when you wanted the first.
+
+
+      `in` and `.index()` do simple finds for you. You write your own when the test is more complicated, like "the first word longer than 5 characters".
+    code: |
+      def first_long(words, size):
+          for word in words:
+              if len(word) > size:
+                  return word
+          return None
+
+      print(first_long(["ox", "goat", "summit"], 3))
+      print(first_long(["ox"], 3))
+    subgoals:
+      - { line: 3, label: 'The test' }
+      - { line: 4, label: 'Found it: stop right now' }
+      - { line: 5, label: 'Only after checking every item' }
+    predict: Will `summit` be the answer to the first call?
+
+  - type: choice
+    id: find-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      found = None
+      for n in [3, 8, 12]:
+          if n > 5:
+              found = n
+      print(found)
+    choices: ['12', '8', 'None', '3']
+    answer: '12'
+    why: >-
+      There's no `break`, so the loop keeps going, and later matches overwrite earlier ones. It finds the last match.
+    variants:
+      - code: |
+          found = None
+          for n in [3, 8, 12]:
+              if n > 5:
+                  found = n
+                  break
+          print(found)
+        choices: ['8', '12', 'None', '3']
+        answer: '8'
+        why: >-
+          `break` stops the loop at the first match.
+      - code: |
+          def pos(items, target):
+              for i in range(len(items)):
+                  if items[i] == target:
+                      return i
+              return -1
+
+          print(pos([4, 5], 5), pos([4, 5], 9))
+        choices: ['1 -1', '5 -1', '1 0', '2 -1']
+        answer: '1 -1'
+        why: >-
+          It gives back the position of the match, and -1 only after checking everything.
+
+  - type: learn
+    id: best
+    title: Best so far
+    body: >-
+      To find the largest item by hand, keep a variable holding the best you've seen so far. Each pass, compare the current item with it, and replace it if the current one is better.
+
+
+      Here's the classic bug: starting `best` at 0. It looks fine, until every item is negative. Then nothing ever beats 0, and the function says the largest is 0, which isn't even in the list. So start with the first item, `best = items[0]`. That also means an empty list needs a guard.
+
+
+      The comparison decides what happens with ties: `>` keeps the first of the tied items, while `>=` keeps the last. For plain numbers, `max()` already does all this. You write your own when "best" means something custom, like the longest word.
+    code: |
+      def largest(items):
+          best = items[0]
+          for item in items:
+              if item > best:
+                  best = item
+          return best
+
+      def bad_largest(items):
+          best = 0
+          for item in items:
+              if item > best:
+                  best = item
+          return best
+
+      print(largest([-5, -2, -9]))
+      print(bad_largest([-5, -2, -9]))
+    subgoals:
+      - { line: 2, label: 'Start from a real item' }
+      - { line: 4, label: 'Beats the best so far?' }
+      - { line: 5, label: 'New best' }
+      - { line: 9, label: 'The bug: what if everything is below 0?' }
+    predict: What will the second call give back?
+
+  - type: choice
+    id: best-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      best = 0
+      for n in [-4, -1, -7]:
+          if n > best:
+              best = n
+      print(best)
+    choices: ['0', '-1', '-7', '-4']
+    answer: '0'
+    why: >-
+      Nothing beats 0, so `best` never changes. The right answer, -1, is missed. It should start from the first item.
+    variants:
+      - code: |
+          best = "ox"
+          for w in ["ox", "yak", "elk", "ant"]:
+              if len(w) > len(best):
+                  best = w
+          print(best)
+        choices: ['yak', 'ant', 'elk', 'ox']
+        answer: 'yak'
+        why: >-
+          With `>`, a tie doesn't replace the best, so the first of the three-letter words stays.
+      - code: |
+          best = "ox"
+          for w in ["ox", "yak", "elk", "ant"]:
+              if len(w) >= len(best):
+                  best = w
+          print(best)
+        choices: ['ant', 'yak', 'elk', 'ox']
+        answer: 'ant'
+        why: >-
+          With `>=`, a tie does replace the best, so the last of the tied words stays.
+
+  - type: explain
+    id: explain-best-start
+    prompt: This gives the wrong answer for this list. Why, and how would you fix it?
+    code: |
+      temps = [-8, -3, -6]
+      warmest = 0
+      for t in temps:
+          if t > warmest:
+              warmest = t
+      print(warmest)
+    model: >-
+      It starts at 0, and every temperature is below that, so `warmest` never changes and it shows 0. It should start with `temps[0]`, so that the answer is always a real item.
+    keyPoints:
+      - Starting at 0 fails when every item is below 0
+      - Start from the first item, with `warmest = temps[0]`
+
+  - type: blank
+    id: fill-pattern
+    prompt: Fill in the start so this works for any non-empty list, and shows `-1`.
+    code: |
+      nums = [-4, -1, -7]
+      best = ____
+      for n in nums:
+          if n > best:
+              best = n
+      print(best)
+    answers: [['nums[0]', 'nums[-1]', 'nums[1]', 'nums[2]']]
+    expectOutput: '-1'
+    why: >-
+      Start from a real item, and usually the first.
+    variants:
+      - prompt: Fill in the blank so ties keep the last word, and this shows `elk`.
+        code: |
+          best = "ox"
+          for w in ["yak", "elk"]:
+              if len(w) ____ len(best):
+                  best = w
+          print(best)
+        answers: [['>=']]
+        expectOutput: elk
+        why: >-
+          `>=` replaces the best on a tie.
+      - prompt: Fill in the missing word so the loop stops at the first match, and this shows `8`.
+        code: |
+          for n in [3, 8, 12]:
+              if n > 5:
+                  print(n)
+                  ____
+        answers: [['break']]
+        expectOutput: '8'
+        why: >-
+          Without `break`, it would also print 12.
+
+  - type: fix
+    id: fix-best
+    prompt: '`lowest([5, 9])` should give back `5`, but it gives back `0`. Fix it.'
+    code: |
+      def lowest(items):
+          best = 0
+          for item in items:
+              if item < best:
+                  best = item
+          return best
+    solution: |
+      def lowest(items):
+          best = items[0]
+          for item in items:
+              if item < best:
+                  best = item
+          return best
+    highlightLine: 2
+    tests:
+      - { call: 'lowest([5, 9])', expect: '5' }
+      - { call: 'lowest([-1, -5])', expect: '-5' }
+    why: >-
+      Starting at 0 only works if something beats it. Start from a real item.
+    hints:
+      - Does any item in `[5, 9]` go below the starting value?
+    variants:
+      - prompt: '`count_big([5, 50, 60], 10)` should give back `2`, but it gives back `110`. Fix it.'
+        code: |
+          def count_big(items, limit):
+              c = 0
+              for item in items:
+                  if item > limit:
+                      c += item
+              return c
+        solution: |
+          def count_big(items, limit):
+              c = 0
+              for item in items:
+                  if item > limit:
+                      c += 1
+              return c
+        highlightLine: 5
+        tests:
+          - { call: 'count_big([5, 50, 60], 10)', expect: '2' }
+        why: >-
+          A count adds 1, and a sum adds the item.
+        hints:
+          - Is this adding up items, or counting them?
+      - prompt: '`first_neg([1, -2, -3])` should give back `-2`, but it gives back `-3`. Fix it.'
+        code: |
+          def first_neg(items):
+              found = None
+              for item in items:
+                  if item < 0:
+                      found = item
+              return found
+        solution: |
+          def first_neg(items):
+              for item in items:
+                  if item < 0:
+                      return item
+              return None
+        highlightLine: 5
+        tests:
+          - { call: 'first_neg([1, -2, -3])', expect: '-2' }
+          - { call: 'first_neg([1])', expect: None }
+        why: >-
+          The loop kept going, so later matches overwrote the first. Returning stops it right away.
+        hints:
+          - What happens after the first match?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Which pattern is this?
+    body: >-
+      Here's a question close to something you'd really ask in machine learning: given the predictions and the correct answers, what's the accuracy, and which example was the most wrong?
+
+
+      Accuracy is a count: how many positions match, divided by how many there are. So it's the count pattern over positions, since we need both lists. "Most wrong" is a best-so-far: track the largest error, and where it was. Finding where it was just means storing `i` as well as the value.
+
+
+      Look at how little was new. Naming the patterns turns one big question into two small ones you've already solved.
+    code: |
+      guesses = [1, 0, 1, 1]
+      answers = [1, 1, 1, 0]
+      scores = [0.9, 0.4, 0.8, 0.7]
+
+      correct = 0
+      for i in range(len(guesses)):
+          if guesses[i] == answers[i]:
+              correct += 1
+      print(correct / len(guesses))
+
+      worst = 0
+      for i in range(len(scores)):
+          if abs(scores[i] - answers[i]) > abs(scores[worst] - answers[worst]):
+              worst = i
+      print(worst)
+    subgoals:
+      - { line: 7, label: 'Count: positions that match' }
+      - { line: 9, label: 'Divide by the total' }
+      - { line: 11, label: 'Best so far: start at the first position' }
+      - { line: 14, label: 'Keep the position of the new best' }
+    predict: What's the accuracy here?
+
+  - type: write
+    id: longest
+    prompt: Write `longest(words)`, which gives back the longest word. If there's a tie, the first one wins. You can assume that the list isn't empty.
+    starter: |
+      def longest(words):
+          # Your code here
+    solution: |
+      def longest(words):
+          best = words[0]
+          for word in words:
+              if len(word) > len(best):
+                  best = word
+          return best
+    tests:
+      - { call: 'longest(["ox", "goat", "yak"])', expect: "'goat'" }
+      - { call: 'longest(["hi", "ox"])', expect: "'hi'" }
+    why: >-
+      Best so far, with `>` so a tie keeps the first.
+    hints:
+      - Start from the first word. Which comparison keeps it on a tie?
+    variants:
+      - prompt: Write `mean_positive(nums)`, which gives back the mean of the items above 0, or `0` if there are none. So `mean_positive([2, -1, 4])` gives back `3.0`.
+        starter: |
+          def mean_positive(nums):
+              # Your code here
+        solution: |
+          def mean_positive(nums):
+              total = 0
+              count = 0
+              for n in nums:
+                  if n > 0:
+                      total += n
+                      count += 1
+              if count == 0:
+                  return 0
+              return total / count
+        tests:
+          - { call: 'mean_positive([2, -1, 4])', expect: '3.0' }
+          - { call: 'mean_positive([-1])', expect: '0' }
+          - { call: 'mean_positive([])', expect: '0' }
+        hints:
+          - You need a sum and a count, and a guard before dividing.
+
+  - type: choice
+    id: remember-inplace
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      a = [1, 2]
+      for x in a:
+          x += 10
+      print(a)
+    choices: ['[1, 2]', '[11, 12]', '[11, 2]', '12']
+    answer: '[1, 2]'
+    why: >-
+      `x` is its own variable, so changing it doesn't touch the list.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Count adds 1 for each match, and sum adds the item. Find stops at the first match, and only says no after the loop. Best so far starts from a real item, never from 0, and `>` or `>=` decides who wins a tie.
+
+
+      Next: a surprise that catches almost everyone who works with lists.

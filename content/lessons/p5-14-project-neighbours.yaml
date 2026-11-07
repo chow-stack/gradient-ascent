@@ -1,0 +1,213 @@
+id: p5-project-neighbours
+track: ml
+unit: 5
+order: 14
+kind: project
+title: 'Project: Nearest neighbours'
+summary: Build a similarity search and your first classifier, with no loops.
+
+cards:
+  - type: learn
+    id: brief
+    label: The project
+    title: A classifier with no training
+    body: >-
+      Here's a simple and surprisingly strong idea: to classify something new, find the most similar example you've already seen, and copy its label. It's called nearest neighbours. Search engines, recommendation systems and language model tools all rely on this same step of finding the most similar vectors.
+
+
+      You'll build it with cosine similarity, and with no loops, so it stays fast with thousands of examples. It uses this unit's main ideas: `keepdims`, broadcasting, a table of dot products, masks and `argmax`. There are 4 steps, and your earlier work is in the starter each time. At the end, you can run it on some data and see a plot.
+
+
+      Before you write each line, say what shape it should give. `X` always has a row for each example, and a column for each feature.
+
+  - type: write
+    id: normalise
+    prompt: >-
+      Step 1 of 4. Write `normalise_rows(X)`, which gives back `X` with each row divided by its own length, so that every row has a length of 1. `np.linalg.norm(X, axis=1, keepdims=True)` gives the lengths, in a shape that lines up.
+    starter: |
+      import numpy as np
+
+      def normalise_rows(X):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+    tests:
+      - { call: 'normalise_rows(np.array([[3.0, 4.0], [0.0, 2.0]]))', expect: '[[0.6, 0.8], [0.0, 1.0]]' }
+      - { call: 'normalise_rows(np.ones((5, 2))).shape', expect: '(5, 2)' }
+    why: >-
+      The lengths have shape `(rows, 1)`, which stretches across the columns, so each row uses its own length.
+    hints:
+      - The shapes are `(rows, columns)` and `(rows, 1)`.
+
+  - type: write
+    id: similarity
+    prompt: >-
+      Step 2 of 4. Write `similarity(X)`, which gives back a table where the cell in row `i`, column `j` is the cosine similarity of rows `i` and `j`. Its shape is `(rows, rows)`.
+    starter: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          U = normalise_rows(X)
+          return U @ U.T
+    tests:
+      - { call: 'similarity(np.array([[1.0, 0.0], [2.0, 0.0], [0.0, 3.0]]))', expect: '[[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]]' }
+      - { call: 'similarity(np.ones((4, 3))).shape', expect: '(4, 4)' }
+    why: >-
+      A matrix product is a table of dot products. With unit rows, each dot product is a cosine similarity.
+    hints:
+      - The product you want is `(rows, columns) @ (columns, rows)`.
+
+  - type: write
+    id: most-similar
+    prompt: >-
+      Step 3 of 4. Write `most_similar(X, i)`, which gives back the position of the row most similar to row `i`, leaving out row `i` itself. Every row is a perfect match with itself, so set that one's score to `-np.inf`, which is lower than any number, before you take the `argmax`.
+    starter: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          U = normalise_rows(X)
+          return U @ U.T
+
+      def most_similar(X, i):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          U = normalise_rows(X)
+          return U @ U.T
+
+      def most_similar(X, i):
+          scores = similarity(X)[i]
+          scores[i] = -np.inf
+          return scores.argmax()
+    tests:
+      - { call: 'most_similar(np.array([[1.0, 0.0], [1.0, 0.1], [0.0, 1.0]]), 0)', expect: '1' }
+      - { call: 'most_similar(np.array([[1.0, 0.0], [1.0, 0.1], [0.0, 1.0]]), 2)', expect: '1' }
+      - { call: 'most_similar(np.array([[0.0, 1.0], [1.0, 0.0], [0.1, 1.0]]), 0)', expect: '2' }
+    why: >-
+      Assigning to a row changes the table, but this table is new each time, so that's safe here. If you kept one table to use again, you'd want `.copy()`.
+    hints:
+      - Row `i` of the table holds that row's similarity to every other.
+
+  - type: write
+    id: classify
+    prompt: >-
+      Step 4 of 4. Write `predict(X_train, y_train, X_test)`, which gives each test row the label of its most similar training row. Work out a table with a row per test example and a column per training example, take the best column in each row, and use those positions to pick from `y_train`. Then write `accuracy(preds, labels)`.
+    starter: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          U = normalise_rows(X)
+          return U @ U.T
+
+      def most_similar(X, i):
+          scores = similarity(X)[i]
+          scores[i] = -np.inf
+          return scores.argmax()
+
+      def predict(X_train, y_train, X_test):
+          # Your code here
+
+      def accuracy(preds, labels):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def similarity(X):
+          U = normalise_rows(X)
+          return U @ U.T
+
+      def most_similar(X, i):
+          scores = similarity(X)[i]
+          scores[i] = -np.inf
+          return scores.argmax()
+
+      def predict(X_train, y_train, X_test):
+          scores = normalise_rows(X_test) @ normalise_rows(X_train).T
+          return y_train[scores.argmax(axis=1)]
+
+      def accuracy(preds, labels):
+          return (preds == labels).mean()
+    tests:
+      - { call: 'predict(np.array([[1.0, 0.0], [0.0, 1.0]]), np.array([7, 9]), np.array([[5.0, 1.0], [1.0, 5.0], [2.0, 0.0]]))', expect: '[7, 9, 7]' }
+      - { call: 'predict(np.ones((6, 2)), np.zeros(6), np.ones((3, 2))).shape', expect: '(3,)' }
+      - { call: 'accuracy(np.array([1, 0, 1, 1]), np.array([1, 1, 1, 1]))', expect: '0.75' }
+    why: >-
+      The shapes tell the whole story. `(test, features) @ (features, train)` gives `(test, train)`, `argmax(axis=1)` gives `(test,)`, and those positions pick the labels.
+    hints:
+      - The product you want is `(test, features) @ (features, train)`.
+      - An array of positions picks items from `y_train`.
+
+  - type: learn
+    id: see-it
+    label: Recap
+    title: See it work
+    body: >-
+      Run this to try your classifier on two clouds of points, each pointing in a different direction. It splits them into training and test sets, measures the accuracy and plots the result. Change the seed or the noise and see what happens to the accuracy.
+
+
+      You've now got the tools that the rest of the course is built on. Without any training, this model already gets most of them right, which makes it a useful baseline: any model you train later has to beat it. Next unit is the calculus behind the gradient lines you've been copying, and how a model can improve itself by following them.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      def normalise_rows(X):
+          return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+      def predict(X_train, y_train, X_test):
+          scores = normalise_rows(X_test) @ normalise_rows(X_train).T
+          return y_train[scores.argmax(axis=1)]
+
+      rng = np.random.default_rng(0)
+      noise = 0.5
+      a = rng.normal([3.0, 1.0], noise, size=(60, 2))
+      b = rng.normal([1.0, 3.0], noise, size=(60, 2))
+      X = np.concatenate([a, b])
+      y = np.array([0] * 60 + [1] * 60)
+
+      order = rng.permutation(len(X))
+      X, y = X[order], y[order]
+      X_train, y_train = X[:90], y[:90]
+      X_test, y_test = X[90:], y[90:]
+
+      preds = predict(X_train, y_train, X_test)
+      print("accuracy:", (preds == y_test).mean())
+
+      plt.scatter(X_test[preds == 0, 0], X_test[preds == 0, 1], label="predicted 0")
+      plt.scatter(X_test[preds == 1, 0], X_test[preds == 1, 1], label="predicted 1")
+      plt.xlabel("feature 1")
+      plt.ylabel("feature 2")
+      plt.legend()
+    subgoals:
+      - { line: 13, label: 'Two clouds of points' }
+      - { line: 18, label: 'One shuffle for both' }
+      - { line: 23, label: 'One line of prediction' }
+      - { line: 26, label: 'Each predicted class in its own colour' }
+    predict: How accurate do you think it will be?

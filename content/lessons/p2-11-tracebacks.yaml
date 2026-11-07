@@ -1,0 +1,356 @@
+id: p2-tracebacks
+track: ml
+unit: 2
+order: 11
+title: Reading a traceback
+summary: When a crash happens inside a function, follow the trail back to the cause.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Errors now have a trail
+    body: >-
+      Now that functions call other functions, a crash can happen deep in a chain of calls. Python tells you the whole chain, in a message called a traceback. Real machine learning errors can be dozens of lines long, and people who can't read them get stuck for hours.
+
+
+      By the end of this lesson you'll be able to read a traceback from the bottom up, say which function crashed and who called it, and find the actual bug, which is often not on the line that crashed.
+
+  - type: learn
+    id: reading
+    title: Read it from the bottom
+    body: >-
+      Run this example. Rather than one line, you'll see a traceback. Each pair of lines is one step in the chain of calls: the first gives the file, the line number and the function, and the second shows that line of code.
+
+
+      The steps are in the order they were called, with the most recent last. So the top is your program's main code, which is called `<module>`. The bottom step is where it crashed. The very last line gives the type of error and its message.
+
+
+      So read from the bottom up. What went wrong? That's the last line. Where? That's the step above it. Who called that? Keep going up. You don't have to understand every line. Often the last line and the last step are all you need.
+    code: |
+      def average(total, count):
+          return total / count
+
+      def report(total, count):
+          result = average(total, count)
+          return f"Average: {result}"
+
+      print(report(10, 2))
+      print(report(10, 0))
+    expectError: ZeroDivisionError
+    subgoals:
+      - { line: 2, label: 'The crash happens here' }
+      - { line: 5, label: 'Called from here' }
+      - { line: 8, label: 'This call works fine' }
+      - { line: 9, label: 'This call started the problem' }
+    predict: Which line's call will make it crash, and in which function?
+
+  - type: choice
+    id: which-function
+    prompt: 'This traceback came from a program. In which function did the crash happen?'
+    kind: concept
+    code: |
+      Traceback (most recent call last):
+        File "main.py", line 9, in <module>
+          print(summary("abc"))
+        File "main.py", line 6, in summary
+          return shout(text) + 1
+        File "main.py", line 2, in shout
+          return text.upper() + 1
+      TypeError: can only concatenate str (not "int") to str
+    choices: ['shout', 'summary', '<module>', 'print']
+    answer: 'shout'
+    why: >-
+      The last step before the error message is where it crashed, and that's `shout`, on line 2.
+    variants:
+      - prompt: 'In this traceback, which line of the program started the chain of calls?'
+        code: |
+          Traceback (most recent call last):
+            File "main.py", line 12, in <module>
+              total = run(3)
+            File "main.py", line 8, in run
+              return step(n)
+            File "main.py", line 3, in step
+              return n / 0
+          ZeroDivisionError: division by zero
+        choices: ['Line 12', 'Line 8', 'Line 3', 'Line 0']
+        answer: 'Line 12'
+        why: >-
+          The top step is the outermost call. The crash itself is at the bottom, on line 3.
+      - prompt: 'What kind of error is this, and what does it say is wrong?'
+        code: |
+          Traceback (most recent call last):
+            File "main.py", line 5, in <module>
+              show(4)
+            File "main.py", line 2, in show
+              print(valeu)
+          NameError: name 'valeu' is not defined
+        choices:
+          - 'A NameError: `valeu` is misspelled on line 2'
+          - 'A NameError: `show` does not exist'
+          - 'A TypeError: 4 is the wrong type'
+          - 'A SyntaxError on line 5'
+        answer: 'A NameError: `valeu` is misspelled on line 2'
+        why: >-
+          The last line gives the type and the message, and the step above it points to the line.
+
+  - type: learn
+    id: real-cause
+    title: The crash isn't always the bug
+    body: >-
+      The traceback tells you where Python got stuck, and that's different from where you made the mistake. Very often, the line that crashed is fine, and it was given a bad value by something earlier.
+
+
+      Below, `shout` crashes, but `shout` is correct. The real bug is in `get_name`, which printed its result rather than returning it. So `get_name` gave back `None`, and that travelled along until something tried to use it.
+
+
+      So after you've found the crash, ask: what values did this line have, and are they what I expected? If not, where did they come from? Follow the trail upwards through the traceback, and back through earlier lines. The `NoneType` here is a big clue: it nearly always means a missing `return`.
+    code: |
+      def get_name():
+          print("Ada")
+
+      def shout(name):
+          return name.upper()
+
+      name = get_name()
+      print(shout(name))
+    expectError: AttributeError
+    subgoals:
+      - { line: 2, label: 'The real bug: prints and does not return' }
+      - { line: 5, label: 'The crash: this line is fine' }
+      - { line: 7, label: 'None gets stored here' }
+      - { line: 8, label: 'And gets passed along here' }
+    predict: The error will mention `NoneType`. Which function should you fix?
+
+  - type: explain
+    id: explain-cause
+    prompt: This crashes on line 2. But which line would you change, and why?
+    code: |
+      def half(n):
+          return n / 2
+
+      def run():
+          value = "10"
+          return half(value)
+
+      print(run())
+    expectError: TypeError
+    model: >-
+      Line 2 is correct, but it was given text. The problem is on line 5, where `value` is the string `"10"` and should be the number `10`.
+    keyPoints:
+      - The crash on line 2 happens because `n` holds a string, and text can't be divided
+      - The real fix is on line 5, where the value should be a number
+
+  - type: choice
+    id: which-to-fix
+    kind: concept
+    prompt: A crash says `TypeError ... 'NoneType'` on a line that uses the result of `load_data()`. What should you check first?
+    choices:
+      - 'Whether `load_data` has a `return` on every path'
+      - 'Whether Python is installed correctly'
+      - 'The spelling of the word `None`'
+      - 'Whether to add more `print` lines at the top of the program'
+    answer: 'Whether `load_data` has a `return` on every path'
+    why: >-
+      `NoneType` means a value was `None`. The usual cause is a function that didn't return on the path that ran.
+    variants:
+      - prompt: Which of these is the best first step when a long traceback appears?
+        choices:
+          - 'Read the last line, then the step just above it'
+          - 'Read every line, starting from the top'
+          - 'Delete the function that was mentioned first'
+          - 'Change things at random, and run it again'
+        answer: 'Read the last line, then the step just above it'
+        why: >-
+          The last line says what happened, and the step above says where. Start there, and go upwards if you need to.
+
+  - type: blank
+    id: fill-return-fix
+    prompt: The crash mentions `NoneType` on line 5. Fill in the blank to fix the real bug, so this shows `HI`.
+    code: |
+      def get_word():
+          ____ "hi"
+
+      word = get_word()
+      print(word.upper())
+    answers: [['return']]
+    expectOutput: HI
+    why: >-
+      The crash was on line 5, but the cause was the function that didn't give anything back.
+    variants:
+      - prompt: Fill in the blank so the value can be divided, and this shows `5.0`.
+        code: |
+          def half(n):
+              return n / 2
+
+          text = "10"
+          print(half(____))
+        answers: [['int(text)', 'float(text)']]
+        expectOutput: '5.0'
+        why: >-
+          The function is fine. The value passed to it has to be converted first.
+
+  - type: fix
+    id: fix-caller
+    prompt: This crashes inside `average`, but `average` is correct. Fix the bug in `total_of`, so this shows `3.0`.
+    code: |
+      def total_of(a, b):
+          print(a + b)
+
+      def average(total, count):
+          return total / count
+
+      print(average(total_of(2, 4), 2))
+    solution: |
+      def total_of(a, b):
+          return a + b
+
+      def average(total, count):
+          return total / count
+
+      print(average(total_of(2, 4), 2))
+    highlightLine: 2
+    expectOutput: '3.0'
+    why: >-
+      `total_of` gave back `None`, and that was only noticed when `average` tried to divide it.
+    hints:
+      - What does `total_of` give back?
+    variants:
+      - prompt: This crashes inside `first_char` with an `IndexError`. Fix the function by adding a guard, so that an empty string gives back `""`, and this shows `a` and then an empty line.
+        code: |
+          def first_char(text):
+              return text[0]
+
+          print(first_char("abc"))
+          print(first_char(""))
+        solution: |
+          def first_char(text):
+              if text == "":
+                  return ""
+              return text[0]
+
+          print(first_char("abc"))
+          print(first_char(""))
+        highlightLine: 2
+        expectOutput: "a\n"
+        why: >-
+          An empty string has no index 0. A guard deals with the awkward case first.
+        hints:
+          - Which input causes the crash, and what should happen for it?
+      - prompt: This crashes with a `TypeError` because the arguments are the wrong way around in the call. Fix the call so it shows `goat goat`.
+        code: |
+          def repeat(word, times):
+              out = ""
+              for i in range(times):
+                  out += word + " "
+              return out
+
+          print(repeat(2, "goat"))
+        solution: |
+          def repeat(word, times):
+              out = ""
+              for i in range(times):
+                  out += word + " "
+              return out
+
+          print(repeat("goat", 2))
+        highlightLine: 7
+        expectOutput: goat goat
+        why: >-
+          The crash shows up at `range`, but the function is fine. The call passed its values in the wrong order.
+        hints:
+          - What did `times` hold when `range` ran?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Debugging from start to finish
+    body: >-
+      Here's the whole process on a real bug. A function should give the percentage of vowels in some text. Run it and you get `ZeroDivisionError` from inside `percent`.
+
+
+      Step 1: read the bottom. Division by zero, in `percent`, so `whole` must be 0. Step 2: go up. `whole` came from `vowel_share`, which passes `len(text)`. So `text` must be empty. Step 3: is that the bug? `percent` is fine. An empty string is a valid input, and `vowel_share` doesn't handle it. Step 4: fix it there, with a guard.
+
+
+      Notice what we didn't do. We didn't change things at random, and we didn't start by rereading all the code. The traceback told us where to look, and each step was just a question about one value. The corrected version is below.
+    code: |
+      def percent(part, whole):
+          return part / whole * 100
+
+      def vowel_share(text):
+          if text == "":
+              return 0
+          count = 0
+          for ch in text:
+              if ch in "aeiou":
+                  count += 1
+          return percent(count, len(text))
+
+      print(vowel_share("goat"))
+      print(vowel_share(""))
+    subgoals:
+      - { line: 2, label: 'Where it crashed, and it is not the bug' }
+      - { line: 5, label: 'The fix: handle the empty case' }
+      - { line: 11, label: 'Where the bad value came from' }
+      - { line: 14, label: 'The input that used to crash' }
+    predict: What will each call show now?
+
+  - type: write
+    id: mean-word
+    prompt: >-
+      Write `mean_length(a, b)`, which gives back the average length of two strings, and write a helper function `length_sum(a, b)` for it to call. If both are empty, `mean_length` should still work, and give back `0.0`.
+    starter: |
+      # Write length_sum, then mean_length
+    solution: |
+      def length_sum(a, b):
+          return len(a) + len(b)
+
+      def mean_length(a, b):
+          return length_sum(a, b) / 2
+    tests:
+      - { call: 'length_sum("ab", "c")', expect: '3' }
+      - { call: 'mean_length("ab", "cdef")', expect: '3.0' }
+      - { call: 'mean_length("", "")', expect: '0.0' }
+    why: >-
+      The helper has to return its answer, or the division gets `None`. You always divide by 2 here, so there's no zero to guard against.
+    hints:
+      - If you see `NoneType`, check that `length_sum` returns.
+    variants:
+      - prompt: Write `safe_mean(total, count)`, which gives back `total / count`, or `0` if `count` is 0, so that it can never crash with a `ZeroDivisionError`.
+        starter: |
+          # Write safe_mean here
+        solution: |
+          def safe_mean(total, count):
+              if count == 0:
+                  return 0
+              return total / count
+        tests:
+          - { call: 'safe_mean(10, 4)', expect: '2.5' }
+          - { call: 'safe_mean(10, 0)', expect: '0' }
+        hints:
+          - Deal with the awkward case first.
+
+  - type: choice
+    id: remember-nested
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      total = 0
+      for a in range(2):
+          for b in range(5):
+              total += 1
+      print(total)
+    choices: ['10', '7', '5', '2']
+    answer: '10'
+    why: >-
+      The inner line runs 5 times for each of the 2 outer passes.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Read a traceback from the bottom. The last line says what went wrong, and the step above says where. Going up the steps shows who called it. The line that crashed is often fine, so ask where its values came from. `NoneType` nearly always means a missing `return`.
+
+
+      That's the whole unit. The checkpoint is next, with no hints, and then a project that gives you a first look at how models learn.

@@ -1,0 +1,388 @@
+id: p3-looping-lists
+track: ml
+unit: 3
+order: 3
+title: Looping over lists
+summary: Go through items, build new lists, and change items safely.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Doing something to every item
+    body: >-
+      Lists and loops belong together. Nearly every data task reads each item in turn, and either works something out or builds a new list.
+
+
+      By the end of this lesson you'll be able to go through a list, make a new list from an old one, and change items in place. You'll also see why changing the loop variable doesn't change the list, and why you shouldn't remove items while looping.
+
+  - type: learn
+    id: for-items
+    title: Going through the items
+    body: >-
+      `for x in items:` works just as it did for strings. Each pass, `x` holds the next item, and the loop ends after the last. It works for an empty list too, where the block simply doesn't run.
+
+
+      Use a singular name for the item and a plural name for the list: `for score in scores:`. It makes the code read naturally, and it helps you avoid a common mix-up, which is to use the list inside the block when you meant the item.
+
+
+      To make a new list, use a pattern you already know: an empty list, a loop and `append`. If you add an `if`, you only keep some of the items, and that's called filtering. Transforming and filtering are two of the most common jobs in data work.
+    code: |
+      scores = [70, 45, 90]
+      for score in scores:
+          print(score + 5)
+
+      doubled = []
+      for score in scores:
+          doubled.append(score * 2)
+      print(doubled)
+
+      passed = []
+      for score in scores:
+          if score >= 50:
+              passed.append(score)
+      print(passed)
+    subgoals:
+      - { line: 2, label: '`score` holds one item at a time' }
+      - { line: 7, label: 'Transform: one output for every item' }
+      - { line: 12, label: 'Filter: only some items are kept' }
+      - { line: 13, label: 'Keep this one' }
+    predict: What will `passed` be?
+
+  - type: choice
+    id: for-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      out = []
+      for n in [1, 2, 3]:
+          out.append(n * n)
+      print(out)
+    choices: ['[1, 4, 9]', '[1, 2, 3]', '[9]', '14']
+    answer: '[1, 4, 9]'
+    why: >-
+      Each pass appends the square of the current item.
+    variants:
+      - code: |
+          out = []
+          for w in ["ox", "goat", "yak"]:
+              if len(w) == 3:
+                  out.append(w)
+          print(out)
+        choices: ["['yak']", "['ox', 'yak']", "['goat']", '[3]']
+        answer: "['yak']"
+        why: >-
+          Only `yak` has exactly 3 characters. Strings in a printed list show their quotes.
+      - code: |
+          total = 0
+          for n in [2, 4]:
+              total += n
+          print(total)
+        choices: ['6', '8', '[2, 4]', '4']
+        answer: '6'
+        why: >-
+          It's the accumulator pattern. `sum` would do the same job.
+      - code: |
+          for n in []:
+              print("hi")
+          print("end")
+        choices: ['end', "hi\nend", 'Nothing', 'Error']
+        answer: 'end'
+        why: >-
+          An empty list has no items, so the block doesn't run.
+
+  - type: learn
+    id: change-in-place
+    title: Changing the items in a list
+    body: >-
+      Here's a bug nearly everyone writes. You want to double every item, so you write `for n in nums: n = n * 2`. It runs without any error, and the list doesn't change at all.
+
+
+      Why? `n` is an ordinary variable that was given a copy of the item's value. Assigning to `n` changes `n`, and the list knows nothing about it. It's the same rule as with parameters and with `for i in range(3)`.
+
+
+      To change the list, you have to assign to a position, so you need the index. That's what `for i in range(len(nums)):` is for. Then `nums[i] = nums[i] * 2` really does replace the item. Or build a new list instead, which is often clearer.
+    code: |
+      nums = [1, 2, 3]
+      for n in nums:
+          n = n * 2
+      print(nums)
+
+      for i in range(len(nums)):
+          nums[i] = nums[i] * 2
+      print(nums)
+    subgoals:
+      - { line: 3, label: 'Only changes the variable `n`' }
+      - { line: 4, label: 'The list is unchanged' }
+      - { line: 6, label: 'Loop over the positions' }
+      - { line: 7, label: 'Assign to the position' }
+    predict: What will the first `print(nums)` show?
+
+  - type: choice
+    id: inplace-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      a = [1, 2]
+      for x in a:
+          x = 0
+      print(a)
+    choices: ['[1, 2]', '[0, 0]', '[0, 2]', '0']
+    answer: '[1, 2]'
+    why: >-
+      Assigning to `x` only changes `x`, so the list stays as it was.
+    variants:
+      - code: |
+          a = [1, 2]
+          for i in range(len(a)):
+              a[i] = 0
+          print(a)
+        choices: ['[0, 0]', '[1, 2]', '[0, 1]', '0']
+        answer: '[0, 0]'
+        why: >-
+          Assigning to a position really changes the list.
+      - code: |
+          a = [5, 6, 7]
+          for i in range(len(a)):
+              a[i] = i
+          print(a)
+        choices: ['[0, 1, 2]', '[5, 6, 7]', '[1, 2, 3]', '[5, 7, 9]']
+        answer: '[0, 1, 2]'
+        why: >-
+          Each position is given its own index as its new value.
+
+  - type: explain
+    id: explain-unchanged
+    prompt: Someone wants to add 1 to each price, but the list doesn't change. Why not, and what would you change?
+    code: |
+      prices = [10, 20]
+      for p in prices:
+          p = p + 1
+      print(prices)
+    model: >-
+      `p` is only a variable holding each value, so assigning to it doesn't touch the list. To change the list, loop over `range(len(prices))` and assign to `prices[i]`.
+    keyPoints:
+      - Assigning to the loop variable changes only that variable and not the list
+      - Loop over the indexes and assign to `prices[i]`, or build a new list
+
+  - type: learn
+    id: pairs-and-removing
+    title: Two lists, and removing while looping
+    body: >-
+      To go through two lists in step, loop over positions and use the same `i` for both. If they could differ in length, the shorter one can cause an `IndexError`, so decide on which length to use. A later unit shows you a tidier tool called `zip`.
+
+
+      A warning about removing items while looping over the same list. The loop keeps track of its position by counting, so when you remove an item, everything shifts along by one, and the next item gets skipped. There's no error, just a wrong answer. Below, the `2` and the `3` were meant to go, but `3` stays.
+
+
+      The safe way is to build a new list containing what you want to keep. That's just a filter.
+    code: |
+      prices = [10, 20]
+      counts = [3, 1]
+      total = 0
+      for i in range(len(prices)):
+          total += prices[i] * counts[i]
+      print(total)
+
+      nums = [1, 2, 3, 4]
+      for n in nums:
+          if n > 1 and n < 4:
+              nums.remove(n)
+      print(nums)
+    subgoals:
+      - { line: 4, label: 'One position for both lists' }
+      - { line: 5, label: 'Same `i` for each list' }
+      - { line: 11, label: 'Removing shifts the later items' }
+      - { line: 12, label: 'An item got skipped' }
+    predict: The `2` gets removed. Which item does the loop look at next?
+
+  - type: blank
+    id: fill-loop
+    prompt: Fill in the blank so this keeps only the even numbers, and shows `[2, 4]`.
+    code: |
+      out = []
+      for n in [1, 2, 3, 4]:
+          if ____:
+              out.append(n)
+      print(out)
+    answers: [['n % 2 == 0', 'n%2==0', 'n % 2 != 1']]
+    expectOutput: '[2, 4]'
+    why: >-
+      A filter is a loop, an `if` and an `append`.
+    variants:
+      - prompt: Fill in the blank so each item is replaced by its square, and this shows `[4, 9]`.
+        code: |
+          a = [2, 3]
+          for i in range(len(a)):
+              ____ = a[i] ** 2
+          print(a)
+        answers: [['a[i]']]
+        expectOutput: '[4, 9]'
+        why: >-
+          To change the list, assign to its position.
+      - prompt: Fill in the blank so this goes through the positions, and shows `0` and `1`.
+        code: |
+          a = ["x", "y"]
+          for i in ____:
+              print(i)
+        answers: [['range(len(a))', 'range(2)', 'range(0, len(a))']]
+        expectOutput: "0\n1"
+        why: >-
+          `range(len(a))` gives each valid position.
+
+  - type: fix
+    id: fix-loop-variable
+    prompt: '`add_all(nums, 1)` should give back `[2, 3]`, but it gives back the list unchanged. Fix it.'
+    code: |
+      def add_all(nums, amount):
+          for n in nums:
+              n = n + amount
+          return nums
+    solution: |
+      def add_all(nums, amount):
+          for i in range(len(nums)):
+              nums[i] = nums[i] + amount
+          return nums
+    highlightLine: 3
+    tests:
+      - { call: 'add_all([1, 2], 1)', expect: '[2, 3]' }
+    why: >-
+      To change a list, assign to a position. Building and returning a new list also works.
+    hints:
+      - What does assigning to `n` change?
+    variants:
+      - prompt: '`no_zeros([0, 0, 5])` should give back `[5]`, but it gives back `[0, 5]`. Fix it by building a new list.'
+        code: |
+          def no_zeros(nums):
+              for n in nums:
+                  if n == 0:
+                      nums.remove(n)
+              return nums
+        solution: |
+          def no_zeros(nums):
+              out = []
+              for n in nums:
+                  if n != 0:
+                      out.append(n)
+              return out
+        highlightLine: 2
+        tests:
+          - { call: 'no_zeros([0, 0, 5])', expect: '[5]' }
+          - { call: 'no_zeros([1, 2])', expect: '[1, 2]' }
+        why: >-
+          Removing shifted the items, so the second zero was skipped. A filter avoids the problem.
+        hints:
+          - What happens to the next item after a removal?
+      - prompt: This crashes with a `TypeError`, because the block adds the whole list. It should show `6`. Fix it.
+        code: |
+          total = 0
+          nums = [1, 2, 3]
+          for n in nums:
+              total += nums
+          print(total)
+        solution: |
+          total = 0
+          nums = [1, 2, 3]
+          for n in nums:
+              total += n
+          print(total)
+        highlightLine: 4
+        tests: []
+        expectOutput: '6'
+        why: >-
+          Inside the loop, `n` is the item, and `nums` is the whole list.
+        hints:
+          - Which name is the current item?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Rescaling data
+    body: >-
+      Before training, you often rescale numbers so they fall between 0 and 1. It's a real preprocessing step, and it's a good test of what you've learned.
+
+
+      For each value, subtract the smallest and divide by the range. Break the job up: find the smallest and the largest once, before the loop, since they don't change. Then loop and build a new list, leaving the original alone.
+
+
+      Think about what could go wrong. If all the values are the same, the range is 0, and dividing would crash. So a guard deals with that first. Then test with something where you can work out the answer in your head: 10, 20 and 30 should give 0, 0.5 and 1.
+    code: |
+      def rescale(values):
+          low = min(values)
+          high = max(values)
+          if high == low:
+              return [0] * len(values)
+          out = []
+          for v in values:
+              out.append((v - low) / (high - low))
+          return out
+
+      print(rescale([10, 20, 30]))
+      print(rescale([5, 5]))
+    subgoals:
+      - { line: 2, label: 'Work these out once, before the loop' }
+      - { line: 4, label: 'Guard against dividing by zero' }
+      - { line: 8, label: 'One output for each input' }
+      - { line: 11, label: 'A case you can check in your head' }
+    predict: What will `rescale([10, 20, 30])` give?
+
+  - type: write
+    id: filter-long
+    prompt: Write `long_words(words, n)`, which gives back a new list of the words with more than `n` characters. So `long_words(["ox", "goat"], 2)` gives back `["goat"]`.
+    starter: |
+      def long_words(words, n):
+          # Your code here
+    solution: |
+      def long_words(words, n):
+          out = []
+          for word in words:
+              if len(word) > n:
+                  out.append(word)
+          return out
+    tests:
+      - { call: 'long_words(["ox", "goat"], 2)', expect: "['goat']" }
+      - { call: 'long_words([], 2)', expect: '[]' }
+      - { call: 'long_words(["a", "b"], 0)', expect: "['a', 'b']" }
+    why: >-
+      It's a filter: an empty list, a loop, an `if` and an `append`.
+    hints:
+      - Set up the new list before the loop, and return it after.
+    variants:
+      - prompt: Write `add_lists(a, b)`, which gives back a new list where each item is the sum of the items at that position. Both lists have the same length. So `add_lists([1, 2], [3, 4])` gives back `[4, 6]`.
+        starter: |
+          def add_lists(a, b):
+              # Your code here
+        solution: |
+          def add_lists(a, b):
+              out = []
+              for i in range(len(a)):
+                  out.append(a[i] + b[i])
+              return out
+        tests:
+          - { call: 'add_lists([1, 2], [3, 4])', expect: '[4, 6]' }
+          - { call: 'add_lists([], [])', expect: '[]' }
+        hints:
+          - Loop over the positions, and use `i` for both lists.
+
+  - type: choice
+    id: remember-none
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      a = [2, 1]
+      b = a.append(3)
+      print(b, len(a))
+    choices: ['None 3', '[2, 1, 3] 3', 'None 2', '3 3']
+    answer: 'None 3'
+    why: >-
+      `append` changes `a` and gives back `None`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `for x in items:` gives you each item. To make a new list, use an empty list, a loop and `append`. Assigning to the loop variable doesn't change the list, so use `range(len(items))` and assign to a position. Don't remove items from a list while looping over it, and build a new list instead.
+
+
+      Next: the four patterns that solve most list problems.

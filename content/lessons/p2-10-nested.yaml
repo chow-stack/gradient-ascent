@@ -1,0 +1,380 @@
+id: p2-nested
+track: ml
+unit: 2
+order: 10
+title: Loops inside loops
+summary: Grids, pairs, and how fast the number of passes grows.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Rows and columns
+    body: >-
+      Images, spreadsheets and the matrices at the heart of machine learning all have rows and columns. Going through a grid means going through the rows and, for each row, going through its columns: a loop inside a loop.
+
+
+      By the end of this lesson you'll be able to trace nested loops, work out how many times the inner line runs, and print grids. You'll also see why these loops can be slow, which is the reason NumPy exists.
+
+  - type: learn
+    id: nesting
+    title: The inner loop runs in full, every time
+    body: >-
+      A loop's block can contain anything, including another loop. Here's the one rule to remember: for each single pass of the outer loop, the inner loop runs all the way through, from the start.
+
+
+      So the outer variable changes slowly, and the inner one changes quickly, like the hour and minute hands on a clock. The two loops need different variable names. And indentation shows you what belongs where: two levels in means it's run by the inner loop, while one level in means it runs once per outer pass.
+
+
+      The number of inner passes multiplies. If the outer loop runs 3 times and the inner runs 4, the inner block runs 12 times.
+    code: |
+      for row in range(2):
+          print(f"Row {row}")
+          for col in range(3):
+              print(row, col)
+      print("Done")
+    subgoals:
+      - { line: 1, label: 'The slow one' }
+      - { line: 2, label: 'Once per row' }
+      - { line: 3, label: 'Starts again for each row' }
+      - { line: 4, label: 'Runs 2 × 3 = 6 times' }
+      - { line: 5, label: 'Once, at the very end' }
+    predict: After `0 2`, what's the next line shown?
+
+  - type: choice
+    id: nested-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for a in range(2):
+          for b in range(2):
+              print(a, b)
+    choices: ["0 0\n0 1\n1 0\n1 1", "0 0\n1 1", "0 0\n1 0\n0 1\n1 1", "0 1\n1 0"]
+    answer: "0 0\n0 1\n1 0\n1 1"
+    why: >-
+      `a` stays at 0 while `b` goes through all its values, and then the same happens with `a` as 1.
+    hints:
+      - The inner variable changes fastest.
+    variants:
+      - code: |
+          count = 0
+          for a in range(3):
+              for b in range(4):
+                  count += 1
+          print(count)
+        choices: ['12', '7', '4', '3']
+        answer: '12'
+        why: >-
+          The inner line runs 4 times for each of the 3 outer passes.
+      - code: |
+          count = 0
+          for a in range(3):
+              count += 1
+              for b in range(4):
+                  pass
+          print(count)
+        choices: ['3', '12', '7', '4']
+        answer: '3'
+        why: >-
+          `count += 1` is only one level in, so it runs once per outer pass. (`pass` is a line that does nothing, and it fills an empty block.)
+      - code: |
+          for a in range(1, 3):
+              for ch in "xy":
+                  print(ch * a)
+        choices: ["x\ny\nxx\nyy", "x\nxx\ny\nyy", "xy\nxxyy", "x\ny"]
+        answer: "x\ny\nxx\nyy"
+        why: >-
+          The inner loop can go over a string. It runs in full for `a` as 1, and again for `a` as 2.
+
+  - type: learn
+    id: printing-grids
+    title: Printing without a new line
+    body: >-
+      To see a grid, you need several values on one line, and `print` normally ends with a new line. It has an option for this: `print(x, end=" ")` ends with a space instead of a new line. You've already seen that arguments can be passed by name, and this is one.
+
+
+      The shape for a grid is then: inside the outer loop, the inner loop prints one row's values with `end`. After the inner loop, an empty `print()` finishes that row. It has to be one level in, so that it runs once per row.
+
+
+      The inner range can even depend on the outer variable. `for col in range(row + 1):` gives a triangle, because each row is longer than the last.
+    code: |
+      for row in range(1, 4):
+          for col in range(1, 4):
+              print(row * col, end=" ")
+          print()
+
+      for row in range(3):
+          for col in range(row + 1):
+              print("#", end="")
+          print()
+    subgoals:
+      - { line: 3, label: 'Stay on the same line' }
+      - { line: 4, label: 'One level in: ends each row' }
+      - { line: 7, label: 'Each row is longer than the last' }
+    predict: What will the bottom row of the times table be?
+
+  - type: choice
+    id: grid-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for row in range(2):
+          for col in range(3):
+              print("*", end="")
+          print()
+    choices: ["***\n***", "**\n**\n**", "******", "*\n*\n*\n*\n*\n*"]
+    answer: "***\n***"
+    why: >-
+      Each row prints 3 stars on the same line, and then the empty `print()` ends the line. That happens twice.
+    variants:
+      - code: |
+          for row in range(3):
+              for col in range(row):
+                  print("#", end="")
+              print("|")
+        choices: ["|\n#|\n##|", "#|\n##|\n###|", "##|\n##|\n##|", "|\n|\n|"]
+        answer: "|\n#|\n##|"
+        why: >-
+          For row 0, `range(0)` has no values, so only the bar shows. Each later row has one more `#`.
+      - code: |
+          for row in range(2):
+              for col in range(2):
+                  print(row + col, end=" ")
+              print()
+        choices: ["0 1\n1 2", "0 0\n1 1", "0 1 1 2", "1 2\n2 3"]
+        answer: "0 1\n1 2"
+        why: >-
+          Row 0 gives 0 + 0 and 0 + 1. Row 1 gives 1 + 0 and 1 + 1.
+
+  - type: explain
+    id: explain-print-level
+    prompt: Why does the empty `print()` have to be indented one level, and not two? What would happen if it were two?
+    code: |
+      for row in range(2):
+          for col in range(2):
+              print("x", end="")
+          print()
+    model: >-
+      At one level in, it runs once per row, after the inner loop has finished, so it ends each row. At two levels it would be inside the inner loop, and it would run after every `x`, putting each one on its own line.
+    keyPoints:
+      - One level in means it runs once per outer pass, after the inner loop ends
+      - Two levels in would put it inside the inner loop, so every `x` would be on its own line
+
+  - type: learn
+    id: nested-bugs
+    title: What goes wrong
+    body: >-
+      Three bugs show up here. The first is using the same variable name for both loops. The inner loop overwrites the outer one's variable. Python goes on with the right number of outer passes, but any code after the inner loop that uses that variable sees the wrong value.
+
+
+      The second is where an accumulator gets reset. A total for the whole grid has to start before both loops. A total for each row has to start inside the outer loop, before the inner one. Each level has its own place, so ask how often it should go back to zero.
+
+
+      The third concerns `break`, which only leaves the innermost loop. The outer loop carries on. To stop everything at once, put the loops in a function and use `return`.
+    deeper: >-
+      Nested loops can get slow. Two loops over 1,000 items run a million inner passes, and three run a billion. A small image has 256 × 256, or about 65,000 pixels, so going through it pixel by pixel with Python loops is noticeably slow. NumPy does the same work in fast compiled code, using a single line, and that's why you'll learn it in a later unit.
+    code: |
+      for row in range(2):
+          row_total = 0
+          for col in range(3):
+              row_total += col + row
+          print(f"Row {row}: {row_total}")
+
+      def find_pair(limit, target):
+          for a in range(limit):
+              for b in range(limit):
+                  if a * b == target:
+                      return f"{a} and {b}"
+          return "none"
+
+      print(find_pair(5, 6))
+    subgoals:
+      - { line: 2, label: 'Back to 0 for each row' }
+      - { line: 4, label: 'Add within the row' }
+      - { line: 11, label: 'return leaves both loops at once' }
+    predict: What will the total be for row 1?
+
+  - type: blank
+    id: fill-nested
+    prompt: Fill in the blank so this prints a 2 by 2 square of `x`, where each row is on its own line.
+    code: |
+      for row in range(2):
+          for col in range(2):
+              print("x", ____)
+          print()
+    answers: [['end=""', "end=''"]]
+    expectOutput: "xx\nxx"
+    why: >-
+      `end=""` keeps the next `print` on the same line.
+    variants:
+      - prompt: Fill in the inner range so each row is one longer than the last, and this shows `*`, then `**`.
+        code: |
+          for row in range(2):
+              for col in range(____):
+                  print("*", end="")
+              print()
+        answers: [['row + 1', 'row+1', '0, row + 1']]
+        expectOutput: "*\n**"
+        why: >-
+          For row 0, `range(1)` gives one star, and for row 1, `range(2)` gives two.
+
+  - type: fix
+    id: fix-total-place
+    prompt: '`grid_total(2, 3)` should add up `1` once for every cell and give back `6`, but it gives back `3`. Fix it.'
+    code: |
+      def grid_total(rows, cols):
+          for r in range(rows):
+              total = 0
+              for c in range(cols):
+                  total += 1
+          return total
+    solution: |
+      def grid_total(rows, cols):
+          total = 0
+          for r in range(rows):
+              for c in range(cols):
+                  total += 1
+          return total
+    highlightLine: 3
+    tests:
+      - { call: 'grid_total(2, 3)', expect: '6' }
+      - { call: 'grid_total(1, 1)', expect: '1' }
+    why: >-
+      A total for the whole grid has to start before both loops. Here it was reset for every row.
+    hints:
+      - How many times does line 3 run?
+    variants:
+      - prompt: This should show `000` and then `111`, but it prints numbers on separate lines. Fix it.
+        code: |
+          for row in range(2):
+              for col in range(3):
+                  print(row)
+              print()
+        solution: |
+          for row in range(2):
+              for col in range(3):
+                  print(row, end="")
+              print()
+        highlightLine: 3
+        tests: []
+        expectOutput: "000\n111"
+        why: >-
+          Each value has to stay on the row's line, so it needs `end=""`.
+        hints:
+          - What does `print` put at the end by default?
+      - prompt: 'The two loops share a variable. This should show `0 done` and then `1 done`, but it shows `2 done` twice. Fix it.'
+        code: |
+          for i in range(2):
+              for i in range(3):
+                  pass
+              print(i, "done")
+        solution: |
+          for i in range(2):
+              for j in range(3):
+                  pass
+              print(i, "done")
+        highlightLine: 2
+        tests: []
+        expectOutput: "0 done\n1 done"
+        why: >-
+          The inner loop overwrote `i`. Each loop needs its own name.
+        hints:
+          - What is `i` when the inner loop has finished?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Every pair
+    body: >-
+      Comparing everything with everything is the classic job for nested loops. Say you want to know whether a string has any repeated character. For each position, you check every later position.
+
+
+      The trick is where the inner loop starts. Starting it at `i + 1` means each pair is checked once, and a character is never compared with itself. If it started at 0, every character would match itself, and every string would seem to have a repeat.
+
+
+      Notice this is the search pattern from the last lesson: `return True` as soon as a match shows up, and `return False` only after both loops are done. Patterns combine like this. A new problem is rarely new, and it's usually a shape you already know, in a slightly different place.
+    code: |
+      def has_repeat(text):
+          for i in range(len(text)):
+              for j in range(i + 1, len(text)):
+                  if text[i] == text[j]:
+                      return True
+          return False
+
+      print(has_repeat("hello"))
+      print(has_repeat("goat"))
+    subgoals:
+      - { line: 2, label: 'Each position in turn' }
+      - { line: 3, label: 'Only the positions after it' }
+      - { line: 5, label: 'One match is enough' }
+      - { line: 6, label: 'After both loops: no match anywhere' }
+    predict: Which two positions match in `hello`?
+
+  - type: write
+    id: times-table
+    prompt: >-
+      Write `count_pairs(limit, total)`, which gives back how many pairs `a`, `b` add up to `total`, with `a` and `b` both going from 1 up to and including `limit`. So `count_pairs(3, 4)` gives back `3`, for 1 + 3, 2 + 2 and 3 + 1.
+    starter: |
+      def count_pairs(limit, total):
+          # Your code here
+    solution: |
+      def count_pairs(limit, total):
+          count = 0
+          for a in range(1, limit + 1):
+              for b in range(1, limit + 1):
+                  if a + b == total:
+                      count += 1
+          return count
+    tests:
+      - { call: 'count_pairs(3, 4)', expect: '3' }
+      - { call: 'count_pairs(2, 10)', expect: '0' }
+      - { call: 'count_pairs(1, 2)', expect: '1' }
+    why: >-
+      The count starts before both loops, since it's for the whole grid. The `return` goes after both.
+    hints:
+      - Which `range` includes `limit`?
+    variants:
+      - prompt: Write `triangle(n)`, which prints a triangle of `#` with `n` rows, the first with 1 and the last with `n`. Then call `triangle(3)`.
+        starter: |
+          def triangle(n):
+              # Your code here
+        solution: |
+          def triangle(n):
+              for row in range(1, n + 1):
+                  for col in range(row):
+                      print("#", end="")
+                  print()
+
+          triangle(3)
+        tests: []
+        expectOutput: "#\n##\n###"
+        hints:
+          - The inner range depends on the row.
+          - End each row with an empty `print()`.
+
+  - type: choice
+    id: remember-search
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def has_x(text):
+          for ch in text:
+              if ch == "x":
+                  return True
+          return False
+
+      print(has_x("axb"), has_x("ab"))
+    choices: ['True False', 'False False', 'True True', 'False True']
+    answer: 'True False'
+    why: >-
+      The first call finds `x` and returns. The second reaches the end of the loop, so it returns `False`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      The inner loop runs in full for each outer pass, so the counts multiply. Give each loop its own variable. `print(x, end="")` stays on the line. Put an accumulator at the level where it should reset. `break` only leaves the inner loop, and `return` leaves everything.
+
+
+      Next: when a crash happens deep inside these calls, how to find out what went wrong.

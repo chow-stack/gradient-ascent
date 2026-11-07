@@ -37,8 +37,6 @@ const learn = z.object({
   code: z.string().optional(),
   /** The error this example is meant to end with, such as NameError, for showing what errors look like. */
   expectError: z.string().optional(),
-  /** The same idea in Java (Unit 1 maps from AP CSA). */
-  java: z.string().optional(),
   /** Subgoal labels shown beside the code (worked-example principle). */
   subgoals: z.array(z.object({ line: z.number().int().positive(), label: z.string() })).default([]),
   /** If set, ask the learner to predict before they can run (PRIMM). */

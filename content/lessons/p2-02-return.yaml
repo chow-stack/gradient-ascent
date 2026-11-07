@@ -1,0 +1,371 @@
+id: p2-return
+track: ml
+unit: 2
+order: 2
+title: Giving back a value
+summary: Use return to hand a result back, and see why print can't do that.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Functions that answer
+    body: >-
+      The functions you've written so far only show text on the screen. Your program can't use that text for anything. A function that measures a model's error has
+      to give the number back, so that other code can act on it.
+
+
+      By the end of this lesson you'll be able to write functions that return results, and you'll know the difference between `return` and `print`. That difference
+      is one of the most common sources of confusion for new programmers, so we'll go through it slowly.
+
+  - type: learn
+    id: returning
+    title: The return statement
+    body: >-
+      `return` ends the function and hands a value back to the line that called it. You saw this from the other side when you called `len` and `round`: the call gets
+      replaced by its return value. The same now applies to functions you write. If `area(3, 4)` returns 12, then `area(3, 4) + 1` is `12 + 1`.
+
+
+      So you can store the result, use it in a sum, pass it to another function or print it. Whoever calls the function decides what to do with the answer.
+      That's what makes returning so flexible, and it's why most functions return their results and leave the printing to someone else.
+    code: |
+      def area(width, height):
+          return width * height
+
+      result = area(3, 4)
+      print(result)
+      print(area(2, 5) + 1)
+      print(area(area(1, 2), 3))
+    subgoals:
+      - { line: 2, label: 'Hand the answer back' }
+      - { line: 4, label: 'Keep the answer in a variable' }
+      - { line: 6, label: 'Use it in a sum' }
+      - { line: 7, label: 'Pass it to another call, inner one first' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: use-return
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def add_one(n):
+          return n + 1
+
+      x = add_one(4)
+      print(x * 2)
+    choices: ['10', '9', '5', 'None']
+    answer: '10'
+    why: >-
+      `add_one(4)` gives back 5, so `x` holds 5, and `x * 2` is 10.
+    variants:
+      - code: |
+          def double(n):
+              return n * 2
+
+          print(double(double(3)))
+        choices: ['12', '6', '9', '36']
+        answer: '12'
+        why: >-
+          The inner call runs first: `double(3)` is 6, and then `double(6)` is 12.
+      - code: |
+          def double(n):
+              return n * 2
+
+          double(5)
+          print("end")
+        choices: ['end', "10\nend", "5\nend", "None\nend"]
+        answer: 'end'
+        why: >-
+          The function returns 10, but no line stores or prints it, so it's lost. Returning doesn't show anything.
+      - code: |
+          def size(word):
+              return len(word) + 1
+
+          print(size("goat") + size("up"))
+        choices: ['8', '6', 'goatup', '7']
+        answer: '8'
+        why: >-
+          The two calls give back 5 and 3, and then Python adds them.
+
+  - type: learn
+    id: print-vs-return
+    title: Printing isn't returning
+    body: >-
+      `print` shows a value to a person. `return` gives a value to your program. They can look the same when you try them out, which is why they get mixed up.
+
+
+      A function with no `return` still gives something back: the special value `None`, which means "nothing here". So if a function prints its answer rather than returning it,
+      you'll see the right number on the screen, but the variable that stores the result holds `None`. Trying to do maths with it stops the program with
+      `TypeError: unsupported operand type(s)`, mentioning `NoneType`.
+
+
+      When you see `NoneType` in an error, a good first question is: which function forgot to return?
+    code: |
+      def double_show(n):
+          print(n * 2)
+
+      def double_give(n):
+          return n * 2
+
+      a = double_show(5)
+      b = double_give(5)
+      print(a)
+      print(b)
+    subgoals:
+      - { line: 2, label: 'Shows it, and gives back nothing' }
+      - { line: 5, label: 'Shows nothing, and gives back the answer' }
+      - { line: 7, label: 'Shows 10, and stores None' }
+      - { line: 8, label: 'Shows nothing, and stores 10' }
+    predict: What four things appear in total, counting everything that gets shown?
+
+  - type: choice
+    id: none-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def shout(word):
+          print(word.upper())
+
+      x = shout("hi")
+      print(x)
+    choices: ["HI\nNone", "HI\nHI", 'HI', 'None']
+    answer: "HI\nNone"
+    why: >-
+      The call prints `HI`. There's no `return`, so `x` holds `None`, and the last line shows it.
+    hints:
+      - What does a function give back if it has no `return`?
+    variants:
+      - code: |
+          def total(a, b):
+              a + b
+
+          print(total(2, 3))
+        choices: ['None', '5', 'a + b', 'Error']
+        answer: 'None'
+        why: >-
+          The body works out 5 and then throws it away. Without `return`, the function gives back `None`.
+      - code: |
+          def f(n):
+              print(n)
+              return n + 1
+
+          print(f(1))
+        choices: ["1\n2", '2', '1', "1\nNone"]
+        answer: "1\n2"
+        why: >-
+          A function can do both. The `print` inside shows 1 during the call, and the last line shows the 2 that came back.
+
+  - type: explain
+    id: explain-none
+    prompt: This function looks right when you run it, because `8` appears on the screen. So why does the next line show `None`?
+    code: |
+      def cube_of_two():
+          print(2 ** 3)
+
+      answer = cube_of_two()
+      print(answer)
+    model: >-
+      The function prints 8, which only shows it on the screen. It has no `return`, so it gives back `None`, and that's what gets stored in `answer`.
+    keyPoints:
+      - '`print` shows a value but does not hand it back to the program'
+      - A function with no `return` gives back `None`
+
+  - type: learn
+    id: return-exits
+    title: Return ends the function
+    body: >-
+      `return` does two things: it hands back a value, and it leaves the function immediately. Any lines after it in the body never run. If you put a `print` underneath a `return`, it
+      will silently do nothing.
+
+
+      It's also possible to write `return` with no value. That leaves the function and gives back `None`, which is occasionally handy.
+
+
+      A function can only return once per call, because the first `return` it reaches ends the call. To give back two pieces of information, you'll use a structure that holds several
+      values, which you'll meet in a later unit. For now, write two small functions.
+    code: |
+      def check(n):
+          print("Before return")
+          return n * 2
+          print("After return")
+
+      print(check(4))
+    subgoals:
+      - { line: 2, label: 'This runs' }
+      - { line: 3, label: 'Hand back the answer and leave' }
+      - { line: 4, label: 'Never reached' }
+      - { line: 6, label: 'Shows what came back' }
+    predict: Will `After return` appear?
+
+  - type: blank
+    id: fill-return
+    prompt: Fill in the blank so `half(10)` gives back `5.0`.
+    code: |
+      def half(n):
+          ____ n / 2
+    answers: [['return']]
+    tests:
+      - { call: half(10), expect: '5.0' }
+    why: >-
+      `return` hands the answer back to whoever called the function.
+    variants:
+      - prompt: Fill in the blank so this shows `30`.
+        code: |
+          def add(a, b):
+              return a + b
+
+          total = ____(10, 20)
+          print(total)
+        answers: [['add']]
+        tests: []
+        expectOutput: '30'
+        why: >-
+          Call the function by name, and store what it gives back.
+      - prompt: Fill in the blank so `area(2, 5)` gives back `10`.
+        code: |
+          def area(w, h):
+              return ____
+        answers: [['w * h', 'w*h', 'h * w', 'h*w']]
+        tests:
+          - { call: 'area(2, 5)', expect: '10' }
+        why: >-
+          Return the calculation, using the names of the parameters.
+
+  - type: fix
+    id: print-instead
+    prompt: '`double(4)` should give back `8`, but it gives back `None`. Fix it.'
+    code: |
+      def double(n):
+          print(n * 2)
+    solution: |
+      def double(n):
+          return n * 2
+    highlightLine: 2
+    tests:
+      - { call: double(4), expect: '8' }
+      - { call: double(0), expect: '0' }
+    why: >-
+      Printing shows the answer, and only `return` hands it back.
+    hints:
+      - What gives a value back to the code that called the function?
+    variants:
+      - prompt: This crashes with a `TypeError` that mentions `NoneType`. Fix the function so it shows `11`.
+        code: |
+          def plus_one(n):
+              n + 1
+
+          print(plus_one(9) + 1)
+        solution: |
+          def plus_one(n):
+              return n + 1
+
+          print(plus_one(9) + 1)
+        highlightLine: 2
+        tests: []
+        expectOutput: '11'
+        why: >-
+          The body worked out the sum and threw it away, so the function gave back `None`.
+        hints:
+          - What does the function give back at the moment?
+      - prompt: '`price(10)` should give back `12`, but it gives back `10`. Fix it.'
+        code: |
+          def price(base):
+              return base
+              base = base + 2
+        solution: |
+          def price(base):
+              base = base + 2
+              return base
+        highlightLine: 2
+        tests:
+          - { call: price(10), expect: '12' }
+        why: >-
+          `return` leaves the function straight away, so the line under it never ran.
+        hints:
+          - Does the last line ever run?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Building from small functions
+    body: >-
+      Once functions return values, they can feed into each other. This is how larger programs get built: small functions that each do one job, and a function that combines them.
+
+
+      Say you want the pace of a hike in minutes per kilometre, from a distance and a time in hours. One function converts hours to minutes, and another works out the pace, using
+      the first. Each one is short enough to check by eye, and you can test each on its own before relying on it.
+
+
+      Notice that neither function prints. They only compute and return. All the printing happens at the bottom, in one place. Keeping these apart is a good habit, because a function that returns can be used anywhere.
+    code: |
+      def to_minutes(hours):
+          return hours * 60
+
+      def pace(km, hours):
+          return to_minutes(hours) / km
+
+      result = pace(10, 2)
+      print(f"Pace: {result} minutes per km")
+    subgoals:
+      - { line: 1, label: 'One small job' }
+      - { line: 5, label: 'Use it to do a bigger job' }
+      - { line: 7, label: 'Call it and keep the answer' }
+      - { line: 8, label: 'Print in one place' }
+    predict: What number will the message show?
+
+  - type: write
+    id: average
+    prompt: Write a function `average(a, b)` that returns the mean of two numbers. It should return the value, not print it.
+    starter: |
+      def average(a, b):
+          # Your code here
+    solution: |
+      def average(a, b):
+          return (a + b) / 2
+    tests:
+      - { call: 'average(2, 4)', expect: '3.0' }
+      - { call: 'average(1, 2)', expect: '1.5' }
+    why: >-
+      The parentheses matter. Without them, Python divides `b` by 2 first.
+    hints:
+      - Add them, then divide by 2. Which needs to happen first?
+    variants:
+      - prompt: Write a function `initials(first, last)` that returns the first letter of each name joined together, so `initials("Ada", "Byron")` gives back `"AB"`.
+        starter: |
+          def initials(first, last):
+              # Your code here
+        solution: |
+          def initials(first, last):
+              return first[0] + last[0]
+        tests:
+          - { call: 'initials("Ada", "Byron")', expect: "'AB'" }
+          - { call: 'initials("x", "y")', expect: "'xy'" }
+        hints:
+          - The first character of a string is at index 0.
+
+  - type: choice
+    id: remember-def
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def f(x):
+          print(x)
+
+      f("a")
+      print("b")
+      f("c")
+    choices: ["a\nb\nc", "b\na\nc", "a\nc\nb", 'b']
+    answer: "a\nb\nc"
+    why: >-
+      The program goes from top to bottom, and each call runs the body and comes back.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `return` hands a value back and ends the function straight away. `print` only shows a value to a person. A function with no `return` gives back `None`, so `NoneType` in an error usually
+      means that some function forgot to return.
+
+
+      Next: functions that decide what to return.

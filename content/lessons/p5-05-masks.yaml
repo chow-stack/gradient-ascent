@@ -1,0 +1,431 @@
+id: p5-masks
+track: ml
+unit: 5
+order: 5
+title: Selecting with conditions
+summary: Boolean masks, np.where, and picking many items at once.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Filtering with no loop
+    body: >-
+      Your filter loop from Unit 3 has a NumPy form, and it's one of the most useful things in the library. It lets you ask questions like "how many predictions were right?" in a single line.
+
+
+      By the end of this lesson you'll be able to filter an array by a condition, count matches, work out a model's accuracy, and pick out many specific items at once.
+
+  - type: learn
+    id: masks
+    title: Boolean masks
+    body: >-
+      A comparison on an array applies to each item, like any other operation. `a > 2` gives an array of `True` and `False`, called a mask. Use a mask as an index, and you get only the items where it's `True`: `a[a > 2]`. That one expression is your whole filter loop. It gives a 1D array, whatever the original's shape was.
+
+
+      Assigning works too: `a[a < 0] = 0` replaces every negative number with 0.
+
+
+      To combine conditions, use `&` for and, `|` for or, and `~` for not, with parentheses around each comparison: `a[(a > 1) & (a < 4)]`. Python's `and` doesn't work on arrays, and gives `ValueError: The truth value of an array ... is ambiguous`. You'd get the same error from `if a > 2:`, since one `if` can't answer for many items. Use `.any()` or `.all()` to get one answer.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 5, -2, 3])
+      print(a > 2)
+      print(a[a > 2])
+
+      print(a[(a > 0) & (a < 4)])
+
+      b = a.copy()
+      b[b < 0] = 0
+      print(b)
+
+      print((a > 2).any(), (a > 2).all())
+      if a > 2:
+          print("big")
+    expectError: ValueError
+    subgoals:
+      - { line: 4, label: 'A mask: True or False for each item' }
+      - { line: 5, label: 'Keep the True items' }
+      - { line: 7, label: 'Combine with &, and use parentheses' }
+      - { line: 10, label: 'Assign to the matching items' }
+      - { line: 14, label: 'if needs one answer, not four' }
+    predict: What will `a[a > 2]` show?
+
+  - type: choice
+    id: masks-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([4, 1, 3])
+      print(a[a >= 3])
+    choices: ['[4 3]', '[ True False  True]', '[0 2]', '[1]']
+    answer: '[4 3]'
+    why: >-
+      The mask keeps the items where the comparison is true.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([4, 1, 3])
+          print(a >= 3)
+        choices: ['[ True False  True]', '[4 3]', 'True', '[1 0 1]']
+        answer: '[ True False  True]'
+        why: >-
+          A comparison gives one answer for each item.
+      - code: |
+          import numpy as np
+          a = np.array([1, -1, 2])
+          a[a < 0] = 0
+          print(a)
+        choices: ['[1 0 2]', '[1 2]', '[0]', '[1 -1 2]']
+        answer: '[1 0 2]'
+        why: >-
+          Assigning through a mask changes only the matching items.
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3, 4])
+          print(a[(a > 1) & (a < 4)])
+        choices: ['[2 3]', '[1 2 3 4]', '[2 3 4]', 'Error']
+        answer: '[2 3]'
+        why: >-
+          `&` needs both to be true for each item.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a[a > 1])
+        choices: ['[2 3 4]', "[[2]\n [3 4]]", "[[False  True]\n [ True  True]]", 'Error']
+        answer: '[2 3 4]'
+        why: >-
+          The matches may not form a grid, so a mask always gives a 1D array.
+
+  - type: learn
+    id: counting
+    title: Counting and accuracy
+    body: >-
+      In arithmetic, `True` counts as 1 and `False` as 0. So `(a > 2).sum()` counts how many items match, and `(a > 2).mean()` gives the fraction that match. You've written a counting loop many times now, and this replaces it.
+
+
+      This gives you the standard one-line accuracy calculation: `(preds == labels).mean()`. Compare the two arrays item by item, and take the mean of the `True`s and `False`s. You'll write that line for every classifier from here on.
+
+
+      `np.where(condition, x, y)` is the array form of "x if condition else y". It chooses from `x` where the mask is true, and from `y` elsewhere, keeping the shape. With only a condition, `np.where(a > 2)` gives the positions of the matches, as a tuple with one array per axis, and that catches a lot of people out.
+    code: |
+      import numpy as np
+
+      a = np.array([1, 5, -2, 3])
+      print((a > 2).sum())
+      print((a > 2).mean())
+
+      preds = np.array([1, 0, 1, 1])
+      labels = np.array([1, 1, 1, 0])
+      print(preds == labels)
+      print((preds == labels).mean())
+
+      print(np.where(a > 0, a, 0))
+      print(np.where(a > 2))
+    subgoals:
+      - { line: 4, label: 'Count the matches' }
+      - { line: 5, label: 'The fraction that match' }
+      - { line: 9, label: 'Compare item by item' }
+      - { line: 10, label: 'Accuracy in one line' }
+      - { line: 12, label: 'Choose for every item' }
+      - { line: 13, label: 'Positions, in a tuple' }
+    predict: What accuracy will it report?
+
+  - type: choice
+    id: counting-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2, 3, 4])
+      print((a % 2 == 0).sum(), (a > 3).mean())
+    choices: ['2 0.25', '6 0.25', '2 1', '6 4.0']
+    answer: '2 0.25'
+    why: >-
+      Two items are even, and one out of four is above 3.
+    variants:
+      - code: |
+          import numpy as np
+          preds = np.array([0, 1, 1, 0])
+          labels = np.array([0, 1, 0, 0])
+          print((preds == labels).mean())
+        choices: ['0.75', '3', '0.5', '1.0']
+        answer: '0.75'
+        why: >-
+          Three out of four match.
+      - code: |
+          import numpy as np
+          a = np.array([-1, 2])
+          print(np.where(a > 0, a, 0))
+        choices: ['[0 2]', '[2]', '[1]', '(array([1]),)']
+        answer: '[0 2]'
+        why: >-
+          With three arguments, `where` chooses a value for every item.
+      - code: |
+          import numpy as np
+          a = np.array([5, 0, 7])
+          print(np.where(a > 1)[0])
+        choices: ['[0 2]', '[5 7]', '[ True False  True]', '[1]']
+        answer: '[0 2]'
+        why: >-
+          With one argument, `where` gives the positions, in a tuple.
+
+  - type: explain
+    id: explain-accuracy
+    prompt: Explain how this one line works out accuracy, step by step.
+    code: |
+      import numpy as np
+      preds = np.array([1, 0, 1])
+      labels = np.array([1, 1, 1])
+      print((preds == labels).mean())
+    model: >-
+      `==` compares the arrays item by item, giving an array of `True` and `False`. In arithmetic, `True` counts as 1 and `False` as 0, so the mean is the fraction that are right, here 2 out of 3.
+    keyPoints:
+      - '`==` compares item by item, giving a mask'
+      - '`True` counts as 1, so the mean is the fraction that are right'
+
+  - type: learn
+    id: fancy
+    title: Picking by position
+    body: >-
+      You can also index with a list or an array of positions. `a[[0, 2, 2]]` gives items 0, 2 and 2 again, in that order. Unlike a slice, the positions can be in any order, and they can repeat. This is how you shuffle and how you take a random batch: `X[batch]`, where `batch` is an array of random row numbers.
+
+
+      Unlike a slice, this gives a copy, and so does a mask. So changing the result doesn't change the original.
+
+
+      There's one form you'll see in almost every classifier. If `probs` has a row for each example, and a column for each class, then `probs[np.arange(3), labels]` gets one value from each row: from row 0 it takes column `labels[0]`, from row 1 it takes `labels[1]`, and so on. The two index arrays are read in pairs. That's how you get the probability the model gave to each right answer, and it's the heart of a loss function.
+    code: |
+      import numpy as np
+
+      a = np.array([10, 20, 30])
+      print(a[[0, 2, 2]])
+
+      X = np.array([[1, 2], [3, 4], [5, 6]])
+      print(X[[2, 0]])
+
+      probs = np.array([[0.7, 0.3], [0.2, 0.8], [0.6, 0.4]])
+      labels = np.array([0, 1, 1])
+      print(probs[np.arange(3), labels])
+    subgoals:
+      - { line: 4, label: 'Any order, and repeats are fine' }
+      - { line: 7, label: 'Pick whole rows: a batch' }
+      - { line: 10, label: 'The right class for each row' }
+      - { line: 11, label: 'One from each row, read in pairs' }
+    predict: Which three numbers will the last line pick?
+
+  - type: blank
+    id: fill-mask
+    prompt: Fill in the blank to keep the positive numbers, so this shows `[2 3]`.
+    code: |
+      import numpy as np
+      a = np.array([-1, 2, 3])
+      print(a[____])
+    answers: [['a > 0', 'a>0', 'a >= 0', 'a>=0', 'a > -1']]
+    expectOutput: '[2 3]'
+    why: >-
+      A comparison gives a mask, and the mask picks the items.
+    variants:
+      - prompt: Fill in the blank to count the matches, so this shows `2`.
+        code: |
+          import numpy as np
+          a = np.array([1, 5, 7])
+          print((a > 2).____())
+        answers: [['sum']]
+        expectOutput: '2'
+        why: >-
+          `True` counts as 1 in a sum.
+      - prompt: Fill in the blank to work out the accuracy, so this shows `0.5`.
+        code: |
+          import numpy as np
+          preds = np.array([1, 0])
+          labels = np.array([1, 1])
+          print(____)
+        answers: [['(preds == labels).mean()', '(labels == preds).mean()', 'np.mean(preds == labels)']]
+        expectOutput: '0.5'
+        why: >-
+          Compare, then take the mean.
+      - prompt: Fill in the blank to combine the conditions, so this shows `[2]`.
+        code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          print(a[(a > 1) ____ (a < 3)])
+        answers: [['&']]
+        expectOutput: '[2]'
+        why: >-
+          On arrays, use `&`, not `and`.
+
+  - type: fix
+    id: fix-and
+    prompt: '`in_range(a)` should give back the items between 0 and 10, but it gives a `ValueError`. Fix it.'
+    code: |
+      import numpy as np
+
+      def in_range(a):
+          return a[a > 0 and a < 10]
+    solution: |
+      import numpy as np
+
+      def in_range(a):
+          return a[(a > 0) & (a < 10)]
+    highlightLine: 4
+    tests:
+      - { call: 'in_range(np.array([-1, 5, 20]))', expect: '[5]' }
+    why: >-
+      `and` wants a single true or false. `&` works item by item, and it needs parentheses around each comparison.
+    hints:
+      - What's the array version of `and`?
+    variants:
+      - prompt: This should show `yes`, if any item is above 2, but it gives a `ValueError`. Fix the condition.
+        code: |
+          import numpy as np
+          a = np.array([1, 5])
+          if a > 2:
+              print("yes")
+        solution: |
+          import numpy as np
+          a = np.array([1, 5])
+          if (a > 2).any():
+              print("yes")
+        highlightLine: 3
+        tests: []
+        expectOutput: 'yes'
+        why: >-
+          An `if` needs one answer, and `.any()` gives one.
+        hints:
+          - Which method turns many answers into one?
+      - prompt: '`accuracy(p, y)` should give back a fraction, so `accuracy(np.array([1, 0]), np.array([1, 1]))` is `0.5`. But it gives back `1`. Fix it.'
+        code: |
+          import numpy as np
+
+          def accuracy(p, y):
+              return (p == y).sum()
+        solution: |
+          import numpy as np
+
+          def accuracy(p, y):
+              return (p == y).mean()
+        highlightLine: 4
+        tests:
+          - { call: 'accuracy(np.array([1, 0]), np.array([1, 1]))', expect: '0.5' }
+        why: >-
+          `.sum()` counts how many are right, and `.mean()` gives the fraction.
+        hints:
+          - You want a fraction, not a count.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Cleaning a column
+    body: >-
+      Real data has missing and impossible values. Suppose a column of ages has -1 wherever someone didn't answer. Taking the mean of it directly gives you a wrong number, with no error.
+
+
+      So make a mask of the good values, and give it a name, which makes the code readable. The mean of the good values is what you actually want. Then fill in the bad ones with that mean, which is a common technique. Finally, print how many you fixed, because a surprise there often means a bigger problem with the data.
+
+
+      Keep the mask, and you can use it on other columns too. `y[good]` keeps the labels of the same rows, so that your inputs and labels stay matched.
+    code: |
+      import numpy as np
+
+      ages = np.array([30.0, -1.0, 40.0, -1.0, 50.0])
+      y = np.array([1, 0, 1, 1, 0])
+
+      print(ages.mean())
+
+      good = ages >= 0
+      mean_age = ages[good].mean()
+      print(mean_age)
+
+      ages[~good] = mean_age
+      print(ages)
+      print((~good).sum(), "fixed")
+      print(y[good])
+    subgoals:
+      - { line: 6, label: 'Wrong, and no error' }
+      - { line: 8, label: 'Give the mask a name' }
+      - { line: 9, label: 'The mean of the good values' }
+      - { line: 12, label: 'The tilde means not' }
+      - { line: 15, label: 'The same rows of another array' }
+    predict: What's the true mean age, leaving out the -1s?
+
+  - type: write
+    id: write-accuracy
+    prompt: Write `above_mean(a)`, with no loop, which gives back the items of `a` that are greater than its mean. So `above_mean(np.array([1, 2, 6]))` gives back `[6]`.
+    starter: |
+      import numpy as np
+
+      def above_mean(a):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def above_mean(a):
+          return a[a > a.mean()]
+    tests:
+      - { call: 'above_mean(np.array([1, 2, 6]))', expect: '[6]' }
+      - { call: 'above_mean(np.array([2, 2]))', expect: '[]' }
+    why: >-
+      A comparison with one number gives a mask.
+    hints:
+      - '`a.mean()` is a single number you can compare with.'
+    variants:
+      - prompt: Write `pick_probs(probs, labels)`, which takes a grid with a row for each example, and an array with the right class for each. It gives back the probability of the right class in each row. So `pick_probs(np.array([[0.7, 0.3], [0.2, 0.8]]), np.array([0, 0]))` gives back `[0.7, 0.2]`.
+        starter: |
+          import numpy as np
+
+          def pick_probs(probs, labels):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def pick_probs(probs, labels):
+              return probs[np.arange(len(labels)), labels]
+        tests:
+          - { call: 'pick_probs(np.array([[0.7, 0.3], [0.2, 0.8]]), np.array([0, 0]))', expect: '[0.7, 0.2]' }
+          - { call: 'pick_probs(np.array([[0.1, 0.9]]), np.array([1]))', expect: '[0.9]' }
+        hints:
+          - You need one array of row numbers and one of column numbers.
+      - prompt: Write `clip_negative(a)`, which gives back a new array with every negative number replaced by 0, leaving `a` unchanged, with no loop.
+        starter: |
+          import numpy as np
+
+          def clip_negative(a):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def clip_negative(a):
+              return np.where(a < 0, 0, a)
+        tests:
+          - { call: 'clip_negative(np.array([1, -2]))', expect: '[1, 0]' }
+          - { call: '(lambda a: (clip_negative(a), a)[1])(np.array([-1]))', expect: '[-1]', hidden: true }
+        hints:
+          - '`np.where` makes a new array. So does `.copy()`, if you want to assign through a mask.'
+
+  - type: choice
+    id: remember-view
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      a = np.array([1, 2])
+      b = a[:1]
+      b[0] = 5
+      print(a)
+    choices: ['[5 2]', '[1 2]', '[5]', 'Error']
+    answer: '[5 2]'
+    why: >-
+      A slice of an array shares memory with it.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A comparison gives a mask, and `a[mask]` keeps the true items. Use `&`, `|` and `~`, with parentheses. `.sum()` counts matches, and `.mean()` gives the fraction, so `(preds == labels).mean()` is accuracy. `np.where` chooses values. An array of positions picks items in any order, and it gives a copy.
+
+
+      Next: replacing whole loops with array operations.

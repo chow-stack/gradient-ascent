@@ -1,0 +1,354 @@
+id: p4-functions-values
+track: ml
+unit: 4
+order: 6
+title: Functions as values
+summary: Pass a function to another function, and sort by anything.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Functions are things too
+    body: >-
+      So far, functions have been something you call. But a function is also a value, just like a number or a list. You can give it another name, put it in a list and pass it to another function. Training code does this all the time, for example by passing in the loss function to use.
+
+
+      By the end of this lesson you'll be able to pass functions around, write small ones with `lambda`, and sort by anything using `key=`.
+
+  - type: learn
+    id: passing
+    title: A name without parentheses
+    body: >-
+      The parentheses are what call a function. `square(3)` runs it and gives you the result. `square` on its own, with no parentheses, is the function itself. It doesn't run. You can assign it, as in `f = square`, and then `f(3)` does the same thing. There's one function with two names, just like with lists.
+
+
+      That means a function can be an argument. `apply_twice(f, x)` below doesn't know or care what `f` does. It only knows that `f` can be called. The person calling it decides what to do, and that makes `apply_twice` useful in many places.
+
+
+      The classic mistakes are mirror images. Writing `apply_twice(square(), 3)` calls `square` too early, with no argument, and it crashes. Writing `print(square)` without parentheses shows something like `<function square at 0x10>`, and it doesn't call anything.
+    code: |
+      def square(x):
+          return x * x
+
+      def apply_twice(f, x):
+          return f(f(x))
+
+      f = square
+      print(f(3))
+      print(apply_twice(square, 3))
+      print(type(square).__name__)
+
+      steps = [square, abs]
+      for step in steps:
+          print(step(-2))
+    subgoals:
+      - { line: 5, label: 'Calls whatever it was given, twice' }
+      - { line: 7, label: 'A second name, with no call' }
+      - { line: 9, label: 'Pass the function itself' }
+      - { line: 12, label: 'Functions can go in a list' }
+    predict: What will `apply_twice(square, 3)` show?
+
+  - type: choice
+    id: passing-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def hello():
+          return "hi"
+
+      greet = hello
+      print(greet())
+    choices: ['hi', 'greet', 'None', 'Error']
+    answer: 'hi'
+    why: >-
+      `greet = hello` has no parentheses, so nothing gets called. `greet` is a second name for the function, and `greet()` calls it.
+    variants:
+      - code: |
+          def apply(f, x):
+              return f(x) + 1
+
+          def double(n):
+              return n * 2
+
+          print(apply(double, 5))
+        choices: ['11', '12', '10', '6']
+        answer: '11'
+        why: >-
+          `double` makes 10, and then `apply` adds 1.
+      - code: |
+          def compose(f, g, x):
+              return g(f(x))
+
+          def add3(n):
+              return n + 3
+
+          def sq(n):
+              return n * n
+
+          print(compose(add3, sq, 2))
+        choices: ['25', '7', '10', '16']
+        answer: '25'
+        why: >-
+          `f(2)` is 5, and `g(5)` is 25. The inner call runs first, as it does in the chain rule, which you'll meet later.
+      - code: |
+          ops = {"up": abs, "len": len}
+          print(ops["len"]("abc"))
+        choices: ['3', 'abc', 'len', 'Error']
+        answer: '3'
+        why: >-
+          The dict's value is the function `len`, so the second pair of parentheses calls it.
+
+  - type: learn
+    id: lambda
+    title: lambda and key=
+    body: >-
+      `lambda` makes a small function in one expression, without a `def` or a name. `lambda n: n * 2` takes `n` and gives back `n * 2`. There's no `return` keyword, because the expression is the result. Use it for small functions that you only need in one place, and use `def` for anything longer.
+
+
+      Its main use is with `key=`, an argument to `sorted`, `min` and `max`. `key` takes a function, which gets called on each item to find what to compare. The results are only used for comparing, and you get back the original items. So `sorted(words, key=len)` gives you the words, shortest first.
+
+
+      This also answers a question from Unit 3. `max(counts, key=counts.get)` compares each key using `counts.get(key)`, which is its count. You pass `counts.get` with no parentheses, because `max` will call it. Sorted pairs often use `key=lambda p: p[1]` to sort by the second item, and `reverse=True` puts the largest first.
+    code: |
+      words = ["ccc", "a", "bb"]
+      print(sorted(words, key=len))
+      print(sorted([3, -5, 1], key=lambda n: abs(n)))
+
+      counts = {"ox": 1, "yak": 3}
+      print(max(counts, key=counts.get))
+
+      pairs = list(counts.items())
+      print(sorted(pairs, key=lambda p: p[1], reverse=True))
+    subgoals:
+      - { line: 2, label: 'Compares lengths, gives back words' }
+      - { line: 3, label: 'Compares absolute values' }
+      - { line: 6, label: 'The key with the top count' }
+      - { line: 9, label: 'By the second item, largest first' }
+    predict: What's the order of the `abs` line?
+
+  - type: choice
+    id: key-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      print(max(["a", "ccc", "bb"], key=len))
+    choices: ['ccc', '3', 'bb', 'a']
+    answer: 'ccc'
+    why: >-
+      `key` only decides what's compared, and you get back the original item, not its length.
+    variants:
+      - code: |
+          print(sorted([-3, 1, 2], key=lambda n: -n))
+        choices: ['[2, 1, -3]', '[-3, 1, 2]', '[3, -1, -2]', '[-2, -1, 3]']
+        answer: '[2, 1, -3]'
+        why: >-
+          Compared by their negatives, the largest comes first, and the items themselves stay as they were.
+      - code: |
+          f = lambda a, b: a + b
+          print(f(2, 3))
+        choices: ['5', '23', 'None', 'Error']
+        answer: '5'
+        why: >-
+          A lambda can take several parameters, and its expression is what it gives back.
+      - code: |
+          pairs = [("a", 2), ("b", 1)]
+          print(min(pairs, key=lambda p: p[1])[0])
+        choices: ['b', 'a', '1', "('b', 1)"]
+        answer: 'b'
+        why: >-
+          It compares the second items, and gives back the whole tuple, whose first item is `b`.
+
+  - type: explain
+    id: explain-parens
+    prompt: One of these two lines crashes. Which one, and why?
+    code: |
+      def double(n):
+          return n * 2
+
+      def run(f):
+          return f(1)
+
+      print(run(double))
+      print(run(double()))
+    expectError: TypeError
+    model: >-
+      The second one crashes. `double()` calls the function straight away, with no argument, which gives a `TypeError`. `run` needs to be given the function itself, without parentheses, and it does the calling.
+    keyPoints:
+      - Parentheses call a function right away
+      - To pass a function along, leave off the parentheses
+
+  - type: blank
+    id: fill-key
+    prompt: Fill in the blank to sort the words by their last letter, so this shows `['ca', 'ab']`.
+    code: |
+      print(sorted(["ab", "ca"], key=____))
+    answers: [['lambda w: w[-1]', 'lambda word: word[-1]', 'lambda x: x[-1]', 'lambda s: s[-1]']]
+    expectOutput: "['ca', 'ab']"
+    why: >-
+      `key` takes a function, which is called once per word, and `sorted` compares what it gives back.
+    variants:
+      - prompt: Fill in the blank to find the longest word, so this shows `yak`.
+        code: |
+          print(max(["ox", "yak"], key=____))
+        answers: [['len']]
+        expectOutput: yak
+        why: >-
+          Pass `len` itself, with no parentheses.
+      - prompt: Fill in the blank to find the key with the highest count, so this shows `b`.
+        code: |
+          c = {"a": 1, "b": 5}
+          print(max(c, key=____))
+        answers: [['c.get', 'lambda k: c[k]']]
+        expectOutput: b
+        why: >-
+          `c.get` is a function that takes a key and gives back its count.
+      - prompt: Fill in the blank so the function gets called on 3, and this shows `9`.
+        code: |
+          def run(f):
+              return ____
+
+          print(run(lambda n: n * n))
+        answers: [['f(3)']]
+        expectOutput: '9'
+        why: >-
+          `f` is a function, so you call it with parentheses.
+
+  - type: fix
+    id: fix-early
+    prompt: '`run_later` should be passed the function and call it afterwards, so this shows `done`. But the function is called too early. Fix it.'
+    code: |
+      def job():
+          return "done"
+
+      def run_later(f):
+          return f()
+
+      print(run_later(job()))
+    solution: |
+      def job():
+          return "done"
+
+      def run_later(f):
+          return f()
+
+      print(run_later(job))
+    highlightLine: 7
+    expectOutput: done
+    why: >-
+      `job()` runs right away and passes along a string. `job` passes the function.
+    hints:
+      - What's the difference between `job` and `job()`?
+    variants:
+      - prompt: This should show the shortest word, `ox`, but it crashes with a `TypeError`. Fix the sort so it compares lengths.
+        code: |
+          print(sorted(["yak", "ox"], key=len(str))[0])
+        solution: |
+          print(sorted(["yak", "ox"], key=len)[0])
+        highlightLine: 1
+        expectOutput: ox
+        why: >-
+          Pass `len` itself. `sorted` will call it on each word.
+        hints:
+          - Should `len` have parentheses here?
+      - prompt: 'This should give the word with the top count, `b`, but `max(c)` compares the keys and gives `z`. Fix it.'
+        code: |
+          c = {"b": 9, "z": 1}
+          print(max(c))
+        solution: |
+          c = {"b": 9, "z": 1}
+          print(max(c, key=c.get))
+        highlightLine: 2
+        expectOutput: b
+        why: >-
+          With `key=c.get`, `max` compares counts, and gives back the key.
+        hints:
+          - You need to tell `max` what to compare.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Swapping the loss function
+    body: >-
+      Here's why this matters for machine learning. A training loop has a lot of parts, and one of them is how you measure the error. Rather than writing a new loop for each measure, you pass the measure in as a function.
+
+
+      `squared` and `absolute` are two ways of scoring one prediction. `average_loss` doesn't know which it's using. It walks through the predictions and targets, calling `loss_fn` on each pair, and it averages the results. Swapping one for the other only takes changing one argument, and no other code has to change.
+
+
+      PyTorch works this way. You'll write `loss_fn = nn.CrossEntropyLoss()`, and pass your model and `loss_fn` to a training function.
+    code: |
+      def squared(pred, target):
+          return (pred - target) ** 2
+
+      def absolute(pred, target):
+          return abs(pred - target)
+
+      def average_loss(preds, targets, loss_fn):
+          scores = [loss_fn(p, t) for p, t in zip(preds, targets)]
+          return sum(scores) / len(scores)
+
+      preds = [2.0, 4.0]
+      targets = [1.0, 7.0]
+      print(average_loss(preds, targets, squared))
+      print(average_loss(preds, targets, absolute))
+      print(average_loss(preds, targets, lambda p, t: 0))
+    subgoals:
+      - { line: 7, label: 'loss_fn is a parameter, like any other' }
+      - { line: 8, label: 'Call it on each pair' }
+      - { line: 13, label: 'Pass the function, with no parentheses' }
+      - { line: 15, label: 'A lambda works too' }
+    predict: Which measure gives the larger answer?
+
+  - type: write
+    id: write-apply
+    prompt: Write `apply_all(f, items)`, which gives back a new list with `f` called on each item. So `apply_all(len, ["ox", "yak"])` gives back `[2, 3]`.
+    starter: |
+      def apply_all(f, items):
+          # Your code here
+    solution: |
+      def apply_all(f, items):
+          return [f(x) for x in items]
+    tests:
+      - { call: 'apply_all(len, ["ox", "yak"])', expect: '[2, 3]' }
+      - { call: 'apply_all(lambda n: n * 2, [1])', expect: '[2]' }
+      - { call: 'apply_all(abs, [])', expect: '[]' }
+    why: >-
+      This is what Python's built-in `map` does.
+    hints:
+      - '`f` is a function, so `f(x)` calls it.'
+    variants:
+      - prompt: >-
+          Write `top_words(counts, n)`, which gives back a list of the `n` keys with the highest counts, largest first. So `top_words({"a": 1, "b": 5, "c": 3}, 2)` gives back `["b", "c"]`.
+        starter: |
+          def top_words(counts, n):
+              # Your code here
+        solution: |
+          def top_words(counts, n):
+              return sorted(counts, key=counts.get, reverse=True)[:n]
+        tests:
+          - { call: 'top_words({"a": 1, "b": 5, "c": 3}, 2)', expect: "['b', 'c']" }
+          - { call: 'top_words({}, 2)', expect: '[]' }
+        hints:
+          - Sort the keys by their counts, and slice.
+
+  - type: choice
+    id: remember-set
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      print(sorted(set([3, 1, 3])))
+    choices: ['[1, 3]', '[1, 3, 3]', '[3, 1]', '{1, 3}']
+    answer: '[1, 3]'
+    why: >-
+      `set` removes the repeats, and `sorted` gives back a list in order.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A function's name without parentheses is the function itself, and with them it's a call. You can store functions and pass them along. `lambda x: x * 2` is a small function with no name. `key=` tells `sorted`, `min` and `max` what to compare, and you get back the original items.
+
+
+      Next: functions that make functions, and remember things.

@@ -8,7 +8,7 @@ separate, and you can do as many as you like. Each one teaches one new idea thro
 explanations, mixed with exercises: predict the output, order the lines, fill in the blank, fix the bug, write the
 code, and explain it in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
 
-> **Status:** Phase 2 of 5. The new Unit 1, Programs and values, is built for true beginners. Older Python lessons stand in while the next two units are rewritten, followed by Python for ML code. See the
+> **Status:** Phase 2 of 5. Units 1 to 5 are written for true beginners: Programs and values, Functions and repetition, Collections and libraries, Python for ML code, and NumPy, shapes and plots. The calculus refresh comes next. See the
 > [roadmap](#roadmap).
 
 ---
@@ -76,7 +76,7 @@ npm install
 npm run dev
 ```
 
-`npm install` also downloads NumPy for offline use (`npm run setup:python` retries it).
+`npm install` also downloads NumPy and matplotlib for offline use (`npm run setup:python` retries it).
 
 Open <http://localhost:5173> and press **Start**.
 
@@ -148,8 +148,8 @@ src/
 ## Roadmap
 
 - [x] **Phase 1:** plan, design system ("Summit"), project setup
-- [x] **Phase 2:** lessons, Daily 5, spaced repetition, streaks, Units 1–2, self-hosted NumPy
-- [ ] **Phase 3:** NumPy and plots, calculus refresh, first models judged honestly (Units 3–5)
+- [x] **Phase 2:** lessons, Daily 5, spaced repetition, streaks, self-hosted NumPy
+- [ ] **Phase 3:** Units 1–5 and plots are done; calculus refresh and first models judged honestly are next
 - [ ] **Phase 4:** a hand-built micrograd and MLP, with diagnosing training curves (Units 6–7)
 - [ ] **Phase 5:** trees, probability, makemore, attention and a tiny GPT (Units 8–11)
 

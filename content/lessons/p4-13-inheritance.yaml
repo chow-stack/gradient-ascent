@@ -1,0 +1,535 @@
+id: p4-inheritance
+track: ml
+unit: 4
+order: 13
+title: Building on a class
+summary: Inherit from a base class, and remember super().__init__(), as every PyTorch model does.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The first lines of every model
+    body: >-
+      Every PyTorch model starts with `class Net(nn.Module):`, followed by `super().__init__()`. It's copied so often that a lot of people never find out what it means, and then they're baffled when they forget it.
+
+
+      By the end of this lesson you'll be able to create a class from an existing one, replace some of its methods, and explain why that `super()` line is there.
+
+  - type: learn
+    id: inherit
+    title: Inheriting methods
+    body: >-
+      Inheritance lets a new class start with everything that an existing class has. Put the parent's name in parentheses: `class Linear(Module):`. `Module` is called the parent or base class, and `Linear` the child or subclass.
+
+
+      When you use `obj.something`, Python checks the object first, then its class, and then the parent. So a `Linear` has any method it defines, plus every method of `Module`. You write what's common once, in the parent, and many children share it.
+
+
+      A child can also replace a parent's method by defining one with the same name, which is called overriding. Python finds the child's first, so the parent's never runs. An object of the child class also counts as one of the parent: `isinstance(layer, Module)` is `True`.
+
+
+      Use inheritance when the child really is a kind of the parent. A `Linear` layer is a kind of `Module`. Don't use it merely to reach some useful code.
+    code: |
+      class Module:
+          def describe(self):
+              return "a module"
+
+          def name(self):
+              return "module"
+
+      class Linear(Module):
+          def name(self):
+              return "linear"
+
+      layer = Linear()
+      print(layer.describe())
+      print(layer.name())
+      print(isinstance(layer, Module))
+      print(Module().name())
+    subgoals:
+      - { line: 8, label: 'Linear starts with what Module has' }
+      - { line: 9, label: 'Replaces the parent version' }
+      - { line: 13, label: 'Found on the parent' }
+      - { line: 14, label: 'Found on the child first' }
+      - { line: 15, label: 'A Linear is a kind of Module' }
+    predict: What will `layer.name()` show?
+
+  - type: choice
+    id: inherit-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class A:
+          def hi(self):
+              return "A"
+          def yo(self):
+              return "yo"
+
+      class B(A):
+          def hi(self):
+              return "B"
+
+      b = B()
+      print(b.hi(), b.yo())
+    choices: ['B yo', 'A yo', 'B B', 'Error']
+    answer: 'B yo'
+    why: >-
+      `hi` is found on the child, and `yo` isn't, so Python finds that one on the parent.
+    variants:
+      - code: |
+          class A:
+              def who(self):
+                  return "A"
+              def greet(self):
+                  return "I am " + self.who()
+
+          class B(A):
+              def who(self):
+                  return "B"
+
+          print(B().greet())
+        choices: ['I am B', 'I am A', 'Error', 'B']
+        answer: 'I am B'
+        why: >-
+          `self` is the `B` object, even inside a parent's method, so `self.who()` finds the child's version. PyTorch's `forward` works this way.
+      - code: |
+          class A:
+              pass
+
+          class B(A):
+              pass
+
+          print(isinstance(B(), A), isinstance(A(), B))
+        choices: ['True False', 'True True', 'False True', 'False False']
+        answer: 'True False'
+        why: >-
+          A `B` is a kind of `A`, but not the other way round.
+      - code: |
+          class A:
+              size = 1
+
+          class B(A):
+              pass
+
+          print(B().size)
+        choices: ['1', 'None', 'Error', '0']
+        answer: '1'
+        why: >-
+          Class attributes are inherited too.
+
+  - type: learn
+    id: super
+    title: Why super().__init__() is there
+    body: >-
+      `__init__` follows the same rule as any other method. If the child defines its own, it replaces the parent's, and the parent's doesn't run. Python won't call it for you. So any attributes the parent sets up never get created.
+
+
+      The result is an `AttributeError` later on, often somewhere far from the cause: the parent's other methods expect an attribute that was never made.
+
+
+      `super()` gives you access to the parent's version, so `super().__init__()` runs the parent's setup. Put it first in the child's `__init__`, and pass along any arguments the parent needs. Then add the child's own attributes. `super().other_method()` works too, which is handy when you want to add to a parent's behaviour without replacing it.
+
+
+      This is why every PyTorch model has that line. `nn.Module.__init__` sets up the machinery that tracks the model's weights. If you leave it out, PyTorch stops with an error as soon as you assign a layer.
+    code: |
+      class Module:
+          def __init__(self):
+              self.training = True
+
+      class Good(Module):
+          def __init__(self, w):
+              super().__init__()
+              self.w = w
+
+      class Bad(Module):
+          def __init__(self, w):
+              self.w = w
+
+      print(Good(2).training)
+      print(Bad(2).w)
+      print(Bad(2).training)
+    expectError: AttributeError
+    subgoals:
+      - { line: 3, label: 'The setup that every child needs' }
+      - { line: 7, label: 'Run the parent setup first' }
+      - { line: 8, label: 'Then add its own attribute' }
+      - { line: 12, label: 'Replaces it: the parent setup never runs' }
+      - { line: 16, label: 'The attribute was never made' }
+    predict: Which line will crash?
+
+  - type: choice
+    id: super-concept
+    prompt: This child has its own `__init__`. What happens on the last line?
+    code: |
+      class Base:
+          def __init__(self):
+              self.ready = True
+
+      class Child(Base):
+          def __init__(self):
+              self.size = 1
+
+      print(Child().ready)
+    choices: ['AttributeError', 'True', 'None', 'False']
+    answer: 'AttributeError'
+    why: >-
+      The child's `__init__` replaces the parent's, which never runs. Python won't call `super().__init__()` for you.
+
+  - type: choice
+    id: super-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Base:
+          def __init__(self):
+              print("base")
+
+      class Child(Base):
+          def __init__(self):
+              print("child")
+              super().__init__()
+
+      Child()
+    choices: ["child\nbase", "base\nchild", 'child', 'base']
+    answer: "child\nbase"
+    why: >-
+      The child's `__init__` runs, and it calls the parent's at the point where `super()` appears.
+    variants:
+      - code: |
+          class Base:
+              def __init__(self):
+                  print("base")
+
+          class Child(Base):
+              pass
+
+          Child()
+        choices: ['base', 'Nothing', 'Error', "base\nbase"]
+        answer: 'base'
+        why: >-
+          With no `__init__` of its own, the child inherits the parent's like any other method.
+      - code: |
+          class Base:
+              def __init__(self, n):
+                  self.n = n
+
+          class Child(Base):
+              def __init__(self, n):
+                  super().__init__(n * 2)
+
+          print(Child(3).n)
+        choices: ['6', '3', 'None', 'Error']
+        answer: '6'
+        why: >-
+          The child decides what to pass to the parent's `__init__`.
+      - code: |
+          class A:
+              def f(self):
+                  return 1
+
+          class B(A):
+              def f(self):
+                  return super().f() + 1
+
+          print(B().f())
+        choices: ['2', '1', 'Error', 'None']
+        answer: '2'
+        why: >-
+          `super().f()` runs the parent's version, and the child adds to it.
+
+  - type: explain
+    id: explain-super
+    prompt: This crashes when you call `d(1)`. What's the actual cause, and what line is missing?
+    code: |
+      class Module:
+          def __init__(self):
+              self.calls = 0
+
+      class Dense(Module):
+          def __init__(self, w):
+              self.w = w
+
+          def __call__(self, x):
+              self.calls += 1
+              return self.w * x
+
+      d = Dense(2)
+      d(1)
+    expectError: AttributeError
+    model: >-
+      `Dense` has its own `__init__`, which replaces the parent's, so `self.calls = 0` never runs. The crash only shows up later, when `__call__` uses `self.calls`. The fix is `super().__init__()` as the first line of `Dense.__init__`.
+    keyPoints:
+      - The child's `__init__` replaces the parent's, so the attribute was never made
+      - '`super().__init__()` runs the parent setup'
+
+  - type: parsons
+    id: order-sub
+    prompt: Put the lines in order so `Square(3).area()` gives back 9, and `Square(3).named` is `True`.
+    code: |
+      class Shape:
+          def __init__(self):
+              self.named = True
+      class Square(Shape):
+          def __init__(self, s):
+              super().__init__()
+              self.s = s
+          def area(self):
+              return self.s * self.s
+    distractors: ['class Square:']
+    tests:
+      - { call: 'Square(3).area()', expect: '9' }
+      - { call: 'Square(3).named', expect: 'True' }
+    why: >-
+      `super().__init__()` runs the parent's setup. Without it, `.named` wouldn't exist.
+
+  - type: blank
+    id: fill-super
+    prompt: Fill in the blank so the parent's setup runs, and this shows `True`.
+    code: |
+      class Base:
+          def __init__(self):
+              self.ready = True
+
+      class Child(Base):
+          def __init__(self):
+              ____
+              self.size = 1
+
+      print(Child().ready)
+    answers: [['super().__init__()', 'Base.__init__(self)']]
+    expectOutput: 'True'
+    why: >-
+      `super()` gives you access to the parent's version.
+    variants:
+      - prompt: Fill in the blank so `Child` inherits from `Base`, and this shows `hi`.
+        code: |
+          class Base:
+              def greet(self):
+                  return "hi"
+
+          class Child(____):
+              pass
+
+          print(Child().greet())
+        answers: [['Base']]
+        expectOutput: hi
+        why: >-
+          The parent's name goes in parentheses.
+      - prompt: Fill in the blank to pass the size to the parent, so this shows `4`.
+        code: |
+          class Base:
+              def __init__(self, size):
+                  self.size = size
+
+          class Child(Base):
+              def __init__(self, size):
+                  super().__init__(____)
+
+          print(Child(4).size)
+        answers: [['size']]
+        expectOutput: '4'
+        why: >-
+          The parent's `__init__` needs its own arguments.
+
+  - type: fix
+    id: fix-super
+    prompt: '`Net(2)(3)` should give back `6`, but it crashes with an `AttributeError`. Fix it.'
+    code: |
+      class Base:
+          def __init__(self):
+              self.scale = 1
+
+      class Net(Base):
+          def __init__(self, w):
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x * self.scale
+    solution: |
+      class Base:
+          def __init__(self):
+              self.scale = 1
+
+      class Net(Base):
+          def __init__(self, w):
+              super().__init__()
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x * self.scale
+    highlightLine: 7
+    tests:
+      - { call: 'Net(2)(3)', expect: '6' }
+    why: >-
+      The child's `__init__` replaces the parent's, so call the parent's yourself. It's the classic first bug in a PyTorch model.
+    hints:
+      - Which line creates `self.scale`, and does it ever run?
+    variants:
+      - prompt: This should show `linear`, but it shows `module`, because the child's method has a different name from the parent's. Fix the child.
+        code: |
+          class Module:
+              def name(self):
+                  return "module"
+
+          class Linear(Module):
+              def names(self):
+                  return "linear"
+
+          print(Linear().name())
+        solution: |
+          class Module:
+              def name(self):
+                  return "module"
+
+          class Linear(Module):
+              def name(self):
+                  return "linear"
+
+          print(Linear().name())
+        highlightLine: 6
+        tests: []
+        expectOutput: linear
+        why: >-
+          To override a method, the child has to use exactly the same name.
+        hints:
+          - Compare the two method names.
+      - prompt: '`Child(5).size` should give back `5`, but it gives a `TypeError`, because the parent''s `__init__` needs an argument. Fix it.'
+        code: |
+          class Base:
+              def __init__(self, size):
+                  self.size = size
+
+          class Child(Base):
+              def __init__(self, size):
+                  super().__init__()
+        solution: |
+          class Base:
+              def __init__(self, size):
+                  self.size = size
+
+          class Child(Base):
+              def __init__(self, size):
+                  super().__init__(size)
+        highlightLine: 7
+        tests:
+          - { call: 'Child(5).size', expect: '5' }
+        why: >-
+          Pass along whatever the parent's `__init__` needs.
+        hints:
+          - What does the parent's `__init__` expect?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A tiny PyTorch
+    body: >-
+      Here's a small imitation of how PyTorch's `nn.Module` works. It'll make your first real model feel familiar.
+
+
+      `Module` does the shared work. Its `__init__` sets up a list of parameters. Its `__call__` runs `self.forward(x)`. And here's the key idea: `Module` doesn't have a working `forward` of its own. It's up to each child to write one. Since `self` is the child object, `self.forward` finds the child's version.
+
+
+      That's why, in PyTorch, you define `forward` but you call `model(x)`. The parent's `__call__` can do any bookkeeping it needs, and then it hands over to your code. To add a new kind of layer, you only write what's different. You can also see why skipping `super().__init__()` breaks things: `self.params` wouldn't exist.
+    code: |
+      class Module:
+          def __init__(self):
+              self.params = []
+
+          def __call__(self, x):
+              return self.forward(x)
+
+          def param_count(self):
+              return len(self.params)
+
+      class Linear(Module):
+          def __init__(self, w, b):
+              super().__init__()
+              self.w = w
+              self.b = b
+              self.params = [w, b]
+
+          def forward(self, x):
+              return self.w * x + self.b
+
+      class Double(Module):
+          def forward(self, x):
+              return x * 2
+
+      for layer in [Linear(3, 1), Double()]:
+          print(layer(2), layer.param_count())
+    subgoals:
+      - { line: 6, label: 'Calling runs the child version of forward' }
+      - { line: 8, label: 'Shared by every child' }
+      - { line: 13, label: 'Run the shared setup' }
+      - { line: 18, label: 'You write this part' }
+      - { line: 21, label: 'No __init__, so it inherits the parent one' }
+    predict: What will each layer show?
+
+  - type: write
+    id: write-inherit
+    prompt: Write a class `Doubler` that inherits from `Module` and defines `forward(self, x)` to give back `x * 2`. Then write `AddN`, which also inherits from `Module`. `AddN(n)` must run the parent's setup, store `n`, and have a `forward` that gives back `x + self.n`.
+    starter: |
+      class Module:
+          def __init__(self):
+              self.ready = True
+
+          def __call__(self, x):
+              return self.forward(x)
+
+      # Write Doubler and AddN here
+    solution: |
+      class Module:
+          def __init__(self):
+              self.ready = True
+
+          def __call__(self, x):
+              return self.forward(x)
+
+      class Doubler(Module):
+          def forward(self, x):
+              return x * 2
+
+      class AddN(Module):
+          def __init__(self, n):
+              super().__init__()
+              self.n = n
+
+          def forward(self, x):
+              return x + self.n
+    tests:
+      - { call: 'Doubler()(3)', expect: '6' }
+      - { call: 'AddN(2)(3)', expect: '5' }
+      - { call: 'AddN(2).ready', expect: 'True' }
+      - { call: 'isinstance(Doubler(), Module)', expect: 'True' }
+    why: >-
+      Each child only writes what's different, and the parent handles the calling.
+    hints:
+      - '`Doubler` needs no `__init__`, because it can inherit the parent one.'
+      - '`AddN` has its own `__init__`, so it needs `super().__init__()`.'
+
+  - type: choice
+    id: remember-call
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      class F:
+          def __call__(self, x):
+              return x + 1
+
+      f = F()
+      print(f(f(1)))
+    choices: ['3', '2', '1', 'Error']
+    answer: '3'
+    why: >-
+      Calling an object runs its `__call__`, and it's called twice here.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `class Child(Parent):` starts with everything the parent has. A method with the same name replaces the parent's. A child's `__init__` replaces the parent's too, so call `super().__init__()` first. `self` is always the actual object, so a parent's method can call a child's `forward`.
+
+
+      Next: one more lesson, on making errors work for you.

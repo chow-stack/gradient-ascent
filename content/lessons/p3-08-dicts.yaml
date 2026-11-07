@@ -1,0 +1,382 @@
+id: p3-dicts
+track: ml
+unit: 3
+order: 8
+title: Dictionaries
+summary: Look values up by name instead of by position.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Finding things by name
+    body: >-
+      With a list, you find an item by its position. But often you want to look something up by what it is: a word's count, a student's score, a setting's value. Searching a list every time would be slow and clumsy.
+
+
+      By the end of this lesson you'll be able to create a dictionary, look things up, add and change entries, and deal with a key that isn't there. Language models use dictionaries right from the start, to turn every character into a number.
+
+  - type: learn
+    id: basics
+    title: Keys and values
+    body: >-
+      A dictionary, or dict, stores pairs. Each key leads to a value. You write it in curly braces, with a colon between each key and value and commas between the pairs. Then `stock["rope"]` looks up the key `"rope"` and gives you its value.
+
+
+      It's like a real dictionary: you look up a word, you don't look up a page number. And lookups stay fast however big the dict gets, because Python doesn't search through it item by item.
+
+
+      Keys have to be unique, and usually they're strings or numbers. Values can be anything, including lists. `in` checks the keys, not the values, and `len` counts the pairs.
+    deeper: >-
+      Keys need to be values that can't change, which is why a string or number can be a key and a list can't. Trying to use a list gives `TypeError: unhashable type: 'list'`. A dict works by turning each key into a number that says where to store it, and if a key could change, it would be stored in the wrong place. This is called a hash table, and it's why lookups are so quick.
+    code: |
+      stock = {"rope": 3, "tent": 1}
+      print(stock["rope"])
+      print(len(stock))
+      print("tent" in stock)
+      print(1 in stock)
+
+      vocab = {"a": 0, "b": 1, "c": 2}
+      print(vocab["c"])
+    subgoals:
+      - { line: 1, label: 'Each key leads to a value' }
+      - { line: 2, label: 'Look up by key' }
+      - { line: 4, label: 'Is this one of the keys?' }
+      - { line: 5, label: '`in` does not check the values' }
+      - { line: 7, label: 'Characters to numbers, as in a language model' }
+    predict: What will `print(1 in stock)` show?
+
+  - type: choice
+    id: lookup-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      ages = {"Ada": 36, "Grace": 85}
+      print(ages["Grace"])
+    choices: ['85', 'Grace', '1', '36']
+    answer: '85'
+    why: >-
+      The key `"Grace"` leads to the value 85.
+    variants:
+      - code: |
+          ages = {"Ada": 36}
+          print("Ada" in ages, 36 in ages)
+        choices: ['True False', 'True True', 'False True', 'False False']
+        answer: 'True False'
+        why: >-
+          `in` looks through the keys only.
+      - code: |
+          d = {"a": [1, 2], "b": [3]}
+          print(len(d), len(d["a"]))
+        choices: ['2 2', '3 2', '2 3', '2 1']
+        answer: '2 2'
+        why: >-
+          The dict has 2 pairs, and the value under `"a"` is a list of 2 items.
+      - code: |
+          d = {1: "one", 2: "two"}
+          print(d[2])
+        choices: ['two', 'one', 'None', 'Error']
+        answer: 'two'
+        why: >-
+          With a dict, `2` is a key, not a position. Keys can be numbers.
+
+  - type: learn
+    id: changing
+    title: Adding and changing
+    body: >-
+      The same syntax both adds and changes. `stock["map"] = 2` adds a new pair if `"map"` isn't there, and replaces the value if it is. Since keys are unique, there's never a second `"rope"`. That means overwriting a value by accident gives you no warning, so be careful.
+
+
+      Updating from the old value works as usual: `stock["rope"] += 1`. You can start with an empty dict, `{}`, and fill it up as you go. `del stock["rope"]` removes a pair.
+
+
+      Dicts are mutable, just like lists, so everything from the aliasing lesson applies. `b = a` gives one dict two names, and `.copy()` makes a separate one.
+    code: |
+      stock = {"rope": 3}
+      stock["map"] = 2
+      print(stock)
+      stock["rope"] = 10
+      print(stock)
+      stock["rope"] += 1
+      print(stock["rope"])
+      del stock["map"]
+      print(stock)
+    subgoals:
+      - { line: 2, label: 'A new key: adds a pair' }
+      - { line: 4, label: 'An existing key: replaces its value' }
+      - { line: 6, label: 'Update from the old value' }
+      - { line: 8, label: 'Remove a pair' }
+    predict: How many pairs does `stock` have after the line that sets `rope` to 10?
+
+  - type: choice
+    id: change-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 1}
+      d["b"] = 2
+      d["a"] = 5
+      print(d)
+    choices: ["{'a': 5, 'b': 2}", "{'a': 1, 'b': 2, 'a': 5}", "{'b': 2, 'a': 5}", "{'a': 6, 'b': 2}"]
+    answer: "{'a': 5, 'b': 2}"
+    why: >-
+      Keys are unique, so `"a"` is replaced, and it stays in its original place.
+    variants:
+      - code: |
+          d = {}
+          d["x"] = 1
+          d["x"] += 1
+          print(d["x"], len(d))
+        choices: ['2 1', '1 1', '2 2', 'Error']
+        answer: '2 1'
+        why: >-
+          There's only one key, and its value goes up to 2.
+      - code: |
+          a = {"n": 1}
+          b = a
+          b["n"] = 9
+          print(a["n"])
+        choices: ['9', '1', 'None', 'Error']
+        answer: '9'
+        why: >-
+          It's aliasing again: one dict with two names.
+
+  - type: learn
+    id: missing
+    title: When a key is missing
+    body: >-
+      Looking up a key that isn't there stops the program with a `KeyError`. Many people expect to get `None` or 0, but Python would rather you find out. Run this code to see it, and notice that the error message shows you the missing key.
+
+
+      There are two ways to handle it. You can check first with `if key in d:`. Or you can use `.get(key)`, which gives back `None` if the key's missing, or `.get(key, 0)`, which gives back the default you chose. `.get` never adds the key to the dict.
+
+
+      Common causes of a `KeyError` include a typo, the wrong capitalisation, or a key of the wrong type. `"1"` and `1` are different keys, and that bites when you read numbers from text.
+    code: |
+      stock = {"rope": 3}
+      print("tent" in stock)
+      print(stock.get("tent"))
+      print(stock.get("tent", 0))
+      print(stock.get("rope", 0))
+      print(stock["tent"])
+    expectError: KeyError
+    subgoals:
+      - { line: 2, label: 'Check first' }
+      - { line: 3, label: 'Missing gives None' }
+      - { line: 4, label: 'Or the default you chose' }
+      - { line: 5, label: 'If it exists, the default is ignored' }
+      - { line: 6, label: 'A plain lookup crashes' }
+    predict: What will `stock.get("rope", 0)` show?
+
+  - type: choice
+    id: get-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      d = {"a": 1}
+      print(d.get("b", 7) + d.get("a", 7))
+    choices: ['8', '14', '2', 'Error']
+    answer: '8'
+    why: >-
+      `"b"` is missing, so that gives the default, 7. `"a"` exists, so that gives 1.
+    variants:
+      - code: |
+          d = {"a": 1}
+          d.get("b", 0)
+          print(len(d))
+        choices: ['1', '2', '0', 'Error']
+        answer: '1'
+        why: >-
+          `.get` only reads. It never adds the key.
+      - code: |
+          d = {1: "x"}
+          print(d.get("1"))
+        choices: ['None', 'x', '1', 'Error']
+        answer: 'None'
+        why: >-
+          The string `"1"` and the number `1` are different keys.
+
+  - type: explain
+    id: explain-key-error
+    prompt: Why does this crash with a `KeyError`, even though `Rope` looks like it's in the dictionary? How could you fix it?
+    code: |
+      stock = {"rope": 3}
+      print(stock["Rope"])
+    expectError: KeyError
+    model: >-
+      Keys have to match exactly, and capitals matter, so `"Rope"` and `"rope"` are different keys. Looking up `"rope"` fixes it, and `.get` would avoid the crash for any missing key.
+    keyPoints:
+      - Keys must match exactly, including capitals
+      - Use the exact key, or `.get` if the key could be missing
+
+  - type: blank
+    id: fill-dict
+    prompt: Fill in the blank so this shows `3`.
+    code: |
+      stock = {"rope": 3}
+      print(stock[____])
+    answers: [['"rope"', "'rope'"]]
+    expectOutput: '3'
+    why: >-
+      The key goes in square brackets, in quotes, since it's a string.
+    variants:
+      - prompt: Fill in the blank so a missing key gives `0`, and this shows `0`.
+        code: |
+          stock = {"rope": 3}
+          print(stock.get("tent", ____))
+        answers: [['0']]
+        expectOutput: '0'
+        why: >-
+          The second argument to `.get` is the default.
+      - prompt: Fill in the blank to add a new pair, so this shows `2`.
+        code: |
+          d = {"a": 1}
+          d[____] = 5
+          print(len(d))
+        answers: [['"b"', "'b'", '"c"', '"x"', '1', '2']]
+        expectOutput: '2'
+        why: >-
+          Any new key adds a pair. Using `"a"` would replace the value.
+
+  - type: fix
+    id: fix-missing
+    prompt: This crashes with a `KeyError`. Fix it so a missing word shows `0`.
+    code: |
+      counts = {"goat": 2}
+      print(counts["yak"])
+    solution: |
+      counts = {"goat": 2}
+      print(counts.get("yak", 0))
+    highlightLine: 2
+    expectOutput: '0'
+    why: >-
+      `.get` with a default handles a missing key without crashing.
+    hints:
+      - Which dict tool lets you choose what a missing key gives?
+    variants:
+      - prompt: This should show `Ada`, but it crashes, because it looks up a position. Fix the lookup.
+        code: |
+          names = {"first": "Ada", "last": "Byron"}
+          print(names[0])
+        solution: |
+          names = {"first": "Ada", "last": "Byron"}
+          print(names["first"])
+        highlightLine: 2
+        expectOutput: Ada
+        why: >-
+          Dicts don't go by position. You look up by key.
+        hints:
+          - What are the keys in this dict?
+      - prompt: This should show `5`, but it crashes, because the key was stored as a number. Fix the lookup.
+        code: |
+          scores = {7: 5}
+          typed = "7"
+          print(scores[typed])
+        solution: |
+          scores = {7: 5}
+          typed = "7"
+          print(scores[int(typed)])
+        highlightLine: 3
+        expectOutput: '5'
+        why: >-
+          `"7"` and `7` are different keys, so convert first.
+        hints:
+          - What type is `typed`, and what type is the key?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Encoding text as numbers
+    body: >-
+      Models only work with numbers, so the first step in any language model is turning characters into numbers. makemore and nanoGPT both start with exactly this, using a pair of dicts: one from characters to numbers, and one going back.
+
+
+      Below, we go through the allowed characters, giving each the next number. For each one, we fill in both dicts. Then encoding a word is a loop that looks each character up, and decoding goes the other way.
+
+
+      Look at how it uses each thing you know: a string loop, a counter, dict assignment, list building, and `join` to put the text back together. Try following `"bad"` through by hand. If the encoded list goes back to the same word, you know that it works.
+    code: |
+      chars = "abcd"
+      to_num = {}
+      to_char = {}
+      n = 0
+      for ch in chars:
+          to_num[ch] = n
+          to_char[n] = ch
+          n += 1
+
+      encoded = []
+      for ch in "bad":
+          encoded.append(to_num[ch])
+      print(encoded)
+
+      letters = []
+      for n in encoded:
+          letters.append(to_char[n])
+      print("".join(letters))
+    subgoals:
+      - { line: 6, label: 'Character to number' }
+      - { line: 7, label: 'Number back to character' }
+      - { line: 12, label: 'Encode: look each one up' }
+      - { line: 17, label: 'Decode: go the other way' }
+      - { line: 18, label: 'Back to a string' }
+    predict: What list will `"bad"` turn into?
+
+  - type: write
+    id: price-total
+    prompt: Write `total_cost(prices, items)`. `prices` is a dict of item to price, and `items` is a list of item names. Give back the total, counting any unknown item as `0`.
+    starter: |
+      def total_cost(prices, items):
+          # Your code here
+    solution: |
+      def total_cost(prices, items):
+          total = 0
+          for item in items:
+              total += prices.get(item, 0)
+          return total
+    tests:
+      - { call: 'total_cost({"rope": 5, "map": 2}, ["rope", "map", "rope"])', expect: '12' }
+      - { call: 'total_cost({"rope": 5}, ["yak"])', expect: '0' }
+      - { call: 'total_cost({}, [])', expect: '0' }
+    why: >-
+      It's the accumulator pattern, with a lookup in the middle. `.get` deals with the unknown items.
+    hints:
+      - What does `.get(item, 0)` give for an unknown item?
+    variants:
+      - prompt: 'Write `encode(text, mapping)`, which gives back a list of the numbers for each character. So `encode("ab", {"a": 0, "b": 1})` gives back `[0, 1]`.'
+        starter: |
+          def encode(text, mapping):
+              # Your code here
+        solution: |
+          def encode(text, mapping):
+              out = []
+              for ch in text:
+                  out.append(mapping[ch])
+              return out
+        tests:
+          - { call: 'encode("ab", {"a": 0, "b": 1})', expect: '[0, 1]' }
+          - { call: 'encode("", {})', expect: '[]' }
+        hints:
+          - Look each character up as you go through the text.
+
+  - type: choice
+    id: remember-split
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      a = "4,5".split(",")
+      print(a[0] * 2)
+    choices: ['44', '8', '4,54,5', 'Error']
+    answer: '44'
+    why: >-
+      The pieces of a split are strings, and `*` repeats a string.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A dict maps unique keys to values. `d[k]` reads, and `d[k] = v` adds or replaces. `in` checks the keys. A missing key gives a `KeyError` unless you use `.get(k, default)`. Keys must match exactly, including their type.
+
+
+      Next: the most useful dict pattern of all, and the first step towards a language model.

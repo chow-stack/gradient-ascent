@@ -1,0 +1,503 @@
+id: p4-callable
+track: ml
+unit: 4
+order: 12
+title: Objects that act like functions and lists
+summary: The methods behind PyTorch's model(x) and dataset[i].
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: What model(x) really is
+    body: >-
+      In PyTorch, you run a model by writing `model(x)`, as if it were a function. You read training data with `dataset[i]` and `len(dataset)`, as if it were a list. Neither is magic. They're objects with a few special methods.
+
+
+      By the end of this lesson you'll be able to make an object callable, make it work with `len` and indexing, and write a small dataset class. After this, a PyTorch model will look familiar the first time you see it.
+
+  - type: learn
+    id: call
+    title: Calling an object
+    body: >-
+      Parentheses after a value mean "call it". For a function, that runs the function. For an object, Python looks for a method called `__call__`. So `model(3)` runs `model.__call__(3)`. There's no method called `model`. `model` is an object, and it's the thing being called.
+
+
+      Why not just write `model.output(3)`? It would work. But a callable object can be passed to anything that expects a function, such as `key=`, or the `average_loss` from earlier. It's also a convenient way of writing something that needs both data and behaviour.
+
+
+      This is the third way of having a function with memory. A closure remembers a few variables, while an object with `__call__` can hold lots of them, with names you can reach from outside, like `model.w`. So training code can change the weights, and the next call uses them. If you call an object with no `__call__`, you get `TypeError: 'Scale' object is not callable`.
+    code: |
+      class Scale:
+          def __init__(self, k):
+              self.k = k
+
+          def __call__(self, x):
+              return x * self.k
+
+      triple = Scale(3)
+      print(triple(4))
+      print(triple.__call__(4))
+
+      triple.k = 10
+      print(triple(4))
+
+      print(sorted([1, 2], key=Scale(-1)))
+    subgoals:
+      - { line: 5, label: 'Runs when the object is called' }
+      - { line: 9, label: 'The object itself is being called' }
+      - { line: 12, label: 'Its data can be changed from outside' }
+      - { line: 15, label: 'Works anywhere a function does' }
+    predict: What will `triple(4)` show after `k` changes?
+
+  - type: choice
+    id: call-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Scale:
+          def __init__(self, k):
+              self.k = k
+          def __call__(self, x):
+              return x * self.k
+
+      layers = [Scale(2), Scale(5)]
+      x = 1
+      for layer in layers:
+          x = layer(x)
+      print(x)
+    choices: ['10', '7', '1', 'Error']
+    answer: '10'
+    why: >-
+      Each layer feeds the next. 1 × 2 = 2, then 2 × 5 = 10. That's how a network runs.
+    variants:
+      - code: |
+          class Shift:
+              def __init__(self, k):
+                  self.k = k
+              def __call__(self, x):
+                  return x + self.k
+
+          f = Shift(1)
+          print(f(f(2)))
+        choices: ['4', '3', '2', 'Error']
+        answer: '4'
+        why: >-
+          `f(2)` is 3, and `f(3)` is 4.
+      - code: |
+          class Count:
+              def __init__(self):
+                  self.n = 0
+              def __call__(self):
+                  self.n += 1
+                  return self.n
+
+          c = Count()
+          c()
+          c()
+          print(c.n)
+        choices: ['2', '1', '0', 'Error']
+        answer: '2'
+        why: >-
+          The object keeps its state between calls.
+      - code: |
+          class Add:
+              def __init__(self, n):
+                  self.n = n
+              def __call__(self, x):
+                  return x + self.n
+
+          print(Add(2)(3))
+        choices: ['5', '2', '3', 'Error']
+        answer: '5'
+        why: >-
+          The first parentheses make the object, and the second call it.
+
+  - type: explain
+    id: explain-call
+    prompt: What actually happens on the last line?
+    code: |
+      class Model:
+          def __init__(self, w):
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x
+
+      model = Model(2)
+      y = model(3)
+    model: >-
+      `model` is an object, not a function. Python runs `model.__call__(3)`, which multiplies 3 by the stored weight, so `y` is 6.
+    keyPoints:
+      - Calling an object runs `__call__`
+      - The weight is stored on the object
+
+  - type: learn
+    id: sequence
+    title: Length and indexing
+    body: >-
+      `__len__` is what `len(obj)` calls, and it should give back a whole number. `__getitem__` is what `obj[i]` calls, with `i` passed in. With those two methods, your object can be read like a list, even though it might not hold a list at all. It might calculate each item on demand, or load it from a file only when asked. That's the point of it: a dataset can be far larger than your memory.
+
+
+      These two are the whole of what PyTorch's `Dataset` requires. A `DataLoader` only ever asks "how many are there?" and "give me number `i`".
+
+
+      There's a bonus. If you define `__getitem__`, a `for` loop works too. Python calls it with 0, 1, 2 and so on, until it gets an `IndexError`. So if your `__getitem__` never causes that error, your loop never ends. Passing the index through to a real list gets you the error automatically. In the code below, `raise` creates the error on purpose, and you'll learn more about it two lessons from now.
+
+
+      `__getitem__` can give back anything, and a tuple of an input and a label is the usual thing for a training example.
+    code: |
+      class Squares:
+          def __len__(self):
+              return 3
+
+          def __getitem__(self, i):
+              if i >= 3:
+                  raise IndexError
+              return i * i
+
+      data = Squares()
+      print(len(data), data[2])
+      for x in data:
+          print(x)
+
+      class Pairs:
+          def __init__(self, xs, ys):
+              self.xs = xs
+              self.ys = ys
+
+          def __len__(self):
+              return len(self.xs)
+
+          def __getitem__(self, i):
+              return self.xs[i], self.ys[i]
+
+      d = Pairs([1, 2], [10, 20])
+      x, y = d[1]
+      print(len(d), x + y)
+    subgoals:
+      - { line: 2, label: 'Runs for len(data)' }
+      - { line: 5, label: 'Runs for data[i]' }
+      - { line: 7, label: 'This is how a for loop knows to stop' }
+      - { line: 8, label: 'No list: worked out when asked' }
+      - { line: 24, label: 'An input and a label' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: seq-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      class Pairs:
+          def __init__(self, xs, ys):
+              self.xs = xs
+              self.ys = ys
+          def __len__(self):
+              return len(self.xs)
+          def __getitem__(self, i):
+              return self.xs[i], self.ys[i]
+
+      d = Pairs([1, 2], [10, 20])
+      print(d[0], len(d))
+    choices: ['(1, 10) 2', '1 2', '(1, 10) 4', 'Error']
+    answer: '(1, 10) 2'
+    why: >-
+      `d[0]` runs `__getitem__(0)`, which gives a tuple. This is a PyTorch `Dataset` in miniature.
+    variants:
+      - code: |
+          class Doubled:
+              def __init__(self, items):
+                  self.items = items
+              def __getitem__(self, i):
+                  return self.items[i] * 2
+
+          for x in Doubled([1, 2]):
+              print(x)
+        choices: ["2\n4", "1\n2", 'Error', '[2, 4]']
+        answer: "2\n4"
+        why: >-
+          The `for` loop asks for 0, 1 and 2, and the list's `IndexError` on 2 ends the loop.
+      - code: |
+          class Empty:
+              def __len__(self):
+                  return 0
+
+          print(len(Empty()))
+        choices: ['0', 'None', 'Error', '1']
+        answer: '0'
+        why: >-
+          `len` runs `__len__`.
+      - code: |
+          class Upper:
+              def __init__(self, s):
+                  self.s = s
+              def __getitem__(self, i):
+                  return self.s[i].upper()
+
+          print(Upper("ab")[-1])
+        choices: ['B', 'A', 'b', 'Error']
+        answer: 'B'
+        why: >-
+          `i` is passed along as it is, so a negative index works, because the string understands it.
+
+  - type: parsons
+    id: order-dataset
+    prompt: Put the lines in order so that `Data([5, 6])` has a length of 2, and `Data([5, 6])[1]` gives back `6`.
+    code: |
+      class Data:
+          def __init__(self, items):
+              self.items = items
+          def __len__(self):
+              return len(self.items)
+          def __getitem__(self, i):
+              return self.items[i]
+    distractors: ['    def __getitem__(self):', '        return self.items']
+    tests:
+      - { call: 'len(Data([5, 6]))', expect: '2' }
+      - { call: 'Data([5, 6])[1]', expect: '6' }
+    why: >-
+      `__getitem__` needs `i` as well as `self`.
+
+  - type: blank
+    id: fill-call
+    prompt: Fill in the method name so `Add(2)(3)` works, and this shows `5`.
+    code: |
+      class Add:
+          def __init__(self, n):
+              self.n = n
+
+          def ____(self, x):
+              return x + self.n
+
+      print(Add(2)(3))
+    answers: [['__call__']]
+    expectOutput: '5'
+    why: >-
+      Calling an object with parentheses runs its `__call__`.
+    variants:
+      - prompt: Fill in the method name so `b[1]` works, and this shows `y`.
+        code: |
+          class Box:
+              def __init__(self, items):
+                  self.items = items
+
+              def ____(self, i):
+                  return self.items[i]
+
+          b = Box(["x", "y"])
+          print(b[1])
+        answers: [['__getitem__']]
+        expectOutput: 'y'
+        why: >-
+          Square brackets run `__getitem__`.
+      - prompt: Fill in the blank so `len(b)` shows `2`.
+        code: |
+          class Box:
+              def __init__(self, items):
+                  self.items = items
+
+              def __len__(self):
+                  return ____
+
+          print(len(Box([1, 2])))
+        answers: [['len(self.items)']]
+        expectOutput: '2'
+        why: >-
+          The object passes the question on to the list it holds.
+
+  - type: fix
+    id: fix-call
+    prompt: '`Linear(2)(3)` should give back `6`, but it gives a `TypeError`, because the object isn''t callable. Fix it.'
+    code: |
+      class Linear:
+          def __init__(self, w):
+              self.w = w
+
+          def call(self, x):
+              return self.w * x
+    solution: |
+      class Linear:
+          def __init__(self, w):
+              self.w = w
+
+          def __call__(self, x):
+              return self.w * x
+    highlightLine: 5
+    tests:
+      - { call: 'Linear(2)(3)', expect: '6' }
+    why: >-
+      Python only looks for the exact name `__call__`.
+    hints:
+      - Special methods have particular names.
+    variants:
+      - prompt: This should show `1`, then `2`, but it never ends, since nothing stops the loop. Fix `__getitem__` by reading from the list.
+        code: |
+          class Items:
+              def __init__(self, items):
+                  self.items = items
+
+              def __getitem__(self, i):
+                  return i + 1
+
+          for x in Items([1, 2]):
+              print(x)
+              if x > 5:
+                  break
+        solution: |
+          class Items:
+              def __init__(self, items):
+                  self.items = items
+
+              def __getitem__(self, i):
+                  return self.items[i]
+
+          for x in Items([1, 2]):
+              print(x)
+              if x > 5:
+                  break
+        highlightLine: 6
+        tests: []
+        expectOutput: "1\n2"
+        why: >-
+          The list raises an `IndexError` past its end, and that's what stops a `for` loop.
+        hints:
+          - What happens when a list is asked for an item past its end?
+      - prompt: '`Pairs([1], [2])[0]` should give back `(1, 2)`, but it gives a `TypeError`. Fix `__getitem__`.'
+        code: |
+          class Pairs:
+              def __init__(self, xs, ys):
+                  self.xs = xs
+                  self.ys = ys
+
+              def __getitem__(self):
+                  return self.xs[0], self.ys[0]
+        solution: |
+          class Pairs:
+              def __init__(self, xs, ys):
+                  self.xs = xs
+                  self.ys = ys
+
+              def __getitem__(self, i):
+                  return self.xs[i], self.ys[i]
+        highlightLine: 6
+        tests:
+          - { call: 'Pairs([1], [2])[0]', expect: '(1, 2)' }
+          - { call: 'Pairs([1, 3], [2, 4])[1]', expect: '(3, 4)' }
+        why: >-
+          Python passes the index to the method, so it needs a parameter for it.
+        hints:
+          - What does `d[0]` pass in?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A model and a dataset
+    body: >-
+      Here's the shape of nearly every PyTorch program, using only plain Python. There's a dataset, a model, and a loop that brings them together.
+
+
+      `Dataset` holds the examples, and answers two questions: how many, and which one. `Linear` holds a weight and a bias, and turns an input into a prediction when it's called. The loop goes through positions, unpacks each example, calls the model, and measures how wrong it was.
+
+
+      Everything here is a pattern that you've met in this unit: a callable object, a tuple unpacked in a loop, and an accumulator. In the PyTorch unit, these same parts will look almost identical, and the only addition is a step that updates the weights.
+    code: |
+      class Dataset:
+          def __init__(self, xs, ys):
+              self.xs = xs
+              self.ys = ys
+
+          def __len__(self):
+              return len(self.xs)
+
+          def __getitem__(self, i):
+              return self.xs[i], self.ys[i]
+
+      class Linear:
+          def __init__(self, w, b):
+              self.w = w
+              self.b = b
+
+          def __call__(self, x):
+              return self.w * x + self.b
+
+      data = Dataset([1, 2, 3], [3, 5, 8])
+      model = Linear(2, 1)
+
+      total = 0
+      for i in range(len(data)):
+          x, y = data[i]
+          pred = model(x)
+          total += (pred - y) ** 2
+      print(total / len(data))
+    subgoals:
+      - { line: 9, label: 'One example: an input and a label' }
+      - { line: 17, label: 'Turns an input into a prediction' }
+      - { line: 25, label: 'Get one example' }
+      - { line: 26, label: 'Run the model' }
+      - { line: 27, label: 'How wrong was it?' }
+    predict: The model gets the first two right. How wrong is it on the third?
+
+  - type: write
+    id: write-dataset
+    prompt: Write a class `Dataset`. `Dataset(xs, ys)` stores two lists. `len(d)` gives the number of examples, and `d[i]` gives the tuple `(xs[i], ys[i])`.
+    starter: |
+      # Write the Dataset class here
+    solution: |
+      class Dataset:
+          def __init__(self, xs, ys):
+              self.xs = xs
+              self.ys = ys
+
+          def __len__(self):
+              return len(self.xs)
+
+          def __getitem__(self, i):
+              return self.xs[i], self.ys[i]
+    tests:
+      - { call: 'len(Dataset([1, 2], [3, 4]))', expect: '2' }
+      - { call: 'Dataset([1, 2], [3, 4])[1]', expect: '(2, 4)' }
+      - { call: 'len(Dataset([], []))', expect: '0' }
+    why: >-
+      That's everything PyTorch asks of a dataset.
+    hints:
+      - You need two methods besides `__init__`, and neither needs a loop.
+    variants:
+      - prompt: Write a class `Chain`. `Chain(fs)` stores a list of functions. Calling the object with `x` runs each function in order, feeding each result into the next. So `Chain([abs, str])(-1)` gives back `"1"`.
+        starter: |
+          # Write the Chain class here
+        solution: |
+          class Chain:
+              def __init__(self, fs):
+                  self.fs = fs
+
+              def __call__(self, x):
+                  for f in self.fs:
+                      x = f(x)
+                  return x
+        tests:
+          - { call: 'Chain([abs, str])(-1)', expect: "'1'" }
+          - { call: 'Chain([])(5)', expect: '5' }
+          - { call: 'Chain([lambda n: n + 1, lambda n: n * 2])(1)', expect: '4' }
+        hints:
+          - Keep reassigning `x` as you go through the functions.
+
+  - type: choice
+    id: remember-radd
+    prompt: From the last lesson. `v` has `__add__` but no `__radd__`. Why does `sum([v, v])` fail?
+    choices:
+      - '`sum` starts from 0, so the first step is `0 + v`'
+      - '`sum` only works on lists of numbers'
+      - '`sum` needs `__sum__`'
+    answer: '`sum` starts from 0, so the first step is `0 + v`'
+    why: >-
+      With the number 0 on the left, Python needs `__radd__`.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `obj(x)` runs `__call__`, which is what `model(x)` does. `len(obj)` runs `__len__`, and `obj[i]` runs `__getitem__`, which together make a dataset. A `for` loop can use `__getitem__`, and stops at an `IndexError`. A callable object is a function with named data.
+
+
+      Next: building on an existing class, as every PyTorch model does.

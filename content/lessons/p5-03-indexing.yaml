@@ -1,0 +1,397 @@
+id: p5-indexing
+track: ml
+unit: 5
+order: 3
+title: Indexing and slicing
+summary: Get any cell, row, column or block, and know what shape you'll get.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Reaching into a grid
+    body: >-
+      Data arrives as big tables, and you constantly need parts of them: this column is the label, those rows are a batch, that part is the training set. NumPy has a compact way of saying all of this.
+
+
+      By the end of this lesson you'll be able to get any cell, row, column or block from an array, predict the shape you'll get back, and assign to a whole section at once.
+
+  - type: learn
+    id: cells
+    title: Rows and cells
+    body: >-
+      With a list of lists, you wrote `g[1][2]`. An array takes it all in one pair of brackets, separated by a comma: `a[1, 2]` is row 1, column 2. Everything counts from 0, and negative positions work as usual, so `a[-1, -1]` is the bottom-right cell.
+
+
+      One index picks a row: `a[0]` is the whole first row, as a 1D array. So `a[1][2]` also works, but `a[1, 2]` is the normal way.
+
+
+      Look at the shape of what you get. Each single number that you index with removes one axis. Start from `(2, 3)`: `a[0]` removes the rows, leaving `(3,)`, and `a[0, 1]` removes both, leaving a plain number. Asking for a row that doesn't exist gives an `IndexError`, just as with a list.
+    code: |
+      import numpy as np
+
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+
+      print(a[1, 2])
+      print(a[-1, -1])
+      print(a[0])
+      print(a[0].shape)
+      print(a[1][0])
+      print(a[2, 0])
+    expectError: IndexError
+    subgoals:
+      - { line: 5, label: 'Row 1, column 2' }
+      - { line: 6, label: 'The bottom-right cell' }
+      - { line: 7, label: 'One index gives a row' }
+      - { line: 8, label: 'One axis fewer' }
+      - { line: 10, label: 'There are only rows 0 and 1' }
+    predict: What will `a[1, 2]` show?
+
+  - type: choice
+    id: cells-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([[1, 2], [3, 4], [5, 6]])
+      print(a[2, 0], a[0, 1])
+    choices: ['5 2', '2 5', '6 2', '3 2']
+    answer: '5 2'
+    why: >-
+      Row first, then column. Row 2, column 0 is 5, and row 0, column 1 is 2.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4], [5, 6]])
+          print(a[1])
+        choices: ['[3 4]', '[2 4 6]', '3', '[[3 4]]']
+        answer: '[3 4]'
+        why: >-
+          One index picks a row.
+      - code: |
+          import numpy as np
+          a = np.zeros((4, 5))
+          print(a[0].shape)
+        choices: ['(5,)', '(4,)', '(1, 5)', '(4, 5)']
+        answer: '(5,)'
+        why: >-
+          Indexing with a single number removes that axis.
+      - code: |
+          import numpy as np
+          a = np.zeros((2, 3, 4))
+          print(a[0].shape, a[0, 0].shape)
+        choices: ['(3, 4) (4,)', '(2, 3) (2,)', '(3, 4) (3,)', '(4,) (3, 4)']
+        answer: '(3, 4) (4,)'
+        why: >-
+          Each number removes the next axis, starting from the left.
+
+  - type: learn
+    id: slices
+    title: Columns and blocks
+    body: >-
+      Slices work on each axis, using the same `start:stop` rules you know from lists. So `a[0:2, 1:3]` means rows 0 and 1, and columns 1 and 2.
+
+
+      A colon on its own means "all of this axis". That's how you get a column: `a[:, 0]` means every row, column 0. You can't do that with a list of lists, and it's one of the most used forms in data work. `a[:, -1]` gets the last column, which is often the label, and `a[:, :-1]` gets all the others, which are often the inputs.
+
+
+      Now the shape rule. A number removes an axis, and a slice keeps it. So `a[:, 0]` gives `(2,)`, while `a[:, 0:1]` gives `(2, 1)`, with the same numbers in a different shape. Slices also never fail for going out of range, so check the shape if you're not sure.
+    code: |
+      import numpy as np
+
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+
+      print(a[:, 0])
+      print(a[:, 0].shape)
+      print(a[:, 0:1].shape)
+      print(a[0:2, 1:3])
+      print(a[:, -1])
+      print(a[:, :-1].shape)
+    subgoals:
+      - { line: 5, label: 'Every row, column 0' }
+      - { line: 6, label: 'A number removes the axis' }
+      - { line: 7, label: 'A slice keeps it' }
+      - { line: 8, label: 'A block' }
+      - { line: 9, label: 'The last column, often the label' }
+    predict: What will `a[:, 0]` show?
+
+  - type: choice
+    id: slices-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      a = np.array([[1, 2, 3], [4, 5, 6]])
+      print(a[:, 1])
+    choices: ['[2 5]', '[4 5 6]', '[1 2 3]', '[[2] [5]]']
+    answer: '[2 5]'
+    why: >-
+      Every row, column 1.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.zeros((5, 3))
+          print(a[1:3].shape)
+        choices: ['(2, 3)', '(3, 3)', '(5, 2)', '(2,)']
+        answer: '(2, 3)'
+        why: >-
+          The slice keeps 2 rows, and the columns are all still there.
+      - code: |
+          import numpy as np
+          a = np.zeros((5, 3))
+          print(a[:, 0].shape, a[:, 0:1].shape)
+        choices: ['(5,) (5, 1)', '(5, 1) (5,)', '(5,) (5,)', '(1, 5) (5, 1)']
+        answer: '(5,) (5, 1)'
+        why: >-
+          A number removes the axis, and a slice keeps it.
+      - code: |
+          import numpy as np
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(a[1, 1:])
+        choices: ['[5 6]', '[2 3]', '[4 5]', '[[5 6]]']
+        answer: '[5 6]'
+        why: >-
+          Row 1, from column 1 onwards.
+
+  - type: explain
+    id: explain-shapes
+    prompt: These hold the same numbers. Why do they have different shapes?
+    code: |
+      import numpy as np
+      a = np.zeros((4, 2))
+      print(a[:, 0].shape)
+      print(a[:, 0:1].shape)
+    model: >-
+      Indexing with a single number removes that axis, so `a[:, 0]` has shape `(4,)`. A slice keeps the axis, even when it only covers one column, so `a[:, 0:1]` has shape `(4, 1)`.
+    keyPoints:
+      - A single number removes the axis
+      - A slice keeps the axis, even with only one item
+
+  - type: learn
+    id: assign
+    title: Changing sections
+    body: >-
+      You can assign to anything you can read. `a[0, 0] = 9` changes one cell, `a[0] = 7` sets a whole row to 7, and `a[:, 1] = 0` clears a column. A single number spreads across the whole section. An array of the right size fills it item by item, and the wrong size gives a `ValueError`.
+
+
+      This is how you'd fill a table of bigram counts: `counts[i, j] += 1` adds 1 to one cell. You'll write that exact line in the makemore unit.
+
+
+      You can also go through the rows of a 2D array with a `for` loop, because each item of its first axis is a row. It's fine for a few rows, but you should reach for array operations first.
+    code: |
+      import numpy as np
+
+      a = np.zeros((2, 3))
+      a[0, 0] = 9
+      a[1] = 7
+      a[:, 1] = 0
+      print(a)
+
+      counts = np.zeros((2, 2))
+      counts[0, 1] += 1
+      counts[0, 1] += 1
+      print(counts)
+
+      for row in np.array([[1, 2], [3, 4]]):
+          print(row.sum())
+    subgoals:
+      - { line: 4, label: 'One cell' }
+      - { line: 5, label: 'A whole row' }
+      - { line: 6, label: 'A whole column' }
+      - { line: 10, label: 'Add to one cell' }
+      - { line: 14, label: 'A loop gives the rows' }
+    predict: What will the array `a` look like?
+
+  - type: blank
+    id: fill-index
+    prompt: Fill in the blank to get row 1, column 0, so this shows `3`.
+    code: |
+      import numpy as np
+      a = np.array([[1, 2], [3, 4]])
+      print(a[____])
+    answers: [['1, 0', '1,0', '-1, 0', '-1,0']]
+    expectOutput: '3'
+    why: >-
+      Row first, then column, in one pair of brackets.
+    variants:
+      - prompt: Fill in the blank to get the second column, so this shows `[2 4]`.
+        code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a[____])
+        answers: [[':, 1', ':,1', ':, -1', ':,-1']]
+        expectOutput: '[2 4]'
+        why: >-
+          A colon means every row.
+      - prompt: Fill in the blank to set the first row to zeros, so this shows `[0 0]`.
+        code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          ____ = 0
+          print(a[0])
+        answers: [['a[0]', 'a[0, :]', 'a[0,:]']]
+        expectOutput: '[0 0]'
+        why: >-
+          A single number spreads across the whole row.
+      - prompt: Fill in the blank to get all the columns except the last, so this shows `(2, 2)`.
+        code: |
+          import numpy as np
+          a = np.zeros((2, 3))
+          print(a[:, ____].shape)
+        answers: [[':-1', '0:2', ':2', '0:-1']]
+        expectOutput: (2, 2)
+        why: >-
+          `:-1` stops before the last one, which is the usual way of separating inputs from a label.
+
+  - type: fix
+    id: fix-col
+    prompt: '`first_column(a)` should give back the first column, so `first_column(np.array([[1, 2], [3, 4]]))` is `[1, 3]`. But it gives back the first row. Fix it.'
+    code: |
+      import numpy as np
+
+      def first_column(a):
+          return a[0]
+    solution: |
+      import numpy as np
+
+      def first_column(a):
+          return a[:, 0]
+    highlightLine: 4
+    tests:
+      - { call: 'first_column(np.array([[1, 2], [3, 4]]))', expect: '[1, 3]' }
+    why: >-
+      One index picks a row, so a column needs a colon for "every row".
+    hints:
+      - How do you say "every row"?
+    variants:
+      - prompt: This should show `6`, the cell in row 1, column 2, but it gives an `IndexError`, because the two positions are the wrong way round. Fix it.
+        code: |
+          import numpy as np
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(a[2, 1])
+        solution: |
+          import numpy as np
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(a[1, 2])
+        highlightLine: 3
+        tests: []
+        expectOutput: '6'
+        why: >-
+          Rows come first, and this array only has rows 0 and 1.
+        hints:
+          - Which comes first, the row or the column?
+      - prompt: This should show `[[1 2]]`, keeping it as a grid with one row, but it shows `[1 2]`. Use a slice, so the axis stays.
+        code: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a[0])
+        solution: |
+          import numpy as np
+          a = np.array([[1, 2], [3, 4]])
+          print(a[0:1])
+        highlightLine: 3
+        tests: []
+        expectOutput: '[[1 2]]'
+        why: >-
+          A slice keeps the axis, even when it holds only one row.
+        hints:
+          - A number removes the axis, and a slice keeps it.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Splitting a table of data
+    body: >-
+      Real data usually comes as one table, with a row for each example and a column for each measurement. The last column is often the answer that you want to predict. Here's the routine you'll go through for every model.
+
+
+      First, separate the inputs from the labels. `data[:, :-1]` takes every column but the last, and `data[:, -1]` takes the last. Notice the shapes: the inputs stay as a grid, and the labels become a plain vector, which is what's usually wanted.
+
+
+      Then split by rows into training and test sets, using slices on the first axis. Rows are examples, so slicing rows never separates an input from its label, provided you use the same cut for both. Then check the shapes, every time.
+    code: |
+      import numpy as np
+
+      data = np.array([
+          [1.0, 2.0, 0],
+          [3.0, 4.0, 1],
+          [5.0, 6.0, 0],
+          [7.0, 8.0, 1],
+      ])
+
+      X = data[:, :-1]
+      y = data[:, -1]
+      print(X.shape, y.shape)
+
+      cut = 3
+      X_train, X_test = X[:cut], X[cut:]
+      y_train, y_test = y[:cut], y[cut:]
+      print(X_train.shape, y_test)
+    subgoals:
+      - { line: 3, label: 'A row for each example' }
+      - { line: 10, label: 'Every column but the last' }
+      - { line: 11, label: 'The last column' }
+      - { line: 15, label: 'Slice the rows' }
+      - { line: 16, label: 'The same cut, so they still match' }
+    predict: What's the shape of `X_train`?
+
+  - type: write
+    id: write-split
+    prompt: Write `split_labels(data)`, which gives back a tuple of two arrays, every column but the last, and the last column. So for a shape of `(4, 3)`, the shapes would be `(4, 2)` and `(4,)`.
+    starter: |
+      import numpy as np
+
+      def split_labels(data):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def split_labels(data):
+          return data[:, :-1], data[:, -1]
+    tests:
+      - { call: 'split_labels(np.zeros((4, 3)))[0].shape', expect: '(4, 2)' }
+      - { call: 'split_labels(np.zeros((4, 3)))[1].shape', expect: '(4,)' }
+      - { call: 'split_labels(np.array([[1, 2, 3]]))[1]', expect: '[3]' }
+    why: >-
+      `:-1` keeps the axis, because it's a slice. `-1` removes it, because it's a number.
+    hints:
+      - Use a colon for every row in both.
+    variants:
+      - prompt: Write `corners(a)`, which gives back a list of the four corner values of a 2D array, in the order top-left, top-right, bottom-left, bottom-right. So `corners(np.array([[1, 2], [3, 4]]))` gives back `[1, 2, 3, 4]`.
+        starter: |
+          import numpy as np
+
+          def corners(a):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def corners(a):
+              return [a[0, 0], a[0, -1], a[-1, 0], a[-1, -1]]
+        tests:
+          - { call: 'corners(np.array([[1, 2], [3, 4]]))', expect: '[1, 2, 3, 4]' }
+          - { call: 'corners(np.arange(9).reshape(3, 3))', expect: '[0, 2, 6, 8]' }
+        hints:
+          - Negative positions count from the end.
+
+  - type: choice
+    id: remember-reshape
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print(np.arange(8).reshape(2, -1).shape)
+    choices: ['(2, 4)', '(2, 8)', '(4, 2)', '(2, -1)']
+    answer: '(2, 4)'
+    why: >-
+      8 items in 2 rows leaves 4 columns.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `a[r, c]` gets a cell, and `a[r]` gets a row. `a[:, c]` gets a column, where the colon means all. A single number removes an axis, and a slice keeps it. You can assign to any section, and a single number spreads across it.
+
+
+      Next: a surprise about slices, which is different from what you learned with lists.

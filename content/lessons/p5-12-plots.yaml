@@ -1,0 +1,482 @@
+id: p5-plots
+track: ml
+unit: 5
+order: 12
+title: Plots
+summary: Draw lines, scatters and histograms, and read a loss curve.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Seeing your numbers
+    body: >-
+      A column of numbers hides almost everything. One plot can show you a broken dataset or a model that has stopped learning, in a second. People who train models look at plots all day.
+
+
+      `matplotlib` is the standard plotting library. By the end of this lesson you'll be able to draw the four kinds of plot you'll use most, label them so they make sense, and read a loss curve to work out what your model is doing. Any code here that draws a plot will show it below the output when you run it.
+
+  - type: learn
+    id: lines
+    title: Line plots
+    body: >-
+      Everyone imports it the same way: `import matplotlib.pyplot as plt`. `plt.plot(x, y)` draws a line through the points, so `x` and `y` must be the same length. If they aren't, you get a `ValueError`.
+
+
+      Use `np.linspace` to get `x`, and array maths to get `y`, which is how you plot any formula. If you give only one argument, as in `plt.plot(losses)`, then `x` is just 0, 1, 2 and so on, which is what you want for a loss curve.
+
+
+      Calling `plt.plot` again adds a line to the same plot. Give each a `label`, and then call `plt.legend()` to show them. Always add `plt.xlabel`, `plt.ylabel` and `plt.title`. A plot with no labels is one that you'll misread next week. In a script, you'd finish with `plt.show()` to open the window. Here it's drawn for you, though the call does no harm.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      x = np.linspace(-3, 3, 50)
+
+      plt.plot(x, x ** 2, label="x squared")
+      plt.plot(x, np.tanh(x), label="tanh")
+
+      plt.xlabel("x")
+      plt.ylabel("y")
+      plt.title("Two functions")
+      plt.legend()
+    subgoals:
+      - { line: 4, label: 'Fifty evenly spaced points' }
+      - { line: 6, label: 'A line through them' }
+      - { line: 7, label: 'A second line, on the same plot' }
+      - { line: 9, label: 'Always label the axes' }
+      - { line: 12, label: 'Show the labels of the lines' }
+    predict: What shape will the `x squared` line have?
+
+  - type: choice
+    id: lines-choice
+    prompt: You have a list of 100 losses, one for each training step. What's the simplest way to plot them?
+    choices:
+      - '`plt.plot(losses)`'
+      - '`plt.plot(100, losses)`'
+      - '`plt.hist(losses, 100)`'
+      - '`plt.scatter(losses)`'
+    answer: '`plt.plot(losses)`'
+    why: >-
+      With one argument, `x` is the position in the list, which here is the step number.
+    variants:
+      - prompt: Why does `plt.plot(np.linspace(0, 1, 5), np.zeros(4))` crash?
+        choices:
+          - '`x` has 5 points and `y` has 4'
+          - '`y` can''t be all zeros'
+          - You have to call `plt.xlabel` first
+        answer: '`x` has 5 points and `y` has 4'
+        why: >-
+          Each point needs an `x` and a `y`, so the lengths must match.
+      - prompt: How do you draw two lines on the same plot?
+        choices:
+          - Call `plt.plot` twice
+          - Pass `plt.plot` a list of plots
+          - You can't, as you need two plots
+        answer: Call `plt.plot` twice
+        why: >-
+          Each call adds to the current plot.
+      - prompt: Your plot has two lines, but it shows nothing to say which is which. What's missing?
+        choices:
+          - '`label=` on each line, and `plt.legend()`'
+          - '`plt.xlabel` and `plt.ylabel`'
+          - '`plt.title`'
+        answer: '`label=` on each line, and `plt.legend()`'
+        why: >-
+          The labels name each line, and `legend` shows them.
+
+  - type: learn
+    id: others
+    title: Scatter, histogram, image
+    body: >-
+      Three other kinds of plot cover nearly everything else.
+
+
+      `plt.scatter(x, y)` draws a dot for each point, with no joining line. It's what you use to see whether two columns are related, or how classes separate. Use a mask to draw each class in its own colour: `plt.scatter(X[y == 0, 0], X[y == 0, 1])`. `alpha=0.5` makes the dots see-through.
+
+
+      `plt.hist(values, bins=30)` shows how the values are spread out, by counting how many fall in each range. It's the best first look at any column, and it's a good way to spot strange values. `np.histogram` gives you the same counts as numbers.
+
+
+      `plt.imshow(grid, cmap="gray")` draws a 2D array as an image, one square per cell. You'll use it to look at digits, and to look at your weights.
+
+
+      For a new plot rather than adding to the last one, call `plt.figure()` first.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      rng = np.random.default_rng(0)
+      a = rng.normal(0, 1, size=(50, 2))
+      b = rng.normal(3, 1, size=(50, 2))
+      plt.scatter(a[:, 0], a[:, 1], alpha=0.5, label="class 0")
+      plt.scatter(b[:, 0], b[:, 1], alpha=0.5, label="class 1")
+      plt.legend()
+
+      plt.figure()
+      plt.hist(rng.normal(0, 1, size=1000), bins=30)
+      plt.title("A bell curve")
+
+      plt.figure()
+      plt.imshow(np.arange(25).reshape(5, 5), cmap="gray")
+    subgoals:
+      - { line: 5, label: 'A cloud of points around 0' }
+      - { line: 7, label: 'A dot for each point' }
+      - { line: 11, label: 'Start a new plot' }
+      - { line: 12, label: 'Count how many fall in each range' }
+      - { line: 16, label: 'A grid, drawn as an image' }
+    predict: How many separate plots will this draw?
+
+  - type: choice
+    id: others-choice
+    prompt: You want to know if a column contains strange values, like a few very large ones. Which plot do you start with?
+    choices: ['A histogram', 'A line plot', 'A scatter of the column against itself', 'An image']
+    answer: 'A histogram'
+    why: >-
+      A histogram shows how the values are spread, so that odd ones stand out.
+    variants:
+      - prompt: You want to see whether height and weight are related, across 500 people. Which plot do you use?
+        choices: ['A scatter plot', 'A histogram', 'An image', 'A line plot']
+        answer: 'A scatter plot'
+        why: >-
+          One dot per person, with one column on each axis. A line would join them in a meaningless order.
+      - prompt: You have an array of shape `(28, 28)`, holding one handwritten digit. How do you look at it?
+        choices: ['`plt.imshow(a, cmap="gray")`', '`plt.plot(a)`', '`plt.hist(a)`', '`plt.scatter(a)`']
+        answer: '`plt.imshow(a, cmap="gray")`'
+        why: >-
+          `imshow` draws a grid as an image.
+
+  - type: choice
+    id: hist-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+      data = np.array([1, 1, 2, 5])
+      counts, edges = np.histogram(data, bins=2)
+      print(counts)
+    choices: ['[3 1]', '[2 2]', '[1 3]', '[1 1 2 5]']
+    answer: '[3 1]'
+    why: >-
+      The two ranges are 1 to 3, and 3 to 5. Three values fall in the first, and one in the second.
+    variants:
+      - code: |
+          import numpy as np
+          counts, edges = np.histogram(np.array([0, 1, 2, 3]), bins=2)
+          print(counts.sum())
+        choices: ['4', '2', '6', '3']
+        answer: '4'
+        why: >-
+          Every value falls in some range, so the counts add up to the number of values.
+      - code: |
+          import numpy as np
+          counts, edges = np.histogram(np.array([0, 1, 2, 3]), bins=2)
+          print(len(edges))
+        choices: ['3', '2', '4', '5']
+        answer: '3'
+        why: >-
+          Two ranges need three edges.
+
+  - type: learn
+    id: reading
+    title: Reading a loss curve
+    body: >-
+      This is the plot you'll look at most. Here's how to read one.
+
+
+      Falling quickly and then levelling off: it's healthy. Falling very slowly: the learning rate is probably too low. Jumping around wildly or climbing: the learning rate is too high. Flat from the very start: something's broken, and often the gradients aren't reaching the weights, or the data and labels don't match.
+
+
+      Plot the loss on the training data and on the test data together. If both are falling, the model is learning. If training loss keeps falling, but the test loss starts rising, that's overfitting: the model is memorising the training set, rather than learning the pattern.
+
+
+      Losses often cover a huge range. `plt.yscale("log")` spreads the small values out, so that you can see what's happening late in training. Single steps are also noisy on mini-batches, so look at the trend, rather than at each wiggle.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      steps = np.arange(50)
+      healthy = np.exp(-steps / 10)
+      slow = 1 - steps / 200
+      test = np.exp(-steps / 10) + (steps / 60) ** 2
+
+      plt.plot(steps, healthy, label="training")
+      plt.plot(steps, test, label="test: overfitting")
+      plt.plot(steps, slow, label="learning rate too low")
+      plt.xlabel("step")
+      plt.ylabel("loss")
+      plt.legend()
+    subgoals:
+      - { line: 5, label: 'Falls fast, then levels off' }
+      - { line: 6, label: 'Barely moving' }
+      - { line: 7, label: 'Falls, and then rises again' }
+      - { line: 9, label: 'Plot them together to compare' }
+    predict: Which line would worry you most, and why?
+
+  - type: choice
+    id: reading-choice
+    prompt: Your loss jumps around, and it's growing larger over time. What's the most likely problem?
+    choices:
+      - The learning rate is too high
+      - The learning rate is too low
+      - The model is overfitting
+      - There's too much data
+    answer: The learning rate is too high
+    why: >-
+      Each step overshoots the minimum and lands further away.
+    variants:
+      - prompt: Training loss keeps falling, but test loss has started to rise. What's going on?
+        choices:
+          - Overfitting, as it's memorising the training data
+          - The learning rate is too high
+          - The test set is broken
+          - It's healthy, so keep training
+        answer: Overfitting, as it's memorising the training data
+        why: >-
+          It's getting better on data it has seen, and worse on data it hasn't.
+      - prompt: Your loss is exactly flat from the first step. What should you suspect first?
+        choices:
+          - A bug, such as the weights never being updated
+          - It has already finished learning
+          - The learning rate is slightly too high
+          - You need a bigger plot
+        answer: A bug, such as the weights never being updated
+        why: >-
+          A model that hasn't learned anything shouldn't be flat from step one. It's usually a bug, like the `w = w - ...` one that you met in Views and copies.
+
+  - type: explain
+    id: explain-plot
+    prompt: Why would you plot before trusting a single number like the mean? What can this example hide?
+    code: |
+      import numpy as np
+      a = np.array([0.0, 0.0, 0.0, 0.0, 5.0])
+      b = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+      print(a.mean(), b.mean())
+    model: >-
+      These have the same mean, 1.0, but `b` is constant, and `a` is mostly zeros with one large value. A single number can hide outliers and the shape of the data. A histogram would show the difference straight away.
+    keyPoints:
+      - Very different data can have the same mean
+      - A plot shows the spread and any outliers
+
+  - type: blank
+    id: fill-plot
+    prompt: Fill in the blank so this draws a line, which the last line counts, and shows `1`.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+      x = np.linspace(0, 1, 5)
+      plt.____(x, x ** 2)
+      print(len(plt.gca().lines))
+    answers: [['plot']]
+    expectOutput: '1'
+    why: >-
+      `plt.plot` draws a line through the points.
+    variants:
+      - prompt: Fill in the blank to label the bottom axis, so this shows `step`.
+        code: |
+          import matplotlib.pyplot as plt
+          plt.plot([1, 2])
+          plt.____("step")
+          print(plt.gca().get_xlabel())
+        answers: [['xlabel']]
+        expectOutput: step
+        why: >-
+          Always label your axes.
+      - prompt: Fill in the blank so this draws a dot per point, which the last line counts, and shows `1`.
+        code: |
+          import matplotlib.pyplot as plt
+          plt.____([1, 2], [3, 4])
+          print(len(plt.gca().collections))
+        answers: [['scatter']]
+        expectOutput: '1'
+        why: >-
+          `scatter` draws dots, with no line joining them.
+      - prompt: Fill in the blank to get 5 evenly spaced numbers, so that the plot has smooth points, and this shows `5`.
+        code: |
+          import numpy as np
+          x = np.____(0, 1, 5)
+          print(len(x))
+        answers: [['linspace']]
+        expectOutput: '5'
+        why: >-
+          `linspace` takes the number of points.
+
+  - type: fix
+    id: fix-lengths
+    prompt: This crashes with a `ValueError`, because `x` and `y` have different lengths. Fix the line that makes `x`, so that this draws the line, and shows `4`.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+      y = np.array([1.0, 2.0, 4.0, 8.0])
+      x = np.linspace(0, 1, 5)
+      plt.plot(x, y)
+      print(len(x))
+    solution: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+      y = np.array([1.0, 2.0, 4.0, 8.0])
+      x = np.linspace(0, 1, 4)
+      plt.plot(x, y)
+      print(len(x))
+    highlightLine: 4
+    expectOutput: '4'
+    why: >-
+      Each point needs an `x` and a `y`.
+    hints:
+      - How many values does `y` have?
+    variants:
+      - prompt: 'This should give 5 evenly spaced points, from 0 to 1, for plotting, so it should show `5`. But `arange` takes a step, not a count. Fix it.'
+        code: |
+          import numpy as np
+          x = np.arange(0, 1, 5)
+          print(len(x))
+        solution: |
+          import numpy as np
+          x = np.linspace(0, 1, 5)
+          print(len(x))
+        highlightLine: 2
+        expectOutput: '5'
+        why: >-
+          `linspace` takes the number of points, and `arange` takes the step.
+        hints:
+          - Which function takes the number of points?
+      - prompt: This should keep the two plots separate, so it should show `2`. But both lines land on one plot. Fix it.
+        code: |
+          import matplotlib.pyplot as plt
+          plt.plot([1, 2])
+          plt.plot([2, 1])
+          print(len(plt.get_fignums()))
+        solution: |
+          import matplotlib.pyplot as plt
+          plt.plot([1, 2])
+          plt.figure()
+          plt.plot([2, 1])
+          print(len(plt.get_fignums()))
+        highlightLine: 3
+        expectOutput: '2'
+        why: >-
+          `plt.figure()` starts a new plot.
+        hints:
+          - What starts a new plot?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Train, record, plot
+    body: >-
+      Here's the routine you'll repeat for every model from now on, and it uses most of what's in this unit. Make some data that follows a known line, `y = 2x + 1`, with noise. Then fit it using gradient descent, as in your Unit 2 project, but this time it's vectorised over all the examples.
+
+
+      The key habit is to record the loss on every step in a list, and then plot that list. So there's a loop over the steps, which has to stay, and one line of array maths inside it for each stage.
+
+
+      Look at the curve first. If it falls and levels off, then look at `w` and `b`, which should be near 2 and 1. A second plot shows the fitted line over the data. You don't have to fully understand where the two gradient lines come from yet. That's next unit's job, and it's the calculus refresher.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      rng = np.random.default_rng(0)
+      x = rng.random(50)
+      y = 2 * x + 1 + rng.normal(0, 0.1, size=50)
+
+      w, b = 0.0, 0.0
+      losses = []
+      for step in range(200):
+          preds = w * x + b
+          losses.append(((preds - y) ** 2).mean())
+          w -= 0.3 * (2 * (preds - y) * x).mean()
+          b -= 0.3 * (2 * (preds - y)).mean()
+
+      print(round(w, 1), round(b, 1))
+
+      plt.plot(losses)
+      plt.xlabel("step")
+      plt.ylabel("loss")
+
+      plt.figure()
+      plt.scatter(x, y, alpha=0.5)
+      plt.plot(np.sort(x), w * np.sort(x) + b)
+    subgoals:
+      - { line: 6, label: 'A known line, plus noise' }
+      - { line: 11, label: 'Every prediction at once' }
+      - { line: 12, label: 'Record the loss' }
+      - { line: 13, label: 'Step downhill' }
+      - { line: 18, label: 'First, check the curve' }
+    predict: What values should `w` and `b` end up near?
+
+  - type: write
+    id: write-split-labels
+    prompt: Scatter plots draw each class separately. Write `split_by_label(X, y)`, which gives back a tuple of two arrays, the rows of `X` where `y` is 0, and those where `y` is 1. So `split_by_label(np.array([[1, 2], [3, 4]]), np.array([1, 0]))` gives back `[[3, 4]]` and `[[1, 2]]`.
+    starter: |
+      import numpy as np
+
+      def split_by_label(X, y):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def split_by_label(X, y):
+          return X[y == 0], X[y == 1]
+    tests:
+      - { call: 'split_by_label(np.array([[1, 2], [3, 4]]), np.array([1, 0]))[0]', expect: '[[3, 4]]' }
+      - { call: 'split_by_label(np.array([[1, 2], [3, 4]]), np.array([1, 0]))[1]', expect: '[[1, 2]]' }
+    why: >-
+      A mask on the first axis picks whole rows, and keeps them in a grid.
+    hints:
+      - Use a mask made from `y`.
+    variants:
+      - prompt: To plot any function, you need the points first. Write `curve(f, start, stop, n)`, which gives back a tuple of `n` evenly spaced `x` values, and `f` applied to them. So `curve(np.abs, -1.0, 1.0, 3)` gives back `[-1, 0, 1]` and `[1, 0, 1]`.
+        starter: |
+          import numpy as np
+
+          def curve(f, start, stop, n):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def curve(f, start, stop, n):
+              x = np.linspace(start, stop, n)
+              return x, f(x)
+        tests:
+          - { call: 'curve(np.abs, -1.0, 1.0, 3)[0]', expect: '[-1.0, 0.0, 1.0]' }
+          - { call: 'curve(np.abs, -1.0, 1.0, 3)[1]', expect: '[1.0, 0.0, 1.0]' }
+        hints:
+          - Functions can be passed as values, so you can call `f` here.
+      - prompt: Write `best_step(losses)`, which takes a list of losses, and gives back the step with the lowest one. So `best_step([3.0, 1.0, 2.0])` gives back `1`.
+        starter: |
+          import numpy as np
+
+          def best_step(losses):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def best_step(losses):
+              return int(np.argmin(losses))
+        tests:
+          - { call: 'best_step([3.0, 1.0, 2.0])', expect: '1' }
+          - { call: 'best_step([0.5])', expect: '0' }
+        hints:
+          - NumPy functions accept a plain list too.
+
+  - type: choice
+    id: remember-rng
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      import numpy as np
+      print(np.stack([np.zeros(4), np.zeros(4), np.zeros(4)]).shape)
+    choices: ['(3, 4)', '(4, 3)', '(12,)', '(4, 4)']
+    answer: '(3, 4)'
+    why: >-
+      `stack` adds a new first axis, with 3 items.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `plt.plot` draws lines, `plt.scatter` draws dots, `plt.hist` shows the spread and `plt.imshow` shows a grid. Label everything. A healthy loss curve falls and then levels off. Climbing means the learning rate is too high, flat means a bug, and a rising test loss means overfitting.
+
+
+      Next: a checkpoint on this whole unit, and then a project that uses it.

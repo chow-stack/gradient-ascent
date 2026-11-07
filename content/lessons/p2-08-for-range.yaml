@@ -1,0 +1,372 @@
+id: p2-for-range
+track: ml
+unit: 2
+order: 8
+title: Counting with for
+summary: Repeat a set number of times with for and range.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A tidier loop
+    body: >-
+      With `while`, you've been writing the same three lines again and again: set up a counter, check it, update it. Forgetting one of them gives you the bugs from the last lesson. When you know how many passes you want, Python has a loop that handles all three for you.
+
+
+      By the end of this lesson you'll be able to use `for` with `range`, predict exactly which numbers `range` produces, and choose between `for` and `while`. Almost every training loop you'll ever read starts with `for`.
+
+  - type: learn
+    id: for-loop
+    title: for and range
+    body: >-
+      `for i in range(4):` runs its block 4 times. On each pass, Python puts the next value in the variable `i`. There's no setup line and no update line, so you can't forget them, and this loop can't run forever.
+
+
+      `range(4)` produces 0, 1, 2, 3. It starts at 0 and stops before the number you give it. That matches how indexes work: `range(n)` gives you exactly `n` values, and the last one is `n - 1`. Thinking that `range(4)` includes 4 is the classic mistake here.
+
+
+      The name `i` is only a convention, and you can use any name that suits. Use `i` for a plain counter, and something descriptive if it means something, like `epoch`.
+    deeper: >-
+      If you don't need the value at all, the convention is to call the variable `_`, as in `for _ in range(3):`. It tells the reader that you only care about repeating. Also, `range` doesn't build all its numbers in advance. It produces them one at a time, so `range(1000000)` uses almost no memory.
+    code: |
+      for i in range(4):
+          print(i)
+
+      for epoch in range(2):
+          print(f"Training pass {epoch}")
+    subgoals:
+      - { line: 1, label: 'Each pass, `i` gets the next value' }
+      - { line: 2, label: 'The block runs once per value' }
+      - { line: 4, label: 'Use a name that means something' }
+    predict: What's the last number the first loop shows?
+
+  - type: choice
+    id: range-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for i in range(3):
+          print(i)
+    choices: ["0\n1\n2", "1\n2\n3", "0\n1\n2\n3", '3']
+    answer: "0\n1\n2"
+    why: >-
+      `range(3)` starts at 0 and stops before 3. It gives 3 values, and the last is 2.
+    variants:
+      - code: |
+          total = 0
+          for i in range(4):
+              total += i
+          print(total)
+        choices: ['6', '10', '4', '3']
+        answer: '6'
+        why: >-
+          0 + 1 + 2 + 3 is 6. It's the accumulator pattern, with no counter to manage.
+      - code: |
+          for i in range(0):
+              print("hi")
+          print("end")
+        choices: ['end', "hi\nend", 'Nothing', 'Error']
+        answer: 'end'
+        why: >-
+          `range(0)` has no values, so the block doesn't run at all.
+      - code: |
+          for i in range(2):
+              print("a")
+          print("b")
+        choices: ["a\na\nb", "a\nb\na\nb", "a\nb", "a\na\nb\nb"]
+        answer: "a\na\nb"
+        why: >-
+          Only the indented line repeats. The last line runs once, after the loop.
+
+  - type: learn
+    id: range-forms
+    title: Start, stop and step
+    body: >-
+      `range` can take up to three numbers. `range(start, stop)` begins at `start` and stops before `stop`. So to get 1 to 5, you write `range(1, 6)`. The stop is always left out, the same rule as with a slice.
+
+
+      `range(start, stop, step)` moves by `step` each time. `range(0, 10, 2)` gives 0, 2, 4, 6, 8. To count down, use a negative step: `range(3, 0, -1)` gives 3, 2, 1.
+
+
+      A common mistake when counting down is `range(3, 0)`, with no step. That gives nothing, without any error, because counting up from 3 never gets to 0. And `range` only works with whole numbers, so `range(2.5)` gives a `TypeError`.
+    code: |
+      for n in range(1, 4):
+          print(n)
+      for n in range(0, 10, 5):
+          print(n)
+      for n in range(2, 0, -1):
+          print(n)
+      for n in range(3, 0):
+          print("never")
+    subgoals:
+      - { line: 1, label: 'Start at 1, stop before 4' }
+      - { line: 3, label: 'Go up in fives' }
+      - { line: 5, label: 'Count down with a negative step' }
+      - { line: 7, label: 'No step, so it counts up: no values' }
+    predict: What's the very last number this shows?
+
+  - type: choice
+    id: range-forms-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for n in range(2, 5):
+          print(n)
+    choices: ["2\n3\n4", "2\n3\n4\n5", "3\n4\n5", "0\n1\n2\n3\n4"]
+    answer: "2\n3\n4"
+    why: >-
+      It starts at 2 and stops before 5.
+    variants:
+      - code: |
+          for n in range(1, 8, 3):
+              print(n)
+        choices: ["1\n4\n7", "1\n4", "1\n3\n8", "3\n6"]
+        answer: "1\n4\n7"
+        why: >-
+          It goes up in threes from 1. 7 is below the stop, and 10 would be past it.
+      - code: |
+          for n in range(5, 2, -1):
+              print(n)
+        choices: ["5\n4\n3", "5\n4\n3\n2", "4\n3\n2", 'Nothing']
+        answer: "5\n4\n3"
+        why: >-
+          It counts down, and it still stops before the stop value, which is 2.
+      - code: |
+          total = 0
+          for n in range(1, 4):
+              total += n
+          print(total)
+        choices: ['6', '10', '3', '5']
+        answer: '6'
+        why: >-
+          The values are 1, 2 and 3.
+
+  - type: explain
+    id: explain-range
+    prompt: Someone wants the sum of 1 to 10, and this gives the wrong answer. Why, and what should they write?
+    code: |
+      total = 0
+      for n in range(10):
+          total += n
+      print(total)
+    model: >-
+      `range(10)` gives 0 to 9, so 10 is never added. To get 1 to 10, they should write `range(1, 11)`, because the stop value is left out.
+    keyPoints:
+      - '`range(10)` stops before 10, so it runs from 0 to 9'
+      - '`range(1, 11)` gives the numbers 1 to 10'
+
+  - type: learn
+    id: for-vs-while
+    title: for or while?
+    body: >-
+      Use `for` when you can say how many passes you want before the loop starts, even if that number is in a variable. Use `while` when you only know the condition for stopping, as in "keep going until the error is small enough".
+
+
+      Anything you can write with `for` you can write with `while`, but `for` is shorter, and it rules out infinite loops. So it's the default.
+
+
+      One difference catches people out. Changing the loop variable inside a `for` block doesn't affect the loop. At the top of the next pass, Python simply assigns the next value, and whatever you did is overwritten. So you can't skip values by writing `i += 1`.
+    code: |
+      # The same loop, two ways
+      i = 0
+      while i < 3:
+          print(i)
+          i += 1
+
+      for i in range(3):
+          print(i)
+
+      # Changing i does not change the loop
+      for i in range(3):
+          i = i + 10
+          print(i)
+    subgoals:
+      - { line: 3, label: 'Three separate jobs' }
+      - { line: 7, label: 'All in one line' }
+      - { line: 12, label: 'Only lasts until the next pass' }
+    predict: What will the last loop show?
+
+  - type: blank
+    id: fill-range
+    prompt: Fill in the blank so this shows `1`, `2` and `3`.
+    code: |
+      for n in range(____):
+          print(n)
+    answers: [['1, 4', '1,4', '1, 4, 1']]
+    expectOutput: "1\n2\n3"
+    why: >-
+      Start at 1, and stop before 4.
+    variants:
+      - prompt: Fill in the blank so this shows `3`, `2` and `1`.
+        code: |
+          for n in range(____):
+              print(n)
+        answers: [['3, 0, -1', '3,0,-1']]
+        expectOutput: "3\n2\n1"
+        why: >-
+          Stop before 0, with a step of -1.
+      - prompt: Fill in the blank so this shows `0`, `5` and `10`.
+        code: |
+          for n in range(____):
+              print(n)
+        answers: [['0, 11, 5', '0, 15, 5', '0, 12, 5', '0, 13, 5', '0, 14, 5', '0,11,5', '0,15,5']]
+        expectOutput: "0\n5\n10"
+        why: >-
+          The third number is the step. The stop has to be above 10, and at most 15.
+      - prompt: Fill in the missing word so this repeats, and it shows `hi` twice.
+        code: |
+          ____ i in range(2):
+              print("hi")
+        answers: [['for']]
+        expectOutput: "hi\nhi"
+        why: >-
+          A `for` line has the variable, then `in`, then what to go through.
+
+  - type: fix
+    id: fix-range-end
+    prompt: '`sum_to(3)` should give back `6`, but it gives back `3`. Fix the `range`.'
+    code: |
+      def sum_to(limit):
+          total = 0
+          for n in range(limit):
+              total += n
+          return total
+    solution: |
+      def sum_to(limit):
+          total = 0
+          for n in range(1, limit + 1):
+              total += n
+          return total
+    highlightLine: 3
+    tests:
+      - { call: sum_to(3), expect: '6' }
+      - { call: sum_to(1), expect: '1' }
+      - { call: sum_to(0), expect: '0' }
+    why: >-
+      The stop is left out, so to include `limit` you have to stop at `limit + 1`.
+    hints:
+      - What are the values of `range(3)`?
+    variants:
+      - prompt: This crashes with a `TypeError`, because a number can't be looped over directly. Fix it so `go` appears 3 times.
+        code: |
+          for i in 3:
+              print("go")
+        solution: |
+          for i in range(3):
+              print("go")
+        highlightLine: 1
+        tests: []
+        expectOutput: "go\ngo\ngo"
+        why: >-
+          `for` needs something that produces values, and `range(3)` does.
+        hints:
+          - What produces the values 0, 1 and 2?
+      - prompt: This should count down `3`, `2`, `1`, but it shows nothing. Fix it.
+        code: |
+          for n in range(3, 0):
+              print(n)
+        solution: |
+          for n in range(3, 0, -1):
+              print(n)
+        highlightLine: 1
+        tests: []
+        expectOutput: "3\n2\n1"
+        why: >-
+          Without a negative step, `range` counts up, so going from 3 up to 0 gives no values.
+        hints:
+          - Which way does `range` count by default?
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A loop that uses its counter
+    body: >-
+      The counter isn't only for repeating, and you can calculate with it. Here's the shape of a real training loop in miniature. A value starts out far from where we want it, and each pass moves it a fraction of the way towards the target. We report on progress every few passes using `%`.
+
+
+      Look at how the pieces from this unit fit together. There's an accumulator being updated from its old value, and a `for` loop because we've chosen a number of passes in advance. An `if` inside it uses `%` to select only some passes. And it's all wrapped in a function with defaults.
+
+
+      You'll see this shape again when you train your first real model. Only the line that does the update will get more interesting.
+    code: |
+      def train(value, target=10, passes=6, rate=0.5):
+          for step in range(passes):
+              value = value + rate * (target - value)
+              if step % 2 == 0:
+                  print(f"Step {step}: {value}")
+          return value
+
+      final = train(2)
+      print(final)
+    subgoals:
+      - { line: 1, label: 'Settings with defaults' }
+      - { line: 2, label: 'A fixed number of passes' }
+      - { line: 3, label: 'Update from the old value' }
+      - { line: 4, label: 'Report every other pass' }
+      - { line: 6, label: 'Hand back the result after the loop' }
+    predict: Is the final value above or below 10, and why?
+
+  - type: write
+    id: squares-sum
+    prompt: Write `sum_squares(n)`, which gives back 1² + 2² + ... + n². So `sum_squares(3)` gives back `14`, from 1 + 4 + 9. Use `for` and `range`.
+    starter: |
+      def sum_squares(n):
+          # Your code here
+    solution: |
+      def sum_squares(n):
+          total = 0
+          for i in range(1, n + 1):
+              total += i ** 2
+          return total
+    tests:
+      - { call: sum_squares(3), expect: '14' }
+      - { call: sum_squares(1), expect: '1' }
+      - { call: sum_squares(0), expect: '0' }
+    why: >-
+      The range has to include `n`, so it stops at `n + 1`. The rest is the accumulator pattern.
+    hints:
+      - Which `range` gives you 1 up to and including `n`?
+    variants:
+      - prompt: Write `power(base, exp)`, which multiplies `base` by itself `exp` times using a loop, without `**`. So `power(2, 3)` gives back `8`, and anything to the power 0 gives back `1`.
+        starter: |
+          def power(base, exp):
+              # Your code here
+        solution: |
+          def power(base, exp):
+              result = 1
+              for i in range(exp):
+                  result *= base
+              return result
+        tests:
+          - { call: 'power(2, 3)', expect: '8' }
+          - { call: 'power(5, 0)', expect: '1' }
+          - { call: 'power(3, 2)', expect: '9' }
+        hints:
+          - What's the right starting value when multiplying?
+
+  - type: choice
+    id: remember-break
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      n = 0
+      while True:
+          n += 3
+          if n > 5:
+              break
+      print(n)
+    choices: ['6', '3', '5', '9']
+    answer: '6'
+    why: >-
+      `n` goes 3, then 6. Then `6 > 5` is true, so `break` leaves the loop.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `for i in range(n):` runs `n` times, with `i` going from 0 to `n - 1`. `range(start, stop, step)` always leaves out the stop. Use `for` when you can say how many passes you need, and `while` when you only know when to stop.
+
+
+      Next: `for` can go through more than numbers, and text is the first example.

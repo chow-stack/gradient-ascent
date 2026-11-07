@@ -1,0 +1,397 @@
+id: p4-zip
+track: ml
+unit: 4
+order: 3
+title: Walking lists together
+summary: Use zip and enumerate in place of index loops.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Fewer indexes, fewer bugs
+    body: >-
+      A neuron multiplies each input by its matching weight. So you often need two lists side by side, which so far has meant a loop over positions, with `[i]` everywhere.
+
+
+      By the end of this lesson you'll be able to loop over two lists together, get positions when you need them, and write a dot product, the calculation at the heart of every neural network. You'll also know about a silent bug that `zip` can hide.
+
+  - type: learn
+    id: zip
+    title: zip pairs things up
+    body: >-
+      `zip(a, b)` walks through two lists together, and gives you one tuple at a time: the first items, then the second items, and so on. With unpacking, each one goes into its own name, so `for x, y in zip(a, b):` reads almost like English.
+
+
+      Compare it with the version using `range(len(a))`, which works just as well, but gives you more places to make a mistake. It also works on anything you can loop over, not just lists, and with more than two: `zip(a, b, c)` gives tuples of three.
+
+
+      Here's the catch: `zip` stops at the end of the shorter list, without an error. If your weights and inputs have different lengths, you get a wrong answer and no warning. A `zip` object isn't a list either, so `print(zip(a, b))` shows nothing useful. Use `list(zip(a, b))` to see inside it.
+    code: |
+      inputs = [1, 2, 3]
+      weights = [10, 20, 30]
+
+      for i in range(len(inputs)):
+          print(inputs[i], weights[i])
+
+      for x, w in zip(inputs, weights):
+          print(x, w)
+
+      print(list(zip([1, 2, 3], ["a", "b"])))
+    subgoals:
+      - { line: 4, label: 'The old way, with positions' }
+      - { line: 7, label: 'The same pairs, with zip' }
+      - { line: 10, label: 'Stops at the shorter one' }
+    predict: What happens to the `3` on the last line?
+
+  - type: choice
+    id: zip-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      total = 0
+      for w, x in zip([2, 3], [10, 1]):
+          total += w * x
+      print(total)
+    choices: ['23', '16', '60', '5']
+    answer: '23'
+    why: >-
+      2 × 10 + 3 × 1 = 23. Multiplying pairs and adding them up is called a dot product.
+    variants:
+      - code: |
+          total = 0
+          for w, x in zip([2, 0, 1], [3, 9, 4]):
+              total += w * x
+          print(total)
+        choices: ['10', '19', '27', '6']
+        answer: '10'
+        why: >-
+          2 × 3 + 0 × 9 + 1 × 4 = 10. A weight of 0 ignores that input.
+      - code: |
+          print(list(zip("ab", [1, 2, 3])))
+        choices: ["[('a', 1), ('b', 2)]", "[('a', 1), ('b', 2), (None, 3)]", 'Error', "['a1', 'b2']"]
+        answer: "[('a', 1), ('b', 2)]"
+        why: >-
+          `zip` works on strings too, and stops at the shorter one.
+      - code: |
+          for a, b, c in zip([1], [2], [3]):
+              print(a + b + c)
+        choices: ['6', '1', 'Error', '123']
+        answer: '6'
+        why: >-
+          `zip` can take any number of lists, so you get tuples of three here.
+
+  - type: explain
+    id: explain-silent
+    prompt: This model has 3 inputs but only 2 weights. Why is the lack of an error a bigger problem than a crash would be?
+    code: |
+      inputs = [1, 2, 3]
+      weights = [10, 10]
+      total = 0
+      for x, w in zip(inputs, weights):
+          total += x * w
+      print(total)
+    model: >-
+      `zip` stops at the shorter list, so the third input is silently ignored, and you get a believable but wrong answer. A crash would tell you there's a bug right away, but this could go unnoticed while the model just performs badly.
+    keyPoints:
+      - '`zip` stops at the shorter list without any error'
+      - A wrong answer with no error is harder to notice than a crash
+
+  - type: learn
+    id: enumerate
+    title: enumerate gives you positions
+    body: >-
+      Sometimes you want the item and its position. `for i in range(len(words)):` followed by `words[i]` does that, but `enumerate` is cleaner: `for i, word in enumerate(words):`. Each pass gives you a tuple of position and item. Mind the order: the position always comes first, and mixing them up is a common bug.
+
+
+      Positions start at 0, unless you say otherwise with `enumerate(words, start=1)`, which is useful for showing line numbers or training steps to people. It only changes the number you're given, and not the positions in the list.
+
+
+      Use `enumerate` when you need a position as well as the item, and plain `for` when you don't. Loops over positions still have their place, for example when you're changing items in a list by assigning to `items[i]`.
+    code: |
+      words = ["ox", "yak"]
+
+      for i, word in enumerate(words):
+          print(i, word)
+
+      for step, word in enumerate(words, start=1):
+          print(f"Step {step}: {word}")
+
+      print(list(enumerate("ab")))
+    subgoals:
+      - { line: 3, label: 'Position first, then the item' }
+      - { line: 6, label: 'Start counting from 1' }
+      - { line: 9, label: 'It gives tuples' }
+    predict: What's the first line of output?
+
+  - type: choice
+    id: enumerate-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      for a, b in enumerate(["x", "y"]):
+          print(a, b)
+    choices: ["0 x\n1 y", "x 0\ny 1", "1 x\n2 y", "x y"]
+    answer: "0 x\n1 y"
+    why: >-
+      `enumerate` gives the position first, whatever you call the names.
+    variants:
+      - code: |
+          best = 0
+          nums = [4, 9, 2]
+          for i, n in enumerate(nums):
+              if n > nums[best]:
+                  best = i
+          print(best)
+        choices: ['1', '9', '2', '0']
+        answer: '1'
+        why: >-
+          This finds the position of the largest item, which is called argmax, and you'll use it to read a model's prediction.
+      - code: |
+          for i, ch in enumerate("hi", start=5):
+              print(i)
+        choices: ["5\n6", "0\n1", "6\n7", "5\n5"]
+        answer: "5\n6"
+        why: >-
+          `start` sets the first number you're given.
+
+  - type: learn
+    id: neighbours
+    title: Neighbours with a slice
+    body: >-
+      Here's a trick you'll see in the makemore unit. `zip(text, text[1:])` pairs each character with the one after it. The slice is the same text moved along by one, and because `zip` stops at the shorter one, the final character doesn't cause an `IndexError`. For once, `zip`'s stopping early is exactly what you want.
+
+
+      It works on lists too. `zip(losses, losses[1:])` gives you each loss with the next one, which is handy for checking whether training is improving. Compare this with `range(len(text) - 1)` and `text[i + 1]`, which you used in Unit 3. There's no risk of going past the end, and there's less to get wrong.
+    code: |
+      text = "goat"
+      for a, b in zip(text, text[1:]):
+          print(a, b)
+
+      losses = [0.9, 0.5, 0.6]
+      for old, new in zip(losses, losses[1:]):
+          print(new < old)
+    subgoals:
+      - { line: 2, label: 'The text, against itself moved along by one' }
+      - { line: 6, label: 'Each value with the next one' }
+      - { line: 7, label: 'Did it improve?' }
+    predict: How many pairs does `goat` give?
+
+  - type: blank
+    id: fill-zip
+    prompt: Fill in the blank so this adds up the products of matching items, and shows `11`.
+    code: |
+      total = 0
+      for x, y in ____:
+          total += x * y
+      print(total)
+    answers: [['zip([1, 2], [3, 4])', 'zip([3, 4], [1, 2])']]
+    expectOutput: '11'
+    why: >-
+      `zip` pairs the two lists, and 1 × 3 + 2 × 4 = 11.
+    variants:
+      - prompt: Fill in the blank so each item comes with its position, and this shows `1 b` last.
+        code: |
+          for i, ch in ____("ab"):
+              print(i, ch)
+        answers: [['enumerate']]
+        expectOutput: "0 a\n1 b"
+        why: >-
+          `enumerate` gives the position and the item.
+      - prompt: Fill in the blank so this pairs each letter with the next, and shows `2`.
+        code: |
+          text = "abc"
+          count = 0
+          for a, b in zip(text, ____):
+              count += 1
+          print(count)
+        answers: [['text[1:]']]
+        expectOutput: '2'
+        why: >-
+          Moving the text along by one gives you each neighbour.
+
+  - type: fix
+    id: fix-enumerate
+    prompt: '`find_first(["a", "b"], "b")` should give back `1`, but it never finds it, because the two names are the wrong way round. Fix it.'
+    code: |
+      def find_first(items, target):
+          for item, i in enumerate(items):
+              if item == target:
+                  return i
+          return -1
+    solution: |
+      def find_first(items, target):
+          for i, item in enumerate(items):
+              if item == target:
+                  return i
+          return -1
+    highlightLine: 2
+    tests:
+      - { call: 'find_first(["a", "b"], "b")', expect: '1' }
+      - { call: 'find_first(["a"], "z")', expect: '-1' }
+    why: >-
+      The position always comes first. Python can't tell what you meant by the names.
+    hints:
+      - Which comes first from `enumerate`?
+    variants:
+      - prompt: '`dot([1, 2], [3, 4])` should give back `11`, but it gives back `5`. Fix it.'
+        code: |
+          def dot(a, b):
+              total = 0
+              for x, y in zip(a, a):
+                  total += x * y
+              return total
+        solution: |
+          def dot(a, b):
+              total = 0
+              for x, y in zip(a, b):
+                  total += x * y
+              return total
+        highlightLine: 3
+        tests:
+          - { call: 'dot([1, 2], [3, 4])', expect: '11' }
+          - { call: 'dot([], [])', expect: '0' }
+        why: >-
+          The list was being paired with itself. Each name has to come from the list you mean.
+        hints:
+          - What are the two things being zipped?
+      - prompt: This should show `2`, the number of times a value goes up, but it crashes with an `IndexError`. Fix it using `zip`.
+        code: |
+          nums = [1, 2, 1, 3]
+          count = 0
+          for i in range(len(nums)):
+              if nums[i + 1] > nums[i]:
+                  count += 1
+          print(count)
+        solution: |
+          nums = [1, 2, 1, 3]
+          count = 0
+          for a, b in zip(nums, nums[1:]):
+              if b > a:
+                  count += 1
+          print(count)
+        highlightLine: 3
+        tests: []
+        expectOutput: '2'
+        why: >-
+          With `zip`, the loop can't run past the end.
+        hints:
+          - You saw how to pair each item with the next one.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A neuron, with zip
+    body: >-
+      Now the neuron from the first lesson can handle any number of inputs. Before, it had separate parameters for `x1`, `x2`, `w1` and `w2`. With lists and `zip`, one version works for two inputs or two thousand.
+
+
+      The steps are the accumulator pattern. Start a total at the bias, go through the matching pairs, and add each product. The dot product is pulled out into its own function, since it's useful by itself, and the neuron becomes a single line. You'll find these same two lines inside NumPy and PyTorch code, written as `w @ x + b`.
+
+
+      Finally, `predict` shows `enumerate` in use, finding the position of the highest output. Classifiers do this to turn their numbers into an answer.
+    code: |
+      def dot(a, b):
+          total = 0
+          for x, y in zip(a, b):
+              total += x * y
+          return total
+
+      def neuron(inputs, weights, bias):
+          return dot(inputs, weights) + bias
+
+      def predict(outputs):
+          best = 0
+          for i, value in enumerate(outputs):
+              if value > outputs[best]:
+                  best = i
+          return best
+
+      print(neuron([2, 3], [0.5, -1], 1))
+      print(predict([0.1, 0.7, 0.2]))
+    subgoals:
+      - { line: 3, label: 'Matching pairs' }
+      - { line: 8, label: 'A weighted sum plus a bias' }
+      - { line: 12, label: 'Value and position' }
+      - { line: 18, label: 'The position of the highest output' }
+    predict: Which position will `predict` choose?
+
+  - type: write
+    id: write-dot
+    prompt: Write `add_lists(a, b)`, which gives back a new list where each item is the sum of the matching items in `a` and `b`. So `add_lists([1, 2], [3, 4])` gives back `[4, 6]`.
+    starter: |
+      def add_lists(a, b):
+          # Your code here
+    solution: |
+      def add_lists(a, b):
+          out = []
+          for x, y in zip(a, b):
+              out.append(x + y)
+          return out
+    tests:
+      - { call: 'add_lists([1, 2], [3, 4])', expect: '[4, 6]' }
+      - { call: 'add_lists([], [])', expect: '[]' }
+    why: >-
+      Adding two vectors works exactly like this.
+    hints:
+      - Use `zip` to pair the items, and build a new list.
+    variants:
+      - prompt: Write `argmax(nums)`, which gives back the position of the largest number. On a tie, the first one wins. So `argmax([1, 9, 3])` gives back `1`.
+        starter: |
+          def argmax(nums):
+              # Your code here
+        solution: |
+          def argmax(nums):
+              best = 0
+              for i, n in enumerate(nums):
+                  if n > nums[best]:
+                      best = i
+              return best
+        tests:
+          - { call: 'argmax([1, 9, 3])', expect: '1' }
+          - { call: 'argmax([-5, -2])', expect: '1' }
+          - { call: 'argmax([2, 2])', expect: '0' }
+        hints:
+          - Keep the position of the best so far, starting at 0.
+      - prompt: Write `improved(losses)`, which gives back how many times a loss is lower than the one before it. So `improved([3, 2, 2, 1])` gives back `2`.
+        starter: |
+          def improved(losses):
+              # Your code here
+        solution: |
+          def improved(losses):
+              count = 0
+              for old, new in zip(losses, losses[1:]):
+                  if new < old:
+                      count += 1
+              return count
+        tests:
+          - { call: 'improved([3, 2, 2, 1])', expect: '2' }
+          - { call: 'improved([])', expect: '0' }
+          - { call: 'improved([1])', expect: '0' }
+        hints:
+          - Pair each loss with the next one.
+
+  - type: choice
+    id: remember-unpack
+    kind: predict
+    prompt: From the last lesson. What does this print?
+    code: |
+      def f():
+          return 1, 2
+
+      a, b = f()
+      print(b, a)
+    choices: ['2 1', '1 2', '(1, 2)', 'Error']
+    answer: '2 1'
+    why: >-
+      `return 1, 2` gives back a tuple, and it gets unpacked into two names.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      `zip(a, b)` walks lists together, and stops at the shorter one without telling you. `enumerate` gives the position first, and then the item. `zip(text, text[1:])` gives each item with the next one. A dot product multiplies matching pairs and adds them up.
+
+
+      Next: a shorter way of writing the loops that build lists.

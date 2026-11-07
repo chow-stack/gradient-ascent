@@ -10,7 +10,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /** Add packages here as lessons need them; their dependencies are included automatically. */
-const PACKAGES = ['numpy']
+const PACKAGES = ['numpy', 'matplotlib']
 
 type LockEntry = { file_name: string; sha256: string; depends: string[] }
 
