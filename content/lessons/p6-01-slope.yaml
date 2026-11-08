@@ -1,0 +1,360 @@
+id: p6-slope
+track: ml
+unit: 6
+order: 1
+title: Slope by nudging
+summary: How fast a function changes at one point, found by nudging the input a tiny bit.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Which way should a weight move?
+    body: >-
+      Training a model means changing its weights so its error goes down. With millions of weights, you can't try every option. You need each weight to
+      tell you which way to move, and how much it matters. That's what a slope does.
+
+
+      This unit refreshes the calculus that training needs, in code: slopes, the chain rule, gradients, and gradient descent, which is how almost every
+      model learns. It ends with a project where your code fits a line to points you place yourself.
+
+
+      By the end of this lesson you'll be able to estimate the slope of any Python function at any point, using nothing but the function itself.
+
+  - type: learn
+    id: line-slope
+    title: Slope is change over change
+    body: >-
+      The slope of a line is how much the output changes when the input goes up by one. For `y = 3 * x + 1`, every step of 1 in `x` adds 3 to `y`, so the
+      slope is 3. In general, it's the change in `y` divided by the change in `x`: rise over run.
+
+
+      The sign tells you the direction. A positive slope means the output goes up as the input goes up. A negative slope means it goes down. A slope of 0
+      means it's flat, at least right there.
+
+
+      A line has the same slope everywhere. Curves don't. `y = x ** 2` is flat at 0, gentle near 1, and steep at 10. So for a curve, the question is
+      always "the slope where?"
+    code: |
+      def f(x):
+          return 3 * x + 1
+
+      print(f(5) - f(4))
+      print((f(10) - f(2)) / (10 - 2))
+
+      def g(x):
+          return x ** 2
+
+      print(g(1) - g(0))
+      print(g(11) - g(10))
+    subgoals:
+      - { line: 4, label: 'A step of 1 adds 3' }
+      - { line: 5, label: 'Rise over run: also 3' }
+      - { line: 10, label: 'A curve: gentle here' }
+      - { line: 11, label: 'and steep here' }
+    predict: What will the last line show?
+
+  - type: choice
+    id: slope-sign
+    prompt: A function's slope at `x = 2` is `-5`. What happens to its output if you increase `x` a tiny bit?
+    choices:
+      - It goes down, about 5 times as much as `x` went up
+      - It goes up by 5
+      - It becomes -5
+      - Nothing, the slope only describes the whole function
+    answer: It goes down, about 5 times as much as `x` went up
+    why: >-
+      The slope is a rate, not the output's value. Negative means the output falls as `x` rises, and 5 is how many times faster.
+    variants:
+      - prompt: At `x = 4`, a function's output is `100` and its slope is `0`. Which is true?
+        choices:
+          - It's flat there, so a tiny nudge barely changes the output
+          - The output must be 0 there
+          - The function is 0 everywhere
+          - It's at its steepest there
+        answer: It's flat there, so a tiny nudge barely changes the output
+        why: >-
+          A slope of 0 says nothing about how big the output is, only that it isn't changing right there.
+      - prompt: Which has the bigger slope at `x = 3`?
+        choices:
+          - '`y = x ** 2`, whose slope keeps growing'
+          - '`y = 2 * x + 50`, because its outputs are bigger'
+          - They're the same, because both go up
+        answer: '`y = x ** 2`, whose slope keeps growing'
+        why: >-
+          `x ** 2` changes by about 6 per step near 3, and the line changes by 2. Big outputs don't mean a big slope.
+
+  - type: learn
+    id: nudge
+    title: The slope at a point, by nudging
+    body: >-
+      To find a curve's slope at one point, zoom in. Take a tiny step `h` from `x`, see how much the output changed, and divide by `h`: `(f(x + h) - f(x)) /
+      h`. Up close, any smooth curve looks like a straight line, so this gets closer to the true slope the smaller `h` is.
+
+
+      That limit, the slope at exactly one point, is called the derivative. For `x ** 2` at 3, nudging gives about 6, and the exact answer is 6.
+
+
+      The mistake to avoid is a big step. `(f(5) - f(3)) / 2` is the slope of the line through two far-apart points, and on a curve that isn't the slope at
+      either of them. It's 8 here, not 6.
+
+
+      This nudge is the most useful trick in this unit. It works on any function you can call, with no algebra, so you'll use it to check every derivative
+      you work out by hand.
+    code: |
+      def f(x):
+          return x ** 2
+
+      def slope(f, x, h=0.0001):
+          return (f(x + h) - f(x)) / h
+
+      print(round(slope(f, 3), 3))
+      print(round(slope(f, -2), 3))
+      print((f(5) - f(3)) / 2)
+    subgoals:
+      - { line: 5, label: 'Nudge, compare, divide' }
+      - { line: 7, label: 'About 6 at x = 3' }
+      - { line: 8, label: 'Negative: going down there' }
+      - { line: 9, label: 'A big step gives the wrong slope' }
+    predict: What will `slope(f, 3)` be, roughly?
+
+  - type: choice
+    id: nudge-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f(x):
+          return x ** 2 + x
+
+      h = 0.001
+      print(round((f(2 + h) - f(2)) / h, 1))
+    choices: ['5.0', '6.0', '4.0', '2.0']
+    answer: '5.0'
+    why: >-
+      `x ** 2` adds about 4 per unit near 2 and `x` adds 1 more, so the slope is about 5. The output, 6, is a different thing.
+    variants:
+      - code: |
+          def f(x):
+              return 10 - 3 * x
+
+          h = 0.001
+          print(round((f(7 + h) - f(7)) / h, 1))
+        choices: ['-3.0', '3.0', '-11.0', '10.0']
+        answer: '-3.0'
+        why: >-
+          It's a line going down by 3 per step, so the slope is -3 everywhere, at 7 too.
+      - code: |
+          def f(x):
+              return x ** 3
+
+          h = 0.001
+          print(round((f(1 + h) - f(1)) / h, 1))
+        choices: ['3.0', '1.0', '2.0', '0.0']
+        answer: '3.0'
+        why: >-
+          Near 1, `x ** 3` grows about 3 times as fast as `x`.
+
+  - type: explain
+    id: explain-far
+    prompt: Both lines try to find the slope of `x ** 2` at 3. Why is the second one wrong, even though the maths is "rise over run"?
+    code: |
+      def f(x):
+          return x ** 2
+
+      print((f(3.0001) - f(3)) / 0.0001)
+      print((f(5) - f(3)) / 2)
+    model: >-
+      Rise over run between two far-apart points gives the slope of the straight line joining them, but a curve's slope changes along the way. Between 3
+      and 5 it gets steeper, so the average is 8, not the slope at 3. A tiny step stays close to 3, where the curve is nearly straight, so it gives about 6.
+    keyPoints:
+      - A curve's slope changes from point to point
+      - A big step averages over the whole stretch, a tiny step measures the slope at that point
+
+  - type: blank
+    id: fill-nudge
+    prompt: Fill in the blank so `slope` estimates the slope of `f` at `x`. This shows `12.0`.
+    code: |
+      def f(x):
+          return x ** 2
+
+      def slope(f, x, h=0.0001):
+          return (f(x + h) - f(x)) / ____
+
+      print(round(slope(f, 6), 1))
+    answers: [['h']]
+    expectOutput: '12.0'
+    why: >-
+      Divide the change in output by the size of the nudge.
+    variants:
+      - prompt: Fill in the blank so this estimates the slope of `f` at 2. It shows `12.0`.
+        code: |
+          def f(x):
+              return x ** 3
+
+          h = 0.0001
+          print(round((f(____) - f(2)) / h, 1))
+        answers: [['2 + h', 'h + 2']]
+        expectOutput: '12.0'
+        why: >-
+          Nudge the input by `h`, starting from the same point.
+
+  - type: learn
+    id: tiny-h
+    title: How small should the nudge be?
+    body: >-
+      Smaller is better, up to a point. With `h = 1`, the estimate is the slope of a long chord, which is off. With `h = 0.0001`, it's very close.
+
+
+      But a computer stores numbers with about 16 significant digits. With `h = 1e-12`, `f(x + h)` and `f(x)` agree in almost every digit, and subtracting
+      them throws most of those digits away. What's left is mostly rounding noise, which then gets divided by a tiny number and blown up.
+
+
+      So there's a sweet spot, roughly `1e-4` to `1e-6` for everyday numbers. `1e-5` is shorthand for `0.00001`. Later in this unit you'll meet a better
+      formula that nudges both ways, and is accurate with a bigger `h`.
+    code: |
+      def f(x):
+          return x ** 2
+
+      for h in [1, 0.01, 0.0001, 1e-12]:
+          print(h, (f(3 + h) - f(3)) / h)
+    subgoals:
+      - { line: 5, label: 'Same formula, four sizes' }
+    predict: Which `h` gives the answer closest to 6?
+
+  - type: choice
+    id: h-choice
+    prompt: Someone sets `h = 1e-15` to make their slope "as exact as possible". What happens?
+    choices:
+      - The answer gets worse, because rounding errors dominate a tiny difference
+      - It's exact, because smaller is always better
+      - Python refuses numbers that small
+      - It's the same as `h = 0.0001`
+    answer: The answer gets worse, because rounding errors dominate a tiny difference
+    why: >-
+      Smaller is better only until the subtraction loses its digits. After that, the result is mostly noise.
+    variants:
+      - prompt: Why does `h = 1` give a poor estimate of the slope of `x ** 2` at 3?
+        choices:
+          - It measures the average slope from 3 to 4, where the curve gets steeper
+          - Because 1 is an integer
+          - It's too small for the computer to store
+        answer: It measures the average slope from 3 to 4, where the curve gets steeper
+        why: >-
+          A big step averages over a long stretch of the curve.
+
+  - type: fix
+    id: fix-slope
+    prompt: '`slope(f, x)` should estimate the slope at `x`, so `slope(square, 3)` is about `6`. It gives about `7`. Fix it.'
+    code: |
+      def square(x):
+          return x ** 2
+
+      def slope(f, x):
+          h = 1
+          return (f(x + h) - f(x)) / h
+    solution: |
+      def square(x):
+          return x ** 2
+
+      def slope(f, x):
+          h = 0.0001
+          return (f(x + h) - f(x)) / h
+    highlightLine: 5
+    tests:
+      - { call: 'round(slope(square, 3), 2)', expect: '6.0' }
+      - { call: 'round(slope(square, -1), 2)', expect: '-2.0', hidden: true }
+      - { call: 'round(slope(lambda x: x ** 3, 2), 2)', expect: '12.0', hidden: true }
+    why: >-
+      A step of 1 gives the slope of a long chord, not the slope at the point.
+    hints:
+      - How big is the nudge?
+    variants:
+      - prompt: '`slope(f, x)` should estimate the slope at `x`, so `slope(square, 3)` is about `6`. It gives a huge number. Fix it.'
+        code: |
+          def square(x):
+              return x ** 2
+
+          def slope(f, x):
+              h = 0.0001
+              return f(x + h) - f(x) / h
+        solution: |
+          def square(x):
+              return x ** 2
+
+          def slope(f, x):
+              h = 0.0001
+              return (f(x + h) - f(x)) / h
+        highlightLine: 6
+        tests:
+          - { call: 'round(slope(square, 3), 2)', expect: '6.0' }
+          - { call: 'round(slope(square, -1), 2)', expect: '-2.0', hidden: true }
+        hints:
+          - Division happens before subtraction.
+
+  - type: write
+    id: write-slope
+    prompt: >-
+      Write `slope(f, x)`, which estimates the slope of the function `f` at `x` by nudging it with `h = 0.0001`. So `round(slope(lambda x: 5 * x, 2), 3)`
+      is `5.0`.
+    starter: |
+      def slope(f, x):
+          # Your code here
+    solution: |
+      def slope(f, x):
+          h = 0.0001
+          return (f(x + h) - f(x)) / h
+    tests:
+      - { call: 'round(slope(lambda x: 5 * x, 2), 3)', expect: '5.0' }
+      - { call: 'round(slope(lambda x: x ** 2, 4), 2)', expect: '8.0' }
+      - { call: 'round(slope(lambda x: x ** 2, -3), 2)', expect: '-6.0', hidden: true }
+      - { call: 'round(slope(lambda x: 7, 1), 3)', expect: '0.0', hidden: true }
+    why: >-
+      Nudge, subtract, divide by the nudge.
+    hints:
+      - '`(f(x + h) - f(x)) / h`'
+    variants:
+      - prompt: >-
+          Write `steeper(f, a, b)`, which gives back whichever of `a` and `b` the function `f` is steeper at, meaning its slope is further from 0. Estimate
+          slopes by nudging with `h = 0.0001`. So `steeper(lambda x: x ** 2, 1, -3)` gives back `-3`.
+        starter: |
+          def steeper(f, a, b):
+              # Your code here
+        solution: |
+          def steeper(f, a, b):
+              h = 0.0001
+              sa = (f(a + h) - f(a)) / h
+              sb = (f(b + h) - f(b)) / h
+              if abs(sa) >= abs(sb):
+                  return a
+              return b
+        tests:
+          - { call: 'steeper(lambda x: x ** 2, 1, -3)', expect: '-3' }
+          - { call: 'steeper(lambda x: x ** 2, 5, 2)', expect: '5' }
+          - { call: 'steeper(lambda x: x ** 3, -2, 1)', expect: '-2', hidden: true }
+        hints:
+          - Work out both slopes, then compare `abs` of each.
+
+  - type: choice
+    id: remember-numpy
+    kind: predict
+    prompt: From the last unit. What does this print?
+    code: |
+      import numpy as np
+      x = np.array([1.0, 2.0, 3.0])
+      print(((x - 2) ** 2).mean())
+    choices: ['0.6666666666666666', '2.0', '[1. 0. 1.]', '0.0']
+    answer: '0.6666666666666666'
+    why: >-
+      The squares are 1, 0 and 1, and their mean is two thirds. You'll see this shape again: it's a mean squared error.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A slope is how fast the output changes as the input goes up: positive means rising, negative falling, 0 flat. For a curve, the slope depends on
+      where you are, and the slope at one point is the derivative. You can estimate it by nudging: `(f(x + h) - f(x)) / h` with a small `h`, but not so
+      small that rounding takes over.
+
+
+      Next: rules that give the exact derivative of common functions, so you don't have to nudge every time.

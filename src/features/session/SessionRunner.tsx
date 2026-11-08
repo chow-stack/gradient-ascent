@@ -53,6 +53,15 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const [result, setResult] = useState<GradeResult | undefined>()
   const [hintsUsed, setHintsUsed] = useState(0)
   const [shake, setShake] = useState(0)
+  const shakeRef = useRef<HTMLDivElement>(null)
+  // Replays the shake on each wrong answer without remounting the card.
+  useEffect(() => {
+    if (!shake) return
+    shakeRef.current?.getAnimations?.().forEach((a) => {
+      a.cancel()
+      a.play()
+    })
+  }, [shake])
   // Explain cards: the AI's grade, whether the learner grades themselves instead, and a saved disagreement.
   const [ai, setAi] = useState<AiState>({ status: 'off' })
   const [selfGrading, setSelfGrading] = useState(false)
@@ -470,8 +479,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             </p>
           )}
           <div
-            // A new key replays the shake. Projects don't shake, and remounting would lose a game in progress.
-            key={fullHeight ? 'project' : shake}
+            // Never remount on a wrong answer: that reshuffled the choices and lost a game in progress.
+            ref={shakeRef}
             className={
               fullHeight
                 ? 'flex min-h-0 flex-1 flex-col'

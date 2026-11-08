@@ -261,11 +261,27 @@ Written in the current format. Each lesson's code runs in real NumPy, and plots 
 
 **Exit test:** predict shapes and vectorise loops. It's the checkpoint.
 
-### Unit 6 · Calculus refresh and gradient descent
+### Unit 6 · Calculus refresh and gradient descent _(built)_
 
-Opens with a 5-minute diagnostic (slope, power rule, composition, logs, numeric derivatives) that skips whatever
-survived. Then nudging, the chain rule, partial derivatives and gradients (AB/BC usually skips these two), gradient
-descent. **Project · Fit a line** in NumPy, with a gradient check.
+Every rule is checked against a nudge in code, so no calculus background is assumed. The planned diagnostic that skips
+lessons isn't built: the app has no way to skip lessons yet.
+
+| #   | Lesson                            | Teaches                                                                                       | Target mistakes                                                                                         |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1   | Slope by nudging                  | Slope of a line, its sign, `(f(x + h) - f(x)) / h`, choosing `h`                              | Rise over run between far-apart points is the slope at a point; `h = 1e-15` is more exact; nudging by 1 |
+| 2   | Derivative rules                  | Power rule, sums and constants, `exp`, `log`, checking a rule with a nudge, a valley's bottom | Not lowering the power; a constant's slope is the constant; `exp`'s slope at 0 is 0                     |
+| 3   | The chain rule                    | Outer slope at the inner value times inner slope, longer chains, `(w * x - y) ** 2`           | Dropping the inner slope; adding slopes; outer slope worked out at `x`                                  |
+| 4   | Partial derivatives and gradients | One input at a time, the gradient points uphill, `numeric_grad` with copies                   | Nudging every input at once; the gradient points downhill; `q = p` instead of a copy                    |
+| 5   | Gradient descent                  | `w = w - lr * grad(w)`, learning rates, diverging, loss curves, many weights at once          | `+` instead of `-`; bigger rates are always faster; stop when the gradient is exactly 0                 |
+| 6   | Fitting a line                    | Predictions for a whole array, MSE, `dw` and `db` with NumPy, the training loop               | `y - pred` flips the gradient; sum instead of mean; dropping the `* x`                                  |
+| 7   | Checking gradients                | Central difference, relative error, a planted bug, checking at ordinary points                | A falling loss proves the gradient; `/ 2 * h`; checking at the bottom, where everything is 0            |
+
+**Checkpoint:** built (12 cards), including writing a whole training loop. **Project · Fit a line** _(built)_: `predict`,
+`loss`, `gradients`, `step` and a `check` against central differences, from scratch. The Play tab plots the data and the
+line beside the loss valley for every `w` and `b`, with the path gradient descent takes. Click to add points, pick where
+to start, and try learning rates from creeping to diverging.
+
+**Exit test:** the checkpoint.
 
 ### Unit 7 · First models, judged honestly
 

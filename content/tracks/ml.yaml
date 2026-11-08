@@ -17,3 +17,6 @@ units:
   - unit: 5
     title: NumPy, shapes and plots
     summary: Arrays, vectorising, broadcasting and matrix maths, the way ML code handles numbers.
+  - unit: 6
+    title: Calculus and gradient descent
+    summary: Slopes, the chain rule and gradients, worked out in code, and how a model uses them to learn.

@@ -9,6 +9,8 @@ import { locked, type ViewProps } from './types'
 type ChoiceCard = Extract<Card, { type: 'choice' }>
 
 const looksLikeCode = (s: string) => !s.includes(' ') || /[()[\]{}=%+*'"\d]/.test(s)
+/** A choice written as one piece of code in backticks, like `` `2 * x` ``. */
+const wrapped = (s: string) => /^`[^`]+`$/.test(s)
 
 export function ChoiceView({ card, answer, setAnswer, phase }: ViewProps<ChoiceCard>) {
   // Shuffled once per mount, so reviews don't reward remembering the position.
@@ -41,7 +43,13 @@ export function ChoiceView({ card, answer, setAnswer, phase }: ViewProps<ChoiceC
               onClick={() => setAnswer({ type: 'choice', choice: c })}
             >
               <span className="ga-choice-key">{i + 1}</span>
-              {code ? <code className="whitespace-pre-wrap">{c}</code> : <span>{inline(c)}</span>}
+              {wrapped(c) ? (
+                <code className="whitespace-pre-wrap">{c.slice(1, -1)}</code>
+              ) : code && !c.includes('`') ? (
+                <code className="whitespace-pre-wrap">{c}</code>
+              ) : (
+                <span>{inline(c)}</span>
+              )}
             </button>
           )
         })}

@@ -8,6 +8,7 @@ export const PLAY_NEEDS: Record<PlayKind, string[]> = {
   blackjack: ['Card', 'Deck', 'Hand', 'dealer_turn', 'outcome'],
   life: ['neighbours', 'step', 'random_world', 'stamp'],
   doodle: ['flatten', 'distances', 'predict'],
+  fit: ['predict', 'loss', 'gradients', 'step', 'check'],
 }
 
 /** What a game gets: the learner's program, loaded and callable. */
@@ -62,6 +63,13 @@ _g.shape == (26, 40) and step(_g).shape == (26, 40) and neighbours(_g).shape == 
   doodle: {
     check: `_x = train[0].reshape(-1)
 str(predict(flatten(train), labels, _x)) == str(labels[0]) and len(distances(flatten(train), _x)) == len(train)`,
+  },
+  fit: {
+    check: `_np = __import__("numpy")
+_x = _np.array([-1.0, 0.0, 1.0])
+_y = _np.array([-1.0, 1.0, 3.0])
+_s = step(0.0, 0.0, _x, _y, 0.1)
+len(predict(1.0, 0.0, _x)) == 3 and float(loss(2.0, 1.0, _x, _y)) == 0.0 and len(gradients(0.0, 0.0, _x, _y)) == 2 and len(_s) == 2 and max(check(0.5, 0.5, _x, _y)) < 1e-5`,
   },
 }
 

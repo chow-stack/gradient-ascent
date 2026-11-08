@@ -1,0 +1,316 @@
+id: p6-gradient
+track: ml
+unit: 6
+order: 4
+title: Partial derivatives and gradients
+summary: Slopes for functions of many inputs, one input at a time, collected into a gradient.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: More than one knob
+    body: >-
+      A real loss depends on many numbers at once. A line has a weight `w` and a bias `b`, and a neural network has millions of weights. To train it, you
+      need to know how the loss changes as each one changes.
+
+
+      The idea is simple: nudge one input, hold the others still, and measure. That's a partial derivative. Put one for every input into an array and you
+      have the gradient, the arrow that says which way is uphill.
+
+
+      By the end you'll work out gradients by hand and with code, and know why the gradient points the way it does.
+
+  - type: learn
+    id: partial
+    title: Nudge one, hold the rest
+    body: >-
+      Take `f(w, b) = w ** 2 + w * b`. To get the slope with respect to `w`, treat `b` as a fixed number, like 2 or 7. Then `w ** 2` gives `2 * w`, and `w
+      * b` is `w` times a constant, so it gives `b`. The partial derivative with respect to `w` is `2 * w + b`.
+
+
+      With respect to `b`, treat `w` as fixed. `w ** 2` doesn't change at all when `b` moves, so it gives 0. `w * b` gives `w`. The partial with respect to
+      `b` is just `w`.
+
+
+      In code, the nudge is the same as before, applied to one input only. The other stays exactly where it was.
+    code: |
+      def f(w, b):
+          return w ** 2 + w * b
+
+      h = 0.0001
+      w, b = 1.0, 2.0
+      print(round((f(w + h, b) - f(w, b)) / h, 2))
+      print(round((f(w, b + h) - f(w, b)) / h, 2))
+      print(2 * w + b, w)
+    subgoals:
+      - { line: 6, label: 'Nudge w only' }
+      - { line: 7, label: 'Nudge b only' }
+      - { line: 8, label: 'The rules agree' }
+    predict: What will the first line print?
+
+  - type: choice
+    id: partial-pick
+    prompt: For `f(w, b) = 3 * w + w * b ** 2`, what's the partial derivative with respect to `b`?
+    choices: ['`2 * w * b`', '`3 + b ** 2`', '`2 * b`', '`3 + 2 * w * b`']
+    answer: '`2 * w * b`'
+    why: >-
+      Hold `w` fixed. `3 * w` doesn't change with `b`, and `w * b ** 2` is a constant `w` times `b ** 2`, which gives `w * 2 * b`.
+    variants:
+      - prompt: For `f(w, b) = 3 * w + w * b ** 2`, what's the partial derivative with respect to `w`?
+        choices: ['`3 + b ** 2`', '`2 * w * b`', '`3`', '`3 * w + b ** 2`']
+        answer: '`3 + b ** 2`'
+        why: >-
+          Hold `b` fixed. `3 * w` gives 3, and `w * b ** 2` is `w` times the constant `b ** 2`, which gives `b ** 2`.
+      - prompt: For `f(x, y) = x * y + y`, what's the partial derivative with respect to `y`?
+        choices: ['`x + 1`', '`y`', '`x * y`', '`1`']
+        answer: '`x + 1`'
+        why: >-
+          Hold `x` fixed. `x * y` gives `x`, and `y` gives 1.
+
+  - type: learn
+    id: gradient
+    title: The gradient points uphill
+    body: >-
+      Put the partials in one array and you have the gradient. For `f(w, b) = w ** 2 + w * b`, it's `[2 * w + b, w]`. At `w = 1, b = 2`, that's `[4, 1]`.
+
+
+      The gradient is a direction. Step a little along it and `f` goes up, faster than in any other direction. Step a little against it, along minus the
+      gradient, and `f` goes down fastest. That second fact is the whole of the next lesson.
+
+
+      Each number also says how much its input matters right now. Here `w` matters four times as much as `b`, so the biggest change comes from moving `w`.
+    code: |
+      import numpy as np
+
+      def f(p):
+          w, b = p
+          return w ** 2 + w * b
+
+      def grad(p):
+          w, b = p
+          return np.array([2 * w + b, w])
+
+      p = np.array([1.0, 2.0])
+      g = grad(p)
+      print(g)
+      print(round(f(p), 3), round(f(p + 0.01 * g), 3), round(f(p - 0.01 * g), 3))
+    subgoals:
+      - { line: 9, label: 'One partial per input' }
+      - { line: 14, label: 'Along it, up. Against it, down.' }
+    predict: Which of the three numbers on the last line will be smallest?
+
+  - type: choice
+    id: uphill
+    kind: concept
+    prompt: The gradient of a loss at the current weights is `[4, -2]`. To make the loss smaller, which way should the weights move?
+    choices:
+      [
+        'By a small multiple of `[-4, 2]`',
+        'By a small multiple of `[4, -2]`',
+        'By `[0, 0]`, since one partial is negative',
+        'Only the first weight, by `-4`',
+      ]
+    answer: 'By a small multiple of `[-4, 2]`'
+    why: >-
+      The gradient points uphill, so downhill is the opposite: minus the gradient. That lowers the first weight and raises the second.
+    variants:
+      - prompt: At some point the gradient is `[0.1, -5]`. Which input is the loss more sensitive to there?
+        choices: ['The second', 'The first', 'Both equally', "Neither, since they're small"]
+        answer: 'The second'
+        why: >-
+          A partial of size 5 means a small nudge to the second input changes the loss 50 times as much as the same nudge to the first. The sign only says
+          which way.
+
+  - type: explain
+    id: explain-both
+    prompt: This is meant to be the partial derivative with respect to `w`, which is `2 * w + b`, or 4 here. It prints 5.0. What went wrong?
+    code: |
+      def f(w, b):
+          return w ** 2 + w * b
+
+      h = 0.0001
+      print(round((f(1 + h, 2 + h) - f(1, 2)) / h, 2))
+    model: >-
+      It nudged both `w` and `b` at once. Then the change includes how `f` responds to `b` too, so you get the two partials added together, 4 + 1. A partial
+      derivative nudges one input and keeps the others fixed.
+    keyPoints:
+      - Both inputs were nudged instead of only w
+      - A partial derivative holds the other inputs fixed
+
+  - type: blank
+    id: fill-grad
+    prompt: Fill in the blank so `grad(w, b)` is the gradient of `w ** 2 + w * b`, and the check shows `True`.
+    code: |
+      import numpy as np
+
+      def grad(w, b):
+          return np.array([2 * w + b, ____])
+
+      def f(w, b):
+          return w ** 2 + w * b
+
+      h = 0.0001
+      nudged = np.array([(f(3 + h, -1) - f(3, -1)) / h, (f(3, -1 + h) - f(3, -1)) / h])
+      print(np.allclose(grad(3.0, -1.0), nudged, atol=0.01))
+    answers: [['w']]
+    expectOutput: 'True'
+    why: >-
+      With `w` held fixed, `w ** 2` doesn't change, and `w * b` changes `w` times as fast as `b`.
+    variants:
+      - prompt: Fill in the blank so `grad(x, y)` is the gradient of `x * y ** 2`, and the check shows `True`.
+        code: |
+          import numpy as np
+
+          def grad(x, y):
+              return np.array([y ** 2, ____])
+
+          def f(x, y):
+              return x * y ** 2
+
+          h = 0.0001
+          nudged = np.array([(f(2 + h, 3) - f(2, 3)) / h, (f(2, 3 + h) - f(2, 3)) / h])
+          print(np.allclose(grad(2.0, 3.0), nudged, atol=0.01))
+        answers: [['2 * x * y', '2*x*y', 'x * 2 * y', '2 * y * x', 'x * y * 2']]
+        expectOutput: 'True'
+        why: >-
+          With `x` held fixed, `y ** 2` gives `2 * y`, times the constant `x`.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: A gradient for any function
+    body: >-
+      You won't always want to work partials out by hand. `numeric_grad` does it with nudges: for each input in turn, copy the array, nudge that one entry,
+      and measure the change. Every other entry stays put.
+
+
+      The copy matters. Writing `q = p` doesn't make a new array, it gives the same array a second name. Nudge `q[i]` and you've nudged `p` too, so `f(q) -
+      f(p)` is always 0.
+
+
+      Use floats, too. An array made from `[2, 5]` holds integers, and adding 0.0001 to an integer entry gets cut back to the integer.
+
+
+      This is slow for a million weights, since it calls `f` once per input. That's why real training uses the rules instead. But it's the perfect way to
+      check rules you worked out yourself, which is lesson 7.
+    code: |
+      import numpy as np
+
+      def numeric_grad(f, p, h=0.0001):
+          g = np.zeros(len(p))
+          for i in range(len(p)):
+              q = p.copy()
+              q[i] += h
+              g[i] = (f(q) - f(p)) / h
+          return g
+
+      def f(p):
+          return p[0] ** 2 + 3 * p[1]
+
+      print(np.round(numeric_grad(f, np.array([2.0, 5.0])), 2))
+    subgoals:
+      - { line: 5, label: 'One input at a time' }
+      - { line: 6, label: 'Copy, so p stays put' }
+      - { line: 8, label: "That input's partial" }
+    predict: What two numbers will it print?
+
+  - type: fix
+    id: fix-copy
+    prompt: '`numeric_grad(f, p)` should give the gradient, so for `f` below and `p = [2.0, 5.0]` it gives about `[4.0, 3.0]`. It gives all zeros. Fix it.'
+    code: |
+      import numpy as np
+
+      def f(p):
+          return p[0] ** 2 + 3 * p[1]
+
+      def numeric_grad(f, p, h=0.0001):
+          g = np.zeros(len(p))
+          for i in range(len(p)):
+              q = p
+              q[i] += h
+              g[i] = (f(q) - f(p)) / h
+          return g
+    solution: |
+      import numpy as np
+
+      def f(p):
+          return p[0] ** 2 + 3 * p[1]
+
+      def numeric_grad(f, p, h=0.0001):
+          g = np.zeros(len(p))
+          for i in range(len(p)):
+              q = p.copy()
+              q[i] += h
+              g[i] = (f(q) - f(p)) / h
+          return g
+    highlightLine: 9
+    tests:
+      - { call: 'np.round(numeric_grad(f, np.array([2.0, 5.0])), 2).tolist()', expect: '[4.0, 3.0]' }
+      - {
+          call: 'np.round(numeric_grad(lambda p: p[0] * p[1], np.array([3.0, 4.0])), 2).tolist()',
+          expect: '[4.0, 3.0]',
+          hidden: true,
+        }
+      - { call: 'np.round(numeric_grad(f, np.array([-1.0, 0.0])), 2).tolist()', expect: '[-2.0, 3.0]', hidden: true }
+    why: >-
+      `q = p` makes `q` another name for the same array, so the nudge moves `p` too and the difference is 0. `p.copy()` makes a separate array.
+    hints:
+      - After `q = p`, is `q` a new array or the same one?
+
+  - type: write
+    id: write-grad
+    prompt: >-
+      Write `grad(x, y)` that returns the gradient of `x ** 2 * y + y ** 3` as a tuple `(df_dx, df_dy)`. So `grad(1.0, 2.0)` is `(4.0, 13.0)`.
+    starter: |
+      def grad(x, y):
+          # Your code here
+    solution: |
+      def grad(x, y):
+          return (2 * x * y, x ** 2 + 3 * y ** 2)
+    tests:
+      - { call: 'grad(1.0, 2.0)', expect: '(4.0, 13.0)' }
+      - { call: 'grad(0.0, 1.0)', expect: '(0.0, 3.0)' }
+      - { call: 'grad(3.0, -1.0)', expect: '(-6.0, 12.0)', hidden: true }
+      - { call: 'grad(-2.0, 0.5)', expect: '(-2.0, 4.75)', hidden: true }
+    why: >-
+      With `y` fixed, `x ** 2 * y` gives `2 * x * y` and `y ** 3` gives 0. With `x` fixed, `x ** 2 * y` gives `x ** 2` and `y ** 3` gives `3 * y ** 2`.
+    hints:
+      - For `df_dx`, treat `y` as a number. Which terms change when `x` does?
+      - '`df_dy` is `x ** 2 + 3 * y ** 2`.'
+    variants:
+      - prompt: >-
+          Write `grad(w, b)` that returns the gradient of `(w + 2 * b) ** 2` as a tuple `(df_dw, df_db)`. So `grad(1.0, 1.0)` is `(6.0, 12.0)`.
+        starter: |
+          def grad(w, b):
+              # Your code here
+        solution: |
+          def grad(w, b):
+              u = w + 2 * b
+              return (2 * u, 2 * u * 2)
+        tests:
+          - { call: 'grad(1.0, 1.0)', expect: '(6.0, 12.0)' }
+          - { call: 'grad(0.0, 0.0)', expect: '(0.0, 0.0)' }
+          - { call: 'grad(2.0, -1.5)', expect: '(-2.0, -4.0)', hidden: true }
+        hints:
+          - It's the chain rule. The inside, `w + 2 * b`, has slope 1 for `w` and 2 for `b`.
+
+  - type: choice
+    id: remember-chain
+    prompt: From the last lesson. What's the derivative of `(4 * x + 1) ** 2`?
+    choices: ['`2 * (4 * x + 1) * 4`', '`2 * (4 * x + 1)`', '`8 * x`', '`(4 * x + 1) * 4`']
+    answer: '`2 * (4 * x + 1) * 4`'
+    why: >-
+      The outside's slope, `2 * u`, at the inside's value, times the inside's slope, 4.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A partial derivative is the slope with respect to one input while the others stay fixed. The gradient collects one partial per input into an array.
+      It points uphill, the way the function rises fastest, so minus the gradient points downhill. `numeric_grad` finds a gradient by nudging one copied
+      entry at a time.
+
+
+      Next: walk downhill, one small step at a time. That's gradient descent.

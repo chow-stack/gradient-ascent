@@ -1,0 +1,349 @@
+id: p6-descent
+track: ml
+unit: 6
+order: 5
+title: Gradient descent
+summary: Walk downhill one small step at a time, and pick a step size that gets there.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Learning is walking downhill
+    body: >-
+      Training a model means finding weights that make the loss small. You can't try every possible weight, but you can do something much smarter: stand
+      where you are, ask the gradient which way is uphill, and take a small step the other way. Repeat.
+
+
+      That loop is gradient descent. It trains almost every model in machine learning, from a straight line to the largest neural networks.
+
+
+      By the end you'll write it yourself, and know how to choose the step size so it gets to the bottom without overshooting.
+
+  - type: learn
+    id: step
+    title: One line does the work
+    body: >-
+      Take the loss `(w - 3) ** 2`. It's smallest at `w = 3`, and its slope is `2 * (w - 3)`. Start somewhere, say `w = 0`.
+
+
+      Each step is `w = w - lr * grad(w)`. The gradient points uphill, so subtracting it goes downhill. `lr`, the learning rate, is how big a step to take,
+      as a fraction of the gradient.
+
+
+      Watch what happens near the bottom. The slope gets smaller, so the steps do too. That's why it slows down and settles instead of running past.
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      w = 0.0
+      lr = 0.1
+      for step in range(30):
+          w = w - lr * grad(w)
+          if step < 3:
+              print(step, round(w, 3))
+      print(round(w, 3))
+    subgoals:
+      - { line: 7, label: 'Step against the slope' }
+      - { line: 9, label: 'Big steps at first' }
+      - { line: 10, label: 'Settles near 3' }
+    predict: What will `w` be after the first step?
+
+  - type: choice
+    id: trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      w = 0.0
+      w = w - 0.25 * grad(w)
+      w = w - 0.25 * grad(w)
+      print(w)
+    choices: ['2.25', '1.5', '3.0', '-3.0']
+    answer: '2.25'
+    why: >-
+      At 0 the slope is -6, so the first step goes to 1.5. There the slope is -3, so the second step adds 0.75.
+    variants:
+      - code: |
+          def grad(w):
+              return 2 * (w - 3)
+
+          w = 0.0
+          w = w - 0.5 * grad(w)
+          print(w)
+        choices: ['3.0', '6.0', '-3.0', '1.5']
+        answer: '3.0'
+        why: >-
+          The slope at 0 is -6, and half of it, subtracted, is +3. For this loss, a rate of 0.5 lands on the bottom in one step.
+      - code: |
+          def grad(w):
+              return 2 * w
+
+          w = 1.0
+          for _ in range(2):
+              w = w - 0.1 * grad(w)
+          print(round(w, 2))
+        choices: ['0.64', '0.8', '0.6', '0.0']
+        answer: '0.64'
+        why: >-
+          Each step multiplies `w` by `1 - 0.2`, which is 0.8. Twice gives 0.64.
+
+  - type: learn
+    id: rate
+    title: Too small, too big, just right
+    body: >-
+      The learning rate is the one number you always have to choose. Too small, and it creeps: after 30 steps it's barely moved. Too big, and each step
+      overshoots the bottom to the other side. A little too big and it zigzags but still settles. Much too big and every overshoot is worse than the last,
+      and `w` flies off. That's called diverging.
+
+
+      A bigger rate isn't always faster. Past a certain size it gets slower, then fails completely. For `(w - 3) ** 2`, anything above 1 diverges.
+
+
+      In practice you try a few rates that differ by about 3 times, like 0.01, 0.03, 0.1 and 0.3, and watch the loss.
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      for lr in [0.01, 0.1, 0.9, 1.1]:
+          w = 0.0
+          for _ in range(30):
+              w = w - lr * grad(w)
+          print(lr, round(w, 2))
+    subgoals:
+      - { line: 4, label: 'Same start, four rates' }
+      - { line: 8, label: 'Slow, good, zigzag, diverged' }
+    predict: Which rate will end furthest from 3?
+
+  - type: choice
+    id: rate-pick
+    kind: concept
+    prompt: The loss goes up and down from one step to the next, and the swings get bigger each time. What's the most likely fix?
+    choices:
+      [
+        'Use a smaller learning rate',
+        'Use a bigger learning rate',
+        'Run more steps',
+        'Add the gradient instead of subtracting it',
+      ]
+    answer: 'Use a smaller learning rate'
+    why: >-
+      Growing swings mean each step overshoots the bottom by more than the last. Smaller steps stop the overshoot. More steps would only make it worse.
+    variants:
+      - prompt: After 1,000 steps the loss is still falling, very slowly and smoothly. What's the most likely fix?
+        choices:
+          [
+            'Use a bigger learning rate',
+            'Use a smaller learning rate',
+            'Start from w = 0',
+            'Stop, since the loss is falling',
+          ]
+        answer: 'Use a bigger learning rate'
+        why: >-
+          Smooth and slow means the steps are too timid. A bigger rate covers more ground per step, as long as it doesn't start to overshoot.
+      - prompt: When should gradient descent stop?
+        choices:
+          [
+            'When the loss stops changing much from step to step',
+            'When the gradient is exactly 0',
+            'After exactly 100 steps',
+            'When the loss is exactly 0',
+          ]
+        answer: 'When the loss stops changing much from step to step'
+        why: >-
+          The gradient gets very small near the bottom but almost never hits 0 exactly, and many losses can't reach 0 at all. You stop when progress
+          stalls, or after a budget of steps.
+
+  - type: explain
+    id: explain-ascent
+    prompt: This is meant to find the bottom of `(w - 3) ** 2`, but `w` runs off to a huge number. Why?
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      w = 0.0
+      for _ in range(20):
+          w = w + 0.1 * grad(w)
+      print(round(w))
+    model: >-
+      It adds the gradient instead of subtracting it. The gradient points uphill, so every step climbs higher on the loss. That's gradient ascent, which is
+      where this app's name comes from. To go down, use `w - lr * grad(w)`.
+    keyPoints:
+      - It adds the gradient (+) instead of subtracting it
+      - The gradient points uphill, so this climbs the loss
+
+  - type: blank
+    id: fill-step
+    prompt: Fill in the blank so this descends to the bottom of `(w - 3) ** 2` and prints `3.0`.
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      w = 10.0
+      for _ in range(100):
+          w = w - 0.1 * ____
+      print(round(w, 3))
+    answers: [['grad(w)']]
+    expectOutput: '3.0'
+    why: >-
+      Each step subtracts the learning rate times the slope where `w` is now.
+    variants:
+      - prompt: Fill in the blank so this descends to the bottom of `(w + 1) ** 2` and prints `-1.0`.
+        code: |
+          def grad(w):
+              return 2 * (w + 1)
+
+          w = 4.0
+          for _ in range(100):
+              w = w ____ 0.1 * grad(w)
+          print(round(w, 3))
+        answers: [['-']]
+        expectOutput: '-1.0'
+        why: >-
+          Subtract, to step against the gradient, which points uphill.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Two weights and a loss curve
+    body: >-
+      Gradient descent doesn't care how many weights there are. Keep them in one NumPy array, and the same line, `p = p - lr * grad(p)`, moves every weight
+      at once, each by its own partial.
+
+
+      Here the loss is `(w - 1) ** 2 + (b + 2) ** 2`, smallest at `w = 1, b = -2`. Saving the loss at each step gives a loss curve, the first thing to look
+      at when training anything. It should drop fast and then flatten out.
+    code: |
+      import numpy as np
+
+      def loss(p):
+          return (p[0] - 1) ** 2 + (p[1] + 2) ** 2
+
+      def grad(p):
+          return np.array([2 * (p[0] - 1), 2 * (p[1] + 2)])
+
+      p = np.array([0.0, 0.0])
+      losses = []
+      for _ in range(25):
+          losses.append(loss(p))
+          p = p - 0.1 * grad(p)
+
+      print([round(x, 2) for x in losses[:5]])
+      print(np.round(p, 2))
+    subgoals:
+      - { line: 12, label: 'Keep the loss each step' }
+      - { line: 13, label: 'Every weight moves at once' }
+      - { line: 15, label: 'Drops fast, then flattens' }
+    predict: Will the loss go down by the same amount each step?
+
+  - type: fix
+    id: fix-sign
+    prompt: '`descend(w, lr, steps)` should run gradient descent on `(w - 3) ** 2`, so `round(descend(0.0, 0.1, 100), 3)` is `3.0`. Fix it.'
+    code: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      def descend(w, lr, steps):
+          for _ in range(steps):
+              w = w + lr * grad(w)
+          return w
+    solution: |
+      def grad(w):
+          return 2 * (w - 3)
+
+      def descend(w, lr, steps):
+          for _ in range(steps):
+              w = w - lr * grad(w)
+          return w
+    highlightLine: 6
+    tests:
+      - { call: 'round(descend(0.0, 0.1, 100), 3)', expect: '3.0' }
+      - { call: 'round(descend(10.0, 0.2, 50), 3)', expect: '3.0', hidden: true }
+      - { call: 'round(descend(0.0, 0.1, 1), 3)', expect: '0.6', hidden: true }
+      - { call: 'descend(0.0, 0.25, 2)', expect: '2.25', hidden: true }
+    why: >-
+      Adding the gradient climbs. Subtracting it descends.
+    hints:
+      - Does the gradient point uphill or downhill?
+    variants:
+      - prompt: '`descend(w, lr, steps)` should run gradient descent on `(w - 3) ** 2`, so `round(descend(0.0, 0.1, 100), 3)` is `3.0`. It stops after one step. Fix it.'
+        code: |
+          def grad(w):
+              return 2 * (w - 3)
+
+          def descend(w, lr, steps):
+              for _ in range(steps):
+                  w = w - lr * grad(w)
+                  return w
+        solution: |
+          def grad(w):
+              return 2 * (w - 3)
+
+          def descend(w, lr, steps):
+              for _ in range(steps):
+                  w = w - lr * grad(w)
+              return w
+        highlightLine: 7
+        tests:
+          - { call: 'round(descend(0.0, 0.1, 100), 3)', expect: '3.0' }
+          - { call: 'round(descend(10.0, 0.2, 50), 3)', expect: '3.0', hidden: true }
+          - { call: 'descend(0.0, 0.25, 2)', expect: '2.25', hidden: true }
+          - { call: 'round(descend(5.0, 0.1, 40), 2)', expect: '3.0', hidden: true }
+          - { call: 'round(descend(0.0, 0.1, 2), 3)', expect: '1.08', hidden: true }
+        hints:
+          - The `return` is inside the loop.
+
+  - type: write
+    id: write-descend
+    prompt: >-
+      Write `descend(grad, w, lr, steps)` that takes `steps` steps of gradient descent from `w` and returns where it ends up. `grad` is a function that gives
+      the gradient at a point. It should work for a single number or a NumPy array.
+    starter: |
+      import numpy as np
+
+      def descend(grad, w, lr, steps):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def descend(grad, w, lr, steps):
+          for _ in range(steps):
+              w = w - lr * grad(w)
+          return w
+    tests:
+      - { call: 'descend(lambda w: 2 * (w - 3), 0.0, 0.5, 1)', expect: '3.0' }
+      - { call: 'descend(lambda w: 2 * (w - 3), 0.0, 0.25, 2)', expect: '2.25' }
+      - { call: 'round(descend(lambda w: 2 * w, 1.0, 0.1, 3), 4)', expect: '0.512', hidden: true }
+      - { call: 'descend(lambda w: 2 * w, 5.0, 0.1, 0)', expect: '5.0', hidden: true }
+      - {
+          call: 'np.round(descend(lambda p: 2 * (p - np.array([1.0, -2.0])), np.array([0.0, 0.0]), 0.1, 200), 3).tolist()',
+          expect: '[1.0, -2.0]',
+          hidden: true,
+        }
+    why: >-
+      The loop is the whole algorithm: step against the gradient, `steps` times.
+    hints:
+      - Loop `steps` times, updating `w` each time.
+      - '`w = w - lr * grad(w)`'
+
+  - type: choice
+    id: remember-gradient
+    prompt: From the last lesson. For `f(w, b) = w * b + b`, what's the gradient?
+    choices: ['`[b, w + 1]`', '`[w, b + 1]`', '`[b + 1, w]`', '`[w * b, b]`']
+    answer: '`[b, w + 1]`'
+    why: >-
+      With `b` fixed, `w * b` gives `b`. With `w` fixed, `w * b` gives `w` and `b` gives 1.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Gradient descent repeats one step, `w = w - lr * grad(w)`, which moves every weight a little against its partial. The learning rate sets the step size:
+      too small creeps, too big zigzags or diverges. A loss curve, saved as you go, shows which one you've got. Adding the gradient instead climbs, which is
+      gradient ascent.
+
+
+      Next: put it to work, fitting a line to real data.

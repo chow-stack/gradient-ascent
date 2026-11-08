@@ -1,0 +1,157 @@
+id: p6-project-fit
+track: ml
+unit: 6
+order: 9
+kind: project
+title: 'Project: Fit a line'
+summary: Build linear regression from scratch, then click in data points and watch your gradient descent roll down the loss valley.
+
+cards:
+  - type: project
+    id: fit
+    play: fit
+    brief: >-
+      You'll build the whole of linear regression yourself: a prediction, a loss, its gradient, a training step, and a gradient check to prove the
+      gradient is right. No libraries beyond NumPy.
+
+
+      Then the Play tab hands your functions some data. Click to add points, press Train, and watch two things move at once: the line bending to fit the
+      points, and a dot rolling down the loss valley, a map of the loss for every `w` and `b`. Try the learning rates and see creeping, settling and
+      diverging for yourself.
+    starter: |
+      import numpy as np
+
+      # Try your functions on these points. They sit on the line y = 2x + 1.
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+    solution: |
+      import numpy as np
+
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+
+
+      def predict(w, b, x):
+          return w * x + b
+
+
+      def loss(w, b, x, y):
+          return np.mean((predict(w, b, x) - y) ** 2)
+
+
+      def gradients(w, b, x, y):
+          err = predict(w, b, x) - y
+          return np.mean(2 * err * x), np.mean(2 * err)
+
+
+      def step(w, b, x, y, lr):
+          dw, db = gradients(w, b, x, y)
+          return w - lr * dw, b - lr * db
+
+
+      def check(w, b, x, y):
+          h = 0.00001
+          dw, db = gradients(w, b, x, y)
+          nw = (loss(w + h, b, x, y) - loss(w - h, b, x, y)) / (2 * h)
+          nb = (loss(w, b + h, x, y) - loss(w, b - h, x, y)) / (2 * h)
+          return (
+              abs(dw - nw) / max(abs(dw) + abs(nw), 1e-12),
+              abs(db - nb) / max(abs(db) + abs(nb), 1e-12),
+          )
+    milestones:
+      - title: Predict
+        goal: >-
+          Write `predict(w, b, x)`, the line's prediction `w * x + b`. It should work when `x` is one number or a whole array. Then open the Play tab: your
+          line appears through the points.
+        tests:
+          - { call: 'predict(2.0, 1.0, 3.0)', expect: '7.0' }
+          - { call: 'predict(2.0, 1.0, np.array([0.0, 1.0]))', expect: '[1.0, 3.0]' }
+          - { call: 'predict(-0.5, 0.0, np.array([4.0, -2.0]))', expect: '[-2.0, 1.0]', hidden: true }
+        scope: predict
+        hints:
+          - NumPy does `w * x + b` for every item of an array at once.
+      - title: The loss
+        goal: >-
+          Write `loss(w, b, x, y)`, the mean squared error of the line on the points. Use your `predict`. The Play tab then draws the loss valley.
+        tests:
+          - { call: 'loss(0.0, 0.0, x, y)', expect: '21.0' }
+          - { call: 'loss(2.0, 1.0, x, y)', expect: '0.0' }
+          - {
+              call: 'loss(1.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+              expect: '7.5',
+              hidden: true,
+            }
+          - { call: 'loss(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]))', expect: '0.5', hidden: true }
+        requires: ['name:predict']
+        scope: loss
+        hints:
+          - The errors are `predict(w, b, x) - y`.
+          - Square the errors, then take `np.mean`.
+      - title: The gradient
+        goal: >-
+          Write `gradients(w, b, x, y)`, which gives back the partial derivatives of the loss as a tuple `(dw, db)`.
+        tests:
+          - { call: 'gradients(0.0, 0.0, x, y)', expect: '(-17.0, -8.0)' }
+          - { call: 'gradients(2.0, 1.0, x, y)', expect: '(0.0, 0.0)' }
+          - {
+              call: 'gradients(3.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+              expect: '(4.0, 1.0)',
+              hidden: true,
+            }
+          - {
+              call: 'gradients(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]))',
+              expect: '(2.0, 1.0)',
+              hidden: true,
+            }
+        scope: gradients
+        hints:
+          - "With `err = predict(w, b, x) - y`, each point's slopes are `2 * err * x` for `w` and `2 * err` for `b`."
+          - Take the mean of each, and return them both.
+      - title: One step downhill
+        goal: >-
+          Write `step(w, b, x, y, lr)`, one step of gradient descent, giving back the new `(w, b)`. Use your `gradients`. Then press Train in the Play tab
+          and try each learning rate.
+        tests:
+          - { call: 'step(0.0, 0.0, x, y, 0.1)', expect: '(1.7, 0.8)' }
+          - { call: 'step(2.0, 1.0, x, y, 0.1)', expect: '(2.0, 1.0)' }
+          - {
+              call: 'step(3.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]), 0.5)',
+              expect: '(1.0, -0.5)',
+              hidden: true,
+            }
+          - {
+              call: 'step(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]), 0.25)',
+              expect: '(0.5, 0.75)',
+              hidden: true,
+            }
+        requires: ['name:gradients']
+        scope: step
+        hints:
+          - '`dw, db = gradients(w, b, x, y)`'
+          - Move each against its partial, scaled by `lr`.
+      - title: Check the gradient
+        goal: >-
+          Write `check(w, b, x, y)`. Work out the central difference of `loss` for `w`, then for `b`, with `h = 0.00001`, and give back the two relative
+          errors against `gradients` as a tuple. Use `abs(a - n) / max(abs(a) + abs(n), 1e-12)`. Both should be tiny. Then try Check in the Play tab.
+        tests:
+          - { call: 'max(check(0.5, 0.5, x, y)) < 1e-5', expect: 'True' }
+          - { call: 'len(check(-1.0, 2.0, x, y))', expect: '2' }
+          - {
+              call: 'max(check(1.5, 0.5, np.array([1.0, 2.0, 4.0]), np.array([2.0, 2.0, 5.0]))) < 1e-5',
+              expect: 'True',
+              hidden: true,
+            }
+          - {
+              call: '(lambda g: (globals().__setitem__("gradients", lambda w, b, x, y: (g(w, b, x, y)[0], g(w, b, x, y)[1] / 2)), check(0.5, 0.5, x, y))[1])(gradients)[1] > 0.3',
+              expect: 'True',
+              hidden: true,
+            }
+        requires: ['name:gradients', 'name:loss']
+        scope: check
+        hints:
+          - '`nw = (loss(w + h, b, x, y) - loss(w - h, b, x, y)) / (2 * h)`, and the same for `b`.'
+          - Compare `nw` with `dw` and `nb` with `db`, each with the relative error.
+    extras:
+      - 'Fit a curve: add a `c * x ** 2` term to `predict`, and a third partial to `gradients`.'
+      - Add momentum. Keep a running velocity, `v = 0.9 * v + grad`, and step by `v` instead of the gradient. Does it reach the bottom faster?
+      - Use the mean absolute error, `np.mean(np.abs(err))`, and compare how much the Outlier points pull the line.

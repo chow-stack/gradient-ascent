@@ -1,0 +1,318 @@
+id: p6-chain
+track: ml
+unit: 6
+order: 3
+title: The chain rule
+summary: The slope of a function inside a function is the slopes along the way, multiplied.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Slopes through a pipeline
+    body: >-
+      A model is a pipeline. The weights make a prediction, the prediction goes into an error, and the error gets squared and averaged into a loss. To train
+      it, you need the slope of the loss with respect to a weight, right at the start of the pipeline.
+
+
+      The chain rule handles exactly this: the slope of a function inside a function. It's the one rule backpropagation is made of. When you build micrograd
+      in Unit 8, every `_backward` you write will be one use of it.
+
+
+      By the end of this lesson you'll be able to differentiate things like `(3 * x + 1) ** 2` and `np.exp(2 * x)`, and the error of one prediction, `(w *
+      x - y) ** 2`.
+
+  - type: learn
+    id: chain
+    title: Multiply the slopes
+    body: >-
+      Take `f(x) = (3 * x + 1) ** 2`. It's two steps: the inside, `u = 3 * x + 1`, and the outside, `u ** 2`. Nudge `x` a little. The inside changes 3 times
+      as much, because its slope is 3. Then the outside changes `2 * u` times as much as the inside did. So overall, the output changes `2 * u * 3` times
+      as much as `x`.
+
+
+      That's the chain rule: the slope of the whole thing is the outside's slope, worked out at the inside's value, times the inside's slope. Here that's `2
+      * (3 * x + 1) * 3`.
+
+
+      Two mistakes are common. One is forgetting the inside's slope, the `* 3`, and getting `2 * (3 * x + 1)`. The other is working out the outside's slope
+      at `x` instead of at `u`. The outside never sees `x`, only the inside's value.
+    code: |
+      def f(x):
+          return (3 * x + 1) ** 2
+
+      def df(x):
+          u = 3 * x + 1
+          return 2 * u * 3
+
+      h = 0.0001
+      print(df(1))
+      print(round((f(1 + h) - f(1)) / h, 2))
+    subgoals:
+      - { line: 5, label: 'The inside value' }
+      - { line: 6, label: "Outside's slope at u, times inside's slope" }
+      - { line: 10, label: 'The nudge agrees' }
+    predict: What will `df(1)` be?
+
+  - type: choice
+    id: chain-pick
+    prompt: What's the derivative of `(5 * x - 2) ** 2`?
+    choices: ['`2 * (5 * x - 2) * 5`', '`2 * (5 * x - 2)`', '`2 * x * 5`', '`5 * (5 * x - 2)`']
+    answer: '`2 * (5 * x - 2) * 5`'
+    why: >-
+      The outside, squaring, gives `2 * u` at `u = 5 * x - 2`. Then multiply by the inside's slope, 5. Leaving off the 5 is the most common slip.
+    variants:
+      - prompt: What's the derivative of `np.exp(2 * x)`?
+        choices: ['`2 * np.exp(2 * x)`', '`np.exp(2 * x)`', '`np.exp(2)`', '`2 * x * np.exp(2 * x - 1)`']
+        answer: '`2 * np.exp(2 * x)`'
+        why: >-
+          `exp` is its own derivative, worked out at the inside, `2 * x`. Then multiply by the inside's slope, 2.
+      - prompt: What's the derivative of `np.log(x ** 2 + 1)`?
+        choices: ['`2 * x / (x ** 2 + 1)`', '`1 / (x ** 2 + 1)`', '`1 / (2 * x)`', '`2 * x / x`']
+        answer: '`2 * x / (x ** 2 + 1)`'
+        why: >-
+          `log` gives `1 / u` at `u = x ** 2 + 1`, times the inside's slope, `2 * x`.
+
+  - type: choice
+    id: chain-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def df(x):
+          u = 4 * x - 1
+          return 2 * u * 4
+
+      print(df(1))
+    choices: ['24', '6', '8', '9']
+    answer: '24'
+    why: >-
+      At `x = 1`, the inside is 3. The outside's slope there is `2 * 3`, which is 6, and times the inside's slope, 4, that's 24.
+    variants:
+      - code: |
+          def df(x):
+              u = x ** 2
+              return 3 * u ** 2 * (2 * x)
+
+          print(df(1))
+        choices: ['6', '3', '2', '12']
+        answer: '6'
+        why: >-
+          This is the derivative of `(x ** 2) ** 3`. At 1, the inside is 1, the outside's slope is 3, and the inside's slope is 2.
+
+  - type: learn
+    id: links
+    title: A chain of any length
+    body: >-
+      Longer pipelines work the same way. If `x` goes into `a`, `a` into `b`, and `b` into the output, the slope of the output with respect to `x` is the
+      three local slopes multiplied: how much `b` moves the output, times how much `a` moves `b`, times how much `x` moves `a`.
+
+
+      Here's the trick that makes backpropagation fast. Run the pipeline forwards first, and keep every value along the way. Then walk backwards from the
+      output, multiplying in one local slope at each step. Each step only needs its own small rule and the value saved on the way forward.
+
+
+      Adding the slopes instead of multiplying is a tempting mistake. Think of gears: if one gear turns 3 times as fast as the one before, and the next turns
+      2 times as fast as that, the last turns 6 times as fast, not 5.
+    code: |
+      import numpy as np
+
+      x = 0.5
+      a = 2 * x
+      b = a ** 2
+      out = np.exp(b)
+
+      d_out_b = np.exp(b)
+      d_b_a = 2 * a
+      d_a_x = 2
+      print(round(d_out_b * d_b_a * d_a_x, 4))
+
+      h = 0.0001
+      def whole(x):
+          return np.exp((2 * x) ** 2)
+      print(round((whole(x + h) - whole(x)) / h, 4))
+    subgoals:
+      - { line: 4, label: 'Forward: keep each value' }
+      - { line: 8, label: "Each step's own slope" }
+      - { line: 11, label: 'Backward: multiply them' }
+      - { line: 16, label: 'The nudge agrees (nearly)' }
+    predict: Will the two printed numbers be close?
+
+  - type: explain
+    id: explain-forget
+    prompt: This derivative of `(2 * x + 1) ** 3` is off by a factor of 2. What was forgotten, and why does it matter?
+    code: |
+      def df(x):
+          return 3 * (2 * x + 1) ** 2
+
+      def f(x):
+          return (2 * x + 1) ** 3
+
+      h = 0.0001
+      print(df(1), round((f(1 + h) - f(1)) / h, 1))
+    model: >-
+      It forgot to multiply by the slope of the inside, `2 * x + 1`, which is 2. When `x` moves, the inside moves twice as fast, and the cube responds to
+      the inside, so the whole thing changes twice as fast as this says.
+    keyPoints:
+      - The inside function's slope (2) is missing
+      - The chain rule multiplies the outer slope by the inner slope
+
+  - type: blank
+    id: fill-chain
+    prompt: Fill in the blank to finish the derivative of `(x ** 2 + 1) ** 2`, so it matches the nudge and shows `True`.
+    code: |
+      def f(x):
+          return (x ** 2 + 1) ** 2
+
+      def df(x):
+          u = x ** 2 + 1
+          return 2 * u * ____
+
+      h = 0.0001
+      print(abs(df(1.5) - (f(1.5 + h) - f(1.5)) / h) < 0.01)
+    answers: [['2 * x', '2*x', 'x * 2', '(2 * x)']]
+    expectOutput: 'True'
+    why: >-
+      The inside, `x ** 2 + 1`, has slope `2 * x`.
+    variants:
+      - prompt: Fill in the blank to finish the derivative of `np.exp(-3 * x)`, so it matches the nudge and shows `True`.
+        code: |
+          import numpy as np
+
+          def df(x):
+              return np.exp(-3 * x) * ____
+
+          h = 0.0001
+          nudge = (np.exp(-3 * (0.2 + h)) - np.exp(-3 * 0.2)) / h
+          print(abs(df(0.2) - nudge) < 0.01)
+        answers: [['-3', '(-3)']]
+        expectOutput: 'True'
+        why: >-
+          The inside, `-3 * x`, has slope -3, so the result goes down.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: The error of one prediction
+    body: >-
+      Here's the chain rule on the thing you'll train in this unit. A model predicts `pred = w * x`, and the true answer is `y`. The squared error is `(w *
+      x - y) ** 2`. How does it change as the weight `w` changes? Here `x` and `y` are fixed data, and `w` is the variable.
+
+
+      The inside is `u = w * x - y`, the error. Its slope with respect to `w` is `x`, because `w` is multiplied by `x`. The outside is `u ** 2`, with slope
+      `2 * u`. So the slope is `2 * (w * x - y) * x`.
+
+
+      Read it as a sentence: the bigger the error, the bigger the push, and the push is scaled by the input. When the prediction is too high, `u` is
+      positive, the slope is positive, and lowering `w` reduces the error. That's what makes learning work.
+    code: |
+      def error(w, x, y):
+          return (w * x - y) ** 2
+
+      def d_error(w, x, y):
+          return 2 * (w * x - y) * x
+
+      x, y = 2.0, 10.0
+      for w in [1.0, 5.0, 7.0]:
+          print(w, error(w, x, y), d_error(w, x, y))
+    subgoals:
+      - { line: 5, label: 'Outer slope, times inner slope x' }
+      - { line: 9, label: 'Too low: negative slope, so raise w' }
+    predict: At which `w` is the slope 0?
+
+  - type: fix
+    id: fix-chain
+    prompt: '`d_error(w, x, y)` should be the slope of `(w * x - y) ** 2` with respect to `w`, so `d_error(1.0, 3.0, 9.0)` is `-36.0`. Fix it.'
+    code: |
+      def d_error(w, x, y):
+          return 2 * (w * x - y)
+    solution: |
+      def d_error(w, x, y):
+          return 2 * (w * x - y) * x
+    highlightLine: 2
+    tests:
+      - { call: 'd_error(1.0, 3.0, 9.0)', expect: '-36.0' }
+      - { call: 'd_error(2.0, 1.0, 0.0)', expect: '4.0', hidden: true }
+      - { call: 'd_error(0.5, -2.0, 1.0)', expect: '8.0', hidden: true }
+    why: >-
+      The inside, `w * x - y`, changes `x` times as fast as `w`, so the slope needs `* x`.
+    hints:
+      - What's the slope of the inside, `w * x - y`, as `w` changes?
+    variants:
+      - prompt: '`df(x)` should be the derivative of `np.exp(x ** 2)`, so `round(df(1.0), 3)` is `5.437`. It works out the outside at the wrong place. Fix it.'
+        code: |
+          import numpy as np
+
+          def df(x):
+              return np.exp(x) * 2 * x
+        solution: |
+          import numpy as np
+
+          def df(x):
+              return np.exp(x ** 2) * 2 * x
+        highlightLine: 4
+        tests:
+          - { call: 'round(df(1.0), 3)', expect: '5.437' }
+          - { call: 'round(df(0.5), 3)', expect: '1.284', hidden: true }
+          - { call: 'round(df(-1.0), 3)', expect: '-5.437', hidden: true }
+        hints:
+          - The outside's slope is worked out at the inside's value, not at `x`.
+
+  - type: write
+    id: write-chain
+    prompt: >-
+      Write `d_loss(w, x, y)`, the slope with respect to `w` of the loss `(w * x + 1 - y) ** 2`. So `d_loss(1.0, 2.0, 5.0)` is `-8.0`.
+    starter: |
+      def d_loss(w, x, y):
+          # Your code here
+    solution: |
+      def d_loss(w, x, y):
+          return 2 * (w * x + 1 - y) * x
+    tests:
+      - { call: 'd_loss(1.0, 2.0, 5.0)', expect: '-8.0' }
+      - { call: 'd_loss(2.0, 1.0, 3.0)', expect: '0.0' }
+      - { call: 'd_loss(0.0, -3.0, 4.0)', expect: '18.0', hidden: true }
+      - { call: 'd_loss(1.5, 2.0, 0.0)', expect: '16.0', hidden: true }
+    why: >-
+      The outside gives `2 * u`, and the inside, `w * x + 1 - y`, has slope `x` with respect to `w`. The `+ 1` and `- y` are constants here.
+    hints:
+      - The inside is `w * x + 1 - y`. Which parts change when `w` changes?
+      - '`2 * (inside) * x`'
+    variants:
+      - prompt: >-
+          Write `d_sig(x)`, the derivative of `np.exp(-x ** 2)`. So `round(d_sig(1.0), 4)` is `-0.7358`.
+        starter: |
+          import numpy as np
+
+          def d_sig(x):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def d_sig(x):
+              return np.exp(-x ** 2) * (-2 * x)
+        tests:
+          - { call: 'round(d_sig(1.0), 4)', expect: '-0.7358' }
+          - { call: 'round(d_sig(0.0), 4)', expect: '0.0' }
+          - { call: 'round(d_sig(-0.5), 4)', expect: '0.7788', hidden: true }
+        hints:
+          - The outside is `exp`, its own derivative. The inside, `-x ** 2`, has slope `-2 * x`.
+
+  - type: choice
+    id: remember-rules
+    prompt: From the last lesson. What's the derivative of `np.log(x)`?
+    choices: ['`1 / x`', '`np.log(x)`', '`np.exp(x)`', '`x`']
+    answer: '`1 / x`'
+    why: >-
+      `log` rises steeply near 0 and flattens out, and `1 / x` describes exactly that.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      For a function inside a function, the slope is the outside's slope, worked out at the inside's value, times the inside's slope. Longer chains
+      multiply every local slope along the way, which is what backpropagation does, walking backwards. The slope of a squared error `(w * x - y) ** 2` is `2
+      * (w * x - y) * x`.
+
+
+      Next: functions of more than one input, like a loss that depends on a weight and a bias at once.

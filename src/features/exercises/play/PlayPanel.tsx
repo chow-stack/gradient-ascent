@@ -6,6 +6,7 @@ import { playCall, playLoad } from '../../runner/python'
 import { PLAY_NEEDS, py, type PlayApi } from './api'
 import { Blackjack } from './Blackjack'
 import { Doodle } from './Doodle'
+import { Fit } from './Fit'
 import { Hangman } from './Hangman'
 import { Life } from './Life'
 import { ErrorNote } from './parts'
@@ -92,7 +93,7 @@ export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
   else if (loaded.status === 'loading') body = <p className="ga-play-empty">Loading your program…</p>
   else if (loaded.status === 'failed') body = <ErrorNote what="Your program" error={loaded.error} />
   else {
-    const Game = { hangman: Hangman, wordle: Wordle, blackjack: Blackjack, life: Life, doodle: Doodle }[
+    const Game = { hangman: Hangman, wordle: Wordle, blackjack: Blackjack, life: Life, doodle: Doodle, fit: Fit }[
       kind as Exclude<PlayKind, 'rps'>
     ]
     body = <Game key={loaded.gen} api={api} />

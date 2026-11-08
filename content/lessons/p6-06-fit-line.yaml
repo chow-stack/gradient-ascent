@@ -1,0 +1,374 @@
+id: p6-fit-line
+track: ml
+unit: 6
+order: 6
+title: Fitting a line
+summary: A loss for a whole dataset, its gradient, and gradient descent that learns the best line.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Your first trained model
+    body: >-
+      This is where it all comes together. You'll take some data points, guess a line, measure how wrong the line is across all of them, and use the
+      gradient to improve it, step after step, until it fits.
+
+
+      This is linear regression, trained with gradient descent. It's a real machine learning model, and the loop you write here is the same loop that
+      trains a neural network. The only difference later is a fancier prediction.
+
+
+      By the end you'll compute the loss and its gradient for a whole dataset in a couple of NumPy lines.
+
+  - type: learn
+    id: mse
+    title: One number for how wrong
+    body: >-
+      The line predicts `pred = w * x + b`. With NumPy, `x` is the whole array of inputs, so `pred` is every prediction at once.
+
+
+      Each point has an error, `pred - y`. Some are positive and some negative, so you can't just average them, or they'd cancel out. Square them first,
+      so every error counts and big ones count most, then take the mean. That's the mean squared error, or MSE.
+
+
+      The mean, rather than the sum, keeps the loss the same size whether you have 4 points or 4,000. That matters for the learning rate: with a sum, more
+      data would mean bigger gradients and a rate that suddenly diverges.
+    code: |
+      import numpy as np
+
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+
+      def mse(w, b):
+          pred = w * x + b
+          return np.mean((pred - y) ** 2)
+
+      print(mse(0.0, 0.0))
+      print(mse(1.0, 0.0))
+      print(mse(2.0, 1.0))
+    subgoals:
+      - { line: 7, label: 'Every prediction at once' }
+      - { line: 8, label: 'Square the errors, then average' }
+      - { line: 12, label: 'The line the data came from' }
+    predict: What will the last line print?
+
+  - type: choice
+    id: mse-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      x = np.array([1.0, 2.0])
+      y = np.array([3.0, 5.0])
+      w, b = 2.0, 0.0
+      print(np.mean((w * x + b - y) ** 2))
+    choices: ['1.0', '2.0', '0.0', '-1.0']
+    answer: '1.0'
+    why: >-
+      The predictions are 2 and 4, each 1 too low. The squared errors are 1 and 1, and their mean is 1.
+    variants:
+      - code: |
+          import numpy as np
+
+          x = np.array([0.0, 1.0, 2.0])
+          y = np.array([0.0, 0.0, 0.0])
+          w, b = 1.0, 0.0
+          print(np.mean((w * x + b - y) ** 2))
+        choices: ['1.6666666666666667', '1.0', '5.0', '3.0']
+        answer: '1.6666666666666667'
+        why: >-
+          The errors are 0, 1 and 2. Squared, 0, 1 and 4, which add to 5. The mean is 5 / 3.
+
+  - type: learn
+    id: grads
+    title: The gradient of the MSE
+    body: >-
+      The loss depends on two weights, so the gradient has two partials. Each point's squared error is `(w * x + b - y) ** 2`, and the chain rule from
+      lesson 3 gives its slopes: `2 * (pred - y) * x` for `w`, and `2 * (pred - y)` for `b`, since `b`'s inside slope is 1.
+
+
+      The MSE is the mean of those squared errors, so its gradient is the mean of their slopes. With NumPy that's one line each, no loop.
+
+
+      Read `dw` as: points with a big error push hardest, and points with a big `x` push `w` hardest, because changing `w` moves their prediction the most.
+    code: |
+      import numpy as np
+
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+
+      def gradients(w, b):
+          err = w * x + b - y
+          dw = np.mean(2 * err * x)
+          db = np.mean(2 * err)
+          return dw, db
+
+      print(gradients(0.0, 0.0))
+      print(gradients(2.0, 1.0))
+    subgoals:
+      - { line: 7, label: 'Each error, prediction minus truth' }
+      - { line: 8, label: 'Inside slope x, for w' }
+      - { line: 9, label: 'Inside slope 1, for b' }
+    predict: What will `gradients(2.0, 1.0)` be, at the line that fits perfectly?
+
+  - type: choice
+    id: grad-pick
+    prompt: With `err = w * x + b - y`, which line is the partial derivative of the MSE with respect to `b`?
+    choices: ['`np.mean(2 * err)`', '`np.mean(2 * err * x)`', '`np.mean(err ** 2)`', '`np.sum(2 * err)`']
+    answer: '`np.mean(2 * err)`'
+    why: >-
+      `b` is added straight into each prediction, so its inside slope is 1, and there's no `x` factor. The mean matches the MSE's mean.
+    variants:
+      - prompt: Why does the partial with respect to `w` have a `* x` in it?
+        choices:
+          [
+            "Because changing `w` moves each prediction by that point's `x`",
+            'Because the loss is squared',
+            'To make it a different size from `db`',
+            "Because `x` is the data's mean",
+          ]
+        answer: "Because changing `w` moves each prediction by that point's `x`"
+        why: >-
+          `pred = w * x + b`, so nudging `w` by a little moves the prediction by `x` times that. That's the inside slope in the chain rule.
+      - prompt: You double the dataset by copying every point. What happens to the MSE and its gradient?
+        choices:
+          [
+            'Neither changes',
+            'Both double',
+            'The MSE doubles, the gradient stays',
+            'The gradient doubles, the MSE stays',
+          ]
+        answer: 'Neither changes'
+        why: >-
+          Both are means, and copying every point doesn't change a mean. With sums, both would double, and the learning rate would have to change.
+
+  - type: explain
+    id: explain-sign
+    prompt: This computes the error as `y - pred` instead of `pred - y`. The loss is the same, but training runs off to huge numbers. Why?
+    code: |
+      import numpy as np
+
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+      w, b = 0.0, 0.0
+      for _ in range(50):
+          err = y - (w * x + b)
+          w = w - 0.05 * np.mean(2 * err * x)
+          b = b - 0.05 * np.mean(2 * err)
+      print(round(w), round(b))
+    model: >-
+      Squaring hides the sign, so the loss doesn't change, but the gradient does. With `y - pred`, the inside's slope is `-x`, not `x`, so the formula used
+      here is the negative of the true gradient. Subtracting it steps uphill, and the loss grows every step.
+    keyPoints:
+      - The gradient's sign is flipped
+      - So each step climbs the loss instead of descending
+
+  - type: blank
+    id: fill-dw
+    prompt: Fill in the blank so `dw` is the partial derivative of the MSE with respect to `w`, and the check shows `-17.0`.
+    code: |
+      import numpy as np
+
+      x = np.array([0.0, 1.0, 2.0, 3.0])
+      y = np.array([1.0, 3.0, 5.0, 7.0])
+      w, b = 0.0, 0.0
+      err = w * x + b - y
+      dw = np.mean(2 * err * ____)
+      print(dw)
+    answers: [['x']]
+    expectOutput: '-17.0'
+    why: >-
+      Changing `w` moves each prediction by `x`, so each error's slope is scaled by its `x`.
+    variants:
+      - prompt: Fill in the blank so `loss` is the mean squared error, and it shows `7.5`.
+        code: |
+          import numpy as np
+
+          x = np.array([0.0, 1.0, 2.0, 3.0])
+          y = np.array([1.0, 3.0, 5.0, 7.0])
+          pred = 1.0 * x + 0.0
+          loss = np.____((pred - y) ** 2)
+          print(loss)
+        answers: [['mean']]
+        expectOutput: '7.5'
+        why: >-
+          Square each error, then take the mean.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Training the line
+    body: >-
+      Now the whole loop. Start with a flat line at zero. Each step, compute the gradient over all the points, and move `w` and `b` a little against it.
+      Print the loss now and then to check it's falling.
+
+
+      These four points don't sit on any one line, so the loss can't reach 0. Gradient descent finds the line with the smallest possible MSE, which here is
+      `w = 1.9, b = 1.0`.
+
+
+      This is training. Nothing in the loop knows about lines or this data. Swap in a different prediction and its gradient and the same loop trains that
+      instead.
+    code: |
+      import numpy as np
+
+      x = np.array([1.0, 2.0, 3.0, 4.0])
+      y = np.array([3.0, 5.0, 6.0, 9.0])
+      w, b = 0.0, 0.0
+      lr = 0.05
+
+      for step in range(2000):
+          err = w * x + b - y
+          w = w - lr * np.mean(2 * err * x)
+          b = b - lr * np.mean(2 * err)
+          if step % 500 == 0:
+              print(step, round(np.mean(err ** 2), 3))
+
+      print(round(w, 2), round(b, 2))
+    subgoals:
+      - { line: 9, label: 'Errors for the current line' }
+      - { line: 10, label: 'Step w and b downhill' }
+      - { line: 13, label: 'Watch the loss fall' }
+    predict: Will the printed loss ever reach 0?
+
+  - type: fix
+    id: fix-sum
+    prompt: '`gradients(w, b, x, y)` should return the gradient of the MSE as `(dw, db)`. On 4 points its answers come out 4 times too big. Fix it.'
+    code: |
+      import numpy as np
+
+      def gradients(w, b, x, y):
+          err = w * x + b - y
+          dw = np.sum(2 * err * x)
+          db = np.sum(2 * err)
+          return dw, db
+    solution: |
+      import numpy as np
+
+      def gradients(w, b, x, y):
+          err = w * x + b - y
+          dw = np.mean(2 * err * x)
+          db = np.mean(2 * err)
+          return dw, db
+    highlightLine: 5
+    tests:
+      - {
+          call: 'gradients(0.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+          expect: '(-17.0, -8.0)',
+        }
+      - {
+          call: 'gradients(3.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+          expect: '(4.0, 1.0)',
+          hidden: true,
+        }
+      - { call: 'gradients(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]))', expect: '(2.0, 1.0)', hidden: true }
+    why: >-
+      The loss is a mean, so its gradient is a mean too. A sum grows with the number of points.
+    hints:
+      - The MSE takes the mean of the squared errors. What should the gradient take?
+    variants:
+      - prompt: '`gradients(w, b, x, y)` should return the gradient of the MSE as `(dw, db)`, but training with it climbs the loss. Fix it.'
+        code: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = y - (w * x + b)
+              dw = np.mean(2 * err * x)
+              db = np.mean(2 * err)
+              return dw, db
+        solution: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = w * x + b - y
+              dw = np.mean(2 * err * x)
+              db = np.mean(2 * err)
+              return dw, db
+        highlightLine: 4
+        tests:
+          - {
+              call: 'gradients(0.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+              expect: '(-17.0, -8.0)',
+            }
+          - {
+              call: 'gradients(3.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]))',
+              expect: '(4.0, 1.0)',
+              hidden: true,
+            }
+          - {
+              call: 'gradients(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]))',
+              expect: '(2.0, 1.0)',
+              hidden: true,
+            }
+        hints:
+          - Which way round should the error be, for `pred = w * x + b`?
+
+  - type: write
+    id: write-step
+    prompt: >-
+      Write `step(w, b, x, y, lr)` that takes one step of gradient descent on the MSE of the line `w * x + b`, and returns the new `(w, b)`.
+    starter: |
+      import numpy as np
+
+      def step(w, b, x, y, lr):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def step(w, b, x, y, lr):
+          err = w * x + b - y
+          dw = np.mean(2 * err * x)
+          db = np.mean(2 * err)
+          return w - lr * dw, b - lr * db
+    tests:
+      - {
+          call: 'step(0.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]), 0.1)',
+          expect: '(1.7, 0.8)',
+        }
+      - {
+          call: 'step(2.0, 1.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]), 0.1)',
+          expect: '(2.0, 1.0)',
+        }
+      - {
+          call: 'step(3.0, 0.0, np.array([0.0, 1.0, 2.0, 3.0]), np.array([1.0, 3.0, 5.0, 7.0]), 0.5)',
+          expect: '(1.0, -0.5)',
+          hidden: true,
+        }
+      - {
+          call: 'step(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]), 0.25)',
+          expect: '(0.5, 0.75)',
+          hidden: true,
+        }
+    why: >-
+      Compute the errors, average their slopes into `dw` and `db`, and move both against them.
+    hints:
+      - 'Start with `err = w * x + b - y`.'
+      - '`dw = np.mean(2 * err * x)` and `db = np.mean(2 * err)`. Then return `w - lr * dw, b - lr * db`.'
+
+  - type: choice
+    id: remember-descent
+    prompt: From the last lesson. Training's loss swings up and down, and the swings keep growing. What should you change?
+    choices:
+      [
+        'Make the learning rate smaller',
+        'Make the learning rate bigger',
+        'Run more steps',
+        'Start from different weights',
+      ]
+    answer: 'Make the learning rate smaller'
+    why: >-
+      Growing swings mean every step overshoots by more than the last. Smaller steps stop that.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A line predicts `w * x + b` for every point at once. The MSE averages the squared errors into one number. Its gradient is `np.mean(2 * err * x)` for
+      `w` and `np.mean(2 * err)` for `b`, with `err = pred - y`. Stepping both against it, again and again, is linear regression trained by gradient
+      descent.
+
+
+      Next: how to know your gradient is right before you trust it.

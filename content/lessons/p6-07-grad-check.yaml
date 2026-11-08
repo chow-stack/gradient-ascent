@@ -1,0 +1,291 @@
+id: p6-grad-check
+track: ml
+unit: 6
+order: 7
+title: Checking gradients
+summary: Compare a gradient you worked out against careful nudges, and catch the bugs a falling loss hides.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Trust, but check
+    body: >-
+      Gradient bugs are sneaky. A wrong gradient doesn't crash. Often the loss still goes down, just slower, or to the wrong place, and you'd never know
+      by watching it.
+
+
+      Professionals check every hand-written gradient against nudges before training with it. It takes a few lines and catches a dropped `* x` or a
+      missing 2 every time.
+
+
+      By the end you'll have a better nudge, a fair way to compare two numbers, and a checker you'll use again in Unit 8 when you build backpropagation.
+
+  - type: learn
+    id: central
+    title: Nudge both ways
+    body: >-
+      The nudge so far, `(f(x + h) - f(x)) / h`, measures the slope a little to the right of `x`. On a curve, that's slightly off.
+
+
+      The central difference nudges both ways: `(f(x + h) - f(x - h)) / (2 * h)`. The two errors, one from each side, mostly cancel out, so it's far more
+      accurate for the same `h`. The step between the two points is `2 * h`, so that's what you divide by.
+
+
+      Here the true slope of `x ** 3` at 2 is 12. The one-sided nudge is off in the third decimal place. The central one is off in the sixth.
+    code: |
+      def f(x):
+          return x ** 3
+
+      h = 0.001
+      forward = (f(2 + h) - f(2)) / h
+      central = (f(2 + h) - f(2 - h)) / (2 * h)
+      print(round(forward, 6))
+      print(round(central, 6))
+    subgoals:
+      - { line: 5, label: 'One side only' }
+      - { line: 6, label: 'Both sides, over 2 * h' }
+    predict: Which will be closer to 12?
+
+  - type: choice
+    id: central-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      def f(x):
+          return x ** 2
+
+      h = 0.5
+      print((f(3 + h) - f(3 - h)) / (2 * h))
+    choices: ['6.0', '6.5', '12.0', '3.0']
+    answer: '6.0'
+    why: >-
+      `f(3.5)` is 12.25 and `f(2.5)` is 6.25. The difference, 6, divided by 1 is 6, exactly the slope of `x ** 2` at 3. For a parabola the central
+      difference is exact, even with a big `h`.
+    variants:
+      - code: |
+          def f(x):
+              return x ** 2
+
+          h = 0.5
+          print((f(3 + h) - f(3)) / h)
+        choices: ['6.5', '6.0', '7.0', '3.25']
+        answer: '6.5'
+        why: >-
+          `f(3.5)` is 12.25 and `f(3)` is 9. The difference, 3.25, divided by 0.5 is 6.5. The one-sided nudge overshoots the true 6.
+
+  - type: learn
+    id: relerr
+    title: Close enough, fairly
+    body: >-
+      Your gradient and the nudge will never match exactly, so you need to decide how close is close enough. A plain difference doesn't work: 0.1 apart
+      is a bug if both are near 0.2, and perfectly fine if both are near 1,000.
+
+
+      The relative error divides the difference by their size: `abs(a - n) / (abs(a) + abs(n))`. It's 0 when they match, and up to 1 when they're nothing
+      alike. When both are 0, there's nothing to divide by, so use a tiny number like `1e-12` as the smallest bottom allowed.
+
+
+      As a rule of thumb, below `1e-5` the gradient is right. Above `1e-3`, there's a bug.
+    code: |
+      def rel_error(a, n):
+          return abs(a - n) / max(abs(a) + abs(n), 1e-12)
+
+      print(rel_error(0.2, 0.3))
+      print(rel_error(1000.0, 1000.1))
+      print(rel_error(0.0, 0.0))
+    subgoals:
+      - { line: 2, label: 'Difference over size' }
+      - { line: 6, label: 'Never divides by 0' }
+    predict: Which pair is the bigger worry?
+
+  - type: choice
+    id: relerr-pick
+    kind: concept
+    prompt: 'A gradient check gives these relative errors for three weights: `2e-11`, `4e-10` and `0.33`. What does it tell you?'
+    choices:
+      ["The third weight's partial is wrong", 'All three are fine', 'The first two are wrong', '`h` is too small']
+    answer: "The third weight's partial is wrong"
+    why: >-
+      Tiny errors mean those partials match the nudges. A third of the size is far beyond `1e-3`, so that formula has a bug, like a missing factor.
+    variants:
+      - prompt: 'A relative error comes out at exactly `0.3333`. What kind of bug is the likeliest?'
+        choices:
+          [
+            'The formula is off by a factor of 2',
+            'The sign is flipped',
+            'The nudge used the wrong `h`',
+            'Nothing, this is normal',
+          ]
+        answer: 'The formula is off by a factor of 2'
+        why: >-
+          If `a` is half of `n`, the error is `0.5 n / 1.5 n`, a third. A flipped sign would give exactly 1.
+
+  - type: explain
+    id: explain-falling
+    prompt: '`db` here is half what it should be, a bug. Yet the loss still falls. Why is a falling loss not proof that a gradient is right?'
+    code: |
+      import numpy as np
+
+      x = np.array([1.0, 2.0, 3.0, 4.0])
+      y = np.array([3.0, 5.0, 6.0, 9.0])
+      w, b = 0.0, 0.0
+      for step in range(201):
+          err = w * x + b - y
+          if step % 100 == 0:
+              print(round(np.mean(err ** 2), 3))
+          w = w - 0.05 * np.mean(2 * err * x)
+          b = b - 0.05 * np.mean(err)
+    model: >-
+      A wrong gradient can still point roughly downhill, so steps along it still lower the loss, just more slowly or towards the wrong place. You can't
+      tell from the loss alone. Comparing each partial with a nudge is what catches the missing 2.
+    keyPoints:
+      - A wrong gradient can still point roughly downhill
+      - Only comparing with a numeric gradient catches it
+
+  - type: blank
+    id: fill-central
+    prompt: Fill in the blank to finish the central difference, so it shows `True`.
+    code: |
+      def numeric(f, x, h=0.0001):
+          return (f(x + h) - f(x - h)) / ____
+
+      print(abs(numeric(lambda x: x ** 3, 2.0) - 12) < 1e-6)
+    answers: [['(2 * h)', '(2*h)', '(h * 2)', '(h + h)', '(2.0 * h)']]
+    expectOutput: 'True'
+    why: >-
+      The two points are `2 * h` apart. The brackets matter: `/ 2 * h` would divide by 2, then multiply by `h`.
+    variants:
+      - prompt: Fill in the blank to finish the relative error, so it shows `0.2`.
+        code: |
+          def rel_error(a, n):
+              return abs(a - n) / max(____, 1e-12)
+
+          print(rel_error(3.0, 2.0))
+        answers: [['abs(a) + abs(n)', 'abs(n) + abs(a)']]
+        expectOutput: '0.2'
+        why: >-
+          Divide the difference by the size of both numbers together.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Catching a planted bug
+    body: >-
+      Here's the full check on the line-fitting gradient from last lesson, with a bug planted: `db` is missing its 2. Nudge the loss both ways for `w`, then
+      for `b`, and compare each with the formula.
+
+
+      Pick a starting point that isn't special. At the perfect fit both gradients are 0, and a missing factor of 2 times 0 is still 0, so the check would
+      pass.
+
+
+      The check for `w` is about `1e-11`, so `dw` is right. The check for `b` is a third, and that points straight at the bug: the formula is half the
+      nudge.
+    code: |
+      import numpy as np
+
+      x = np.array([1.0, 2.0, 3.0, 4.0])
+      y = np.array([3.0, 5.0, 6.0, 9.0])
+
+      def loss(w, b):
+          return np.mean((w * x + b - y) ** 2)
+
+      def gradients(w, b):
+          err = w * x + b - y
+          return np.mean(2 * err * x), np.mean(err)
+
+      def rel_error(a, n):
+          return abs(a - n) / max(abs(a) + abs(n), 1e-12)
+
+      w, b, h = 0.5, 0.5, 1e-5
+      dw, db = gradients(w, b)
+      nw = (loss(w + h, b) - loss(w - h, b)) / (2 * h)
+      nb = (loss(w, b + h) - loss(w, b - h)) / (2 * h)
+      print(f'w: {rel_error(dw, nw):.0e}')
+      print(f'b: {rel_error(db, nb):.2f}')
+    subgoals:
+      - { line: 11, label: 'The planted bug' }
+      - { line: 18, label: 'Nudge one weight, both ways' }
+      - { line: 21, label: 'b fails the check' }
+    predict: Which weight's check will fail?
+
+  - type: fix
+    id: fix-central
+    prompt: '`numeric(f, x)` should be the central difference, so `round(numeric(lambda x: x ** 2, 3.0), 4)` is `6.0`. It gives twice that. Fix it.'
+    code: |
+      def numeric(f, x, h=0.00001):
+          return (f(x + h) - f(x - h)) / h
+    solution: |
+      def numeric(f, x, h=0.00001):
+          return (f(x + h) - f(x - h)) / (2 * h)
+    highlightLine: 2
+    tests:
+      - { call: 'round(numeric(lambda x: x ** 2, 3.0), 4)', expect: '6.0' }
+      - { call: 'round(numeric(lambda x: x ** 3, 1.0), 4)', expect: '3.0', hidden: true }
+      - { call: 'round(numeric(lambda x: 5 * x - 2, 10.0), 4)', expect: '5.0', hidden: true }
+    why: >-
+      The two points are `2 * h` apart, so that's the run to divide by.
+    hints:
+      - How far apart are `x - h` and `x + h`?
+    variants:
+      - prompt: '`numeric(f, x)` should be the central difference, so `round(numeric(lambda x: x ** 2, 3.0), 4)` is `6.0`. It gives a huge number. Fix it.'
+        code: |
+          def numeric(f, x, h=0.00001):
+              return (f(x + h) - f(x - h)) / 2 * h
+        solution: |
+          def numeric(f, x, h=0.00001):
+              return (f(x + h) - f(x - h)) / (2 * h)
+        highlightLine: 2
+        tests:
+          - { call: 'round(numeric(lambda x: x ** 2, 3.0), 4)', expect: '6.0' }
+          - { call: 'round(numeric(lambda x: x ** 3, 1.0), 4)', expect: '3.0', hidden: true }
+          - { call: 'round(numeric(lambda x: 5 * x - 2, 10.0), 4)', expect: '5.0', hidden: true }
+        hints:
+          - Python does `/` and `*` left to right. Where do the brackets go?
+
+  - type: write
+    id: write-check
+    prompt: >-
+      Write `grad_ok(f, df, x)` that returns `True` when the formula `df(x)` matches the central difference of `f` at `x`, with `h = 0.00001`. They match
+      when `abs(a - n) / max(abs(a) + abs(n), 1e-12)` is below `1e-5`.
+    starter: |
+      def grad_ok(f, df, x):
+          # Your code here
+    solution: |
+      def grad_ok(f, df, x):
+          h = 0.00001
+          n = (f(x + h) - f(x - h)) / (2 * h)
+          a = df(x)
+          return abs(a - n) / max(abs(a) + abs(n), 1e-12) < 1e-5
+    tests:
+      - { call: 'grad_ok(lambda x: x ** 2, lambda x: 2 * x, 3.0)', expect: 'True' }
+      - { call: 'grad_ok(lambda x: x ** 2, lambda x: x, 3.0)', expect: 'False' }
+      - { call: 'grad_ok(lambda x: (3 * x + 1) ** 2, lambda x: 2 * (3 * x + 1), 1.0)', expect: 'False', hidden: true }
+      - { call: 'grad_ok(lambda x: (3 * x + 1) ** 2, lambda x: 6 * (3 * x + 1), 1.0)', expect: 'True', hidden: true }
+      - { call: 'grad_ok(lambda x: x ** 2, lambda x: 2 * x, 0.0)', expect: 'True', hidden: true }
+    why: >-
+      Work out both numbers, then compare them by their relative error. The `1e-12` keeps the check from dividing by 0 when both are 0.
+    hints:
+      - First get `n`, the central difference, and `a`, which is `df(x)`.
+      - 'Return `abs(a - n) / max(abs(a) + abs(n), 1e-12) < 1e-5`.'
+
+  - type: choice
+    id: remember-fit
+    prompt: From the last lesson. With `err = w * x + b - y`, which is the partial derivative of the MSE with respect to `w`?
+    choices: ['`np.mean(2 * err * x)`', '`np.mean(2 * err)`', '`np.sum(2 * err * x)`', '`np.mean(err ** 2)`']
+    answer: '`np.mean(2 * err * x)`'
+    why: >-
+      Each squared error's slope is `2 * err` times the inside's slope, `x`, and the MSE averages them.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      The central difference, `(f(x + h) - f(x - h)) / (2 * h)`, is a much more accurate nudge. The relative error compares two numbers by their size:
+      below `1e-5` the gradient is right, above `1e-3` it has a bug. Check each partial from an ordinary point, never trust a falling loss alone, and a
+      dropped factor has nowhere to hide.
+
+
+      Next: the checkpoint, and then you'll build a line-fitter you can watch learn.

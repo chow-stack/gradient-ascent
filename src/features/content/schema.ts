@@ -165,7 +165,7 @@ const milestone = z.object({
 })
 
 /** The Play panel games. Each calls functions the milestones ask for (see exercises/play/). */
-export const PLAY_KINDS = ['rps', 'hangman', 'wordle', 'blackjack', 'life', 'doodle'] as const
+export const PLAY_KINDS = ['rps', 'hangman', 'wordle', 'blackjack', 'life', 'doodle', 'fit'] as const
 export type PlayKind = (typeof PLAY_KINDS)[number]
 
 const project = z.object({

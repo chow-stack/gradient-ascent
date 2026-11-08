@@ -1,0 +1,355 @@
+id: p6-rules
+track: ml
+unit: 6
+order: 2
+title: Derivative rules
+summary: Exact slopes for powers, sums, exponentials and logs, each checked against nudging.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Exact slopes, without nudging
+    body: >-
+      Nudging works on anything, but it's approximate and needs two calls per slope. A model with a million weights would need two million calls for every
+      step of training. Instead, ML code uses exact derivatives, worked out by rules.
+
+
+      You only need a handful of rules, and the functions in ML are built from a few pieces: powers, sums, `exp` and `log`. By the end of this lesson you'll
+      write derivatives for each one as Python functions, and check them with the nudge from last lesson. That habit, checking a rule with a nudge, is how
+      real ML code is tested.
+
+  - type: learn
+    id: power
+    title: The power rule
+    body: >-
+      For `x ** n`, the derivative is `n * x ** (n - 1)`. Bring the power down in front, and lower it by one. So `x ** 2` has slope `2 * x`, and `x ** 3`
+      has slope `3 * x ** 2`. A line `x` is `x ** 1`, with slope 1, and a constant like `7` doesn't change at all, so its slope is 0.
+
+
+      A number multiplied in front stays there: `5 * x ** 2` has slope `5 * 2 * x`, which is `10 * x`. And sums go term by term: the slope of `x ** 2 + 3 *
+      x` is `2 * x + 3`.
+
+
+      The common slip is forgetting to bring the power down, and writing `x` for the slope of `x ** 2`. At `x = 3`, that gives 3 instead of 6, and a nudge
+      catches it straight away.
+    code: |
+      def f(x):
+          return 5 * x ** 2 + 3 * x + 7
+
+      def df(x):
+          return 10 * x + 3
+
+      def nudge(f, x, h=0.0001):
+          return (f(x + h) - f(x)) / h
+
+      print(df(2))
+      print(round(nudge(f, 2), 2))
+    subgoals:
+      - { line: 2, label: 'The function' }
+      - { line: 5, label: 'Its derivative, term by term' }
+      - { line: 10, label: 'The rule says 23' }
+      - { line: 11, label: 'The nudge agrees' }
+    predict: What will `df(2)` show?
+
+  - type: choice
+    id: power-pick
+    prompt: What's the derivative of `x ** 4`?
+    choices: ['`4 * x ** 3`', '`x ** 3`', '`4 * x ** 4`', '`3 * x ** 4`']
+    answer: '`4 * x ** 3`'
+    why: >-
+      Bring the 4 down and lower the power to 3. Dropping the 4 is the common slip.
+    variants:
+      - prompt: What's the derivative of `3 * x ** 2 - 4 * x + 9`?
+        choices: ['`6 * x - 4`', '`6 * x - 4 + 9`', '`3 * x - 4`', '`6 * x ** 2 - 4`']
+        answer: '`6 * x - 4`'
+        why: >-
+          `3 * x ** 2` gives `6 * x`, `-4 * x` gives `-4`, and the constant 9 doesn't change, so it gives 0.
+      - prompt: What's the derivative of `10`?
+        choices: ['`0`', '`10`', '`1`', '`10 * x`']
+        answer: '`0`'
+        why: >-
+          A constant never changes, so its slope is 0 everywhere.
+      - prompt: What's the derivative of `x ** 2 / 2`?
+        choices: ['`x`', '`2 * x`', '`x / 2`', '`x ** 2`']
+        answer: '`x`'
+        why: >-
+          `x ** 2` gives `2 * x`, and halving it gives `x`. That's why many textbooks put a half in front of squared errors.
+
+  - type: blank
+    id: fill-power
+    prompt: Fill in the blank with the derivative of `x ** 3`, so the rule matches the nudge. This shows `True`.
+    code: |
+      def df(x):
+          return ____
+
+      x = 2.0
+      h = 0.0001
+      nudge = ((x + h) ** 3 - x ** 3) / h
+      print(abs(df(x) - nudge) < 0.01)
+    answers: [['3 * x ** 2', '3*x**2', '3 * x**2', '3 * (x ** 2)', '3 * x * x', 'x ** 2 * 3']]
+    expectOutput: 'True'
+    why: >-
+      Bring the 3 down and lower the power: `3 * x ** 2`. At 2, that's 12.
+    variants:
+      - prompt: Fill in the blank with the derivative of `4 * x ** 2 + x`, so the rule matches the nudge. This shows `True`.
+        code: |
+          def df(x):
+              return ____
+
+          def f(x):
+              return 4 * x ** 2 + x
+
+          h = 0.0001
+          print(abs(df(1.5) - (f(1.5 + h) - f(1.5)) / h) < 0.01)
+        answers: [['8 * x + 1', '8*x + 1', '8*x+1', '1 + 8 * x', 'x * 8 + 1']]
+        expectOutput: 'True'
+        why: >-
+          `4 * x ** 2` gives `8 * x`, and `x` gives 1.
+
+  - type: learn
+    id: exp-log
+    title: exp and log
+    body: >-
+      Two more functions show up all over ML. `np.exp(x)` is e, about 2.718, raised to the power `x`. It's its own derivative: the slope of `exp` at any
+      point equals its value there. That's what makes it special.
+
+
+      `np.log(x)` is the natural log, the undo button for `exp`: `log(exp(3))` is 3. Its derivative is `1 / x`. So log rises steeply near 0 and flattens
+      out as `x` grows. Losses for classification are built from `log`, which is why you'll see `1 / x` again in Unit 7.
+
+
+      Don't use the power rule on `exp`. The power rule is for a variable raised to a fixed number, like `x ** 3`. In `exp(x)`, the variable is the power,
+      and that's a different function with a different rule.
+    code: |
+      import numpy as np
+
+      def nudge(f, x, h=0.0001):
+          return (f(x + h) - f(x)) / h
+
+      print(round(np.exp(2.0), 3))
+      print(round(nudge(np.exp, 2.0), 3))
+
+      print(round(1 / 4.0, 3))
+      print(round(nudge(np.log, 4.0), 3))
+    subgoals:
+      - { line: 6, label: 'exp at 2' }
+      - { line: 7, label: 'Its slope at 2: the same' }
+      - { line: 9, label: 'The rule for log: 1 / x' }
+      - { line: 10, label: 'The nudge agrees' }
+    predict: How will the first two lines compare?
+
+  - type: choice
+    id: exp-log-pick
+    prompt: What's the slope of `np.exp(x)` at `x = 0`?
+    choices: ['`1`', '`0`', '`e`', 'It has no slope there']
+    answer: '`1`'
+    why: >-
+      `exp` is its own derivative, so the slope at 0 is `exp(0)`, which is 1.
+    variants:
+      - prompt: What's the slope of `np.log(x)` at `x = 2`?
+        choices: ['`0.5`', '`2`', '`np.log(2)`', '`1`']
+        answer: '`0.5`'
+        why: >-
+          The derivative of `log` is `1 / x`, so it's a half at 2.
+      - prompt: Why can't you use the power rule on `np.exp(x)`?
+        choices:
+          - In `exp`, the variable is the power, and the power rule is for a fixed power
+          - Because `exp` comes from NumPy
+          - You can, it gives `x * exp(x - 1)`
+        answer: In `exp`, the variable is the power, and the power rule is for a fixed power
+        why: >-
+          The power rule covers `x ** 3`, not `e ** x`. Using it on `exp` is a common mix-up.
+
+  - type: explain
+    id: explain-check
+    prompt: Why is it worth running a nudge next to a derivative you worked out by hand? What would this catch?
+    code: |
+      def f(x):
+          return x ** 3
+
+      def df(x):
+          return x ** 2
+
+      h = 0.0001
+      print(df(2), (f(2 + h) - f(2)) / h)
+    model: >-
+      A hand-worked derivative can have a slip, like here, where the 3 wasn't brought down. The nudge only uses the function itself, so it doesn't share
+      the mistake. If they disagree, as they do here with 4 against about 12, the derivative is wrong.
+    keyPoints:
+      - The nudge is computed from the function alone, independently of the hand-worked rule
+      - Disagreement shows the derivative has a mistake
+
+  - type: fix
+    id: fix-power
+    prompt: '`df` should be the derivative of `f`, so `df(3)` is `27.0`. It forgets part of the power rule. Fix it.'
+    code: |
+      def f(x):
+          return x ** 3
+
+      def df(x):
+          return x ** 2
+    solution: |
+      def f(x):
+          return x ** 3
+
+      def df(x):
+          return 3 * x ** 2
+    highlightLine: 5
+    tests:
+      - { call: 'df(3.0)', expect: '27.0' }
+      - { call: 'df(-1.0)', expect: '3.0', hidden: true }
+      - { call: 'df(0.5)', expect: '0.75', hidden: true }
+    why: >-
+      Bring the power down in front as well as lowering it.
+    hints:
+      - What does the power rule do with the 3?
+    variants:
+      - prompt: '`df` should be the derivative of `f`, so `df(2)` is `11`. It keeps the constant. Fix it.'
+        code: |
+          def f(x):
+              return 2 * x ** 2 + 3 * x + 8
+
+          def df(x):
+              return 4 * x + 3 + 8
+        solution: |
+          def f(x):
+              return 2 * x ** 2 + 3 * x + 8
+
+          def df(x):
+              return 4 * x + 3
+        highlightLine: 5
+        tests:
+          - { call: 'df(2)', expect: '11' }
+          - { call: 'df(0)', expect: '3', hidden: true }
+          - { call: 'df(-1)', expect: '-1', hidden: true }
+        hints:
+          - How fast does a constant change?
+      - prompt: '`df` should be the derivative of `np.exp`, so `round(df(1.0), 4)` is `2.7183`. It uses the power rule. Fix it.'
+        code: |
+          import numpy as np
+
+          def df(x):
+              return x * np.exp(x - 1)
+        solution: |
+          import numpy as np
+
+          def df(x):
+              return np.exp(x)
+        highlightLine: 4
+        tests:
+          - { call: 'round(df(1.0), 4)', expect: '2.7183' }
+          - { call: 'round(df(0.0), 4)', expect: '1.0', hidden: true }
+          - { call: 'round(df(2.0), 4)', expect: '7.3891', hidden: true }
+        hints:
+          - '`exp` is its own derivative.'
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Finding the bottom of a curve
+    body: >-
+      Here's why slopes matter for training. At the very bottom of a valley, the ground is flat: the slope is 0. So to find where `f(x) = (x - 3) ** 2 + 1`
+      is lowest, find where its slope is 0.
+
+
+      Expanded, `f` is `x ** 2 - 6 * x + 10`, so its slope is `2 * x - 6`. That's 0 when `x` is 3, and `f(3)` is 1, the lowest value. To the left of 3 the
+      slope is negative, so the curve is falling, and to the right it's positive, so it's rising.
+
+
+      Notice the useful part: the slope's sign tells you which way is downhill from wherever you stand. With a negative slope, step right. With a positive
+      one, step left. That's the whole idea of gradient descent, which is two lessons away.
+    code: |
+      def f(x):
+          return (x - 3) ** 2 + 1
+
+      def df(x):
+          return 2 * x - 6
+
+      for x in [0, 2, 3, 4, 6]:
+          print(x, f(x), df(x))
+    subgoals:
+      - { line: 5, label: 'The slope, from the expanded form' }
+      - { line: 8, label: 'Negative, then 0, then positive' }
+    predict: Where is the slope 0?
+
+  - type: write
+    id: write-df
+    prompt: >-
+      `f(x) = x ** 3 - 12 * x` has a valley and a hill. Write `df(x)`, its derivative. Then write `flat_points()`, which gives back the list of the whole
+      numbers from -5 to 5 where the slope is exactly 0, smallest first.
+    starter: |
+      def df(x):
+          # Your code here
+
+
+      def flat_points():
+          # Your code here
+    solution: |
+      def df(x):
+          return 3 * x ** 2 - 12
+
+
+      def flat_points():
+          return [x for x in range(-5, 6) if df(x) == 0]
+    tests:
+      - { call: 'df(1)', expect: '-9' }
+      - { call: 'df(3)', expect: '15' }
+      - { call: 'flat_points()', expect: '[-2, 2]' }
+      - { call: 'df(-4)', expect: '36', hidden: true }
+    why: >-
+      `3 * x ** 2 - 12` is 0 when `x ** 2` is 4, so at -2 and 2.
+    hints:
+      - The power rule gives `3 * x ** 2` for the first term. What does `-12 * x` give?
+      - Loop over `range(-5, 6)` and keep the `x` where `df(x) == 0`.
+    variants:
+      - prompt: >-
+          Write `df(x)`, the derivative of `f(x) = 2 * x ** 2 - 8 * x + 1`. Then write `downhill(x)`, which gives back `"right"` if stepping right goes
+          downhill from `x` (the slope is negative), `"left"` if the slope is positive, and `"bottom"` if it's 0.
+        starter: |
+          def df(x):
+              # Your code here
+
+
+          def downhill(x):
+              # Your code here
+        solution: |
+          def df(x):
+              return 4 * x - 8
+
+
+          def downhill(x):
+              if df(x) < 0:
+                  return "right"
+              if df(x) > 0:
+                  return "left"
+              return "bottom"
+        tests:
+          - { call: 'df(0)', expect: '-8' }
+          - { call: 'downhill(0)', expect: "'right'" }
+          - { call: 'downhill(5)', expect: "'left'" }
+          - { call: 'downhill(2)', expect: "'bottom'", hidden: true }
+        hints:
+          - '`2 * x ** 2` gives `4 * x`. The constant gives 0.'
+
+  - type: choice
+    id: remember-slope
+    prompt: From the last lesson. Why does nudging use a small `h`, rather than `h = 1`?
+    choices:
+      - A big step measures an average slope over a stretch, not the slope at the point
+      - Python can't divide by 1
+      - A small `h` makes the function run faster
+    answer: A big step measures an average slope over a stretch, not the slope at the point
+    why: >-
+      Up close, a curve is nearly straight, so a tiny step measures the slope right there.
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Power rule: `x ** n` gives `n * x ** (n - 1)`. Constants in front stay, constants on their own vanish, and sums go term by term. `exp` is its own
+      derivative, and `log` gives `1 / x`. Check any rule with a nudge. At the bottom of a valley the slope is 0, and its sign says which way is downhill.
+
+
+      Next: the chain rule, for functions inside functions. It's the rule that backpropagation is built on.

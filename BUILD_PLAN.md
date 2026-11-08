@@ -252,7 +252,7 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 - [ ] Modify cards, per-choice feedback
 - [x] Checks a hard-coded answer can't pass: `vary` reruns, concept rules, a cheat test in `content:check`
 - [x] Projects as one brief, one editor and a milestone checklist; the five projects rewritten
-- [x] Content: Units 3–5
+- [x] Content: Units 3–6
 - [ ] Watch-with-prediction and long-block lesson types; long blocks count for the streak
 
 ### Phase 4 — From micrograd to MLP
@@ -299,6 +299,11 @@ card and lesson counts below are judgement: no study tests whole-lesson formats 
 
 ### Built (2026-11-08)
 
+- **Unit 6, calculus and gradient descent.** Seven lessons, a checkpoint and the Fit a line project (CURRICULUM.md). Every
+  rule is shown agreeing with a nudge in code. The project's Play tab draws the loss valley from the learner's own `loss()`
+  and the path their `step()` takes down it.
+- **Tests for the Play bridge.** `runner/play.test.ts` runs the real harness in Pyodide (loading, values, crashes and
+  their lines, JSON replies, state between calls). `PlayPanel.test.tsx` covers the panel with the runner mocked.
 - **Projects you can play.** From testing: the projects felt static, because a program could only print one fixed
   transcript. Now each has a Play tab where the learner's own code runs a real game. The app loads the program once into a
   Python namespace that stays alive and calls its functions as you click (`playLoad` / `playCall` in `runner/python.ts`).
@@ -389,7 +394,7 @@ Different numbers alone aren't enough, because you can memorize the method.
 
 1. Rewrite into the three units, writing variants alongside.
 2. Build the template step.
-3. ~~Back to Phase 3 (NumPy).~~ Done. Next: Unit 6, the calculus refresh.
+3. ~~Back to Phase 3 (NumPy).~~ Done. ~~Unit 6, the calculus refresh.~~ Done. Next: Unit 7, first models judged honestly.
 
 ## 10. Open questions
 

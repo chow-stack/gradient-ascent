@@ -8,7 +8,7 @@ separate, and you can do as many as you like. Each one teaches one new idea thro
 explanations, mixed with exercises: predict the output, order the lines, fill in the blank, fix the bug, write the
 code, and explain it in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
 
-> **Status:** Phase 2 of 5. Units 1 to 5 are written for true beginners: Programs and values, Functions and repetition, Collections and libraries, Python for ML code, and NumPy, shapes and plots. The calculus refresh comes next. See the
+> **Status:** Phase 2 of 5. Units 1 to 6 are written for true beginners: Programs and values, Functions and repetition, Collections and libraries, Python for ML code, NumPy, shapes and plots, and Calculus and gradient descent. First models, judged honestly, come next. See the
 > [roadmap](#roadmap).
 
 ---
@@ -152,7 +152,7 @@ src/
 
 - [x] **Phase 1:** plan, design system ("Summit"), project setup
 - [x] **Phase 2:** lessons, Daily 5, spaced repetition, streaks, self-hosted NumPy
-- [ ] **Phase 3:** Units 1–5 and plots are done; calculus refresh and first models judged honestly are next
+- [ ] **Phase 3:** Units 1–6, plots and the calculus refresh are done; first models judged honestly are next
 - [ ] **Phase 4:** a hand-built micrograd and MLP, with diagnosing training curves (Units 6–7)
 - [ ] **Phase 5:** trees, probability, makemore, attention and a tiny GPT (Units 8–11)
 
