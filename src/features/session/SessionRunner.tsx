@@ -1,4 +1,4 @@
-import { BookOpen, Bug, Lightbulb, Star, X } from 'lucide-react'
+import { BookOpen, Bug, Check, Flag as FlagIcon, Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
@@ -8,6 +8,8 @@ import { checkExplanation, GeminiError, getGeminiKey } from '../ai/gemini'
 import { SegmentedProgress } from '../../components/ui/ProgressBar'
 import { ExerciseView } from '../exercises/ExerciseView'
 import { cardVariants } from '../content/schema'
+import { cardSnapshot, describeAnswer, outcomeLabel, removeFeedback, saveFeedback } from '../feedback/feedback'
+import { FlagDialog, type Flag } from '../feedback/FlagDialog'
 import { loadDraft } from '../exercises/drafts'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
 import { inline } from '../exercises/inline'
@@ -90,6 +92,50 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const hints = 'hints' in card ? card.hints : []
   const [reading, setReading] = useState(false)
   const notes = rereadable(item)
+  // Flags on cards in this session, by item key, so reopening one edits it.
+  const [flags, setFlags] = useState<Record<string, { id?: number; flag: Flag }>>({})
+  const [flagging, setFlagging] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2200)
+    return () => clearTimeout(t)
+  }, [toast])
+  const flagged = flags[item.key]
+
+  /** Save a flag on the card on screen, with what the learner had answered so far. */
+  const saveFlag = (flag: Flag) => {
+    const it = item
+    const prev = flags[it.key]
+    setFlags((f) => ({ ...f, [it.key]: { ...prev, flag } }))
+    setFlagging(false)
+    setToast(prev ? 'Flag updated' : 'Flagged. Thanks!')
+    const row = {
+      ...cardSnapshot(it.lesson, it.card),
+      kind: 'card' as const,
+      at: Date.now(),
+      source: it.source,
+      // After "show answer" the fields hold the solution, not the learner's answer.
+      answer: phase === 'revealed' ? undefined : describeAnswer(answer),
+      outcome: outcomeLabel(phase, isLearn),
+      reason: flag.reason,
+      note: flag.note || undefined,
+    }
+    void saveFeedback(row, prev?.id)
+      .then((id) => setFlags((f) => ({ ...f, [it.key]: { id, flag: f[it.key]?.flag ?? flag } })))
+      .catch(console.error)
+  }
+  const unflag = () => {
+    const id = flagged?.id
+    setFlags((f) => {
+      const rest = { ...f }
+      delete rest[item.key]
+      return rest
+    })
+    setFlagging(false)
+    setToast('Flag removed')
+    if (id !== undefined) void removeFeedback(id).catch(console.error)
+  }
 
   /** Save the outcome of the current item (runs in order, in the background). */
   const resolve = useCallback(
@@ -321,7 +367,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 
   useEffect(() => {
-    if (summary || dailyXp !== null || reading) return
+    if (summary || dailyXp !== null || reading || flagging) return
     const onKey = (e: KeyboardEvent) => {
       if (debug && e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         const to = idx + (e.key === 'ArrowLeft' ? -1 : 1)
@@ -354,7 +400,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [primary, phase, summary, dailyXp, reading, debug, idx, goTo])
+  }, [primary, phase, summary, dailyXp, reading, flagging, debug, idx, goTo])
 
   if (summary) return <SessionDone summary={summary} />
   if (dailyXp !== null && tiles) return <DailyDone results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
@@ -419,6 +465,18 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             />
           )}
         </div>
+        {!debug && (
+          <button
+            type="button"
+            className="ga-icon-btn flex-none"
+            aria-label={flagged ? 'Edit your flag on this card' : 'Flag this card'}
+            aria-pressed={!!flagged}
+            title={flagged ? 'Flagged' : 'Flag this card'}
+            onClick={() => setFlagging(true)}
+          >
+            <FlagIcon size={18} fill={flagged ? 'currentColor' : 'none'} aria-hidden />
+          </button>
+        )}
         {notes.length > 0 && (
           <button
             type="button"
@@ -639,6 +697,19 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           </div>
         </div>
       </footer>
+      {flagging && (
+        <FlagDialog
+          initial={flagged?.flag}
+          onSave={saveFlag}
+          onRemove={flagged ? unflag : undefined}
+          onClose={() => setFlagging(false)}
+        />
+      )}
+      {toast && (
+        <div className="ga-toast" role="status">
+          <Check size={16} className="text-success" aria-hidden /> {toast}
+        </div>
+      )}
       {reading && <NotesDialog title={item.lesson.title} cards={notes} onClose={() => setReading(false)} />}
     </div>
   )

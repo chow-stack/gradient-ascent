@@ -1,6 +1,7 @@
 import { ArrowRight, CalendarCheck, Dumbbell, Flame, Home, Star } from 'lucide-react'
 import { Link } from 'react-router'
 import { Adam } from '../../components/Adam'
+import { RateLesson } from '../feedback/RateLesson'
 import { useProgress, type CheckpointResult } from '../progress/progress'
 import { nextLesson, type SessionKind } from './plan'
 
@@ -57,6 +58,12 @@ export function SessionDone({ summary }: { summary: SessionSummary }) {
             </span>
           )}
         </p>
+
+        {summary.kind === 'lesson' && summary.lessonId && (finishedLesson || cp) && (
+          <div className="mt-8 w-full border-t border-border pt-6">
+            <RateLesson lessonId={summary.lessonId} />
+          </div>
+        )}
 
         <div className="mt-8 flex w-full flex-col gap-2">
           {dailyPending ? (

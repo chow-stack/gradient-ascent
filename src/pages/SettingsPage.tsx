@@ -1,10 +1,11 @@
-import { Bug, Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { Bug, Check, ClipboardCopy, Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '../components/ui/Card'
+import { formatFeedback, markFeedbackDone, openFeedback } from '../features/feedback/feedback'
 import { GEMINI_MODEL, getGeminiKey, setGeminiKey, testGeminiKey } from '../features/ai/gemini'
 import { dayKey } from '../lib/dates'
-import { exportBackup, importBackup, resetProgress } from '../lib/db'
+import { exportBackup, importBackup, resetProgress, type FeedbackRow } from '../lib/db'
 import { setDebug, useDebug } from '../lib/debug'
 
 /** Backup and reset. All progress lives in this browser only, so backups matter. */
@@ -43,6 +44,7 @@ export function SettingsPage() {
         </p>
       </header>
 
+      <FeedbackCard />
       <GeminiCard />
       <DebugCard />
 
@@ -105,6 +107,77 @@ export function SettingsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+/** The learner's flags and lesson ratings, as text to paste to Claude, then cleared. */
+function FeedbackCard() {
+  const [rows, setRows] = useState<FeedbackRow[] | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [cleared, setCleared] = useState(false)
+  const load = useCallback(() => void openFeedback().then(setRows).catch(console.error), [])
+  useEffect(load, [load])
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(t)
+  }, [copied])
+
+  const copy = async () => {
+    if (!rows?.length) return
+    const text = formatFeedback(rows)
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      // No clipboard permission (or an older browser): copy through a hidden field instead.
+      const field = document.createElement('textarea')
+      field.value = text
+      document.body.append(field)
+      field.select()
+      document.execCommand('copy')
+      field.remove()
+    }
+    setCopied(true)
+  }
+  const done = async () => {
+    await markFeedbackDone()
+    setCleared(true)
+    load()
+  }
+  const flags = rows?.filter((r) => r.kind === 'card').length ?? 0
+  const ratings = (rows?.length ?? 0) - flags
+
+  return (
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-h3">Feedback</h2>
+        <p className="max-w-[68ch] text-small text-muted">
+          {rows === null
+            ? '\u00a0'
+            : rows.length
+              ? [
+                  flags && `${flags} flagged card${flags === 1 ? '' : 's'}`,
+                  ratings && `${ratings} lesson rating${ratings === 1 ? '' : 's'}`,
+                ]
+                  .filter(Boolean)
+                  .join(' and ') + ' waiting. Copy them, paste them to Claude, then mark them done.'
+              : cleared
+                ? 'All handed over. New flags and ratings will collect here.'
+                : 'Nothing yet. Flag a card from the top bar of any session, or rate a lesson when you finish it.'}
+        </p>
+      </div>
+      {!!rows?.length && (
+        <div className="flex flex-wrap gap-3">
+          <button type="button" className="ga-btn ga-btn--primary" onClick={() => void copy()}>
+            {copied ? <Check size={16} aria-hidden /> : <ClipboardCopy size={16} aria-hidden />}
+            {copied ? 'Copied' : 'Copy feedback for Claude'}
+          </button>
+          <button type="button" className="ga-btn ga-btn--ghost" onClick={() => void done()}>
+            Mark done
+          </button>
+        </div>
+      )}
+    </Card>
   )
 }
 
