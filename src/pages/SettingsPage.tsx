@@ -1,8 +1,14 @@
-import { Bug, Check, ClipboardCopy, Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
+import { Bug, Check, ClipboardCopy, X, Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '../components/ui/Card'
-import { formatFeedback, markFeedbackDone, openFeedback } from '../features/feedback/feedback'
+import {
+  addGeneralNote,
+  formatFeedback,
+  markFeedbackDone,
+  openFeedback,
+  removeFeedback,
+} from '../features/feedback/feedback'
 import { GEMINI_MODEL, getGeminiKey, setGeminiKey, testGeminiKey } from '../features/ai/gemini'
 import { dayKey } from '../lib/dates'
 import { exportBackup, importBackup, resetProgress, type FeedbackRow } from '../lib/db'
@@ -115,6 +121,7 @@ function FeedbackCard() {
   const [rows, setRows] = useState<FeedbackRow[] | null>(null)
   const [copied, setCopied] = useState(false)
   const [cleared, setCleared] = useState(false)
+  const [draft, setDraft] = useState('')
   const load = useCallback(() => void openFeedback().then(setRows).catch(console.error), [])
   useEffect(load, [load])
   useEffect(() => {
@@ -144,8 +151,17 @@ function FeedbackCard() {
     setCleared(true)
     load()
   }
-  const flags = rows?.filter((r) => r.kind === 'card').length ?? 0
-  const ratings = (rows?.length ?? 0) - flags
+  const addNote = async () => {
+    if (!draft.trim()) return
+    await addGeneralNote(draft)
+    setDraft('')
+    load()
+  }
+  const count = (kind: FeedbackRow['kind']) => rows?.filter((r) => r.kind === kind).length ?? 0
+  const flags = count('card')
+  const ratings = count('lesson')
+  const general = rows?.filter((r) => r.kind === 'general') ?? []
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
   return (
     <Card className="flex flex-col gap-4">
@@ -156,18 +172,71 @@ function FeedbackCard() {
             ? '\u00a0'
             : rows.length
               ? [
-                  flags && `${flags} flagged card${flags === 1 ? '' : 's'}`,
-                  ratings && `${ratings} lesson rating${ratings === 1 ? '' : 's'}`,
+                  flags && plural(flags, 'flagged card'),
+                  ratings && plural(ratings, 'lesson rating'),
+                  general.length && plural(general.length, 'general note'),
                 ]
                   .filter(Boolean)
-                  .join(' and ') + ' waiting. Copy them, paste them to Claude, then mark them done.'
+                  .join(', ')
+                  .replace(/, ([^,]*)$/, ' and $1') + ' waiting. Copy them, paste them to Claude, then mark them done.'
               : cleared
-                ? 'All handed over. New flags and ratings will collect here.'
-                : 'Nothing yet. Flag a card from the top bar of any session, or rate a lesson when you finish it.'}
+                ? 'All handed over. New flags, ratings and notes will collect here.'
+                : 'Nothing yet. Flag a card from the top bar of any session, rate a lesson when you finish it, or write a general note below.'}
         </p>
       </div>
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void addNote()
+        }}
+      >
+        <label htmlFor="general-note" className="text-small font-semibold">
+          General feedback
+        </label>
+        <textarea
+          id="general-note"
+          className="ga-textarea"
+          style={{ minHeight: 76 }}
+          rows={2}
+          placeholder="Anything about the app or the course as a whole"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault()
+              void addNote()
+            }
+          }}
+        />
+        <div>
+          <button type="submit" className="ga-btn ga-btn--secondary ga-btn--sm" disabled={!draft.trim()}>
+            Add note
+          </button>
+        </div>
+      </form>
+      {general.length > 0 && (
+        <ul className="flex flex-col gap-1.5" aria-label="General notes waiting">
+          {general.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-start gap-2 rounded-[var(--radius-md)] bg-raised py-2 pr-1.5 pl-3 text-small"
+            >
+              <span className="min-w-0 flex-1 py-1 whitespace-pre-wrap">{r.note}</span>
+              <button
+                type="button"
+                className="ga-icon-btn size-8 flex-none"
+                aria-label="Delete this note"
+                onClick={() => void removeFeedback(r.id!).then(load)}
+              >
+                <X size={15} aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {!!rows?.length && (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 border-t border-border pt-4">
           <button type="button" className="ga-btn ga-btn--primary" onClick={() => void copy()}>
             {copied ? <Check size={16} aria-hidden /> : <ClipboardCopy size={16} aria-hidden />}
             {copied ? 'Copied' : 'Copy feedback for Claude'}

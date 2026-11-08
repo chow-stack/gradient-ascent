@@ -74,10 +74,12 @@ export type DisputeRow = {
  */
 export type FeedbackRow = {
   id?: number
-  kind: 'card' | 'lesson'
-  lessonId: string
-  lessonTitle: string
-  unit: number
+  /** A flag on a card, a rating of a lesson, or a general note about the app or course (no lesson). */
+  kind: 'card' | 'lesson' | 'general'
+  /** Card flags and lesson ratings only. */
+  lessonId?: string
+  lessonTitle?: string
+  unit?: number
   at: number
   /** Card flags only. */
   cardId?: string

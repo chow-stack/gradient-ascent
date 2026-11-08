@@ -3,6 +3,7 @@ import { exportBackup, GradientDB, importBackup, resetProgress, type FeedbackRow
 import { lessons } from '../content/content'
 import { cardVariants } from '../content/schema'
 import {
+  addGeneralNote,
   cardSnapshot,
   cardVersion,
   describeAnswer,
@@ -65,6 +66,14 @@ describe('feedback', () => {
     expect(text).toContain('- Lesson felt: Too easy')
     expect(text).toContain('(fix, variant 1, first pass, 8 Nov): Confusing')
     expect(text).toContain('    ```\n    def f():\n        pass\n    ```')
+  })
+
+  it('puts general notes first, apart from the units', async () => {
+    const d = freshDb()
+    await addGeneralNote('  The streak feels stressful\nmaybe hide it  ', d)
+    await saveFeedback(flag(), undefined, d)
+    const text = formatFeedback(await openFeedback(d))
+    expect(text).toMatch(/## General\n\n- The streak feels stressful\n  maybe hide it \(\d+ \w+\)\n\n## Unit 7/)
   })
 
   it('gives nothing for no feedback', () => {

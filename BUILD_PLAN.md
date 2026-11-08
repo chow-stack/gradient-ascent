@@ -303,7 +303,7 @@ card and lesson counts below are judgement: no study tests whole-lesson formats 
   tap for a reason (confusing, answer seems wrong, too easy, too hard, boring) and an optional note. It saves the
   lesson, card, version shown, prompt, the learner's answer and how it had gone; reopening edits or removes the flag.
   Lessons, checkpoints and projects end with "How was that?" (too easy, about right, too hard) and an optional line.
-  Settings → Feedback copies all open notes as text grouped by unit and lesson, for pasting to Claude, and "Mark done"
+  Settings → Feedback also takes general notes about the app or course. It copies all open notes as text grouped by unit and lesson, for pasting to Claude, and "Mark done"
   clears them. The `feedback` table (Dexie v4) is in backups, older backups still restore, and resetting progress
   keeps it. Debug sessions show no flag button.
 - **Unit 7, first models judged honestly.** Ten lessons, a checkpoint and the Spam filter project (CURRICULUM.md).

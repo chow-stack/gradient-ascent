@@ -127,15 +127,22 @@ export function formatFeedback(all: FeedbackRow[], now = new Date()): string {
   if (!all.length) return ''
   const rows = [...all].sort((a, b) => a.at - b.at)
   const day = dayKey(now)
+  const general = rows.filter((r) => r.kind === 'general')
   const out = [
     `# Gradient Ascent feedback, ${day}`,
     '',
-    `${rows.length} note${rows.length === 1 ? '' : 's'} from learning. Each names the lesson id, the card id and what I saw.`,
+    `${rows.length} note${rows.length === 1 ? '' : 's'} from learning. Each card note names the lesson id, the card id and what I saw.`,
   ]
-  const units = [...new Set(rows.map((r) => r.unit))].sort((a, b) => a - b)
+  if (general.length) {
+    out.push('', '## General')
+    // Prose, so continuation lines are indented under the bullet rather than fenced like code.
+    for (const r of general) out.push('', `- ${(r.note ?? '').trim().replace(/\n/g, '\n  ')} (${shortDate(r.at)})`)
+  }
+  const lessonRows = rows.filter((r) => r.kind !== 'general')
+  const units = [...new Set(lessonRows.map((r) => r.unit ?? 0))].sort((a, b) => a - b)
   for (const unit of units) {
     out.push('', `## Unit ${unit}`)
-    const inUnit = rows.filter((r) => r.unit === unit)
+    const inUnit = lessonRows.filter((r) => (r.unit ?? 0) === unit)
     const lessonIds = [...new Set(inUnit.map((r) => r.lessonId))]
     for (const lessonId of lessonIds) {
       const ofLesson = inUnit.filter((r) => r.lessonId === lessonId)
@@ -163,6 +170,11 @@ export function formatFeedback(all: FeedbackRow[], now = new Date()): string {
     }
   }
   return out.join('\n') + '\n'
+}
+
+/** A note about the app or the course as a whole. */
+export async function addGeneralNote(note: string, database: GradientDB = db): Promise<number> {
+  return saveFeedback({ kind: 'general', at: Date.now(), note: note.trim() }, undefined, database)
 }
 
 export async function removeFeedback(id: number, database: GradientDB = db): Promise<void> {
