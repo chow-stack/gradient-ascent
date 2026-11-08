@@ -14,6 +14,8 @@ export type CodeEditorProps = {
   ariaLabel?: string
   minLines?: number
   maxLines?: number
+  /** Fill the parent's height instead of growing with the code. The parent must have a height. */
+  fill?: boolean
 }
 
 const LINE_HEIGHT = 23
@@ -29,6 +31,7 @@ export default function CodeEditor({
   ariaLabel = 'Code editor',
   minLines = 6,
   maxLines = 22,
+  fill = false,
 }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null)
   const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -74,6 +77,7 @@ export default function CodeEditor({
     decorations.current = ed.createDecorationsCollection()
 
     const fit = () => {
+      if (fill) return
       const lines = Math.min(maxLines, Math.max(minLines, ed.getModel()!.getLineCount()))
       host.current!.style.height = `${lines * LINE_HEIGHT + 24}px`
       ed.layout()
@@ -113,5 +117,5 @@ export default function CodeEditor({
     // `value` is here because replacing the editor's text clears its decorations.
   }, [errorLine, markLine, value])
 
-  return <div ref={host} className="ga-editor" />
+  return <div ref={host} className={fill ? 'ga-editor h-full' : 'ga-editor'} />
 }

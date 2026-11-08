@@ -9,7 +9,10 @@ export function CodeEditor(props: CodeEditorProps) {
   return (
     <Suspense
       fallback={
-        <div className="ga-editor grid place-items-center text-small text-faint" style={{ height: lines * 23 + 24 }}>
+        <div
+          className={`ga-editor grid place-items-center text-small text-faint${props.fill ? ' h-full' : ''}`}
+          style={props.fill ? undefined : { height: lines * 23 + 24 }}
+        >
           Loading editor…
         </div>
       }

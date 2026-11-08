@@ -1,9 +1,11 @@
-import { Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
+import { Bug, Download, ExternalLink, RotateCcw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { Card } from '../components/ui/Card'
 import { GEMINI_MODEL, getGeminiKey, setGeminiKey, testGeminiKey } from '../features/ai/gemini'
 import { dayKey } from '../lib/dates'
 import { exportBackup, importBackup, resetProgress } from '../lib/db'
+import { setDebug, useDebug } from '../lib/debug'
 
 /** Backup and reset. All progress lives in this browser only, so backups matter. */
 export function SettingsPage() {
@@ -42,6 +44,7 @@ export function SettingsPage() {
       </header>
 
       <GeminiCard />
+      <DebugCard />
 
       <Card className="flex flex-col gap-4">
         <h2 className="text-h3">Backup</h2>
@@ -102,6 +105,38 @@ export function SettingsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+/** Debug mode: open any lesson at any card, without saving anything. */
+function DebugCard() {
+  const debug = useDebug()
+  return (
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-h3">Debug mode</h2>
+        <p className="max-w-[68ch] text-small text-muted">
+          Open any unit or lesson, start at any card, and jump between cards and their versions without answering. Debug
+          sessions save nothing: no XP, reviews, drafts or progress.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex cursor-pointer items-center gap-2.5 font-semibold">
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--color-accent)]"
+            checked={debug}
+            onChange={(e) => setDebug(e.target.checked)}
+          />
+          Debug mode
+        </label>
+        {debug && (
+          <Link to="/debug" className="ga-btn ga-btn--secondary ga-btn--sm">
+            <Bug size={14} aria-hidden /> Open the lesson browser
+          </Link>
+        )}
+      </div>
+    </Card>
   )
 }
 

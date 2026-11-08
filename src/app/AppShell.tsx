@@ -1,9 +1,22 @@
-import { Flame, FolderKanban, Home, LineChart, Map, Palette, Settings, Snowflake, Star, Target } from 'lucide-react'
+import {
+  Bug,
+  Flame,
+  FolderKanban,
+  Home,
+  LineChart,
+  Map,
+  Palette,
+  Settings,
+  Snowflake,
+  Star,
+  Target,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { Adam } from '../components/Adam'
 import { Chip } from '../components/ui/Chip'
 import { useProgress } from '../features/progress/progress'
+import { useDebug } from '../lib/debug'
 
 type NavItem = { to?: string; label: string; icon: ReactNode }
 
@@ -42,8 +55,11 @@ function NavEntry({ item }: { item: NavItem }) {
   )
 }
 
+const debugNav: NavItem = { to: '/debug', label: 'Debug', icon: <Bug size={18} /> }
+
 export function AppShell() {
   const p = useProgress()
+  const debug = useDebug()
   return (
     <div className="flex min-h-dvh">
       <aside className="ga-sidebar sticky top-0 hidden h-dvh w-60 shrink-0 md:flex">
@@ -57,7 +73,7 @@ export function AppShell() {
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-0.5 border-t border-border pt-3">
-          {bottomNav.map((item) => (
+          {(debug ? [debugNav, ...bottomNav] : bottomNav).map((item) => (
             <NavEntry key={item.label} item={item} />
           ))}
         </div>

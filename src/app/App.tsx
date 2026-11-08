@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router'
+import { DebugPage } from '../pages/DebugPage'
 import { HomePage } from '../pages/HomePage'
 import { PathPage } from '../pages/PathPage'
 import { ReadPage } from '../pages/ReadPage'
@@ -16,6 +17,7 @@ export function App() {
         <Route path="read/:lessonId" element={<ReadPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="styleguide" element={<StyleguidePage />} />
+        <Route path="debug" element={<DebugPage />} />
       </Route>
       {/* Sessions are full-screen: no sidebar, nothing to distract. */}
       <Route path="session" element={<SessionPage />} />

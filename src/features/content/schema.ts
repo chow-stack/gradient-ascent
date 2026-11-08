@@ -321,3 +321,9 @@ export function fillBlanks(code: string, values: string[]): string {
   let i = 0
   return code.replace(/____/g, () => values[i++] ?? '')
 }
+
+/** A one-line description of a card, for lists such as the debug browser. */
+export function cardLabel(card: Card): string {
+  const text = card.type === 'learn' ? card.title : card.type === 'project' ? card.brief : card.prompt
+  return text.replace(/`/g, '').replace(/\s+/g, ' ').trim()
+}

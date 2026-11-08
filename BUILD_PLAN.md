@@ -299,6 +299,13 @@ card and lesson counts below are judgement: no study tests whole-lesson formats 
 
 ### Built (2026-11-07)
 
+- **Project split screen.** A project fills the screen with no page scrolling: brief and milestones on the left, the
+  editor over the output on the right (drag the divider to resize), each scrolling on its own. The brief folds to one line
+  once there's code, and only the current milestone stays open. Where it doesn't fit (phones, or beside the debug
+  sidebar), it becomes Brief / Code / Output tabs, with the current milestone pinned above the editor.
+- **Debug mode** (Settings → Debug mode): a Debug page lists every unit, lesson and card, all unlocked. A debug session
+  has a sidebar listing the lesson's cards: start at any card, jump between cards (the list, arrows, or Alt ← / Alt →)
+  and between a card's versions, without answering. On narrow screens the sidebar slides over the card. It saves nothing: no attempts, XP, reviews, drafts, disputes or lesson progress.
 - **Stronger checks on code cards.** From testing Unit 1: a write card could be passed with `size = "medium"`.
   - `vary` reruns the answer and the solution with other values for the variables at the top, and compares printed output
     and every test value.

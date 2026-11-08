@@ -1,11 +1,13 @@
-import { BookOpen, Lightbulb, Star, X } from 'lucide-react'
+import { BookOpen, Bug, Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
 import { db, type DailyResult } from '../../lib/db'
+import { debugPanelOpen, saveDebugPanelOpen, WIDE } from '../../lib/debug'
 import { checkExplanation, GeminiError, getGeminiKey } from '../ai/gemini'
 import { SegmentedProgress } from '../../components/ui/ProgressBar'
 import { ExerciseView } from '../exercises/ExerciseView'
+import { cardVariants } from '../content/schema'
 import { loadDraft } from '../exercises/drafts'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
 import { inline } from '../exercises/inline'
@@ -20,6 +22,7 @@ import {
 } from '../progress/progress'
 import { DAILY_COMPLETE_BONUS, type Outcome } from '../progress/xp'
 import { DailyDone } from './DailyDone'
+import { DebugPanel } from './DebugPanel'
 import { DailyTileRow } from './DailyTiles'
 import { NotesDialog } from './LessonNotes'
 import type { SessionItem, SessionPlan } from './plan'
@@ -36,9 +39,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const totals = useRef({ xp: 0, correct: 0, graded: 0 })
   // Checkpoint score: right without hints or "show answer" (warm-up reviews don't count).
   const checkpoint = useRef({ correct: 0, total: 0 })
-  const [idx, setIdx] = useState(0)
+  // Debug sessions open any lesson at any card, can jump around, and save nothing.
+  const debug = plan.kind === 'debug'
+  const [idx, setIdx] = useState(plan.startAt ?? 0)
+  const [panelOpen, setPanelOpen] = useState(() => debug && debugPanelOpen())
+  const showPanel = (open: boolean) => {
+    setPanelOpen(open)
+    if (window.matchMedia(WIDE).matches) saveDebugPanelOpen(open)
+  }
   const item = queue[Math.min(idx, queue.length - 1)]
-  const [answer, setAnswer] = useState<Answer>(() => startAnswer(item))
+  const [answer, setAnswer] = useState<Answer>(() => startAnswer(item, debug))
   const [phase, setPhase] = useState<Phase>('answering')
   const [result, setResult] = useState<GradeResult | undefined>()
   const [hintsUsed, setHintsUsed] = useState(0)
@@ -66,6 +76,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const [praise] = useState(() => PRAISE[Math.floor(Math.random() * PRAISE.length)])
 
   const card = item.card
+  const fullHeight = card.type === 'project'
   const isLearn = card.type === 'learn'
   const hints = 'hints' in card ? card.hints : []
   const [reading, setReading] = useState(false)
@@ -74,6 +85,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   /** Save the outcome of the current item (runs in order, in the background). */
   const resolve = useCallback(
     (outcome: Outcome) => {
+      if (debug) return
       const it = item
       const durationMs = Date.now() - startedAt.current
       if (it.card.type !== 'learn') {
@@ -113,10 +125,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         setQueue(queueRef.current)
       }
     },
-    [item, daily],
+    [item, daily, debug],
   )
 
   const finish = useCallback(async () => {
+    if (debug) return void navigate('/debug')
     await saving.current
     if (plan.daily) {
       setDailyXp(totals.current.xp + DAILY_COMPLETE_BONUS)
@@ -143,7 +156,34 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       total: totals.current.graded,
       minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)),
     })
-  }, [plan])
+  }, [plan, debug, navigate])
+
+  /** Show item i fresh. In debug mode, `version` picks one of the card's variants (0 is the card itself). */
+  const goTo = useCallback(
+    (i: number, version = 0) => {
+      let target = queueRef.current[i]
+      if (debug) {
+        const base = target.lesson.cards[i]
+        const card = version > 0 ? (cardVariants(base)[version - 1] ?? base) : base
+        target = { ...target, card, key: `debug:${target.itemId}:v${version}` }
+        queueRef.current = queueRef.current.map((q, k) => (k === i ? target : q))
+        setQueue(queueRef.current)
+      }
+      setIdx(i)
+      setAnswer(startAnswer(target, debug))
+      setPhase('answering')
+      setResult(undefined)
+      setHintsUsed(0)
+      setAi({ status: 'off' })
+      setSelfGrading(false)
+      dispute.current = undefined
+      aiRequest.current += 1
+      tries.current = 0
+      startedAt.current = Date.now()
+      window.scrollTo({ top: 0 })
+    },
+    [debug],
+  )
 
   const next = useCallback(() => {
     if (isLearn) resolve({ correct: true, firstTry: true, hintsUsed: 0, gaveUp: false })
@@ -159,20 +199,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       void finish()
       return
     }
-    const nextItem = queueRef.current[idx + 1]
-    setIdx(idx + 1)
-    setAnswer(startAnswer(nextItem))
-    setPhase('answering')
-    setResult(undefined)
-    setHintsUsed(0)
-    setAi({ status: 'off' })
-    setSelfGrading(false)
-    dispute.current = undefined
-    aiRequest.current += 1
-    tries.current = 0
-    startedAt.current = Date.now()
-    window.scrollTo({ top: 0 })
-  }, [idx, isLearn, resolve, finish, card.type, phase, selfGrading, ai, hintsUsed])
+    goTo(idx + 1)
+  }, [idx, isLearn, resolve, finish, card.type, phase, selfGrading, ai, hintsUsed, goTo])
 
   /** Ask the AI to grade an explanation. With no key, offline, or on an error, the learner grades themselves. */
   const askAi = useCallback(
@@ -242,6 +270,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     if (ai.status !== 'done' || answer.type !== 'explain') return
     setSelfGrading(true)
     setPhase('revealed')
+    if (debug) return
     const it = item
     void db.disputes
       .add({
@@ -285,6 +314,12 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   useEffect(() => {
     if (summary || dailyXp !== null || reading) return
     const onKey = (e: KeyboardEvent) => {
+      if (debug && e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        const to = idx + (e.key === 'ArrowLeft' ? -1 : 1)
+        if (to >= 0 && to < queueRef.current.length) goTo(to)
+        e.preventDefault()
+        return
+      }
       const t = (e.target instanceof HTMLElement ? e.target : document.body) as HTMLElement
       const inEditor = !!t.closest('.monaco-editor')
       const inField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || inEditor
@@ -308,7 +343,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [primary, phase, summary, dailyXp, reading])
+  }, [primary, phase, summary, dailyXp, reading, debug, idx, goTo])
 
   if (summary) return <SessionDone summary={summary} />
   if (dailyXp !== null && tiles) return <DailyDone results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
@@ -326,12 +361,37 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const footerState = phase === 'correct' ? 'correct' : phase === 'wrong' ? 'wrong' : undefined
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div
+      className={[
+        // A project fills the screen exactly, so its panels scroll instead of the page.
+        fullHeight ? 'flex h-dvh flex-col' : 'flex min-h-dvh flex-col',
+        debug && panelOpen ? 'lg:pl-[var(--ga-debug-w)]' : '',
+      ].join(' ')}
+    >
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur sm:px-6">
-        <button type="button" aria-label="Exit session" className="ga-icon-btn" onClick={() => navigate('/')}>
+        <button
+          type="button"
+          aria-label="Exit session"
+          className="ga-icon-btn"
+          onClick={() => navigate(debug ? '/debug' : '/')}
+        >
           <X size={20} />
         </button>
+        {debug && !panelOpen && (
+          <button
+            type="button"
+            className="ga-debug-open"
+            aria-label="Show debug panel"
+            title="Show debug panel"
+            onClick={() => showPanel(true)}
+          >
+            <Bug size={15} aria-hidden />
+            <span className="tabular-nums">
+              {idx + 1}/{queue.length}
+            </span>
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           {tiles ? (
             <DailyTileRow results={tiles} />
@@ -361,9 +421,43 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         </span>
       </header>
 
+      {debug && panelOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+            aria-label="Hide debug panel"
+            onClick={() => showPanel(false)}
+          />
+          <DebugPanel
+            items={queue}
+            idx={idx}
+            version={debugVersion(item)}
+            onGo={(i, v) => {
+              goTo(i, v)
+              if (!window.matchMedia(WIDE).matches) showPanel(false)
+            }}
+            onClose={() => showPanel(false)}
+          />
+        </>
+      )}
+
       {/* Card */}
-      <main className="flex flex-1 justify-center px-4 pt-8 pb-12 sm:px-8">
-        <div key={item.key} className="flex w-full max-w-[760px] flex-col gap-5">
+      <main
+        className={
+          fullHeight
+            ? 'flex min-h-0 flex-1 justify-center px-4 pt-4 pb-4 sm:px-6'
+            : 'flex flex-1 justify-center px-4 pt-8 pb-12 sm:px-8'
+        }
+      >
+        <div
+          key={item.key}
+          className={
+            fullHeight
+              ? 'flex min-h-0 w-full max-w-[1400px] flex-1 flex-col gap-3'
+              : 'flex w-full max-w-[760px] flex-col gap-5'
+          }
+        >
           {item.source !== 'lesson' && !daily && (
             <p className="text-caption text-faint">
               {item.source === 'checkpoint'
@@ -376,9 +470,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           <div
             key={shake}
             className={
-              phase === 'wrong' && card.type !== 'write' && card.type !== 'fix' && card.type !== 'project'
-                ? 'ga-shake'
-                : undefined
+              fullHeight
+                ? 'flex min-h-0 flex-1 flex-col'
+                : phase === 'wrong' && card.type !== 'write' && card.type !== 'fix'
+                  ? 'ga-shake'
+                  : undefined
             }
           >
             <ExerciseView
@@ -388,7 +484,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
               phase={phase}
               result={result?.run}
               milestones={result?.milestones}
-              draftKey={card.type === 'project' && item.source === 'project' ? item.itemId : undefined}
+              draftKey={card.type === 'project' && item.source === 'project' && !debug ? item.itemId : undefined}
               ai={ai}
               selfGrading={selfGrading}
               onRetryAi={answer.type === 'explain' ? () => void askAi(answer.text) : undefined}
@@ -410,7 +506,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
 
       {/* Feedback footer */}
       <footer className="ga-footer sticky bottom-0" data-state={footerState} aria-live="polite">
-        <div className="mx-auto flex w-full max-w-[920px] items-center gap-4">
+        <div className={`mx-auto flex w-full items-center gap-4 ${fullHeight ? 'max-w-[1400px]' : 'max-w-[920px]'}`}>
           <div className="hidden flex-none sm:block">
             <Adam mood={mood} size={56} />
           </div>
@@ -531,9 +627,9 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 }
 
-/** A project picks up from the learner's saved draft. Practising a project starts it fresh. */
-function startAnswer(item: SessionItem): Answer {
-  const draft = item.card.type === 'project' && item.source === 'project' ? loadDraft(item.itemId) : null
+/** A project picks up from the learner's saved draft. Practising a project, or debugging it, starts it fresh. */
+function startAnswer(item: SessionItem, debug = false): Answer {
+  const draft = item.card.type === 'project' && item.source === 'project' && !debug ? loadDraft(item.itemId) : null
   return draft ? { type: 'code', code: draft } : initialAnswer(item.card)
 }
 
@@ -634,3 +730,6 @@ function FooterText({
       )
   }
 }
+
+/** Which version of its card a debug item shows (0 is the card itself). */
+const debugVersion = (item: SessionItem) => Number(/:v(\d+)$/.exec(item.key)?.[1] ?? 0)

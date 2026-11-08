@@ -259,3 +259,20 @@ describe('practice mode', () => {
     expect((await slice()).card).toEqual(versionForReview(base, 1))
   })
 })
+
+describe('debug sessions', () => {
+  it('open any lesson, even a locked one, at the chosen card', async () => {
+    const db = freshDb()
+    const last = lessons[lessons.length - 1]
+    const card = last.cards[Math.min(2, last.cards.length - 1)]
+    const plan = await buildSession('debug', { lessonId: last.id, cardId: card.id }, day1, db)
+    expect(plan.items.map((i) => i.card.id)).toEqual(last.cards.map((c) => c.id))
+    expect(plan.items[plan.startAt!].card.id).toBe(card.id)
+  })
+
+  it('start at the first card when the card is unknown, and are empty for an unknown lesson', async () => {
+    const db = freshDb()
+    expect((await buildSession('debug', { lessonId: lessons[0].id, cardId: 'nope' }, day1, db)).startAt).toBe(0)
+    expect((await buildSession('debug', { lessonId: 'nope' }, day1, db)).items).toEqual([])
+  })
+})

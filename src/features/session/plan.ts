@@ -13,14 +13,22 @@ import { selectDaily } from './daily'
  * - lesson:   the next lesson, checkpoint or project on the path. As many as you like.
  * - review:   extra reviews, soonest-due first ("keep going").
  * - practice: more reps on one lesson's exercises; doesn't change the review schedule.
+ * - debug:    any lesson, starting at any card, free to jump around. Saves nothing (see lib/debug.ts).
  */
-export type SessionKind = 'daily' | 'review' | 'practice' | 'lesson'
+export type SessionKind = 'daily' | 'review' | 'practice' | 'lesson' | 'debug'
 
 export type SessionItem = { key: string; itemId: string; lesson: Lesson; card: Card; source: ItemSource }
 
 export type DailyPlan = { day: DayKey; itemIds: string[]; results: Record<string, DailyResult> }
 
-export type SessionPlan = { kind: SessionKind; items: SessionItem[]; lessonId?: string; daily?: DailyPlan }
+export type SessionPlan = {
+  kind: SessionKind
+  items: SessionItem[]
+  lessonId?: string
+  daily?: DailyPlan
+  /** Debug sessions: the card to start at. */
+  startAt?: number
+}
 
 const REVIEW_MAX = 5
 const REVIEW_MAX_CODE = 2 // fix/write take longer; keep the set short
@@ -146,11 +154,17 @@ async function practiceItems(lesson: Lesson, database: GradientDB): Promise<Sess
 
 export async function buildSession(
   kind: SessionKind,
-  opts: { lessonId?: string } = {},
+  opts: { lessonId?: string; cardId?: string } = {},
   now = new Date(),
   database: GradientDB = db,
 ): Promise<SessionPlan> {
   if (kind === 'daily') return dailyPlan(now, database)
+  if (kind === 'debug') {
+    const lesson = lessons.find((l) => l.id === opts.lessonId)
+    if (!lesson) return { kind, items: [] }
+    const at = lesson.cards.findIndex((c) => c.id === opts.cardId)
+    return { kind, items: lessonItems(lesson), lessonId: lesson.id, startAt: Math.max(0, at) }
+  }
   const mastery = new Map((await database.mastery.toArray()).map((m) => [m.lessonId, m]))
   switch (kind) {
     case 'review':

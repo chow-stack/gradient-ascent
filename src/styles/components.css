@@ -1198,3 +1198,270 @@
   line-height: 1.5;
   overflow-x: auto;
 }
+
+/* ───────────── Debug mode ───────────── */
+.ga-debug-lesson {
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+}
+.ga-debug-lesson summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.ga-debug-lesson summary::-webkit-details-marker {
+  display: none;
+}
+.ga-debug-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+.ga-debug-card:hover {
+  background: var(--color-raised);
+}
+
+:root {
+  --ga-debug-w: 300px;
+}
+.ga-debug-panel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--ga-debug-w), 88vw);
+  background: var(--color-sidebar);
+  border-right: 1px solid var(--color-border);
+  box-shadow: 8px 0 32px rgb(0 0 0 / 0.35);
+  animation: ga-debug-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  .ga-debug-panel {
+    box-shadow: none;
+  }
+}
+@keyframes ga-debug-in {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+}
+.ga-debug-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-progress-track) transparent;
+}
+.ga-debug-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin-top: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 15%, transparent);
+}
+.ga-debug-step {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.ga-debug-step:hover:not(:disabled) {
+  background: var(--color-progress-track);
+}
+.ga-debug-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ga-debug-versions {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+.ga-debug-versions button {
+  flex: 1;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--weight-strong);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.ga-debug-versions button:hover {
+  color: var(--color-text);
+}
+.ga-debug-versions button[aria-checked='true'] {
+  background: var(--color-raised);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+.ga-debug-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: var(--color-text);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.ga-debug-row:hover {
+  background: var(--color-raised);
+}
+.ga-debug-row[aria-current] {
+  background: color-mix(in oklab, var(--color-accent) 12%, var(--color-raised));
+  border-left-color: var(--color-accent);
+}
+.ga-debug-type {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--color-raised);
+  color: var(--color-muted);
+}
+.ga-debug-type[data-type='learn'] {
+  color: var(--color-sky);
+}
+.ga-debug-type[data-type='fix'],
+.ga-debug-type[data-type='write'],
+.ga-debug-type[data-type='project'] {
+  color: var(--color-accent);
+}
+.ga-debug-type[data-type='explain'] {
+  color: var(--color-track-web);
+}
+.ga-debug-type[data-type='choice'],
+.ga-debug-type[data-type='parsons'],
+.ga-debug-type[data-type='blank'] {
+  color: var(--color-success);
+}
+.ga-debug-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: var(--weight-strong);
+  color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 13%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
+  cursor: pointer;
+}
+.ga-debug-open:hover {
+  background: color-mix(in oklab, var(--color-accent) 20%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-debug-panel {
+    animation: none;
+  }
+}
+.ga-project-pane {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-progress-track) transparent;
+}
+.ga-project-brief-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.ga-project-brief-toggle[aria-expanded='true'] svg:last-child {
+  transform: rotate(180deg);
+}
+.ga-split-handle {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  margin-top: -5px;
+  cursor: row-resize;
+  touch-action: none;
+}
+.ga-split-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 44px;
+  height: 4px;
+  margin-left: -22px;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  transition: background-color 120ms ease;
+}
+.ga-split-handle:hover::after,
+.ga-split-handle:focus-visible::after {
+  background: var(--color-sky);
+}
+.ga-project-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.ga-project-tabs button {
+  position: relative;
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: var(--weight-strong);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.ga-project-tabs button[aria-selected='true'] {
+  background: var(--color-raised);
+  color: var(--color-text);
+}
+.ga-project-dot {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+.ga-project-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 40%, transparent);
+  font-size: 14px;
+}
