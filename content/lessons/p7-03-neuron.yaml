@@ -1,0 +1,330 @@
+id: p7-neuron
+track: ml
+unit: 7
+order: 3
+title: One neuron
+summary: Many features at once with `X @ w + b`, classifying a whole dataset, and the straight-line boundary that limits what one neuron can learn.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Many features, one score
+    body: >-
+      Real examples have many features. An email has a count for every word you track, whether it has a link, how many capital letters. A model needs
+      one score for each email, built from all of them.
+
+
+      Each feature gets its own weight. Multiply each feature by its weight, add them up, add `b`, and pass the total through the sigmoid. That's a
+      neuron, the same thing you met in Unit 4's first look at a network. Logistic regression is one neuron on its own.
+
+
+      By the end you'll score a whole dataset in one line and see the one shape of boundary a single neuron can draw.
+
+  - type: learn
+    id: matmul
+    title: Every score in one line
+    body: >-
+      Put the examples in a matrix `X`, one row per email and one column per feature, so its shape is `(n, d)`. The weights `w` have shape `(d,)`, one
+      per feature.
+
+
+      From Unit 5, `X @ w` is a dot product of every row with `w`: each row's features times their weights, added up. The result has shape `(n,)`, one
+      number per email. Add `b` and you have every score. The sigmoid then turns them all into probabilities at once.
+
+
+      Here the features are how many times an email says "free", how many times it says "meeting", and whether it has a link. "free" and links push the
+      score up, so their weights are positive. "meeting" pushes it down.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      X = np.array([[2.0, 0.0, 1.0],
+                    [0.0, 3.0, 0.0],
+                    [1.0, 1.0, 1.0],
+                    [0.0, 0.0, 0.0]])
+      w = np.array([1.5, -2.0, 1.0])
+      b = -1.0
+
+      z = X @ w + b
+      print(z)
+      print(sigmoid(z).round(2))
+    subgoals:
+      - { line: 6, label: 'One row per email, one column per feature' }
+      - { line: 10, label: 'One weight per feature' }
+      - { line: 13, label: 'One score per email' }
+    predict: Which email is most likely to be spam?
+
+  - type: choice
+    id: shape
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      X = np.ones((100, 5))
+      w = np.zeros(5)
+      b = 0.0
+      print((X @ w + b).shape)
+    choices: ['(100,)', '(5,)', '(100, 5)', '(100, 1)']
+    answer: '(100,)'
+    why: >-
+      `(100, 5) @ (5,)` gives one dot product per row: 100 scores, in a flat array.
+    misses:
+      '(5,)': "That's one number per feature. The product sums across each row, giving one per example."
+      '(100, 5)': "That's the shape `X * w` would give. `@` adds up each row."
+      '(100, 1)': '`w` is flat, so the result is flat too: `(100,)`.'
+    variants:
+      - code: |
+          import numpy as np
+
+          X = np.ones((100, 5))
+          w = np.zeros(5)
+          print((X * w).shape)
+        choices: ['(100, 5)', '(100,)', '(5,)', 'An error']
+        answer: '(100, 5)'
+        why: >-
+          `*` broadcasts `w` across every row and multiplies item by item, but adds nothing up. You'd still need `.sum(axis=1)` to get scores.
+        misses:
+          '(100,)': '`*` multiplies item by item and keeps every product. Only `@` adds across the row.'
+          '(5,)': 'Broadcasting stretches `w` to every row, so the result keeps the shape of `X`.'
+          'An error': "The shapes line up on the right, `(100, 5)` and `(5,)`, so broadcasting works. That's why the bug is quiet."
+
+  - type: choice
+    id: which-line
+    prompt: '`X` has one row per example. Which line gives a probability for every example?'
+    choices: ['`sigmoid(X @ w + b)`', '`sigmoid(X * w + b)`', '`sigmoid(X @ w) + b`', '`X @ sigmoid(w) + b`']
+    answer: '`sigmoid(X @ w + b)`'
+    why: >-
+      The score is the weighted sum plus `b`, and the whole score goes through the sigmoid.
+    misses:
+      '`sigmoid(X * w + b)`': 'That gives a probability per feature, a whole `(n, d)` table. `@` adds each row up into one score.'
+      '`sigmoid(X @ w) + b`': '`b` belongs inside: it shifts the score. Added outside, the result can go past 1.'
+      '`X @ sigmoid(w) + b`': 'The sigmoid squashes the score, not the weights. This result can be any number.'
+
+  - type: explain
+    id: explain-star
+    prompt: This uses `X * w` where it meant `X @ w`. It runs without an error. What does it compute instead, and why doesn't Python complain?
+    code: |
+      import numpy as np
+
+      X = np.array([[2.0, 0.0, 1.0],
+                    [0.0, 3.0, 0.0]])
+      w = np.array([1.5, -2.0, 1.0])
+      print(X * w)
+      print(X @ w)
+    model: >-
+      `X * w` multiplies each feature by its weight but never adds them up, so you get a table of products, one per feature, instead of one score per
+      example. Broadcasting makes the shapes fit, so there's no error. `@` multiplies and adds across each row.
+    keyPoints:
+      - '`*` multiplies item by item and keeps every product'
+      - "It doesn't add across the row, so there's no single score"
+      - Broadcasting makes the shapes fit, so there's no error
+
+  - type: learn
+    id: classify
+    title: Classifying, and the line it draws
+    body: >-
+      To pick classes, `p >= 0.5` works, and so does `z >= 0`, since a score of 0 is a probability of 0.5. Mixing them up, with `z >= 0.5`, quietly
+      moves the threshold: an email with a score of 0.3 is 57% spam but gets called real.
+
+
+      With two features, the boundary is where `w1 * x1 + w2 * x2 + b = 0`. That's the equation of a straight line. On one side the model says class 1,
+      on the other class 0. With more features, it's still flat: a plane, or its higher version.
+
+
+      So a single neuron can only split classes with something straight. That's its limit, and the reason networks stack neurons in layers.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      X = np.array([[1.0, 1.0], [1.5, 2.0], [2.0, 1.0], [3.0, 3.5], [4.0, 3.0], [3.5, 4.0]])
+      y = np.array([0, 0, 0, 1, 1, 1])
+      w = np.array([1.0, 1.0])
+      b = -5.0
+
+      print(((X @ w + b) >= 0).astype(int))
+
+      x1 = np.linspace(0, 5, 2)
+      plt.scatter(X[:, 0], X[:, 1], c=y, cmap='coolwarm')
+      plt.plot(x1, -(w[0] * x1 + b) / w[1])
+      plt.xlabel('x1')
+      plt.ylabel('x2')
+      plt.show()
+    subgoals:
+      - { line: 9, label: 'Class 1 where the score is at least 0' }
+      - { line: 13, label: 'Solve the boundary for x2 and draw it' }
+    predict: Does the line separate the two groups?
+
+  - type: choice
+    id: threshold-z
+    prompt: "A model's scores for four emails are `[-0.2, 0.3, 0.6, -1.0]`. At the usual threshold of 50%, which does it call spam?"
+    choices: ['The second and third', 'Only the third', 'All four', 'None of them']
+    answer: 'The second and third'
+    why: >-
+      A probability of at least 0.5 is a score of at least 0. Both 0.3 and 0.6 are positive.
+    misses:
+      'Only the third': "That compares the scores with 0.5. The 0.5 is for probabilities. For scores, it's 0."
+      'All four': '-0.2 and -1.0 are negative scores, so their probabilities are below 0.5.'
+      'None of them': 'Any positive score is a probability above 0.5. Two of these are positive.'
+
+  - type: choice
+    id: ring
+    prompt: >-
+      Spam emails sit in a ring around the real ones when plotted by two features. Can a single neuron on those two features separate them?
+    choices:
+      [
+        'No, its boundary is always a straight line',
+        'Yes, with enough training steps',
+        'Yes, if the weights are big enough',
+        'Yes, if you lower the threshold',
+      ]
+    answer: 'No, its boundary is always a straight line'
+    why: >-
+      `w1 * x1 + w2 * x2 + b = 0` is a line, whatever the weights. No straight line puts a ring on one side and its middle on the other.
+    misses:
+      'Yes, with enough training steps': 'Training only changes the weights, and every choice of weights still gives a straight line.'
+      'Yes, if the weights are big enough': 'Bigger weights make the model more confident, but the boundary stays straight.'
+      'Yes, if you lower the threshold': 'A different threshold moves the line sideways. It stays straight.'
+    variants:
+      - prompt: Why can a network with a hidden layer draw a curved boundary when one neuron can't?
+        choices:
+          [
+            'Its later neurons combine the straight boundaries of earlier ones',
+            'It uses a curved version of the sigmoid',
+            'It trains for longer',
+            'It has a bigger threshold',
+          ]
+        answer: 'Its later neurons combine the straight boundaries of earlier ones'
+        why: >-
+          Each hidden neuron draws its own line. The next layer mixes them, and several lines combined can bend around a region, as in Unit 4's
+          TensorFlow Playground.
+        misses:
+          'It uses a curved version of the sigmoid': "The sigmoid is the same. It's combining many neurons that bends the boundary."
+          'It trains for longer': 'One neuron trained forever still draws a straight line.'
+          'It has a bigger threshold': 'Thresholds move a boundary; they never bend it.'
+
+  - type: blank
+    id: fill-predict
+    prompt: Fill in the blank so `predict` gives a probability for every row of `X`.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def predict(X, w, b):
+          return sigmoid(X ____ w + b)
+    answers: [['@']]
+    tests:
+      - { call: 'predict(np.array([[1.0, 1.0], [0.0, 0.0]]), np.array([1.0, -1.0]), 0.0)', expect: '[0.5, 0.5]' }
+      - { call: 'predict(np.ones((3, 2)), np.zeros(2), 0.0).shape', expect: '(3,)' }
+    why: >-
+      `@` multiplies each row by the weights and adds it up, so there's one score per row.
+
+  - type: fix
+    id: fix-threshold
+    prompt: >-
+      `classify(X, w, b)` should give 1 for every example the model thinks is at least 50% likely to be class 1, and 0 for the rest. It misses some.
+      Fix it.
+    code: |
+      import numpy as np
+
+      def classify(X, w, b):
+          z = X @ w + b
+          return (z >= 0.5).astype(int)
+    solution: |
+      import numpy as np
+
+      def classify(X, w, b):
+          z = X @ w + b
+          return (z >= 0).astype(int)
+    highlightLine: 5
+    tests:
+      - {
+          call: 'classify(np.array([[1.0, 2.0], [0.0, 1.0], [3.0, 0.0]]), np.array([0.5, -1.0]), 0.2)',
+          expect: '[0, 0, 1]',
+        }
+      - { call: 'classify(np.array([[0.4, 0.0], [1.0, 0.0]]), np.array([1.0, 1.0]), 0.0)', expect: '[1, 1]' }
+      - { call: 'classify(np.array([[0.1], [-0.1]]), np.array([2.0]), 0.0)', expect: '[1, 0]', hidden: true }
+      - { call: 'classify(np.array([[0.0, 0.0]]), np.array([1.0, 1.0]), 0.25)', expect: '[1]', hidden: true }
+    why: >-
+      The 0.5 belongs to the probability. For the score, the threshold is 0. Either `z >= 0` or `sigmoid(z) >= 0.5` works.
+    hints:
+      - What score does the sigmoid turn into a probability of 0.5?
+    variants:
+      - prompt: '`classify(X, w, b)` should give 1 for every example at least 50% likely to be class 1, and 0 for the rest. Fix it.'
+        code: |
+          import numpy as np
+
+          def classify(X, w, b):
+              z = (X * w).sum() + b
+              return (z >= 0).astype(int)
+        highlightLine: 4
+        hints:
+          - '`.sum()` with no axis adds up everything in the whole table. You want one score per row.'
+
+  - type: write
+    id: write-predict
+    prompt: >-
+      Write `predict(X, w, b)`, which gives the probability of class 1 for every row of `X`, using the `sigmoid` given. No loops.
+    starter: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def predict(X, w, b):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def predict(X, w, b):
+          return sigmoid(X @ w + b)
+    tests:
+      - { call: 'predict(np.array([[1.0, 1.0], [0.0, 0.0]]), np.array([1.0, -1.0]), 0.0)', expect: '[0.5, 0.5]' }
+      - {
+          call: 'predict(np.array([[2.0, 0.0, 1.0], [0.0, 3.0, 0.0]]), np.array([1.5, -2.0, 1.0]), -1.0).round(3)',
+          expect: '[0.953, 0.001]',
+        }
+      - { call: 'predict(np.ones((4, 3)), np.zeros(3), 0.0).shape', expect: '(4,)', hidden: true }
+      - {
+          call: 'predict(np.array([[0.0, 1.0]]), np.array([3.0, 0.0]), np.log(3)).round(4)',
+          expect: '[0.75]',
+          hidden: true,
+        }
+    requires: ['name:sigmoid']
+    forbids: ['loop']
+    why: >-
+      One matrix product gives every score, `b` shifts them all, and the sigmoid turns them into probabilities.
+    hints:
+      - '`X @ w` gives one weighted sum per row.'
+
+  - type: choice
+    id: remember-boundary
+    prompt: 'From the last lesson. A model has one feature, with `w = 0.5` and `b = -2.0`. Where is its decision boundary?'
+    choices: ['`x = 4.0`', '`x = -4.0`', '`x = 5.0`', '`x = 0.5`']
+    answer: '`x = 4.0`'
+    why: >-
+      The boundary is where the score is 0: `0.5 * x - 2 = 0`, so `x = 2 / 0.5 = 4`.
+    misses:
+      '`x = -4.0`': 'Watch the sign: `-b / w` is `2 / 0.5`, which is positive.'
+      '`x = 5.0`': 'That solves `z = 0.5`. The boundary is where the score is 0.'
+      '`x = 0.5`': "That's the weight. Solve `0.5 * x - 2 = 0` for `x`."
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      With examples in the rows of `X`, `X @ w + b` gives every score at once, and `sigmoid` turns them into probabilities. That's one neuron, and on
+      its own it's logistic regression. Classify with `z >= 0` or `p >= 0.5`, not `z >= 0.5`. The boundary is always straight, so one neuron can't
+      wrap around a curved region.
+
+
+      Next: a loss for probabilities, so the model can learn its weights.

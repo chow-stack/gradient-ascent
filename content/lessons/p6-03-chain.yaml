@@ -61,6 +61,10 @@ cards:
     answer: '`2 * (5 * x - 2) * 5`'
     why: >-
       The outside, squaring, gives `2 * u` at `u = 5 * x - 2`. Then multiply by the inside's slope, 5. Leaving off the 5 is the most common slip.
+    misses:
+      '`2 * (5 * x - 2)`': "You left out the inside's slope. The inside, `5 * x - 2`, changes 5 times as fast as `x`."
+      '`2 * x * 5`': "The outside's slope is worked out at the inside's value, `5 * x - 2`, not at `x`."
+      '`5 * (5 * x - 2)`': "Squaring gives `2 * u`. You need that 2 as well as the inside's 5."
     variants:
       - prompt: What's the derivative of `np.exp(2 * x)`?
         choices: ['`2 * np.exp(2 * x)`', '`np.exp(2 * x)`', '`np.exp(2)`', '`2 * x * np.exp(2 * x - 1)`']
@@ -87,6 +91,10 @@ cards:
     answer: '24'
     why: >-
       At `x = 1`, the inside is 3. The outside's slope there is `2 * 3`, which is 6, and times the inside's slope, 4, that's 24.
+    misses:
+      '6': "That's the outside's slope, `2 * 3`, without the inside's 4."
+      '8': "That's `2 * 4`. Work out the inside first: `u` is 3 at `x = 1`."
+      '9': "That's `u ** 2`, the value, not the slope."
     variants:
       - code: |
           def df(x):
@@ -304,6 +312,10 @@ cards:
     answer: '`1 / x`'
     why: >-
       `log` rises steeply near 0 and flattens out, and `1 / x` describes exactly that.
+    misses:
+      '`np.log(x)`': "Being its own derivative is `exp`'s trick, not `log`'s."
+      '`np.exp(x)`': "That's `exp`'s derivative. `log`'s is `1 / x`."
+      '`x`': '`log` flattens out as `x` grows, so its slope shrinks, like `1 / x`.'
 
   - type: learn
     id: recap

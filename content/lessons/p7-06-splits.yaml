@@ -1,0 +1,323 @@
+id: p7-splits
+track: ml
+unit: 7
+order: 6
+title: Train, validation and test
+summary: Why a model's score on its own training data means little, and how to hold data back so the score means something.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A score you can trust
+    body: >-
+      You've trained a classifier and measured its accuracy. On what? So far, on the same examples it learned from. That's like marking a test using the
+      questions you studied with the answers beside them.
+
+
+      What you want to know is how it does on examples it has never seen, the emails that arrive tomorrow. The only way to find out is to hide some
+      data from training and score the model on that.
+
+
+      By the end you'll split data properly, know what each part is for, and spot the ways a split quietly goes wrong.
+
+  - type: learn
+    id: memorise
+    title: Perfect on training, useless on new data
+    body: >-
+      Here's a model that can't possibly learn anything: the labels are random coin flips, with no connection to the features. It's nearest neighbours
+      from Unit 5's doodle project: to classify a point, copy the label of the closest training point.
+
+
+      On its own training data, it scores 100%. Each training point's closest neighbour is itself, so it just reads back the label it memorised. On 100
+      points it hasn't seen, it scores about 50%, a coin flip, which is the truth.
+
+
+      Training accuracy measures how well a model fits what it saw, and a flexible enough model can fit anything, even noise. It says little about new
+      data.
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(200, 2))
+      y = rng.integers(0, 2, 200)
+      X_train, y_train, X_new, y_new = X[:100], y[:100], X[100:], y[100:]
+
+      def nearest(points):
+          d = ((points[:, None, :] - X_train[None, :, :]) ** 2).sum(axis=2)
+          return y_train[d.argmin(axis=1)]
+
+      print(np.mean(nearest(X_train) == y_train))
+      print(np.mean(nearest(X_new) == y_new))
+    subgoals:
+      - { line: 5, label: 'Labels that are pure coin flips' }
+      - { line: 9, label: 'Every distance, by broadcasting' }
+      - { line: 12, label: 'Scored on what it memorised' }
+      - { line: 13, label: "Scored on what it hasn't seen" }
+    predict: What accuracy will it get on its own training data?
+
+  - type: choice
+    id: memorise-meaning
+    prompt: A model scores 99% on its training data. What does that tell you about how it will do on new data?
+    choices:
+      ['Very little on its own', 'It will score about 99%', 'It will score less than 50%', 'It has definitely overfit']
+    answer: 'Very little on its own'
+    why: >-
+      A model can fit its training data perfectly by memorising it, even when the labels are noise. Only held-back data shows how it does on new examples.
+    misses:
+      'It will score about 99%': 'Nearest neighbours scored 100% on random labels and 55% on new data. Training scores flatter.'
+      'It will score less than 50%': "It might do well on new data too. You can't tell until you score it on data it hasn't seen."
+      'It has definitely overfit': 'A high training score is consistent with a good model too. You need held-back data to tell which.'
+
+  - type: explain
+    id: explain-memorise
+    prompt: The labels here are random coin flips, yet the model scores 1.0 on its training data. How?
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(100, 2))
+      y = rng.integers(0, 2, 100)
+
+      d = ((X[:, None, :] - X[None, :, :]) ** 2).sum(axis=2)
+      print(np.mean(y[d.argmin(axis=1)] == y))
+    model: >-
+      Each training point's nearest neighbour is itself, at distance 0, so the model just reads back the label it stored. It has memorised the answers
+      rather than learned a pattern, which is why the score says nothing about new points.
+    keyPoints:
+      - "Each training point's nearest neighbour is itself"
+      - It reads back the stored label, so it's memorising
+      - So training accuracy says nothing about new data
+
+  - type: learn
+    id: split
+    title: Shuffle once, then slice
+    body: >-
+      To hold data back, shuffle the positions with `rng.permutation(n)`, then slice: the first 80% for training, the rest for validation. Use the same
+      shuffled positions for `X` and for `y`, so every example keeps its own label.
+
+
+      Shuffling `X` and `y` separately is the Unit 5 bug, and it's silent here too: training runs, the loss falls a little, and the model learns from
+      pairs that no longer belong together.
+
+
+      Always shuffle first. Data files are often sorted, by date or by label. Slice a file sorted by label without shuffling, and all the spam might land
+      in validation, with none of it in training.
+    code: |
+      import numpy as np
+
+      X = np.arange(20).reshape(10, 2)
+      y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+
+      idx = np.random.default_rng(0).permutation(len(y))
+      k = int(len(y) * 0.8)
+      train, val = idx[:k], idx[k:]
+
+      X_train, y_train = X[train], y[train]
+      X_val, y_val = X[val], y[val]
+      print(train, val)
+      print(y_train, y_val)
+    subgoals:
+      - { line: 6, label: 'One shuffle of the positions' }
+      - { line: 7, label: 'Where the cut goes' }
+      - { line: 10, label: 'The same positions for X and y' }
+    predict: Will both halves have some of each label?
+
+  - type: choice
+    id: sorted
+    kind: predict
+    prompt: The labels are sorted. What does this print?
+    code: |
+      import numpy as np
+
+      y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
+      k = int(len(y) * 0.8)
+      print(y[:k].mean(), y[k:].mean())
+    choices: ['0.0 1.0', '0.2 0.2', '0.8 0.2', '1.0 0.0']
+    answer: '0.0 1.0'
+    why: >-
+      Without a shuffle, the training part gets the first eight labels, all 0, and validation gets the two 1s. The model would never see class 1.
+    misses:
+      '0.2 0.2': "That's what you'd hope a shuffled split gives. Sliced in order, the 1s all land at the end."
+      '0.8 0.2': 'The means are the share of 1s in each part, not their sizes.'
+      '1.0 0.0': 'The 1s are at the end of the array, so they land in `y[k:]`, the validation part.'
+
+  - type: learn
+    id: three
+    title: Train, validation, test
+    body: >-
+      Training data fits the weights. But you also make choices: the learning rate, how many steps, which features, the threshold. If you make them by
+      checking validation scores, the model you end up with is tuned to that validation set, a little.
+
+
+      So keep a third part, the test set, and use it once, at the very end, to report how the final model does. Look at it fifty times while making
+      choices, and it's become a validation set, and its score is too hopeful.
+
+
+      Common splits are 60/20/20 or 80/10/10. With little data, every example held back is one the model can't learn from, which is a real trade-off.
+    code: |
+      import numpy as np
+
+      n = 50
+      idx = np.random.default_rng(1).permutation(n)
+      train, val, test = idx[:30], idx[30:40], idx[40:]
+      print(len(train), len(val), len(test))
+      print(len(set(train) & set(test)))
+    subgoals:
+      - { line: 5, label: 'Fit, choose, report' }
+      - { line: 7, label: 'No example in two parts' }
+    predict: How many examples are in both the training and test parts?
+
+  - type: choice
+    id: tuned-on-test
+    prompt: 'You try 30 learning rates and keep the one with the best test accuracy: 91%. What is wrong with reporting "91% on new data"?'
+    choices:
+      [
+        'The choice was tuned to the test set, so 91% is too hopeful',
+        'Nothing, the test set was never trained on',
+        '30 learning rates is too many to try',
+        'Test accuracy should be reported before choosing',
+      ]
+    answer: 'The choice was tuned to the test set, so 91% is too hopeful'
+    why: >-
+      Picking the best of 30 tries on the test set favours whichever rate got lucky on those examples. Choose on validation, then check test once.
+    misses:
+      'Nothing, the test set was never trained on': 'The weights never saw it, but your choice did. Choosing the best of 30 scores on it is a kind of fitting.'
+      '30 learning rates is too many to try': 'Trying many is fine, on the validation set. Choosing with the test set is the problem.'
+      'Test accuracy should be reported before choosing': 'The test set comes last, once every choice is made.'
+    variants:
+      - prompt: Which part of the data should you use to pick how many training steps to run?
+        choices: ['Validation', 'Training', 'Test', 'All of it together']
+        answer: 'Validation'
+        why: >-
+          The number of steps is a choice, so it's made on data the weights didn't train on, but not the test set, which is kept for the final report.
+        misses:
+          'Training': "Training loss usually keeps falling with more steps, so it would always say more. It can't show overfitting."
+          'Test': 'Choosing on the test set tunes the model to it, and its score stops meaning anything.'
+          'All of it together': 'Then nothing is left that the choice did not see.'
+
+  - type: fix
+    id: fix-shuffle
+    prompt: >-
+      `split(X, y, frac, seed)` should shuffle the examples and give back `X_train, y_train, X_val, y_val`, with `frac` of them in training. Every
+      example must keep its own label. Fix it.
+    code: |
+      import numpy as np
+
+      def split(X, y, frac, seed):
+          rng = np.random.default_rng(seed)
+          X = X[rng.permutation(len(y))]
+          y = y[rng.permutation(len(y))]
+          k = int(len(y) * frac)
+          return X[:k], y[:k], X[k:], y[k:]
+    solution: |
+      import numpy as np
+
+      def split(X, y, frac, seed):
+          idx = np.random.default_rng(seed).permutation(len(y))
+          X, y = X[idx], y[idx]
+          k = int(len(y) * frac)
+          return X[:k], y[:k], X[k:], y[k:]
+    highlightLine: 6
+    tests:
+      - { call: '[len(a) for a in split(np.arange(10).reshape(10, 1), np.arange(10), 0.8, 0)]', expect: '[8, 8, 2, 2]' }
+      - {
+          call: '(lambda s: bool((s[0][:, 0] == s[1]).all() and (s[2][:, 0] == s[3]).all()))(split(np.arange(10).reshape(10, 1), np.arange(10), 0.8, 0))',
+          expect: 'True',
+        }
+      - {
+          call: '(lambda s: bool((s[0][:, 0] == s[1]).all()))(split(np.arange(30).reshape(30, 1), np.arange(30), 0.5, 4))',
+          expect: 'True',
+          hidden: true,
+        }
+      - {
+          call: 'sorted(split(np.arange(10).reshape(10, 1), np.arange(10), 0.8, 0)[1].tolist())',
+          expect: '[0, 2, 3, 4, 5, 6, 7, 9]',
+          hidden: true,
+        }
+    why: >-
+      Two calls to `permutation` give two different orders, so the rows and labels no longer match. Shuffle the positions once and use them for both.
+    hints:
+      - Do `X` and `y` get the same order?
+    variants:
+      - prompt: >-
+          `split(X, y, frac, seed)` should shuffle the examples and give back `X_train, y_train, X_val, y_val`, with `frac` of them in training. On a file
+          sorted by label, validation gets only one class. Fix it.
+        code: |
+          import numpy as np
+
+          def split(X, y, frac, seed):
+              k = int(len(y) * frac)
+              return X[:k], y[:k], X[k:], y[k:]
+        highlightLine: 4
+        hints:
+          - Nothing is shuffled. Shuffle the positions with the seed first.
+
+  - type: blank
+    id: fill-index
+    prompt: Fill in the blanks so the validation part takes the examples at the positions in `val`.
+    code: |
+      import numpy as np
+
+      X = np.arange(20).reshape(10, 2)
+      y = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+      idx = np.random.default_rng(0).permutation(10)
+      train, val = idx[:8], idx[8:]
+      X_val, y_val = X[____], y[____]
+      print(y_val)
+    answers: [['val'], ['val']]
+    expectOutput: '[0 1]'
+    why: >-
+      Indexing with an array of positions picks those rows, and using the same positions for `X` and `y` keeps the pairs together.
+
+  - type: write
+    id: write-indexes
+    prompt: >-
+      Write `split_indexes(n, frac, seed)`, which shuffles the positions `0` to `n - 1` with `np.random.default_rng(seed).permutation(n)` and gives back
+      two arrays: the first `int(n * frac)` positions for training, and the rest for validation.
+    starter: |
+      import numpy as np
+
+      def split_indexes(n, frac, seed):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def split_indexes(n, frac, seed):
+          idx = np.random.default_rng(seed).permutation(n)
+          k = int(n * frac)
+          return idx[:k], idx[k:]
+    tests:
+      - { call: 'split_indexes(10, 0.8, 0)', expect: '([4, 6, 2, 7, 3, 5, 9, 0], [8, 1])' }
+      - { call: 'split_indexes(5, 0.6, 2)', expect: '([2, 4, 3], [0, 1])' }
+      - { call: 'split_indexes(7, 0.5, 1)', expect: '([5, 0, 1], [4, 2, 6, 3])', hidden: true }
+      - { call: '[len(a) for a in split_indexes(100, 0.75, 3)]', expect: '[75, 25]', hidden: true }
+    requires: ['name:permutation']
+    why: >-
+      One shuffle of the positions, then a slice for each part. Returning positions rather than data means `X` and `y` can both use them.
+    hints:
+      - 'Shuffle with `idx = np.random.default_rng(seed).permutation(n)`.'
+      - Then `k = int(n * frac)`, and give back `idx[:k], idx[k:]`.
+
+  - type: choice
+    id: remember-grad
+    prompt: 'From the last lesson. In logistic regression, what is the partial derivative of the mean cross-entropy for `b`?'
+    choices: ['`np.mean(p - y)`', '`np.mean(2 * (p - y))`', '`np.mean(z - y)`', '`X.T @ (p - y) / len(y)`']
+    answer: '`np.mean(p - y)`'
+    why: >-
+      Each example's slope for its score is `p - y`, and `b` adds 1 to every score, so its partial is their mean.
+    misses:
+      '`np.mean(2 * (p - y))`': 'The 2 belongs to the squared error. Cross-entropy and the sigmoid cancel to just `p - y`.'
+      '`np.mean(z - y)`': 'The error uses the probability, `p`, not the raw score `z`.'
+      '`X.T @ (p - y) / len(y)`': "That's the partial for the weights. `b` has no feature to multiply by."
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Training accuracy flatters: a model can fit noise perfectly. Hold data back and score on that. Shuffle the positions once with `permutation` and
+      use them for both `X` and `y`. Train on one part, make choices on validation, and report on test once at the end.
+
+
+      Next: a score on validation still needs something to compare with.

@@ -11,6 +11,7 @@ import { Hangman } from './Hangman'
 import { Life } from './Life'
 import { ErrorNote } from './parts'
 import { Rps } from './Rps'
+import { Spam } from './Spam'
 import { Wordle } from './Wordle'
 
 type Loaded =
@@ -93,9 +94,15 @@ export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
   else if (loaded.status === 'loading') body = <p className="ga-play-empty">Loading your program…</p>
   else if (loaded.status === 'failed') body = <ErrorNote what="Your program" error={loaded.error} />
   else {
-    const Game = { hangman: Hangman, wordle: Wordle, blackjack: Blackjack, life: Life, doodle: Doodle, fit: Fit }[
-      kind as Exclude<PlayKind, 'rps'>
-    ]
+    const Game = {
+      hangman: Hangman,
+      wordle: Wordle,
+      blackjack: Blackjack,
+      life: Life,
+      doodle: Doodle,
+      fit: Fit,
+      spam: Spam,
+    }[kind as Exclude<PlayKind, 'rps'>]
     body = <Game key={loaded.gen} api={api} />
   }
 

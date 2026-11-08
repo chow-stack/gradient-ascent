@@ -62,6 +62,10 @@ cards:
     why: >-
       `f(3.5)` is 12.25 and `f(2.5)` is 6.25. The difference, 6, divided by 1 is 6, exactly the slope of `x ** 2` at 3. For a parabola the central
       difference is exact, even with a big `h`.
+    misses:
+      '6.5': "That's the one-sided nudge. Nudging both ways cancels its error."
+      '12.0': 'The run is `2 * h`, which is 1 here. Dividing by `h` doubles the answer.'
+      '3.0': 'Divide by `2 * h` once. Dividing by 2 again halves the slope.'
     variants:
       - code: |
           def f(x):
@@ -108,6 +112,10 @@ cards:
     answer: "The third weight's partial is wrong"
     why: >-
       Tiny errors mean those partials match the nudges. A third of the size is far beyond `1e-3`, so that formula has a bug, like a missing factor.
+    misses:
+      'All three are fine': '0.33 is far above `1e-3`. That partial disagrees with its nudge by a third.'
+      'The first two are wrong': "Tiny relative errors mean a match. It's the big one that's wrong."
+      '`h` is too small': 'Then all three would be off. Only one is, so its formula has the bug.'
     variants:
       - prompt: 'A relative error comes out at exactly `0.3333`. What kind of bug is the likeliest?'
         choices:
@@ -277,6 +285,10 @@ cards:
     answer: '`np.mean(2 * err * x)`'
     why: >-
       Each squared error's slope is `2 * err` times the inside's slope, `x`, and the MSE averages them.
+    misses:
+      '`np.mean(2 * err)`': "That's for `b`. For `w`, each error's slope is scaled by its `x`."
+      '`np.sum(2 * err * x)`': 'The MSE is a mean, so its gradient is a mean, not a sum.'
+      '`np.mean(err ** 2)`': "That's the loss itself, not its slope."
 
   - type: learn
     id: recap

@@ -59,6 +59,10 @@ cards:
     answer: '`4 * x ** 3`'
     why: >-
       Bring the 4 down and lower the power to 3. Dropping the 4 is the common slip.
+    misses:
+      '`x ** 3`': 'You lowered the power but forgot to bring the 4 down in front.'
+      '`4 * x ** 4`': 'You brought the 4 down but forgot to lower the power by one.'
+      '`3 * x ** 4`': 'The old power, 4, goes in front, and the new power is one less.'
     variants:
       - prompt: What's the derivative of `3 * x ** 2 - 4 * x + 9`?
         choices: ['`6 * x - 4`', '`6 * x - 4 + 9`', '`3 * x - 4`', '`6 * x ** 2 - 4`']
@@ -146,6 +150,10 @@ cards:
     answer: '`1`'
     why: >-
       `exp` is its own derivative, so the slope at 0 is `exp(0)`, which is 1.
+    misses:
+      '`0`': '`exp` is never flat. Its slope equals its value, and `exp(0)` is 1.'
+      '`e`': "That's `exp(1)`. At 0 the slope is `exp(0)`, which is 1."
+      'It has no slope there': '`exp` is smooth everywhere. Its slope at 0 is `exp(0)`, which is 1.'
     variants:
       - prompt: What's the slope of `np.log(x)` at `x = 2`?
         choices: ['`0.5`', '`2`', '`np.log(2)`', '`1`']
@@ -342,6 +350,9 @@ cards:
     answer: A big step measures an average slope over a stretch, not the slope at the point
     why: >-
       Up close, a curve is nearly straight, so a tiny step measures the slope right there.
+    misses:
+      "Python can't divide by 1": 'Dividing by 1 is fine. A big step averages over a stretch where the slope changes.'
+      'A small `h` makes the function run faster': "`h` doesn't change the speed. It changes what the nudge measures."
 
   - type: learn
     id: recap

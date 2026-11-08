@@ -113,7 +113,7 @@ draws the board.
 | Functions as values     | Passing functions (U4)   | —                     | `_backward` closures in micrograd (U8) |
 | Operator overloading    | Special methods (U4)     | Blackjack (U4)        | `Value.__add__` in micrograd (U8)      |
 | Search by elimination   | Wordle bot (U3)          | —                     | Entropy and information (U9)           |
-| Likelihood              | Logistic regression (U5) | Probability (U9)      | makemore's loss (U10)                  |
+| Likelihood              | Logistic regression (U7) | Probability (U11)     | makemore's loss (U12)                  |
 
 ---
 
@@ -124,7 +124,10 @@ draws the board.
 2. **Each wrong answer matches exactly one mistake.** Picking it should tell you what you misunderstood.
    A wrong answer that is just random is a wasted option.
 3. **Fix cards use a target mistake as the bug.** Not a typo.
-4. **Explanations name the mistake.** The `why` says what the wrong belief is, not only what is right.
+4. **Explanations name the mistake.** The `why` says what the wrong belief is, not only what is right. Choice cards
+   also give each wrong option its own note in `misses`, shown when that option is picked, so the learner hears about
+   their own mistake. New units have them on every choice card from Unit 6 on; older units get them on the most-missed
+   cards over time.
 5. **Write tasks are small.** One function, one idea, and hidden tests for the edge cases (empty list,
    negatives, ties).
 6. **Every answer is checked in real Python** by `npm run content:check` before it ships. That includes every variant.
@@ -142,7 +145,10 @@ draws the board.
    `content:check` tries hard-coded fakes against every code card and project milestone (printing the expected output,
    assigning the expected values, functions that return the first expected value) and fails if any of them pass.
 
-10. **Explain cards are graded by AI when there's a key.** It marks each key point hit, missed or unclear and picks
+10. **Modify is a way of writing cards, not a card type.** A write card whose starter is complete, working code plus an
+    instruction to change it ("make it also count negatives") is a Modify card, the M in PRIMM. Its tests check the
+    change. Use it when a concept is new enough that writing from a blank editor is too big a step.
+11. **Explain cards are graded by AI when there's a key.** It marks each key point hit, missed or unclear and picks
     Nailed it, Partly or Missed it. "AI got it wrong" lets you grade yourself instead; the learner's grade counts and the
     disagreement is saved. With no key, offline, or on an error, you compare with a good answer and grade yourself.
 
@@ -283,11 +289,32 @@ to start, and try learning rates from creeping to diverging.
 
 **Exit test:** the checkpoint.
 
-### Unit 7 · First models, judged honestly
+### Unit 7 · First models, judged honestly _(built)_
 
-Log-odds, logistic regression as one neuron, cross-entropy, train/validation/test splits, baselines, learning curves,
-precision and recall, leakage. The stats background should make metrics quick. **Exit test:** beat a baseline with no
-leakage. **Long block:** a real table in a notebook, with git.
+The first half builds logistic regression from Unit 6's loop: a sigmoid on a score, then cross-entropy and its gradient.
+The second half is about not fooling yourself. Every metric is worked out in NumPy with masks, so the stats background
+makes it quick.
+
+| #   | Lesson                        | Teaches                                                                                         | Target mistakes                                                                                           |
+| --- | ----------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | From a score to a probability | Classification, why a line fails, `sigmoid`, its shape, probability then class                  | A line's output is a probability; `sigmoid(0)` is 0; the probability is the class                         |
+| 2   | Log-odds                      | Odds, log-odds, `sigmoid` undoing the log, what a weight means, the boundary at `z = 0`         | Odds are a probability; a weight of 2 doubles the probability; the boundary is at `z = 0.5`               |
+| 3   | One neuron                    | `X @ w + b`, many features, classifying, the boundary as a straight line, what it can't learn   | `X * w` for `X @ w`; thresholding `z` at 0.5; more training fixes a curved boundary                       |
+| 4   | Cross-entropy                 | `-log` of the truth's probability, the binary formula, why not MSE, `np.clip`, the first loss   | Dropping the minus; only the `y * log(p)` term; `log(0)`; MSE is fine for probabilities                   |
+| 5   | Training logistic regression  | The slope `p - y`, `X.T @ (p - y) / n`, the loop, accuracy, loss falling after accuracy is 100% | `z` in place of `p`; a sum in place of a mean; comparing probabilities with labels                        |
+| 6   | Train, validation and test    | Memorising random labels, one shuffled split, validation for choices, test once                 | Scoring on training data; shuffling `X` and `y` separately; tuning on the test set; splitting sorted data |
+| 7   | Baselines                     | The majority class, imbalanced data, the training mean, noise in a small validation set         | 95% accuracy means a good model; the baseline from validation labels; a 2% win on 50 examples is real     |
+| 8   | Precision and recall          | Four counts with masks, precision, recall, the threshold trade-off                              | Precision and recall swapped; a higher threshold raises both; dividing by zero when nothing is flagged    |
+| 9   | Learning curves               | Training and validation loss together, overfitting, underfitting, early stopping                | A falling training loss means it's improving; a gap means underfitting; `best = w` without a copy         |
+| 10  | Leakage                       | Standardising with training statistics, features from the future, duplicates, splitting by time | Standardising before splitting; a feature recorded after the outcome; duplicates on both sides            |
+
+**Checkpoint:** built (12 cards). **Project · Spam filter** _(built)_: `sigmoid` and `predict`, the cross-entropy
+`loss`, a gradient `step`, `split` into training and validation, `dedupe` so copies of one message can't land on both
+sides, `accuracy` and the majority `baseline`, then `precision_recall`. In the Play tab you train it on 174 messages and
+watch both loss curves, type any message to see its probability and the words that pushed it, and drag the threshold to
+trade precision for recall. Until `dedupe` exists, it warns how many validation messages it already saw in training.
+
+**Exit test:** beat the baseline with no leakage. It's the project. **Long block:** a real table in a notebook, with git.
 
 ### Unit 8 · micrograd
 
@@ -383,11 +410,11 @@ Signals that matter more than XP: delayed unaided tasks, completed long blocks, 
 - [x] Checks that can't be passed by hard-coding: `vary` reruns, hidden tests, concept rules, and a cheat test in `content:check`.
 - [x] AI grading of explain cards, with self-grading as the fallback and when the learner disagrees.
 - [x] NumPy, self-hosted so it works offline.
-- [ ] **Modify** card type: starting code plus an instruction, checked by tests.
+- [x] **Modify** cards: written as write cards whose starter is working code to change (§2), so no new type.
 - [ ] Parsons cards with blanks inside lines.
-- [ ] Feedback for each wrong choice (a `why` per option, naming the mistake).
+- [x] Feedback for each wrong choice: a note per option in `misses`, naming the mistake.
 - [x] Plots (matplotlib), shown below a run's output.
-- [ ] A shape viewer. Not built: printing `.shape` is taught as the habit instead, so it may not be needed.
+- ~~A shape viewer.~~ Dropped: printing `.shape` is taught as the habit, and it works everywhere, not just in the app.
 - [ ] Watch-with-prediction and long-block lesson types.
 - [ ] A "mistake to card" button for errors made in outside projects.
 

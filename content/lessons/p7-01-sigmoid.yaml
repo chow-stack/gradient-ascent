@@ -1,0 +1,374 @@
+id: p7-sigmoid
+track: ml
+unit: 7
+order: 1
+title: From a score to a probability
+summary: Yes-or-no questions, why a line can't answer them, and the sigmoid that turns any score into a probability.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Questions with two answers
+    body: >-
+      Unit 6's line predicted a number: a price, a temperature, a score. Many questions have two answers instead. Is this email spam? Will this
+      student pass? Is this transaction fraud? Predicting a class like this is called classification.
+
+
+      A good classifier doesn't just say yes or no. It says how sure it is: "spam, 97%". In this unit you'll build one, logistic regression, from the
+      same training loop you already know. It's one neuron, the building block of every network in Units 8 and 9.
+
+
+      Then comes the half that matters just as much: judging it honestly, so a model that looks good really is good.
+
+  - type: learn
+    id: line
+    title: A line gives impossible answers
+    body: >-
+      Say you have hours studied and whether each student passed, written as 1 for passed and 0 for failed. You could fit a line to those 0s and 1s,
+      and read its output as the chance of passing.
+
+
+      It breaks at the edges. The best line through this data is `0.17 * h - 0.25`. For someone who studied 0 hours, it predicts -0.25, a negative
+      chance. For 12 hours, 1.79, a chance of 179%. A probability has to stay between 0 and 1, and a line goes on forever in both directions.
+
+
+      The fix is to keep the line's output as a score, which can be any number, and pass it through a function that squashes every number into the range
+      0 to 1.
+    code: |
+      hours = [0, 4, 8, 12]
+
+      for h in hours:
+          print(h, round(0.17 * h - 0.25, 2))
+    subgoals:
+      - { line: 4, label: "The line's output for each student" }
+    predict: What will the line say for 12 hours?
+
+  - type: choice
+    id: which-kind
+    prompt: Which of these is a classification problem?
+    choices:
+      [
+        'Whether a photo shows a cat',
+        "Tomorrow's temperature",
+        'The price a house will sell for',
+        'How many minutes a delivery will take',
+      ]
+    answer: 'Whether a photo shows a cat'
+    why: >-
+      Cat or not cat is one of two classes. The others are numbers on a scale, which is regression, the job a line does.
+    misses:
+      "Tomorrow's temperature": 'A temperature is a number on a scale. Predicting it is regression.'
+      'The price a house will sell for': 'A price can be any amount, so this is regression, like the line in Unit 6.'
+      'How many minutes a delivery will take': 'A number of minutes is a quantity, not a class. That makes it regression.'
+    variants:
+      - prompt: A line fitted to 0/1 labels predicts `1.4` for one example. What's wrong with reading that as a probability?
+        choices:
+          [
+            'A probability must be between 0 and 1',
+            'Nothing, it means very likely',
+            'It should be rounded to 1 first',
+            'Lines can only predict whole numbers',
+          ]
+        answer: 'A probability must be between 0 and 1'
+        why: >-
+          140% isn't a chance of anything. A line's output has no limits, which is why classification squashes it first.
+        misses:
+          'Nothing, it means very likely': "A chance can't be more than 100%. The line is just extending past where its numbers mean anything."
+          'It should be rounded to 1 first': 'Rounding hides the problem without fixing it: a line still says -0.3 elsewhere.'
+          'Lines can only predict whole numbers': 'A line predicts any number, which is exactly the problem.'
+
+  - type: learn
+    id: sigmoid
+    title: The sigmoid squashes
+    body: >-
+      The sigmoid is `1 / (1 + np.exp(-z))`. Give it any number `z` and it gives back a number between 0 and 1.
+
+
+      Follow it through. When `z` is large, `np.exp(-z)` is tiny, so the result is close to `1 / 1`. When `z` is very negative, `np.exp(-z)` is huge, so
+      the result is close to 0. At `z = 0`, `np.exp(0)` is 1, so the result is `1 / 2`. It never quite reaches 0 or 1.
+
+
+      The input `z` is called the score, or the logit. The model's job is to give spam a big positive score and real email a big negative one. The
+      sigmoid turns that score into a probability. Since it uses `np.exp`, it works on a whole array at once.
+    deeper: >-
+      The sigmoid is symmetric: `sigmoid(-z)` is `1 - sigmoid(z)`. A score of 2 means 88% spam, and a score of -2 means 88% not spam. That's why
+      flipping the sign of every weight flips which class the model favours.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      print(sigmoid(5.0))
+      print(sigmoid(-5.0))
+      print(sigmoid(np.array([-1.0, 0.0, 1.0])))
+    subgoals:
+      - { line: 4, label: 'Any score in, between 0 and 1 out' }
+      - { line: 8, label: 'A whole array at once' }
+    predict: What will `sigmoid` give for a score of 0?
+
+  - type: choice
+    id: sigmoid-zero
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      print(sigmoid(0.0))
+    choices: ['0.5', '0.0', '1.0', 'nan']
+    answer: '0.5'
+    why: >-
+      `np.exp(0)` is 1, so it's `1 / (1 + 1)`. A score of 0 means the model can't decide: even odds.
+    misses:
+      '0.0': "A score of 0 isn't a probability of 0. `np.exp(0)` is 1, so it's `1 / 2`."
+      '1.0': '`np.exp(-0)` is 1, not 0, so the bottom is 2.'
+      'nan': 'Nothing divides by zero here. The bottom is `1 + 1`.'
+    variants:
+      - code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          print(round(sigmoid(2.0) + sigmoid(-2.0), 6))
+        choices: ['1.0', '0.0', '2.0', '0.5']
+        answer: '1.0'
+        why: >-
+          The sigmoid is symmetric: `sigmoid(-2)` is `1 - sigmoid(2)`. About 0.88 plus about 0.12 is 1.
+        misses:
+          '0.0': 'Both values are positive. The sigmoid never gives a negative number.'
+          '2.0': 'Each is below 1, and they mirror each other: 0.88 and 0.12.'
+          '0.5': "That's `sigmoid(0)`. Here the two mirror images add to 1."
+      - code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          print(sigmoid(np.array([-100.0, 100.0])).round(3))
+        choices: ['[0. 1.]', '[-100. 100.]', '[0.5 0.5]', '[1. 0.]']
+        answer: '[0. 1.]'
+        why: >-
+          A huge negative score is squashed to almost 0, and a huge positive one to almost 1. Rounded, they show as 0 and 1, though they never get there
+          exactly.
+        misses:
+          '[-100. 100.]': 'The sigmoid never gives back its input. Everything lands between 0 and 1.'
+          '[0.5 0.5]': 'Only a score of 0 gives 0.5. These scores are far from it.'
+          '[1. 0.]': 'Backwards: big positive scores give probabilities near 1.'
+
+  - type: explain
+    id: explain-squash
+    prompt: In your own words, why does a classifier pass its line through the sigmoid instead of reading the line's output as a probability?
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      scores = np.array([-0.25, 0.43, 1.79])
+      print(scores)
+      print(sigmoid(scores).round(2))
+    model: >-
+      A line's output can be any number, like -0.25 or 1.79, which can't be probabilities. The sigmoid keeps the order, so bigger scores still mean
+      more likely, but squashes every score into the range 0 to 1.
+    keyPoints:
+      - "A line's output can fall below 0 or above 1"
+      - The sigmoid squashes any score to between 0 and 1
+      - A bigger score still gives a bigger probability
+
+  - type: learn
+    id: threshold
+    title: Probability first, then the class
+    body: >-
+      To turn a probability into a yes or no, compare it with a threshold, usually 0.5: `p >= 0.5` means class 1. With NumPy that gives an array of
+      `True` and `False`, and `.astype(int)` turns it into 1s and 0s.
+
+
+      Keep the probability, though, and don't throw it away for the class. An email at 0.51 and one at 0.99 are both called spam, but you'd treat them
+      very differently. The loss in lesson 4 needs the probability, and so does choosing a different threshold in lesson 8.
+
+
+      A common slip is to treat the probability as if it were the class, writing `p == 1` to find spam. Probabilities from a sigmoid are almost never
+      exactly 1.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      p = sigmoid(np.array([-2.0, 0.1, 3.0]))
+      print(p.round(2))
+      print((p >= 0.5).astype(int))
+      print((p == 1).sum())
+    subgoals:
+      - { line: 6, label: 'Probabilities for three emails' }
+      - { line: 8, label: 'Then the class, with a threshold' }
+    predict: How many of these probabilities are exactly 1?
+
+  - type: choice
+    id: classes
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      p = sigmoid(np.array([-1.0, 0.0, 3.0]))
+      print((p >= 0.5).astype(int))
+    choices: ['[0 1 1]', '[0 0 1]', '[1 1 1]', '[0.27 0.5 0.95]']
+    answer: '[0 1 1]'
+    why: >-
+      A score of -1 gives about 0.27, below the threshold. A score of 0 gives exactly 0.5, and `>=` counts it as class 1. A score of 3 gives about 0.95.
+    misses:
+      '[0 0 1]': '`sigmoid(0)` is exactly 0.5, and `>=` includes it.'
+      '[1 1 1]': '`sigmoid(-1)` is about 0.27, below the threshold.'
+      '[0.27 0.5 0.95]': 'Those are the probabilities. The comparison and `.astype(int)` turn them into classes.'
+    variants:
+      - code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          p = sigmoid(np.array([0.5, 2.0, -0.5, 4.0]))
+          print((p >= 0.9).sum())
+        choices: ['1', '2', '3', '0']
+        answer: '1'
+        why: >-
+          The probabilities are about 0.62, 0.88, 0.38 and 0.98. Only the last is at least 0.9, and `.sum()` counts the `True`s.
+        misses:
+          '2': '`sigmoid(2)` is about 0.88, just under 0.9.'
+          '3': "With a threshold of 0.9, only very high scores count. 0.62 and 0.88 don't."
+          '0': '`sigmoid(4)` is about 0.98, which is above 0.9.'
+
+  - type: blank
+    id: fill-sigmoid
+    prompt: Fill in the blank to finish the sigmoid.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.____(-z))
+    answers: [['exp']]
+    tests:
+      - { call: 'sigmoid(0.0)', expect: '0.5' }
+      - { call: 'sigmoid(np.log(3.0))', expect: '0.75' }
+    why: >-
+      `np.exp(-z)` is tiny for big scores, so the result nears 1, and huge for very negative ones, so it nears 0.
+    variants:
+      - prompt: Fill in the blank so `to_classes` turns probabilities into classes, 1 or 0.
+        code: |
+          import numpy as np
+
+          def to_classes(p):
+              return (p >= 0.5).____(int)
+        answers: [['astype']]
+        tests:
+          - { call: 'to_classes(np.array([0.2, 0.7, 0.5]))', expect: '[0, 1, 1]' }
+          - { call: 'to_classes(np.array([0.49, 0.99]))', expect: '[0, 1]' }
+        why: >-
+          The comparison gives `True` and `False`, and `.astype(int)` turns them into 1 and 0.
+
+  - type: fix
+    id: fix-sign
+    prompt: '`sigmoid(z)` should give a probability near 1 for big positive scores, but it does the opposite. Fix it.'
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(z))
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+    highlightLine: 4
+    tests:
+      - { call: 'round(sigmoid(2.0), 4)', expect: '0.8808' }
+      - { call: 'sigmoid(0.0)', expect: '0.5' }
+      - { call: 'round(sigmoid(-3.0), 4)', expect: '0.0474', hidden: true }
+      - { call: 'sigmoid(np.array([-1.0, 1.0])).round(3)', expect: '[0.269, 0.731]', hidden: true }
+    why: >-
+      The minus sign matters: with `np.exp(z)`, a big score makes the bottom huge and the probability tiny, so every class is flipped.
+    hints:
+      - Try `z = 10`. Should `np.exp(...)` be tiny or huge to give a result near 1?
+    variants:
+      - prompt: '`sigmoid(z)` should give a number between 0 and 1, but `sigmoid(0.0)` gives `2.0`. Fix it.'
+        code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / 1 + np.exp(-z)
+        highlightLine: 4
+        hints:
+          - Division happens before addition. What is `1 / 1` on its own?
+
+  - type: write
+    id: write-classify
+    prompt: >-
+      Write `classify(z, threshold)`, which takes an array of scores and gives back an array of classes: 1 where the sigmoid of the score is at least
+      `threshold`, and 0 elsewhere. Use the `sigmoid` given, and no loops.
+    starter: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def classify(z, threshold):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def classify(z, threshold):
+          return (sigmoid(z) >= threshold).astype(int)
+    tests:
+      - { call: 'classify(np.array([-1.0, 0.0, 3.0]), 0.5)', expect: '[0, 1, 1]' }
+      - { call: 'classify(np.array([0.5, 2.0, -0.5, 4.0]), 0.9)', expect: '[0, 0, 0, 1]' }
+      - { call: 'classify(np.array([-3.0, -1.0]), 0.1)', expect: '[0, 1]', hidden: true }
+      - { call: 'classify(np.array([1.0, 1.0, 1.0]), 0.75)', expect: '[0, 0, 0]', hidden: true }
+    requires: ['name:sigmoid']
+    forbids: ['loop']
+    why: >-
+      The sigmoid gives a probability for every score at once, the comparison picks the class, and `.astype(int)` makes it 1 or 0.
+    hints:
+      - '`sigmoid(z) >= threshold` is an array of `True` and `False`.'
+      - Finish with `.astype(int)`.
+
+  - type: choice
+    id: remember-mse
+    prompt: From Unit 6. Why does the mean squared error square each error before averaging?
+    choices:
+      [
+        "So errors above and below the line don't cancel out",
+        'To make the loss smaller',
+        'Because NumPy needs positive numbers',
+        'So small errors count the most',
+      ]
+    answer: "So errors above and below the line don't cancel out"
+    why: >-
+      An error of +2 and one of -2 would average to 0. Squared, they're both 4, and big errors count most.
+    misses:
+      'To make the loss smaller': 'Squaring an error bigger than 1 makes it bigger. The point is that the signs stop mattering.'
+      'Because NumPy needs positive numbers': 'NumPy is happy with negatives. The problem is that they cancel in a mean.'
+      'So small errors count the most': 'The other way: squaring makes big errors count the most.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Classification predicts a class rather than a number. A line's output can be any number, so it can't be a probability. Instead, a model makes a
+      score `z`, and `sigmoid(z) = 1 / (1 + np.exp(-z))` squashes it to between 0 and 1. A score of 0 gives 0.5. Compare the probability with a
+      threshold to get a class, but keep the probability too.
+
+
+      Next: what the score itself means, and where the model draws the line between its two classes.

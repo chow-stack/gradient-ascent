@@ -369,6 +369,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           : 'idle'
   const done = idx + (phase === 'answering' || phase === 'checking' ? 0 : 1)
   const why = 'why' in card ? card.why : undefined
+  const miss =
+    card.type === 'choice' && answer.type === 'choice' && answer.choice !== null
+      ? card.misses[answer.choice]
+      : undefined
   const footerState = phase === 'correct' ? 'correct' : phase === 'wrong' ? 'wrong' : undefined
 
   return (
@@ -531,6 +535,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
               type={card.type}
               praise={praise}
               why={why}
+              miss={miss}
               message={result?.message}
               verdict={ai.status === 'done' ? ai.check.verdict : undefined}
               selfGrading={selfGrading}
@@ -665,6 +670,7 @@ function FooterText({
   type,
   praise,
   why,
+  miss,
   message,
   verdict,
   selfGrading,
@@ -674,6 +680,8 @@ function FooterText({
   type: string
   praise: string
   why?: string
+  /** The note for the wrong choice picked, naming the mistake behind it. */
+  miss?: string
   message?: string
   verdict?: 'nailed' | 'partly' | 'missed'
   selfGrading?: boolean
@@ -710,6 +718,7 @@ function FooterText({
       return (
         <>
           <p className="ga-footer-title">Not quite.</p>
+          {miss && <p className="ga-footer-body ga-prose mt-0.5">{inline(miss)}</p>}
           <p className="ga-footer-body ga-prose mt-0.5">
             {inline(
               type === 'choice'

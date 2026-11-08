@@ -56,6 +56,10 @@ cards:
     answer: '`2 * w * b`'
     why: >-
       Hold `w` fixed. `3 * w` doesn't change with `b`, and `w * b ** 2` is a constant `w` times `b ** 2`, which gives `w * 2 * b`.
+    misses:
+      '`3 + b ** 2`': "That's the partial with respect to `w`. For `b`, hold `w` fixed."
+      '`2 * b`': "You dropped the `w`. Held fixed, it's a constant multiplier, so it stays."
+      '`3 + 2 * w * b`': "`3 * w` doesn't change when `b` does, so it gives 0, not 3."
     variants:
       - prompt: For `f(w, b) = 3 * w + w * b ** 2`, what's the partial derivative with respect to `w`?
         choices: ['`3 + b ** 2`', '`2 * w * b`', '`3`', '`3 * w + b ** 2`']
@@ -114,6 +118,10 @@ cards:
     answer: 'By a small multiple of `[-4, 2]`'
     why: >-
       The gradient points uphill, so downhill is the opposite: minus the gradient. That lowers the first weight and raises the second.
+    misses:
+      'By a small multiple of `[4, -2]`': "That's along the gradient, which points uphill. The loss would grow."
+      'By `[0, 0]`, since one partial is negative': 'Negative partials are fine. They say that weight should go up.'
+      'Only the first weight, by `-4`': 'Every weight moves against its own partial, so the second goes up too, and by a small multiple.'
     variants:
       - prompt: At some point the gradient is `[0.1, -5]`. Which input is the loss more sensitive to there?
         choices: ['The second', 'The first', 'Both equally', "Neither, since they're small"]
@@ -302,6 +310,10 @@ cards:
     answer: '`2 * (4 * x + 1) * 4`'
     why: >-
       The outside's slope, `2 * u`, at the inside's value, times the inside's slope, 4.
+    misses:
+      '`2 * (4 * x + 1)`': "You left out the inside's slope, 4."
+      '`8 * x`': "Keep the whole inside: the `+ 1` doesn't vanish inside the square."
+      '`(4 * x + 1) * 4`': 'Squaring gives `2 * u`. The 2 is missing.'
 
   - type: learn
     id: recap

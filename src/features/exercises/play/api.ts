@@ -1,4 +1,5 @@
 import type { PlayKind } from '../../content/schema'
+import { SPAM_PY } from './spamModel.ts'
 
 /** The functions and classes each game calls. It plays with whichever of them the program defines so far. */
 export const PLAY_NEEDS: Record<PlayKind, string[]> = {
@@ -9,6 +10,7 @@ export const PLAY_NEEDS: Record<PlayKind, string[]> = {
   life: ['neighbours', 'step', 'random_world', 'stamp'],
   doodle: ['flatten', 'distances', 'predict'],
   fit: ['predict', 'loss', 'gradients', 'step', 'check'],
+  spam: ['sigmoid', 'predict', 'loss', 'step', 'split', 'dedupe', 'accuracy', 'baseline', 'precision_recall'],
 }
 
 /** What a game gets: the learner's program, loaded and callable. */
@@ -70,6 +72,17 @@ _x = _np.array([-1.0, 0.0, 1.0])
 _y = _np.array([-1.0, 1.0, 3.0])
 _s = step(0.0, 0.0, _x, _y, 0.1)
 len(predict(1.0, 0.0, _x)) == 3 and float(loss(2.0, 1.0, _x, _y)) == 0.0 and len(gradients(0.0, 0.0, _x, _y)) == 2 and len(_s) == 2 and max(check(0.5, 0.5, _x, _y)) < 1e-5`,
+  },
+  // Plays a whole game the way the panel does: prepare, train, score a message, measure.
+  spam: {
+    check: `${SPAM_PY}
+_d = _sp_prepare(0, True, True, True)
+_r0 = _sp_report(True, True)
+_r = _sp_train(300, 0.5, True, True)
+_s = _sp_score("Win a free prize, call now")
+_m = _sp_metrics(0.5, True)
+(_d["leaked"] == 0 and _d["val"] > 0 and abs(_r0[0] - 0.6931) < 1e-3 and _r is not None and _r[3] > _d["baseline"]
+    and _s["p"] > 0.5 and len(_s["pieces"]) == 6 and sum(_m["counts"]) == _d["val"] and len(_m["pr"]) == 2)`,
   },
 }
 

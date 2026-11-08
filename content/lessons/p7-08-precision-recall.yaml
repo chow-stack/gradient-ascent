@@ -1,0 +1,357 @@
+id: p7-precision-recall
+track: ml
+unit: 7
+order: 8
+title: Precision and recall
+summary: Counting the two kinds of mistake with masks, the two numbers built from them, and the threshold that trades one for the other.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Which mistakes?
+    body: >-
+      A spam filter can go wrong in two ways. It can let spam into your inbox, or it can send a real email, maybe a job offer, to the spam folder. These
+      cost very different amounts, but accuracy counts them the same.
+
+
+      Precision and recall split the mistakes apart. Your stats class may know recall as sensitivity, and precision as positive predictive value. Here,
+      you'll build them from four counts with NumPy masks.
+
+
+      By the end you'll compute both, know which one a problem cares about, and move the threshold to trade one against the other.
+
+  - type: learn
+    id: counts
+    title: Four counts
+    body: >-
+      Call class 1 "positive" (spam) and class 0 "negative" (real email). Every prediction lands in one of four boxes:
+
+
+      True positives (TP): flagged, and really spam. False positives (FP): flagged, but real email. False negatives (FN): not flagged, but really spam.
+      True negatives (TN): not flagged, and real email.
+
+
+      Each is one mask from Unit 5: `(pred == 1) & (y == 1)` is `True` exactly for the true positives, and `.sum()` counts them. Remember the
+      parentheses: `&` binds tighter than `==`, so without them the comparison is wrong or raises an error. The four counts always add up to the number
+      of examples.
+    code: |
+      import numpy as np
+
+      y    = np.array([1, 0, 1, 1, 0, 0, 1, 0])
+      pred = np.array([1, 1, 1, 0, 0, 0, 1, 0])
+
+      tp = ((pred == 1) & (y == 1)).sum()
+      fp = ((pred == 1) & (y == 0)).sum()
+      fn = ((pred == 0) & (y == 1)).sum()
+      tn = ((pred == 0) & (y == 0)).sum()
+      print(tp, fp, fn, tn)
+    subgoals:
+      - { line: 6, label: 'Flagged and really spam' }
+      - { line: 7, label: 'Flagged, but real' }
+      - { line: 8, label: 'Missed spam' }
+      - { line: 9, label: 'Real, and left alone' }
+    predict: How many false positives are there?
+
+  - type: choice
+    id: count-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      y    = np.array([1, 1, 0, 0, 1])
+      pred = np.array([1, 0, 1, 0, 0])
+      print(((pred == 0) & (y == 1)).sum())
+    choices: ['2', '1', '3', '0']
+    answer: '2'
+    why: >-
+      The mask is `True` where nothing was flagged but the label is 1: the second and fifth examples. Two missed positives.
+    misses:
+      '1': 'Check each position: the second and the fifth are both 1 in `y` and 0 in `pred`.'
+      '3': "That's how many positives there are. Only two of them were missed."
+      '0': 'The mask looks for misses, `pred == 0` where `y == 1`. There are two.'
+    variants:
+      - code: |
+          import numpy as np
+
+          y    = np.array([0, 1, 0, 0, 1, 0])
+          pred = np.array([1, 1, 1, 0, 1, 0])
+          print(((pred == 1) & (y == 0)).sum())
+        choices: ['2', '4', '1', '3']
+        answer: '2'
+        why: >-
+          False positives are flagged with a label of 0: the first and third examples.
+        misses:
+          '4': "That's how many were flagged. Two of them really were positive."
+          '1': 'The first and the third are both flagged with a label of 0.'
+          '3': 'Four were flagged and two of those really were 1. The false positives are the other two.'
+
+  - type: learn
+    id: two-numbers
+    title: Precision and recall
+    body: >-
+      Precision is `tp / (tp + fp)`: of everything the model flagged, how much really was positive. High precision means few false alarms.
+
+
+      Recall is `tp / (tp + fn)`: of everything that really was positive, how much the model caught. High recall means little slips through.
+
+
+      They share a top and differ in the bottom. Precision's bottom is what the model said, so it judges the flags. Recall's bottom is what was really
+      there, so it judges the catch. A spam filter that sends job offers to the spam folder has poor precision. A cancer screen that misses cases has
+      poor recall.
+    code: |
+      import numpy as np
+
+      y    = np.array([1, 0, 1, 1, 0, 0, 1, 0])
+      pred = np.array([1, 1, 1, 0, 0, 0, 1, 0])
+
+      tp = ((pred == 1) & (y == 1)).sum()
+      fp = ((pred == 1) & (y == 0)).sum()
+      fn = ((pred == 0) & (y == 1)).sum()
+      print(tp / (tp + fp))
+      print(tp / (tp + fn))
+    subgoals:
+      - { line: 9, label: 'Of the flags, how many right' }
+      - { line: 10, label: 'Of the real ones, how many caught' }
+    predict: Which will be higher?
+
+  - type: choice
+    id: precision-trace
+    kind: predict
+    prompt: 'A model flags 5 emails. 4 are spam. There were 10 spam emails in all. What does this print?'
+    code: |
+      tp, fp, fn = 4, 1, 6
+      print(tp / (tp + fp), tp / (tp + fn))
+    choices: ['0.8 0.4', '0.4 0.8', '0.8 0.6', '0.5 0.4']
+    answer: '0.8 0.4'
+    why: >-
+      Of the 5 flags, 4 were right, so precision is 0.8. Of the 10 spam emails, it caught 4, so recall is 0.4.
+    misses:
+      '0.4 0.8': 'Swapped. Precision divides by what was flagged, 5. Recall divides by what was really spam, 10.'
+      '0.8 0.6': '0.6 is the share of spam it missed. Recall is the share it caught.'
+      '0.5 0.4': 'Precision is out of the 5 that were flagged, and 4 of them were right.'
+
+  - type: choice
+    id: which-matters
+    prompt: 'For a spam filter on your own inbox, losing a real email is much worse than seeing some spam. Which number should be high?'
+    choices: ['Precision', 'Recall', 'Accuracy', 'The number of true negatives']
+    answer: 'Precision'
+    why: >-
+      Losing a real email is a false positive. Precision falls with every false positive, so a filter that rarely flags real email has high precision.
+    misses:
+      'Recall': 'Recall falls when spam slips through, which you said you can live with. Real email in the spam folder is a false positive.'
+      'Accuracy': 'Accuracy counts both kinds of mistake the same. You care about one kind more.'
+      'The number of true negatives': 'That grows with the number of real emails, mistakes or not. Precision measures the flags.'
+    variants:
+      - prompt: 'A screening test for a serious disease is followed by a second, careful test. Missing a sick patient is the worst outcome. Which number should be high?'
+        choices: ['Recall', 'Precision', 'Accuracy', 'The number of true negatives']
+        answer: 'Recall'
+        why: >-
+          A missed patient is a false negative. Recall is the share of sick patients caught. False alarms are fine: the second test sorts them out.
+        misses:
+          'Precision': "False alarms are cheap here, since the second test catches them. Misses aren't."
+          'Accuracy': 'With a rare disease, accuracy is high even when every sick patient is missed.'
+          'The number of true negatives': 'That counts healthy patients left alone. It says nothing about the ones missed.'
+
+  - type: learn
+    id: threshold
+    title: The threshold trades one for the other
+    body: >-
+      The threshold of 0.5 is a choice, not a rule. Raise it, and the model only flags what it's very sure about: fewer flags, so fewer false alarms and
+      usually higher precision, but more spam slips through, so lower recall. Lower it, and the reverse.
+
+
+      You can't usually raise both. Choose the threshold for the job, on validation data. A spam filter for your own inbox might use 0.9. A disease
+      screen might use 0.2.
+
+
+      There's a trap at the extremes. With a threshold so high that nothing is flagged, precision is `0 / 0`, which NumPy turns into `nan`. Code that
+      computes it needs a rule for that case, usually to call it 0.
+    deeper: >-
+      The F1 score, `2 * precision * recall / (precision + recall)`, combines the two into one number. It's only high when both are. It's handy for
+      comparing models, but it hides which of the two you're losing.
+    code: |
+      import numpy as np
+
+      p = np.array([0.95, 0.85, 0.7, 0.6, 0.55, 0.4, 0.3, 0.2, 0.1, 0.05])
+      y = np.array([1, 1, 1, 0, 1, 0, 1, 0, 0, 0])
+
+      for t in [0.3, 0.5, 0.7, 0.9]:
+          pred = (p >= t).astype(int)
+          tp = ((pred == 1) & (y == 1)).sum()
+          fp = ((pred == 1) & (y == 0)).sum()
+          fn = ((pred == 0) & (y == 1)).sum()
+          print(t, round(tp / (tp + fp), 2), round(tp / (tp + fn), 2))
+    subgoals:
+      - { line: 7, label: 'Classes at this threshold' }
+      - { line: 11, label: 'Precision, then recall' }
+    predict: What happens to recall as the threshold rises?
+
+  - type: choice
+    id: raise
+    prompt: You raise a spam filter's threshold from 0.5 to 0.9. What usually happens?
+    choices:
+      ['Precision goes up and recall goes down', 'Both go up', 'Both go down', 'Recall goes up and precision goes down']
+    answer: 'Precision goes up and recall goes down'
+    why: >-
+      It only flags what it's very sure of, so its flags are more often right, but it catches less of the spam.
+    misses:
+      'Both go up': "A higher threshold flags less, so some spam it used to catch now slips through. Recall can't rise."
+      'Both go down': 'The flags that remain are the confident ones, so precision usually rises.'
+      'Recall goes up and precision goes down': "That's what lowering the threshold does."
+
+  - type: explain
+    id: explain-one-number
+    prompt: This filter reports a precision of 1.0. Why isn't that enough to call it a good filter?
+    code: |
+      import numpy as np
+
+      y    = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+      pred = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+      tp = ((pred == 1) & (y == 1)).sum()
+      print(tp / pred.sum(), tp / y.sum())
+    model: >-
+      It only flagged one email, and that one was spam, so precision is perfect. But it caught one of five spam emails, a recall of 0.2. Each number can
+      be made perfect on its own, so you need both.
+    keyPoints:
+      - It flagged only one email, which happened to be right
+      - Its recall is only 0.2, so most spam got through
+      - Precision and recall need to be read together
+
+  - type: blank
+    id: fill-recall
+    prompt: Fill in the blank so `recall` is the share of real positives the model caught.
+    code: |
+      import numpy as np
+
+      def recall(pred, y):
+          tp = ((pred == 1) & (y == 1)).sum()
+          fn = ((pred == 0) & (y == 1)).sum()
+          return tp / (tp + ____)
+    answers: [['fn']]
+    tests:
+      - { call: 'recall(np.array([1, 1, 1, 0, 0, 0, 1, 0]), np.array([1, 0, 1, 1, 0, 0, 1, 0]))', expect: '0.75' }
+      - { call: 'recall(np.array([1, 0, 0, 0]), np.array([1, 1, 1, 0]))', expect: '0.3333333333333333' }
+    why: >-
+      Recall divides by everything that was really positive: the ones caught and the ones missed.
+
+  - type: fix
+    id: fix-swap
+    prompt: '`precision(pred, y)` should give the share of flagged examples that really are positive. Fix it.'
+    code: |
+      import numpy as np
+
+      def precision(pred, y):
+          tp = ((pred == 1) & (y == 1)).sum()
+          fp = ((pred == 1) & (y == 0)).sum()
+          fn = ((pred == 0) & (y == 1)).sum()
+          return tp / (tp + fn)
+    solution: |
+      import numpy as np
+
+      def precision(pred, y):
+          tp = ((pred == 1) & (y == 1)).sum()
+          fp = ((pred == 1) & (y == 0)).sum()
+          fn = ((pred == 0) & (y == 1)).sum()
+          return tp / (tp + fp)
+    highlightLine: 7
+    tests:
+      - { call: 'precision(np.array([1, 0, 0, 0]), np.array([1, 1, 1, 0]))', expect: '1.0' }
+      - { call: 'precision(np.array([1, 1, 0]), np.array([1, 0, 0]))', expect: '0.5' }
+      - { call: 'precision(np.array([1, 1, 1, 1, 0]), np.array([1, 1, 1, 0, 1]))', expect: '0.75', hidden: true }
+    why: >-
+      That was recall. Precision judges the flags, so its bottom is everything flagged: true positives plus false positives.
+    hints:
+      - Precision is "of the flags, how many were right". What's the total number of flags?
+    variants:
+      - prompt: >-
+          `precision(pred, y)` should give the share of flagged examples that really are positive, and 0.0 when nothing is flagged. A model that flags
+          nothing breaks it. Fix it.
+        code: |
+          import numpy as np
+
+          def precision(pred, y):
+              tp = ((pred == 1) & (y == 1)).sum()
+              fp = ((pred == 1) & (y == 0)).sum()
+              return tp / (tp + fp)
+        solution: |
+          import numpy as np
+
+          def precision(pred, y):
+              tp = ((pred == 1) & (y == 1)).sum()
+              fp = ((pred == 1) & (y == 0)).sum()
+              if tp + fp == 0:
+                  return 0.0
+              return tp / (tp + fp)
+        highlightLine: 6
+        tests:
+          - { call: 'precision(np.array([0, 0]), np.array([1, 0]))', expect: '0.0' }
+          - { call: 'precision(np.array([1, 1, 0]), np.array([1, 0, 0]))', expect: '0.5' }
+          - { call: 'precision(np.array([0, 0, 0]), np.array([0, 0, 0]))', expect: '0.0', hidden: true }
+        hints:
+          - With nothing flagged, `tp + fp` is 0. Check for that before dividing.
+
+  - type: write
+    id: write-pr
+    prompt: >-
+      Write `precision_recall(pred, y)`, which gives back `(precision, recall)` for classes `pred` and labels `y`, both arrays of 1s and 0s. When a
+      bottom would be 0, use 0.0 for that number.
+    starter: |
+      import numpy as np
+
+      def precision_recall(pred, y):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def precision_recall(pred, y):
+          tp = ((pred == 1) & (y == 1)).sum()
+          fp = ((pred == 1) & (y == 0)).sum()
+          fn = ((pred == 0) & (y == 1)).sum()
+          precision = tp / (tp + fp) if tp + fp > 0 else 0.0
+          recall = tp / (tp + fn) if tp + fn > 0 else 0.0
+          return precision, recall
+    tests:
+      - {
+          call: 'precision_recall(np.array([1, 1, 1, 0, 0, 0, 1, 0]), np.array([1, 0, 1, 1, 0, 0, 1, 0]))',
+          expect: '(0.75, 0.75)',
+        }
+      - {
+          call: 'precision_recall(np.array([1, 0, 0, 0]), np.array([1, 1, 1, 0]))',
+          expect: '(1.0, 0.3333333333333333)',
+        }
+      - { call: 'precision_recall(np.array([1, 1, 0]), np.array([1, 0, 0]))', expect: '(0.5, 1.0)', hidden: true }
+      - { call: 'precision_recall(np.array([0, 0]), np.array([1, 0]))', expect: '(0.0, 0.0)', hidden: true }
+      - { call: 'precision_recall(np.array([1, 1]), np.array([0, 0]))', expect: '(0.0, 0.0)', hidden: true }
+    forbids: ['loop']
+    why: >-
+      Three masks give the counts. Precision divides by what was flagged, recall by what was really there, each guarded against dividing by 0.
+    hints:
+      - 'Count `tp`, `fp` and `fn` with masks, like `((pred == 1) & (y == 1)).sum()`.'
+      - 'Precision is `tp / (tp + fp)` and recall is `tp / (tp + fn)`. Check each bottom for 0 first.'
+
+  - type: choice
+    id: remember-baseline
+    prompt: 'From the last lesson. 90% of the validation emails are real. A filter scores 91% accuracy. What do you compare that with?'
+    choices:
+      ['The 90% that always saying "real" gets', '50%, a coin flip', '100%, a perfect filter', 'Its training accuracy']
+    answer: 'The 90% that always saying "real" gets'
+    why: >-
+      The majority baseline gets 90% without learning anything, so the model's real gain is 1 point, and possibly noise.
+    misses:
+      '50%, a coin flip': 'With 90% in one class, guessing the majority beats a coin flip easily. That is the bar.'
+      '100%, a perfect filter': 'Perfect is a goal, not a baseline. The question is whether it learned anything at all.'
+      'Its training accuracy': 'Comparing training and validation is about overfitting. To judge the score itself, compare it with the baseline.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Masks count true positives, false positives, false negatives and true negatives. Precision, `tp / (tp + fp)`, judges the flags. Recall,
+      `tp / (tp + fn)`, judges the catch. Raising the threshold usually raises precision and lowers recall. Choose it for the job, on validation, and
+      guard against dividing by 0 when nothing is flagged.
+
+
+      Next: watching training and validation loss together, to see a model start memorising.

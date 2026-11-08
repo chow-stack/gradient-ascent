@@ -248,8 +248,8 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 ### Phase 3 — NumPy, math and first models
 
 - [x] matplotlib output
-- [ ] Shape viewer (not built; lessons teach printing `.shape`, so check whether it's still wanted)
-- [ ] Modify cards, per-choice feedback
+- [x] ~~Shape viewer~~ dropped: printing `.shape` is the habit taught, and it carries over to Colab and real projects
+- [x] Modify cards (written as write cards with working starter code, no new type) and per-choice feedback (`misses`)
 - [x] Checks a hard-coded answer can't pass: `vary` reruns, concept rules, a cheat test in `content:check`
 - [x] Projects as one brief, one editor and a milestone checklist; the five projects rewritten
 - [x] Content: Units 3–6
@@ -258,7 +258,7 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 ### Phase 4 — From micrograd to MLP
 
 - [ ] Computation-graph visualizer, live loss-curve chart, recorded training logs to diagnose
-- [ ] Content: Units 6–7
+- [x] Content: Units 6–7
 - [ ] Review the path at the Unit 9 decision point
 
 ### Phase 5 — Language models
@@ -299,6 +299,21 @@ card and lesson counts below are judgement: no study tests whole-lesson formats 
 
 ### Built (2026-11-08)
 
+- **Unit 7, first models judged honestly.** Ten lessons, a checkpoint and the Spam filter project (CURRICULUM.md).
+  Logistic regression is built from Unit 6's loop, and the second half is splits, baselines, precision and recall,
+  learning curves and leakage, every metric written with masks. Every choice card has `misses`.
+- **Spam filter Play tab.** The app turns 174 messages into word features from the training part only; the learner's
+  `sigmoid`, `predict`, `loss` and `step` train it, `split` and `dedupe` keep validation honest, and `accuracy`,
+  `baseline` and `precision_recall` judge it. Both loss curves are drawn live, any typed message gets a probability with
+  each word tinted by its weight, and a threshold slider trades precision for recall. Until `dedupe` exists, it says how
+  many validation messages are copies of training ones. Its Python lives in `play/spamModel.ts`, so `content:check`
+  plays a whole game against the solution.
+- **Feedback for each wrong choice.** Choice cards take `misses`, a note per wrong option naming the mistake behind it,
+  shown above the `why` when that option is picked. The schema rejects notes for options that aren't choices, or for the
+  answer, and a variant with new choices doesn't inherit the card's notes. Every Unit 6 choice card has them.
+- **Phase 3 cleanup.** The shape viewer is dropped, and Modify is a way of writing write cards rather than a new type.
+- **Fixes:** a wrong answer no longer reshuffles the choices (the card was remounted to replay the shake), and code
+  choices wrapped in backticks no longer show the backticks.
 - **Unit 6, calculus and gradient descent.** Seven lessons, a checkpoint and the Fit a line project (CURRICULUM.md). Every
   rule is shown agreeing with a nudge in code. The project's Play tab draws the loss valley from the learner's own `loss()`
   and the path their `step()` takes down it.
@@ -394,7 +409,7 @@ Different numbers alone aren't enough, because you can memorize the method.
 
 1. Rewrite into the three units, writing variants alongside.
 2. Build the template step.
-3. ~~Back to Phase 3 (NumPy).~~ Done. ~~Unit 6, the calculus refresh.~~ Done. Next: Unit 7, first models judged honestly.
+3. ~~Back to Phase 3 (NumPy).~~ Done. ~~Unit 6, the calculus refresh.~~ Done. ~~Unit 7, first models judged honestly.~~ Done. Next: long-block and watch-with-prediction lesson types, then Unit 8 (micrograd).
 
 ## 10. Open questions
 
@@ -403,38 +418,41 @@ Different numbers alone aren't enough, because you can memorize the method.
 
 ## 11. Decision log
 
-| Date       | Decision                                                                                                             | Why                                                                                                                                       |
-| ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-04 | Name: **Gradient Ascent**                                                                                            | Small steps uphill every day; ML pun                                                                                                      |
-| 2026-11-04 | Python first, then TS; three interleaved tracks                                                                      | Python is the ML language; TS explains my web projects                                                                                    |
-| 2026-11-04 | Local-only web app, Vite + React + TS                                                                                | Simple; the codebase itself is learning material                                                                                          |
-| 2026-11-06 | Gemini called from the browser with my own key, optional                                                             | No server to run; replaces the 2026-11-04 local-server plan                                                                               |
-| 2026-11-06 | Replace Unit 1 with three Python units, no Java, after a pilot lesson                                                | Should work for anyone; test the longer lesson format on one lesson first                                                                 |
-| 2026-11-06 | More explanation per idea, activities chosen by concept instead of a fixed ladder                                    | Short cards felt thin, and novice evidence favours fuller explanation in segments                                                         |
-| 2026-11-04 | Phase 1 = plan + design + scaffold only                                                                              | Agree on the target before building                                                                                                       |
-| 2026-11-04 | Mascot: **Adam the mountain goat**                                                                                   | Climbs one step at a time; named after the Adam optimizer                                                                                 |
-| 2026-11-04 | First look rejected as too generic; 4 directions (Summit, Trailhead, Contour, Daybreak) built in a style lab         | Choose visually, mix parts, then commit                                                                                                   |
-| 2026-11-04 | Visual direction: **Summit** (layered indigo, flat orange buttons, segmented progress). Other 3 removed              | Professional and calm, still game-like                                                                                                    |
-| 2026-11-04 | Dark only for now                                                                                                    | One theme done well; light can come later                                                                                                 |
-| 2026-11-04 | Adam animates with CSS only, off under reduced motion                                                                | No animation library needed; respects accessibility                                                                                       |
-| 2026-11-04 | Content in YAML (not JSON), validated with zod                                                                       | Code blocks stay readable with block scalars; one schema gives types + validation                                                         |
-| 2026-11-04 | Unit 1 order: variables → numbers → strings → functions → if → while → for → lists → dicts → patterns                | Functions early so later lessons can use real write-a-function tests                                                                      |
-| 2026-11-04 | Explain cards are self-graded for now                                                                                | Honest offline fallback until a tutor exists                                                                                              |
-| 2026-11-04 | Misses come back the next day, not the same day                                                                      | Sessions are daily; same-day repeats are handled by the in-session retry                                                                  |
-| 2026-11-04 | Curriculum moved to CURRICULUM.md; every lesson lists its target mistakes                                            | Wrong answers and fix-card bugs come from real novice mistakes                                                                            |
-| 2026-11-04 | Each unit ends with a checkpoint (80% to pass) and a 3–5 step project                                                | Mixed recall before moving on; projects tie a unit's ideas together                                                                       |
-| 2026-11-04 | Tracks start in stages: Foundations, then + Web after A2, then + ML after A3                                         | Avoids overload; micrograd needs classes and special methods                                                                              |
-| 2026-11-04 | Classes unit moved before data structures (now Track A Unit 3)                                                       | Track C's micrograd depends on it                                                                                                         |
-| 2026-11-05 | **One ML path** replaces three tracks. Web paused; data structures and algorithms become an optional interview track | Goal is deep ML understanding; ML had fewer slots than Web, and the six-month target couldn't be met                                      |
-| 2026-11-05 | Unit order: Python → NumPy → calculus → first models → micrograd → MLP → trees → probability → makemore → GPT        | No study settles the order; syllabi and the math each step needs. NumPy, evaluation and probability were the gaps                         |
-| 2026-11-05 | **Daily 5** replaces the warm-up: separate from lessons, capped at 5, fixed per day, counts the streak               | My idea. Keeps review small and finite; a busy day still counts                                                                           |
-| 2026-11-05 | Problems enter the pool the day after first seen, not at unit end                                                    | Spacing should start right away                                                                                                           |
-| 2026-11-05 | Cards can have variants; each is checked in real Python                                                              | Repeating identical cards trains memory of the answer                                                                                     |
-| 2026-11-05 | Python packages are downloaded after install and verified by hash, not committed                                     | Stays offline at runtime without binaries in git                                                                                          |
-| 2026-11-05 | Projects are lessons of write cards, with reference code in each starter                                             | Works today with no carryover engine; projects stay out of review                                                                         |
-| 2026-11-06 | Rewrite one unit at a time, with older lessons standing in as a temporary unit                                       | The app keeps working, and feedback on Unit 1 can shape the next two before they're written                                               |
-| 2026-11-06 | Applied track parked, not built (CURRICULUM.md §4)                                                                   | Would split effort two days after moving to one path, and there are no users to test it with yet. The split point after Unit 3 stays open |
-| 2026-11-08 | Projects are games the learner's code drives, in a Play tab; milestones grade behaviour, not printed text            | Printed transcripts felt static. Studies favour real, shareable programs and choice; the milestones keep the scaffolding                  |
+| Date       | Decision                                                                                                             | Why                                                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-04 | Name: **Gradient Ascent**                                                                                            | Small steps uphill every day; ML pun                                                                                                            |
+| 2026-11-04 | Python first, then TS; three interleaved tracks                                                                      | Python is the ML language; TS explains my web projects                                                                                          |
+| 2026-11-04 | Local-only web app, Vite + React + TS                                                                                | Simple; the codebase itself is learning material                                                                                                |
+| 2026-11-06 | Gemini called from the browser with my own key, optional                                                             | No server to run; replaces the 2026-11-04 local-server plan                                                                                     |
+| 2026-11-06 | Replace Unit 1 with three Python units, no Java, after a pilot lesson                                                | Should work for anyone; test the longer lesson format on one lesson first                                                                       |
+| 2026-11-06 | More explanation per idea, activities chosen by concept instead of a fixed ladder                                    | Short cards felt thin, and novice evidence favours fuller explanation in segments                                                               |
+| 2026-11-04 | Phase 1 = plan + design + scaffold only                                                                              | Agree on the target before building                                                                                                             |
+| 2026-11-04 | Mascot: **Adam the mountain goat**                                                                                   | Climbs one step at a time; named after the Adam optimizer                                                                                       |
+| 2026-11-04 | First look rejected as too generic; 4 directions (Summit, Trailhead, Contour, Daybreak) built in a style lab         | Choose visually, mix parts, then commit                                                                                                         |
+| 2026-11-04 | Visual direction: **Summit** (layered indigo, flat orange buttons, segmented progress). Other 3 removed              | Professional and calm, still game-like                                                                                                          |
+| 2026-11-04 | Dark only for now                                                                                                    | One theme done well; light can come later                                                                                                       |
+| 2026-11-04 | Adam animates with CSS only, off under reduced motion                                                                | No animation library needed; respects accessibility                                                                                             |
+| 2026-11-04 | Content in YAML (not JSON), validated with zod                                                                       | Code blocks stay readable with block scalars; one schema gives types + validation                                                               |
+| 2026-11-04 | Unit 1 order: variables → numbers → strings → functions → if → while → for → lists → dicts → patterns                | Functions early so later lessons can use real write-a-function tests                                                                            |
+| 2026-11-04 | Explain cards are self-graded for now                                                                                | Honest offline fallback until a tutor exists                                                                                                    |
+| 2026-11-04 | Misses come back the next day, not the same day                                                                      | Sessions are daily; same-day repeats are handled by the in-session retry                                                                        |
+| 2026-11-04 | Curriculum moved to CURRICULUM.md; every lesson lists its target mistakes                                            | Wrong answers and fix-card bugs come from real novice mistakes                                                                                  |
+| 2026-11-04 | Each unit ends with a checkpoint (80% to pass) and a 3–5 step project                                                | Mixed recall before moving on; projects tie a unit's ideas together                                                                             |
+| 2026-11-04 | Tracks start in stages: Foundations, then + Web after A2, then + ML after A3                                         | Avoids overload; micrograd needs classes and special methods                                                                                    |
+| 2026-11-04 | Classes unit moved before data structures (now Track A Unit 3)                                                       | Track C's micrograd depends on it                                                                                                               |
+| 2026-11-05 | **One ML path** replaces three tracks. Web paused; data structures and algorithms become an optional interview track | Goal is deep ML understanding; ML had fewer slots than Web, and the six-month target couldn't be met                                            |
+| 2026-11-05 | Unit order: Python → NumPy → calculus → first models → micrograd → MLP → trees → probability → makemore → GPT        | No study settles the order; syllabi and the math each step needs. NumPy, evaluation and probability were the gaps                               |
+| 2026-11-05 | **Daily 5** replaces the warm-up: separate from lessons, capped at 5, fixed per day, counts the streak               | My idea. Keeps review small and finite; a busy day still counts                                                                                 |
+| 2026-11-05 | Problems enter the pool the day after first seen, not at unit end                                                    | Spacing should start right away                                                                                                                 |
+| 2026-11-05 | Cards can have variants; each is checked in real Python                                                              | Repeating identical cards trains memory of the answer                                                                                           |
+| 2026-11-05 | Python packages are downloaded after install and verified by hash, not committed                                     | Stays offline at runtime without binaries in git                                                                                                |
+| 2026-11-05 | Projects are lessons of write cards, with reference code in each starter                                             | Works today with no carryover engine; projects stay out of review                                                                               |
+| 2026-11-06 | Rewrite one unit at a time, with older lessons standing in as a temporary unit                                       | The app keeps working, and feedback on Unit 1 can shape the next two before they're written                                                     |
+| 2026-11-06 | Applied track parked, not built (CURRICULUM.md §4)                                                                   | Would split effort two days after moving to one path, and there are no users to test it with yet. The split point after Unit 3 stays open       |
+| 2026-11-08 | Projects are games the learner's code drives, in a Play tab; milestones grade behaviour, not printed text            | Printed transcripts felt static. Studies favour real, shareable programs and choice; the milestones keep the scaffolding                        |
+| 2026-11-08 | Shape viewer dropped; Modify is a write card with working starter code; per-choice notes (`misses`) on new units     | The viewer would do the learner's job; Modify needed no new code; feedback naming the specific mistake teaches more than the right answer alone |
+| 2026-11-08 | Keep writing units; build app features just before the unit that needs them (long blocks before Unit 8)              | Content is the gap. Features designed ahead of their first real use get designed for guesses                                                    |
+| 2026-11-08 | Unit 7's project is a spam filter; the app makes the word features, the learner writes the model and every check     | Typing your own message is the fun part; featurising text would spend the project on Unit 3 skills instead of this unit's                       |
 
 ## 12. Sources
 

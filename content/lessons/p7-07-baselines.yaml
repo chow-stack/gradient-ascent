@@ -1,0 +1,313 @@
+id: p7-baselines
+track: ml
+unit: 7
+order: 7
+title: Baselines
+summary: The dumbest model that could work, why it's the first thing to beat, and how much of a win is really a win.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Is 95% good?
+    body: >-
+      Your fraud detector scores 95% on validation. Is that good? You can't tell from the number alone. If 95% of transactions are honest, a "model"
+      that always says honest also scores 95%, and it never catches any fraud.
+
+
+      A baseline is the simplest prediction that needs no learning. Score it on the same validation data first. Your model is only worth something to
+      the extent it beats it.
+
+
+      By the end you'll build the standard baselines, and judge whether a model's win over one is real or just noise.
+
+  - type: learn
+    id: majority
+    title: Always guess the most common class
+    body: >-
+      The majority baseline predicts the most common class in the training labels, for every example. With labels of 1 and 0, the share of 1s is
+      `y_train.mean()`, so the majority is 1 when that's at least 0.5, and 0 otherwise.
+
+
+      Its accuracy on validation is the share of validation labels that match it. On imbalanced data, where one class is rare, that share is high, and it
+      makes a weak model look good. Ten examples with two positives gives 80% for doing nothing.
+
+
+      Work it out from the training labels, not the validation ones. The baseline is a model, too, and peeking at the labels you score it on is
+      cheating, even when it's this small.
+    code: |
+      import numpy as np
+
+      y_train = np.array([0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+      y_val = np.array([0, 0, 0, 1, 0, 0, 0, 0, 1, 0])
+
+      majority = int(y_train.mean() >= 0.5)
+      print(majority)
+      print(np.mean(y_val == majority))
+    subgoals:
+      - { line: 6, label: 'The most common class in training' }
+      - { line: 8, label: 'Its accuracy on validation' }
+    predict: What accuracy does guessing the majority get?
+
+  - type: choice
+    id: majority-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      y_train = np.array([1, 1, 0, 1, 1])
+      y_val = np.array([1, 0, 1, 1])
+      majority = int(y_train.mean() >= 0.5)
+      print(np.mean(y_val == majority))
+    choices: ['0.75', '0.8', '0.25', '1.0']
+    answer: '0.75'
+    why: >-
+      Most training labels are 1, so the baseline always says 1. Three of the four validation labels are 1.
+    misses:
+      '0.8': "That's the share of 1s in the training labels. The baseline is scored on validation."
+      '0.25': "That's how often it's wrong. Three of four validation labels match 1."
+      '1.0': 'The baseline gets every 0 wrong, and validation has one.'
+    variants:
+      - code: |
+          import numpy as np
+
+          y_train = np.array([0, 0, 0, 1])
+          y_val = np.array([1, 1, 0])
+          majority = int(y_train.mean() >= 0.5)
+          print(round(np.mean(y_val == majority), 3))
+        choices: ['0.333', '0.667', '0.75', '0.0']
+        answer: '0.333'
+        why: >-
+          Training is mostly 0, so the baseline says 0. Only one of the three validation labels is 0. A baseline can do badly when validation is unlike
+          training.
+        misses:
+          '0.667': "That's what you'd get choosing the majority from the validation labels, which is peeking."
+          '0.75': "That's the baseline's accuracy on training. It's scored on validation."
+          '0.0': 'One validation label is 0, which matches.'
+
+  - type: choice
+    id: verdict
+    prompt: "A disease affects 3% of patients. A model scores 96% accuracy on validation. What's the honest verdict?"
+    choices:
+      [
+        'It is worse than always saying "healthy"',
+        'It is an excellent model',
+        'It is 46 points better than guessing',
+        'It must have overfit',
+      ]
+    answer: 'It is worse than always saying "healthy"'
+    why: >-
+      Always saying healthy is right for the 97% who are, so it scores 97%. The model does worse than doing nothing.
+    misses:
+      'It is an excellent model': '96% sounds high, but the majority baseline scores 97% here.'
+      'It is 46 points better than guessing': "A coin flip isn't the baseline. Guessing the majority, healthy, scores 97%."
+      'It must have overfit': "It's worse than the baseline, but that could be for many reasons. Overfitting needs a training score to compare."
+
+  - type: learn
+    id: other
+    title: Other baselines
+    body: >-
+      For predicting a number, the baseline is the mean of the training targets, predicted for every example. Its MSE on validation is how much the
+      targets vary. A line that can't beat it has learned nothing about the inputs.
+
+
+      A slightly smarter baseline is often worth trying too: one feature and a hand-picked rule, like "spam if it contains the word winner". If a model
+      with 1,000 features barely beats one rule, it isn't using the other 999 well.
+
+
+      Later in this path, logistic regression becomes the baseline. In Unit 10, a fancy model has to beat it fairly before it's worth using.
+    code: |
+      import numpy as np
+
+      y_train = np.array([2.0, 4.0, 6.0])
+      y_val = np.array([3.0, 5.0])
+
+      guess = y_train.mean()
+      print(guess)
+      print(np.mean((guess - y_val) ** 2))
+    subgoals:
+      - { line: 6, label: 'The training mean, for everything' }
+      - { line: 8, label: 'Its MSE on validation' }
+    predict: What is the baseline's MSE?
+
+  - type: choice
+    id: mean-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      y_train = np.array([1.0, 3.0])
+      y_val = np.array([0.0, 4.0, 2.0])
+      guess = y_train.mean()
+      print(round(np.mean((guess - y_val) ** 2), 3))
+    choices: ['2.667', '0.0', '4.0', '2.0']
+    answer: '2.667'
+    why: >-
+      The training mean is 2. The errors are 2, -2 and 0, so the squares are 4, 4 and 0, and their mean is 8 / 3.
+    misses:
+      '0.0': 'The validation mean is also 2, but each example still misses by its own amount, and the squares add up.'
+      '4.0': "That's the squared error of one example. The third is 0, and the mean is 8 / 3."
+      '2.0': "That's the guess itself, the training mean. The question asks for its MSE."
+
+  - type: explain
+    id: explain-screening
+    prompt: A cancer screening model scores 99% accuracy, where 1% of patients have cancer. What would you check before trusting it, and why?
+    code: |
+      import numpy as np
+
+      y_val = np.array([0] * 99 + [1])
+      always_healthy = np.zeros(100)
+      print(np.mean(always_healthy == y_val))
+    model: >-
+      Compare it with the baseline: always saying healthy also scores 99%, so the accuracy alone shows nothing. Check how many of the real cancer cases
+      it finds, because those are the ones that matter and accuracy hardly counts them.
+    keyPoints:
+      - Always saying healthy also scores 99%
+      - So accuracy alone doesn't show it learned anything
+      - Check how many real cases it catches
+
+  - type: learn
+    id: noise
+    title: Is the win real?
+    body: >-
+      A validation score is an estimate, and with few examples it's a rough one. On 20 messages, each one is 5%. Get one more right by luck and accuracy
+      jumps 5 points.
+
+
+      Your stats background has the tool for this. An accuracy is a proportion, so its standard error is about `np.sqrt(acc * (1 - acc) / n)`. At 90%
+      on 50 examples, that's about 0.04. Two models at 88% and 90% are well within that of each other, so you can't say which is better.
+
+
+      The fixes are more validation data, or a repeated split, which Unit 10 covers. Until then, treat small differences on small sets as a tie.
+    code: |
+      import numpy as np
+
+      for n in [20, 50, 1000]:
+          se = np.sqrt(0.9 * (1 - 0.9) / n)
+          print(n, round(se, 3))
+    subgoals:
+      - { line: 4, label: 'Standard error of a proportion' }
+    predict: How much does going from 50 to 1,000 examples shrink it?
+
+  - type: choice
+    id: tie
+    prompt: 'On 50 validation emails, model A scores 88% and model B scores 90%. What can you conclude?'
+    choices:
+      [
+        'Not much: the gap is about one email, within the noise',
+        'B is better',
+        'A is better, since it is simpler',
+        'Both are worse than the baseline',
+      ]
+    answer: 'Not much: the gap is about one email, within the noise'
+    why: >-
+      2% of 50 is one email. The standard error at this size is about 4%, so the difference could easily be luck.
+    misses:
+      'B is better': 'B is higher, but by one email. With a standard error near 4%, that could be luck.'
+      'A is better, since it is simpler': "Nothing here says A is simpler, and the scores can't separate them."
+      'Both are worse than the baseline': "You'd need the baseline's score to say that."
+
+  - type: blank
+    id: fill-majority
+    prompt: Fill in the blanks so `majority` is the most common class in the training labels.
+    code: |
+      import numpy as np
+
+      def majority(y_train):
+          return int(y_train.____() >= ____)
+    answers: [['mean'], ['0.5', '.5']]
+    tests:
+      - { call: 'majority(np.array([1, 1, 0]))', expect: '1' }
+      - { call: 'majority(np.array([0, 0, 0, 1]))', expect: '0' }
+      - { call: 'majority(np.array([0, 1, 1, 1, 0]))', expect: '1' }
+    why: >-
+      The mean of 1s and 0s is the share of 1s. At least half means 1 is the majority.
+
+  - type: fix
+    id: fix-accuracy
+    prompt: >-
+      `accuracy(p, y)` should give the share of examples where the class, `p >= 0.5`, matches the label. It gives 0 for a model that's mostly right.
+      Fix it.
+    code: |
+      import numpy as np
+
+      def accuracy(p, y):
+          return np.mean(p == y)
+    solution: |
+      import numpy as np
+
+      def accuracy(p, y):
+          return np.mean((p >= 0.5) == y)
+    highlightLine: 4
+    tests:
+      - { call: 'accuracy(np.array([0.9, 0.2, 0.7, 0.4]), np.array([1, 0, 0, 0]))', expect: '0.75' }
+      - { call: 'accuracy(np.array([0.6, 0.6]), np.array([1, 1]))', expect: '1.0' }
+      - {
+          call: 'accuracy(np.array([0.5, 0.49, 0.01]), np.array([1, 1, 0]))',
+          expect: '0.6666666666666666',
+          hidden: true,
+        }
+      - { call: 'accuracy(np.array([0.1]), np.array([1]))', expect: '0.0', hidden: true }
+    why: >-
+      Probabilities are almost never exactly 0 or 1, so comparing them with the labels almost never matches. Turn them into classes first.
+    hints:
+      - Is a probability of 0.9 ever equal to a label of 1?
+
+  - type: write
+    id: write-baseline
+    prompt: >-
+      Write `baseline_accuracy(y_train, y_val)`: the accuracy on `y_val` of always predicting the most common class in `y_train`. Labels are 1 or 0;
+      call a tie 1.
+    starter: |
+      import numpy as np
+
+      def baseline_accuracy(y_train, y_val):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def baseline_accuracy(y_train, y_val):
+          majority = int(y_train.mean() >= 0.5)
+          return np.mean(y_val == majority)
+    tests:
+      - { call: 'baseline_accuracy(np.array([1, 1, 0, 1, 1]), np.array([1, 0, 1, 1]))', expect: '0.75' }
+      - { call: 'baseline_accuracy(np.array([0, 0, 0, 1]), np.array([1, 1, 0, 1]))', expect: '0.25' }
+      - { call: 'baseline_accuracy(np.array([1, 0]), np.array([0, 0, 1]))', expect: '0.3333333333333333', hidden: true }
+      - { call: 'baseline_accuracy(np.array([1, 1, 1, 0]), np.array([0, 0, 0, 1]))', expect: '0.25', hidden: true }
+    why: >-
+      The majority comes from the training labels only. Then it's scored against the validation labels, whatever they are.
+    hints:
+      - 'The share of 1s in training is `y_train.mean()`.'
+      - The baseline's accuracy is `np.mean(y_val == majority)`.
+
+  - type: choice
+    id: remember-split
+    prompt: 'From the last lesson. What goes wrong if you shuffle `X` with one call to `permutation` and `y` with another?'
+    choices:
+      [
+        'Rows and labels no longer match, and nothing crashes',
+        'You get an error about mismatched shapes',
+        'Nothing, both are shuffled',
+        'The validation part ends up empty',
+      ]
+    answer: 'Rows and labels no longer match, and nothing crashes'
+    why: >-
+      Two calls give two different orders, so each example gets someone else's label. The shapes still match, so it runs and trains on noise.
+    misses:
+      'You get an error about mismatched shapes': "Both are still the same length, so there's no error. That's what makes it dangerous."
+      'Nothing, both are shuffled': 'Each is shuffled differently, so the pairs are broken.'
+      'The validation part ends up empty': 'The split sizes are unchanged. What breaks is which label goes with which example.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      A score means nothing without a baseline. For classes, always predict the training majority. For numbers, predict the training mean. Work the
+      baseline out from training labels and score it on validation, like any model. On imbalanced data, the baseline's accuracy is high, so a big number
+      can still be a bad model. And on small validation sets, a gap of a few points may be noise.
+
+
+      Next: when accuracy isn't enough, which mistakes is the model making?

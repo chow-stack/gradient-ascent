@@ -68,6 +68,10 @@ cards:
     answer: '1.0'
     why: >-
       The predictions are 2 and 4, each 1 too low. The squared errors are 1 and 1, and their mean is 1.
+    misses:
+      '2.0': 'Each squared error is 1. The mean of 1 and 1 is 1; 2 is their sum.'
+      '0.0': 'The line misses each point by 1. Squared errors never cancel.'
+      '-1.0': "That's an error before squaring. Squares are never negative."
     variants:
       - code: |
           import numpy as np
@@ -120,6 +124,10 @@ cards:
     answer: '`np.mean(2 * err)`'
     why: >-
       `b` is added straight into each prediction, so its inside slope is 1, and there's no `x` factor. The mean matches the MSE's mean.
+    misses:
+      '`np.mean(2 * err * x)`': "That's for `w`. `b` is added straight in, so its inside slope is 1, with no `x`."
+      '`np.mean(err ** 2)`': "That's the loss itself, the MSE, not its slope."
+      '`np.sum(2 * err)`': 'The loss is a mean, so its gradient is a mean too. A sum grows with the number of points.'
     variants:
       - prompt: Why does the partial with respect to `w` have a `* x` in it?
         choices:
@@ -360,6 +368,10 @@ cards:
     answer: 'Make the learning rate smaller'
     why: >-
       Growing swings mean every step overshoots by more than the last. Smaller steps stop that.
+    misses:
+      'Make the learning rate bigger': 'Growing swings mean the steps are already too big. Bigger ones overshoot further.'
+      'Run more steps': 'More steps of the same size keep overshooting.'
+      'Start from different weights': 'Every step is still too big wherever you start.'
 
   - type: learn
     id: recap

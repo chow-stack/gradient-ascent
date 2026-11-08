@@ -65,6 +65,10 @@ cards:
     answer: '2.25'
     why: >-
       At 0 the slope is -6, so the first step goes to 1.5. There the slope is -3, so the second step adds 0.75.
+    misses:
+      '1.5': "That's after one step. There are two."
+      '3.0': 'The second step is smaller: at 1.5 the slope is only -3.'
+      '-3.0': 'Subtracting a negative slope moves `w` up, toward 3.'
     variants:
       - code: |
           def grad(w):
@@ -131,6 +135,10 @@ cards:
     answer: 'Use a smaller learning rate'
     why: >-
       Growing swings mean each step overshoots the bottom by more than the last. Smaller steps stop the overshoot. More steps would only make it worse.
+    misses:
+      'Use a bigger learning rate': 'Growing swings mean the steps are already too big. Bigger ones overshoot further.'
+      'Run more steps': 'More steps of the same size keep overshooting, so the swings keep growing.'
+      'Add the gradient instead of subtracting it': 'Adding climbs uphill, so the loss would grow without swinging.'
     variants:
       - prompt: After 1,000 steps the loss is still falling, very slowly and smoothly. What's the most likely fix?
         choices:
@@ -335,6 +343,10 @@ cards:
     answer: '`[b, w + 1]`'
     why: >-
       With `b` fixed, `w * b` gives `b`. With `w` fixed, `w * b` gives `w` and `b` gives 1.
+    misses:
+      '`[w, b + 1]`': 'Swapped: with `b` fixed, `w * b` changes `b` times as fast as `w`.'
+      '`[b + 1, w]`': "The `+ b` term doesn't depend on `w`. It adds 1 to the partial for `b`."
+      '`[w * b, b]`': 'Those are parts of the function, not slopes. Hold one input fixed and nudge the other.'
 
   - type: learn
     id: recap

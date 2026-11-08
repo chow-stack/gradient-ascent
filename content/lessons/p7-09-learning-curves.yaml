@@ -1,0 +1,375 @@
+id: p7-learning-curves
+track: ml
+unit: 7
+order: 9
+title: Learning curves
+summary: Training and validation loss on one plot, the shapes that mean overfitting and underfitting, and stopping at the right moment.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Watch both losses
+    body: >-
+      In Unit 6 you watched the training loss fall and took that as progress. It isn't always. A model can keep getting better at its training data
+      while getting worse at everything else.
+
+
+      The fix is cheap: every so often, compute the loss on validation too, and plot both. The two curves together, called learning curves, show what's
+      going on far better than either alone.
+
+
+      By the end you'll read the three shapes the curves make, and keep the weights from the moment validation was best.
+
+  - type: learn
+    id: overfit
+    label: Worked example
+    title: Memorising, step by step
+    body: >-
+      Here, only the first of 25 features matters. The other 24 are noise. With just 30 training examples, there's room for the model to fit the noise.
+
+
+      Early on, both losses fall together: the model is learning the real pattern. Then they split. Training loss keeps falling towards 0 as the model
+      tunes 24 useless weights to fit quirks of those 30 examples. Validation loss turns and rises, because those quirks aren't in new data. That's
+      overfitting.
+
+
+      The gap between the curves is the warning. A falling training loss on its own would have hidden it.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(230, 25))
+      y = (2 * X[:, 0] + rng.normal(size=230) > 0).astype(float)
+      X_tr, y_tr, X_va, y_va = X[:30], y[:30], X[30:], y[30:]
+
+      w, b = np.zeros(25), 0.0
+      train, val = [], []
+      for step in range(1500):
+          train.append(bce(y_tr, sigmoid(X_tr @ w + b)))
+          val.append(bce(y_va, sigmoid(X_va @ w + b)))
+          p = sigmoid(X_tr @ w + b)
+          w = w - 0.02 * X_tr.T @ (p - y_tr) / len(y_tr)
+          b = b - 0.02 * np.mean(p - y_tr)
+
+      print(int(np.argmin(val)))
+      plt.plot(train, label='training')
+      plt.plot(val, label='validation')
+      plt.xlabel('step')
+      plt.ylabel('loss')
+      plt.legend()
+      plt.show()
+    subgoals:
+      - { line: 13, label: 'Only the first feature matters' }
+      - { line: 14, label: 'Few training examples' }
+      - { line: 19, label: 'Record both losses every step' }
+      - { line: 25, label: 'The step where validation was best' }
+    predict: Will the validation loss keep falling as long as the training loss does?
+
+  - type: choice
+    id: read-overfit
+    prompt: 'Training loss keeps falling. Validation loss fell for a while, and has been rising for the last 1,000 steps. What is happening?'
+    choices: ['Overfitting', 'Underfitting', 'The learning rate is too small', 'Training is going well']
+    answer: 'Overfitting'
+    why: >-
+      The model keeps improving on what it saw while getting worse on new data. It's fitting quirks of the training examples.
+    misses:
+      'Underfitting': "Underfitting means it's bad at both. Here the training loss is low and falling."
+      'The learning rate is too small': 'A small rate would make both curves fall slowly. These are moving apart.'
+      'Training is going well': 'Only on the training data. The validation loss, which stands in for new data, is getting worse.'
+
+  - type: explain
+    id: explain-split
+    prompt: In the plot from the worked example, why does validation loss rise while training loss keeps falling?
+    code: |
+      import numpy as np
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(230, 25))
+      y = (2 * X[:, 0] + rng.normal(size=230) > 0).astype(float)
+      print(X.shape, y[:30].mean())
+    model: >-
+      With 24 noise features and only 30 examples, the model can lower its training loss by fitting chance patterns in those examples. Those patterns
+      aren't in new data, so the same weights make validation predictions worse. It's memorising rather than learning.
+    keyPoints:
+      - The noise features let it fit chance patterns in the training examples
+      - Those patterns don't appear in new data
+      - So training loss falls while validation loss rises
+
+  - type: learn
+    id: shapes
+    title: Three shapes
+    body: >-
+      Overfitting: training loss low and falling, validation loss well above it and rising. The model is too flexible for the data. Fixes are more data,
+      fewer features, or stopping earlier.
+
+
+      Underfitting: both losses high, close together, and flattening out. The model can't capture the pattern at all, because it's too simple, the
+      features don't carry the information, or training stopped too soon. More data won't help. A better model or better features might.
+
+
+      A good fit: both low, close together, and flat. Some gap is normal, since a model always does a little better on what it trained on.
+
+
+      People often read a gap as underfitting. It's the other way round: a gap means overfitting, and two high curves together mean underfitting.
+    deeper: >-
+      Another fix for overfitting is regularisation: add `lam * np.sum(w ** 2)` to the loss, which adds `2 * lam * w` to the gradient and keeps the
+      weights small. A model with small weights can't bend itself around every quirk. You'll see it again as weight decay in PyTorch.
+
+  - type: choice
+    id: read-under
+    prompt: Both losses start at 0.69, fall to about 0.62, and stay there, close together. What's the likeliest story?
+    choices:
+      [
+        'Underfitting: the model or its features are too weak',
+        'Overfitting: it has memorised the data',
+        'A perfect fit',
+        'A bug in the validation split',
+      ]
+    answer: 'Underfitting: the model or its features are too weak'
+    why: >-
+      Both high and close means it does equally badly on everything. It hasn't memorised anything, it just can't find much of a pattern.
+    misses:
+      'Overfitting: it has memorised the data': "Memorising would push training loss well below validation. They're together."
+      'A perfect fit': '0.62 is barely better than the 0.69 a model gets by saying 0.5 for everything.'
+      'A bug in the validation split': 'Matching curves are what an honest split gives when the model is weak. Nothing points to a bug.'
+    variants:
+      - prompt: 'Your model is overfitting. Which change is least likely to help?'
+        choices:
+          [
+            'Adding more features',
+            'Collecting more training data',
+            'Stopping training earlier',
+            'Removing features that are noise',
+          ]
+        answer: 'Adding more features'
+        why: >-
+          More features give the model even more room to fit quirks. The others reduce that room or give it more real pattern to learn from.
+        misses:
+          'Collecting more training data': 'More examples make chance patterns rarer, so memorising pays off less. It usually helps a lot.'
+          'Stopping training earlier': 'Stopping at the best validation loss keeps the weights from before the memorising.'
+          'Removing features that are noise': 'Noise features are what it uses to memorise. Fewer of them, less room to overfit.'
+
+  - type: learn
+    id: early
+    title: Keep the best weights
+    body: >-
+      Early stopping: while training, keep the weights from the step with the lowest validation loss, and use those at the end, even if you trained for
+      longer. Validation is making a choice here, the number of steps, which is exactly what it's for.
+
+
+      Saving them takes care. `best_w = w` doesn't save anything. It's a second name for the same array, the Unit 5 view problem. If training then
+      updates `w` in place, with `w -= ...`, your "best" weights change with it, and at the end they're the last weights after all. Save a snapshot
+      with `best_w = w.copy()`.
+
+
+      A common rule adds patience: stop once validation hasn't improved for, say, 100 steps in a row, since it may be about to dip again.
+    code: |
+      import numpy as np
+
+      w = np.array([1.0, 2.0])
+      best_w = w
+      safe_w = w.copy()
+      w -= 0.5
+      print(best_w)
+      print(safe_w)
+    subgoals:
+      - { line: 4, label: 'Another name, not a snapshot' }
+      - { line: 5, label: 'A real snapshot' }
+      - { line: 6, label: 'Updated in place' }
+    predict: What will `best_w` print?
+
+  - type: choice
+    id: copy-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      w = np.array([3.0])
+      best = w
+      for _ in range(2):
+          w -= 1.0
+      print(best)
+    choices: ['[1.]', '[3.]', '[2.]', '3.0']
+    answer: '[1.]'
+    why: >-
+      `best` is another name for the same array, and `-=` changes that array in place, so `best` shows both updates.
+    misses:
+      '[3.]': "That's what a copy would keep. `best = w` makes a second name, not a copy, and `-=` changes the shared array."
+      '[2.]': 'Both updates happen to the same array, so `best` sees both.'
+      '3.0': '`best` is an array, so it prints in brackets, and it changed with `w`.'
+    variants:
+      - code: |
+          import numpy as np
+
+          w = np.array([3.0])
+          best = w
+          for _ in range(2):
+              w = w - 1.0
+          print(best)
+        choices: ['[3.]', '[1.]', '[2.]', 'An error']
+        answer: '[3.]'
+        why: >-
+          `w = w - 1.0` makes a new array and moves the name `w` to it. `best` still names the original, unchanged. Relying on this is fragile: one
+          switch to `-=` breaks it, so copy anyway.
+        misses:
+          '[1.]': '`w - 1.0` makes a new array. Only `-=` would change the one `best` names.'
+          '[2.]': 'Neither step touches the array `best` names. `w` moves to new arrays each time.'
+          'An error': 'Rebinding a name is fine. `best` just keeps the old array.'
+
+  - type: blank
+    id: fill-copy
+    prompt: Fill in the blank so `best_w` is a snapshot that later updates to `w` can't change.
+    code: |
+      import numpy as np
+
+      w = np.array([1.0, 2.0])
+      best_w = w.____()
+      w -= 0.5
+      print(best_w)
+    answers: [['copy']]
+    expectOutput: '[1. 2.]'
+    why: >-
+      `.copy()` makes a new array with the same values, so updating `w` in place leaves it alone.
+
+  - type: fix
+    id: fix-snapshot
+    prompt: >-
+      `train_early` should give back the weights from the step with the lowest validation loss. It always gives back the final weights instead. Fix
+      it.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+      def train_early(X_tr, y_tr, X_va, y_va, lr, steps):
+          w, b = np.zeros(X_tr.shape[1]), 0.0
+          best_loss, best_w, best_b = np.inf, w, b
+          for _ in range(steps):
+              p = sigmoid(X_tr @ w + b)
+              w -= lr * X_tr.T @ (p - y_tr) / len(y_tr)
+              b -= lr * np.mean(p - y_tr)
+              loss = bce(y_va, sigmoid(X_va @ w + b))
+              if loss < best_loss:
+                  best_loss, best_w, best_b = loss, w, b
+          return best_w, best_b
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(230, 25))
+      y = (2 * X[:, 0] + rng.normal(size=230) > 0).astype(float)
+      X_tr, y_tr, X_va, y_va = X[:30], y[:30], X[30:], y[30:]
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+      def train_early(X_tr, y_tr, X_va, y_va, lr, steps):
+          w, b = np.zeros(X_tr.shape[1]), 0.0
+          best_loss, best_w, best_b = np.inf, w.copy(), b
+          for _ in range(steps):
+              p = sigmoid(X_tr @ w + b)
+              w -= lr * X_tr.T @ (p - y_tr) / len(y_tr)
+              b -= lr * np.mean(p - y_tr)
+              loss = bce(y_va, sigmoid(X_va @ w + b))
+              if loss < best_loss:
+                  best_loss, best_w, best_b = loss, w.copy(), b
+          return best_w, best_b
+
+      rng = np.random.default_rng(0)
+      X = rng.normal(size=(230, 25))
+      y = (2 * X[:, 0] + rng.normal(size=230) > 0).astype(float)
+      X_tr, y_tr, X_va, y_va = X[:30], y[:30], X[30:], y[30:]
+    highlightLine: 19
+    tests:
+      - {
+          call: 'round(bce(y_va, sigmoid(X_va @ train_early(X_tr, y_tr, X_va, y_va, 0.1, 300)[0] + train_early(X_tr, y_tr, X_va, y_va, 0.1, 300)[1])), 3)',
+          expect: '0.606',
+        }
+      - {
+          call: 'train_early(X_tr, y_tr, X_va, y_va, 0.1, 300)[0][:3].round(4)',
+          expect: '[0.5938, 0.0546, -0.0316]',
+          hidden: true,
+        }
+    why: >-
+      `best_w = w` gives the same array a second name, and `w -=` changes that array in place, so the "best" weights follow every update. A copy is a
+      real snapshot.
+    hints:
+      - After `best_w = w`, are `best_w` and `w` two arrays, or one?
+      - '`w -=` changes the array in place. Save `w.copy()` instead.'
+
+  - type: write
+    id: write-patience
+    prompt: >-
+      Write `early_stop(val, patience)`. `val` is a list of validation losses, one per step. Walk through it, keeping the position of the best loss so
+      far. Each time a loss isn't a new best, count it; a new best resets the count. Stop when the count reaches `patience`, and give back the position
+      of the best loss seen. If it never stops, give back the best over the whole list.
+    starter: |
+      def early_stop(val, patience):
+          # Your code here
+    solution: |
+      def early_stop(val, patience):
+          best, since = 0, 0
+          for i in range(1, len(val)):
+              if val[i] < val[best]:
+                  best, since = i, 0
+              else:
+                  since += 1
+                  if since == patience:
+                      break
+          return best
+    tests:
+      - { call: 'early_stop([5, 4, 3, 3.5, 3.6, 3.7, 2], 3)', expect: '2' }
+      - { call: 'early_stop([5, 4, 3, 3.5, 3.6, 3.7, 2], 4)', expect: '6' }
+      - { call: 'early_stop([1.0], 2)', expect: '0', hidden: true }
+      - { call: 'early_stop([3, 2, 1], 1)', expect: '2', hidden: true }
+      - { call: 'early_stop([2, 3, 1], 1)', expect: '0', hidden: true }
+      - { call: 'early_stop([2, 3, 1], 2)', expect: '2', hidden: true }
+    requires: ['loop']
+    why: >-
+      A new best resets the count. Anything else adds to it, and reaching the patience ends the walk, so a dip that comes too late is never seen.
+    hints:
+      - 'Keep two variables: the position of the best so far, and how many steps since it.'
+      - 'Start with `best, since = 0, 0` and loop from position 1. `break` when `since == patience`.'
+
+  - type: choice
+    id: remember-pr
+    prompt: 'From the last lesson. A model flags 8 emails, 6 of which are spam. There are 12 spam emails in all. What is its recall?'
+    choices: ['0.5', '0.75', '0.67', '0.25']
+    answer: '0.5'
+    why: >-
+      Recall is the share of real spam caught: 6 of 12.
+    misses:
+      '0.75': "That's precision, 6 of the 8 flagged."
+      '0.67': "That's 8 flags over 12 spam emails. Only the 6 right flags count, so recall is 6 / 12."
+      '0.25': "That's the 2 false alarms out of 8 flags. Recall is about the 12 real spam emails."
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Plot training and validation loss together. A widening gap with validation rising is overfitting: the model is memorising. Both high and flat is
+      underfitting: it can't find the pattern. Early stopping keeps the weights from the best validation step, saved with `.copy()` so in-place updates
+      can't change them, and patience decides when to give up waiting.
+
+
+      Next: the sneakiest way to fool yourself, when information leaks from validation into training.

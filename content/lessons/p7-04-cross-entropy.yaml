@@ -1,0 +1,375 @@
+id: p7-cross-entropy
+track: ml
+unit: 7
+order: 4
+title: Cross-entropy
+summary: The loss for probabilities, why it beats squared error for classifiers, and the clip that keeps it from blowing up.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Scoring a probability
+    body: >-
+      To train the neuron, you need a loss: one number for how wrong its probabilities are. The MSE worked for a line, but for probabilities there's a
+      better choice, the cross-entropy.
+
+
+      It's worth learning well. It's the loss for almost every classifier, and it's the loss you'll use to train makemore and the GPT at the end of this
+      path. There, the "classes" are the next letter or word.
+
+
+      By the end you'll compute it by hand and in NumPy, and know why it's built the way it is.
+
+  - type: learn
+    id: surprise
+    title: Punish confident mistakes
+    body: >-
+      For one example, look at the probability the model gave to the right answer, and take `-np.log` of it.
+
+
+      If the email really is spam and the model said 0.9, the loss is `-np.log(0.9)`, about 0.1. Small. If it said 0.1, the loss is about 2.3. If it said
+      0.01, about 4.6. The loss is 0 only when the model gives the right answer a probability of 1, and it grows without limit as that probability
+      shrinks towards 0.
+
+
+      The minus sign is there because the log of a number below 1 is negative, and a loss should be positive. Leave it out, and gradient descent would
+      try to make the model more wrong.
+    code: |
+      import numpy as np
+
+      for p in [0.99, 0.9, 0.5, 0.1, 0.01]:
+          print(p, round(-np.log(p), 3))
+    subgoals:
+      - { line: 4, label: 'The probability given to the truth, then -log' }
+    predict: What will the loss be when the model says 0.5?
+
+  - type: choice
+    id: surprise-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      print(round(-np.log(0.5), 3))
+    choices: ['0.693', '0.5', '-0.693', '0.0']
+    answer: '0.693'
+    why: >-
+      The log of 0.5 is about -0.693, and the minus sign makes it positive. It's the loss of a model that can't decide.
+    misses:
+      '0.5': 'The loss is `-log` of the probability, not the probability itself.'
+      '-0.693': "That's `np.log(0.5)` without the minus. A loss should be positive."
+      '0.0': 'The loss is only 0 when the right answer gets a probability of 1.'
+    variants:
+      - code: |
+          import numpy as np
+
+          print(round(-np.log(0.999), 3))
+        choices: ['0.001', '0.999', '-0.001', '1.0']
+        answer: '0.001'
+        why: >-
+          The model gave the truth almost all of its probability, so there's almost nothing left to learn from this example. At exactly 1, the loss
+          would be 0.
+        misses:
+          '0.999': "That's the probability. The loss is `-log` of it, which is tiny when the probability is near 1."
+          '-0.001': 'The minus sign in front makes the loss positive.'
+          '1.0': 'A loss near 1 would mean a probability near 0.37. This one is close to 1, so the loss is close to 0.'
+
+  - type: learn
+    id: binary
+    title: Both classes in one formula
+    body: >-
+      With labels `y` of 1 or 0, the probability the model gave the right answer is `p` when `y` is 1, and `1 - p` when `y` is 0. One formula covers
+      both:
+
+
+      `-(y * np.log(p) + (1 - y) * np.log(1 - p))`
+
+
+      When `y` is 1, the second term is multiplied by 0 and drops out, leaving `-np.log(p)`. When `y` is 0, the first drops out, leaving
+      `-np.log(1 - p)`. Take the mean over the examples and that's the binary cross-entropy.
+
+
+      Forgetting the second term is a classic slip. Then the examples labelled 0 add nothing, and a model that says "spam" for everything scores a
+      perfect 0.
+    code: |
+      import numpy as np
+
+      y = np.array([1, 0, 1])
+      p = np.array([0.9, 0.2, 0.6])
+
+      each = -(y * np.log(p) + (1 - y) * np.log(1 - p))
+      print(each.round(3))
+      print(round(each.mean(), 3))
+    subgoals:
+      - { line: 6, label: 'Each example, whichever its label' }
+      - { line: 8, label: 'Then the mean' }
+    predict: Which example has the biggest loss?
+
+  - type: choice
+    id: binary-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      y = np.array([1, 0])
+      p = np.array([0.8, 0.8])
+      loss = np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+      print(round(loss, 3))
+    choices: ['0.916', '0.223', '1.609', '-0.916']
+    answer: '0.916'
+    why: >-
+      The first is spam at 0.8, a loss of about 0.223. The second is real email at 0.8 spam, so it gave the truth 0.2, a loss of about 1.609. The mean
+      is about 0.916.
+    misses:
+      '0.223': "That's `-log(0.8)`, as if both were spam. The second is labelled 0, so its loss uses `1 - p`."
+      '1.609': "That's only the second example's loss. The mean includes the first."
+      '-0.916': 'The minus sign in front makes every loss positive.'
+    variants:
+      - code: |
+          import numpy as np
+
+          y = np.array([0, 0])
+          p = np.array([0.5, 0.5])
+          loss = np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+          print(round(loss, 3))
+        choices: ['0.693', '0.0', '1.386', '0.5']
+        answer: '0.693'
+        why: >-
+          Each example gave the truth 0.5, a loss of `-log(0.5)`, about 0.693, and so does their mean.
+        misses:
+          '0.0': 'The labels are 0, so the `(1 - y)` term counts. It gives `-log(0.5)` each.'
+          '1.386': "That's the sum of the two. Cross-entropy takes the mean."
+          '0.5': 'The loss is `-log` of the probability, not the probability.'
+
+  - type: explain
+    id: explain-term
+    prompt: This loss leaves out the `(1 - y)` term. A model that says 0.99 for every email scores almost 0. Why?
+    code: |
+      import numpy as np
+
+      y = np.array([1, 0, 0, 0])
+      p = np.array([0.99, 0.99, 0.99, 0.99])
+      print(np.mean(-(y * np.log(p))))
+    model: >-
+      Without the second term, every example labelled 0 gives a loss of 0, because it's multiplied by `y = 0`. Only the spam is scored, and calling
+      everything spam suits it perfectly. Nothing punishes the model for flagging real email.
+    keyPoints:
+      - Examples labelled 0 are multiplied by 0 and add nothing
+      - Only the class 1 examples are scored
+      - So calling everything class 1 is never punished
+
+  - type: learn
+    id: why-not-mse
+    title: Why not the squared error?
+    body: >-
+      You could use `np.mean((p - y) ** 2)`. It's a real loss, but it trains a classifier badly.
+
+
+      Say an email is spam and its score is -7, so `p` is about 0.001. That's a confident, badly wrong answer. With the squared error, the slope for the
+      score is tiny, about -0.002, because the sigmoid is almost flat out there. The model barely moves, just when it needs to most.
+
+
+      With cross-entropy, the slope for the score works out to `p - y`, about -1, as big as it can be. The `-log` grows fast enough to undo the
+      sigmoid's flatness. You'll use that `p - y` in the next lesson.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      z, y = -7.0, 1
+      p = sigmoid(z)
+      mse_slope = 2 * (p - y) * p * (1 - p)
+      ce_slope = p - y
+      print(round(mse_slope, 4))
+      print(round(ce_slope, 4))
+    subgoals:
+      - { line: 6, label: 'A confident, wrong answer' }
+      - { line: 8, label: "Squared error's slope for z" }
+      - { line: 9, label: "Cross-entropy's slope for z" }
+    predict: Which slope will be bigger?
+
+  - type: choice
+    id: why-ce
+    prompt: Why do classifiers train with cross-entropy rather than the squared error?
+    choices:
+      [
+        'Its gradient stays big when the model is confidently wrong',
+        'It is always smaller, so training is safer',
+        'The squared error only works on whole numbers',
+        'It never gives a loss above 1',
+      ]
+    answer: 'Its gradient stays big when the model is confidently wrong'
+    why: >-
+      Squared error on a sigmoid has an almost flat slope for very wrong answers, so the model barely learns from them. Cross-entropy's slope is
+      `p - y`, which stays big.
+    misses:
+      'It is always smaller, so training is safer': 'Cross-entropy is often bigger: it grows without limit for confident mistakes. That big push is the point.'
+      'The squared error only works on whole numbers': 'It works on any numbers. The problem is how small its gradient gets through a sigmoid.'
+      'It never gives a loss above 1': 'Cross-entropy can be any positive number. `-log(0.01)` is about 4.6.'
+
+  - type: learn
+    id: clip
+    title: Never take the log of 0
+    body: >-
+      If a probability ever reaches exactly 0 or 1, the log breaks. `np.log(0)` is minus infinity, so the loss becomes infinite, and `0 * np.log(0)`
+      gives `nan`, "not a number", which spreads through every calculation after it.
+
+
+      The sigmoid only reaches 0 or 1 when rounding wins, with scores beyond about 37, but that happens during training. The fix is to clip
+      the probabilities first, so they stay a tiny distance from each end: `np.clip(p, 1e-7, 1 - 1e-7)`. The worst loss for one example is then about
+      16 instead of infinite.
+
+
+      One more number worth knowing: before training, with every weight 0, every probability is 0.5, so the loss is `-np.log(0.5)`, about 0.693. If
+      your first loss is far from that, something's wrong.
+    code: |
+      import numpy as np
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+      print(round(bce(np.array([0.0]), np.array([1.0])), 3))
+      print(round(bce(np.array([1.0, 0.0]), np.array([0.5, 0.5])), 3))
+    subgoals:
+      - { line: 4, label: 'Keep p away from 0 and 1' }
+      - { line: 8, label: 'The loss before any training' }
+    predict: Will the first line print `inf`?
+
+  - type: choice
+    id: first-loss
+    prompt: You start training a classifier with every weight and `b` at 0. What should the first cross-entropy loss be?
+    choices: ['About 0.693', 'About 0', 'About 1', 'It depends on the data']
+    answer: 'About 0.693'
+    why: >-
+      Every score is 0, so every probability is 0.5, and each example's loss is `-log(0.5)`, whatever its label.
+    misses:
+      'About 0': "A loss of 0 means perfect predictions. A model that says 0.5 for everything isn't perfect."
+      'About 1': 'Every probability is 0.5, and `-log(0.5)` is about 0.693, not 1.'
+      'It depends on the data': 'With every probability at 0.5, both labels give the same loss, so the data makes no difference.'
+
+  - type: blank
+    id: fill-bce
+    prompt: Fill in the blank to finish the binary cross-entropy.
+    code: |
+      import numpy as np
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(____)))
+    answers: [['1 - p', '(1 - p)']]
+    tests:
+      - { call: 'round(bce(np.array([1, 0]), np.array([0.8, 0.8])), 3)', expect: '0.916' }
+      - { call: 'round(bce(np.array([0, 0]), np.array([0.5, 0.5])), 3)', expect: '0.693' }
+    why: >-
+      When the label is 0, the model was right with probability `1 - p`.
+    variants:
+      - prompt: Fill in the blank so the probabilities stay away from 0 and 1.
+        code: |
+          import numpy as np
+
+          def bce(y, p):
+              p = np.____(p, 1e-7, 1 - 1e-7)
+              return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+        answers: [['clip']]
+        tests:
+          - { call: 'round(bce(np.array([0.0]), np.array([1.0])), 3)', expect: '16.118' }
+          - { call: 'round(bce(np.array([1, 0]), np.array([0.8, 0.8])), 3)', expect: '0.916' }
+        why: >-
+          `np.clip(p, low, high)` raises anything below `low` and lowers anything above `high`, so the log never sees 0.
+
+  - type: fix
+    id: fix-minus
+    prompt: '`bce(y, p)` should give the binary cross-entropy, but it comes out negative, so training makes the model worse. Fix it.'
+    code: |
+      import numpy as np
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))
+    solution: |
+      import numpy as np
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+    highlightLine: 5
+    tests:
+      - { call: 'round(bce(np.array([1, 0]), np.array([0.8, 0.8])), 3)', expect: '0.916' }
+      - { call: 'round(bce(np.array([1, 0, 1]), np.array([0.9, 0.2, 0.6])), 3)', expect: '0.28' }
+      - { call: 'round(bce(np.array([0, 0]), np.array([0.5, 0.5])), 3)', expect: '0.693', hidden: true }
+      - { call: 'round(bce(np.array([1.0]), np.array([0.0])), 3)', expect: '16.118', hidden: true }
+    why: >-
+      The log of a probability is negative, so the loss needs a minus in front. Without it, gradient descent pushes the probabilities away from the
+      truth.
+    hints:
+      - Is `np.log(0.8)` positive or negative?
+    variants:
+      - prompt: '`bce(y, p)` should give the binary cross-entropy, but a probability of exactly 0 or 1 makes it `inf` or `nan`. Fix it.'
+        code: |
+          import numpy as np
+
+          def bce(y, p):
+              return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+        highlightLine: 4
+        hints:
+          - 'Keep `p` a tiny distance from each end first, with `np.clip`.'
+
+  - type: write
+    id: write-bce
+    prompt: >-
+      Write `bce(y, p)`, the mean binary cross-entropy of labels `y` (1 or 0) and probabilities `p`. Clip `p` to between `1e-7` and `1 - 1e-7` first.
+    starter: |
+      import numpy as np
+
+      def bce(y, p):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def bce(y, p):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+    tests:
+      - { call: 'round(bce(np.array([1, 0]), np.array([0.8, 0.8])), 3)', expect: '0.916' }
+      - { call: 'round(bce(np.array([1, 0, 1]), np.array([0.9, 0.2, 0.6])), 3)', expect: '0.28' }
+      - { call: 'round(bce(np.array([0.0]), np.array([1.0])), 3)', expect: '16.118', hidden: true }
+      - {
+          call: 'round(bce(np.array([1, 1, 0, 0]), np.array([0.5, 0.5, 0.5, 0.5])), 4)',
+          expect: '0.6931',
+          hidden: true,
+        }
+      - { call: 'round(bce(np.array([0]), np.array([0.25])), 4)', expect: '0.2877', hidden: true }
+    forbids: ['loop']
+    why: >-
+      Clip, then `-log` of the probability given to the truth, using `y` and `1 - y` to pick which, and the mean over the examples.
+    hints:
+      - 'Clip first: `p = np.clip(p, 1e-7, 1 - 1e-7)`.'
+      - 'Each loss is `-(y * np.log(p) + (1 - y) * np.log(1 - p))`. Then `np.mean`.'
+
+  - type: choice
+    id: remember-neuron
+    prompt: 'From the last lesson. `X` has shape `(50, 4)`. What shape must `w` be for `X @ w + b` to give one score per example?'
+    choices: ['`(4,)`', '`(50,)`', '`(50, 4)`', '`(4, 50)`']
+    answer: '`(4,)`'
+    why: >-
+      One weight per feature. `(50, 4) @ (4,)` gives `(50,)`, one score per row.
+    misses:
+      '`(50,)`': "That's one number per example. Weights go with features, so `w` needs one per column."
+      '`(50, 4)`': "`X @` a `(50, 4)` matrix doesn't line up: the inner sizes, 4 and 50, must match."
+      '`(4, 50)`': 'That would give a `(50, 50)` table. One score per example needs a weight per feature.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Cross-entropy scores a probability by `-log` of what the model gave the truth: 0 when it's sure and right, huge when it's sure and wrong. The binary
+      form, `-(y * log(p) + (1 - y) * log(1 - p))`, covers both labels, and you take the mean. Clip `p` first so the log never sees 0. Before
+      training, expect about 0.693.
+
+
+      Next: its gradient, and training the neuron.

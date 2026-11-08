@@ -1,0 +1,357 @@
+id: p7-log-odds
+track: ml
+unit: 7
+order: 2
+title: Log-odds
+summary: What a model's score really measures, what one weight does to it, and where the model switches from one class to the other.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: Reading the score
+    body: >-
+      A trained model might say `z = 0.8 * hours - 4`. What does the 0.8 mean? It isn't "each hour adds 0.8 to the chance of passing". Probabilities
+      can't grow forever like that.
+
+
+      The score has a meaning of its own, the log-odds, and once you know it you can read any weight in a classifier. It also tells you exactly where
+      the model draws the line between its two classes.
+
+
+      By the end you'll turn probabilities into log-odds and back, say what a weight does, and find a model's decision boundary.
+
+  - type: learn
+    id: odds
+    title: Odds, then log-odds
+    body: >-
+      The odds are the chance something happens divided by the chance it doesn't: `p / (1 - p)`. A probability of 0.75 is odds of 3, or "3 to 1".
+      A probability of 0.5 is odds of 1, even odds.
+
+
+      Odds aren't a probability. They run from 0 up to as big as you like, so odds of 9 are fine, and mean a probability of 0.9.
+
+
+      Take the log of the odds and you get the log-odds, `np.log(p / (1 - p))`. Now the range is every number: 0 at even odds, positive when
+      something's more likely than not, negative when it's less, and mirror images around 0. That's exactly the range a score can take.
+    code: |
+      import numpy as np
+
+      for p in [0.1, 0.5, 0.75, 0.9]:
+          odds = p / (1 - p)
+          print(p, round(odds, 3), round(np.log(odds), 3))
+    subgoals:
+      - { line: 4, label: 'Chance it happens over chance it does not' }
+      - { line: 5, label: 'Then the log' }
+    predict: What will the log-odds be at a probability of 0.5?
+
+  - type: choice
+    id: odds-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      p = 0.75
+      print(p / (1 - p))
+    choices: ['3.0', '0.75', '0.25', '1.5']
+    answer: '3.0'
+    why: >-
+      0.75 over 0.25 is 3: it happens three times as often as it doesn't.
+    misses:
+      '0.75': "That's the probability. The odds divide it by the chance it doesn't happen."
+      '0.25': "That's `1 - p`, the chance it doesn't happen. The odds are `p` divided by it."
+      '1.5': 'Divide 0.75 by 0.25, not by 0.5.'
+    variants:
+      - code: |
+          import numpy as np
+
+          p = 0.5
+          print(np.log(p / (1 - p)))
+        choices: ['0.0', '1.0', '0.5', '-0.5']
+        answer: '0.0'
+        why: >-
+          Even odds are 1, and the log of 1 is 0. A log-odds of 0 means the model can't decide.
+        misses:
+          '1.0': 'The odds are 1, but the log of 1 is 0.'
+          '0.5': "That's the probability. Its odds are 1, and the log of 1 is 0."
+          '-0.5': 'At even odds, the log-odds is exactly 0, neither positive nor negative.'
+      - code: |
+          p = 0.9
+          print(round(p / (1 - p), 3))
+        choices: ['9.0', '0.9', '0.1', '1.0']
+        answer: '9.0'
+        why: >-
+          0.9 over 0.1 is 9, nine to one. Odds can be any size, unlike a probability.
+        misses:
+          '0.9': "That's the probability, not the odds."
+          '0.1': "That's the chance it doesn't happen."
+          '1.0': 'Odds of 1 are even odds, for a probability of 0.5.'
+
+  - type: learn
+    id: undo
+    title: The sigmoid undoes the log-odds
+    body: >-
+      Here's the connection. Take a probability, turn it into log-odds, then pass that through the sigmoid, and you get the probability back. The sigmoid
+      is the reverse of the log-odds.
+
+
+      So a model's score `z` is a log-odds. When logistic regression computes `z = w * x + b`, it's saying "the log-odds grow in a straight line with
+      `x`". The sigmoid then turns those log-odds into a probability. That's where the name comes from: "logistic" is the sigmoid, and "regression"
+      is the line inside it.
+
+
+      A score of 0 is even odds, a probability of 0.5. Positive scores lean towards class 1, negative ones towards class 0.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      p = 0.9
+      z = np.log(p / (1 - p))
+      print(round(z, 3))
+      print(round(sigmoid(z), 6))
+    subgoals:
+      - { line: 7, label: 'Probability to log-odds' }
+      - { line: 9, label: 'And back with the sigmoid' }
+    predict: What will the last line print?
+
+  - type: choice
+    id: score-meaning
+    prompt: A trained classifier gives one email a score of `z = 0`. What does that mean?
+    choices:
+      [
+        'The model thinks it is 50% likely to be spam',
+        'The model thinks it is 0% likely to be spam',
+        'The email has no words the model knows',
+        'The model is broken',
+      ]
+    answer: 'The model thinks it is 50% likely to be spam'
+    why: >-
+      The score is a log-odds. A log-odds of 0 is odds of 1, even odds, and `sigmoid(0)` is 0.5.
+    misses:
+      'The model thinks it is 0% likely to be spam': 'A score of 0 is a log-odds of 0, which is even odds. A 0% chance would need a score of minus infinity.'
+      'The email has no words the model knows': 'That might give a score of `b`, not 0. A score of 0 just means even odds, for any reason.'
+      'The model is broken': 'Scores of 0 are normal. They sit on the boundary between the two classes.'
+
+  - type: learn
+    id: weights
+    title: What one weight does
+    body: >-
+      In `z = w * x + b`, one more unit of `x` adds `w` to the log-odds. Adding to a log multiplies what's inside it, so each extra unit multiplies the
+      odds by `np.exp(w)`, the same factor every time.
+
+
+      It doesn't add the same amount to the probability. Below, with `w = 0.8`, every extra hour multiplies the odds of passing by about 2.2. Near 50%,
+      that moves the probability a lot. Near 0% or 100%, it barely moves it, because there's little room left.
+
+
+      That's why "a weight of 2 doubles the probability" is wrong: a probability of 0.6 can't double. A weight's sign says which way it pushes, and its
+      size says how strongly, in log-odds.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      w, b = 0.8, -4.0
+      for hours in [3, 4, 5, 6, 7]:
+          z = w * hours + b
+          print(hours, round(sigmoid(z), 3), round(np.exp(z), 3))
+    subgoals:
+      - { line: 6, label: 'A trained model' }
+      - { line: 9, label: 'Probability, then odds' }
+    predict: Does each extra hour add the same amount to the probability?
+
+  - type: choice
+    id: weight-meaning
+    prompt: In a spam filter, the word "prize" has a weight of `0.7`, and `np.exp(0.7)` is about 2. What does one more "prize" in an email do?
+    choices:
+      [
+        'Roughly doubles the odds that it is spam',
+        'Doubles the probability that it is spam',
+        'Adds 0.7 to the probability that it is spam',
+        'Adds 70% to the probability that it is spam',
+      ]
+    answer: 'Roughly doubles the odds that it is spam'
+    why: >-
+      It adds 0.7 to the log-odds, which multiplies the odds by `np.exp(0.7)`, about 2. How much the probability moves depends on where it started.
+    misses:
+      'Doubles the probability that it is spam': 'A probability of 0.7 would become 1.4. The weight multiplies the odds, not the probability.'
+      'Adds 0.7 to the probability that it is spam': 'The weight is added to the log-odds, the score, not to the probability.'
+      'Adds 70% to the probability that it is spam': 'A weight is in log-odds. How far the probability moves depends on where it started.'
+    variants:
+      - prompt: 'A weight is `-1.5`. What does one more unit of its feature do?'
+        choices:
+          [
+            'Lowers the log-odds by 1.5, so the class gets less likely',
+            'Lowers the probability by 1.5',
+            'Makes the probability negative',
+            'Nothing, negative weights are ignored',
+          ]
+        answer: 'Lowers the log-odds by 1.5, so the class gets less likely'
+        why: >-
+          A negative weight pushes the score down. The odds are multiplied by `np.exp(-1.5)`, about 0.22, so the class gets less likely, but the sigmoid
+          keeps it above 0.
+        misses:
+          'Lowers the probability by 1.5': "A probability can't drop by 1.5. The weight is subtracted from the log-odds."
+          'Makes the probability negative': 'The sigmoid keeps every probability between 0 and 1, whatever the score.'
+          'Nothing, negative weights are ignored': 'A negative weight is evidence against the class. It counts as much as a positive one.'
+
+  - type: explain
+    id: explain-weight
+    prompt: Someone reads a weight of 2 as "this feature doubles the probability". Using the output below, explain why that can't be right.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      for z in [-3.0, 0.0, 3.0]:
+          print(round(sigmoid(z), 3), '->', round(sigmoid(z + 2), 3))
+    model: >-
+      A weight is added to the log-odds, not multiplied into the probability. Adding 2 moves a probability of 0.5 up to 0.88, but 0.95 only reaches
+      0.99, and a probability can never pass 1, so nothing can double it every time.
+    keyPoints:
+      - The weight is added to the score, the log-odds
+      - The same weight moves the probability by different amounts
+      - A probability can't go past 1, so it can't keep doubling
+
+  - type: learn
+    id: boundary
+    title: The decision boundary
+    body: >-
+      With the usual threshold, the model says class 1 when `p >= 0.5`. The sigmoid gives 0.5 exactly when the score is 0, so that's the same as
+      `z >= 0`. You never need the sigmoid just to pick a class.
+
+
+      The decision boundary is where `z = 0`. For one feature, `w * x + b = 0` gives `x = -b / w`. For the model with `w = 0.8` and `b = -4`, that's 5:
+      five hours of study is where it switches from "fail" to "pass".
+
+
+      A common slip is to put the boundary where the score is 0.5. The 0.5 belongs to the probability, and the boundary for the score is 0.
+    code: |
+      w, b = 0.8, -4.0
+      print(-b / w)
+    subgoals:
+      - { line: 2, label: 'Solve w * x + b = 0' }
+    predict: How many hours puts the model at exactly 50%?
+
+  - type: choice
+    id: boundary-trace
+    kind: predict
+    prompt: A model's score is `z = 2.0 * x - 3.0`. What does this print?
+    code: |
+      w, b = 2.0, -3.0
+      print(-b / w)
+    choices: ['1.5', '-1.5', '1.75', '3.0']
+    answer: '1.5'
+    why: >-
+      At `x = 1.5` the score is `3 - 3 = 0`, which is a probability of exactly 0.5. Above it, the model says class 1.
+    misses:
+      '-1.5': 'The sign matters: with `b = -3`, `-b` is 3, and `3 / 2` is 1.5.'
+      '1.75': 'That solves `z = 0.5`. The boundary is where the probability is 0.5, which is a score of 0.'
+      '3.0': 'Divide by the weight too: `2 * x - 3 = 0` gives `x = 3 / 2`.'
+
+  - type: blank
+    id: fill-log-odds
+    prompt: Fill in the blank so `log_odds(p)` gives the log-odds of a probability.
+    code: |
+      import numpy as np
+
+      def log_odds(p):
+          return np.log(p / (1 - ____))
+    answers: [['p']]
+    tests:
+      - { call: 'log_odds(0.5)', expect: '0.0' }
+      - { call: 'round(log_odds(0.75), 4)', expect: '1.0986' }
+      - { call: 'round(log_odds(0.1), 4)', expect: '-2.1972' }
+    why: >-
+      The odds are the chance it happens over the chance it doesn't, `1 - p`. Then the log.
+
+  - type: fix
+    id: fix-boundary
+    prompt: >-
+      `boundary(w, b)` should give the value of `x` where the model `z = w * x + b` switches class, at a probability of 0.5. `boundary(2.0, -3.0)`
+      should be `1.5`. Fix it.
+    code: |
+      def boundary(w, b):
+          return (0.5 - b) / w
+    solution: |
+      def boundary(w, b):
+          return -b / w
+    highlightLine: 2
+    tests:
+      - { call: 'boundary(2.0, -3.0)', expect: '1.5' }
+      - { call: 'boundary(0.8, -4.0)', expect: '5.0' }
+      - { call: 'boundary(-1.0, 2.0)', expect: '2.0', hidden: true }
+      - { call: 'boundary(4.0, 1.0)', expect: '-0.25', hidden: true }
+    why: >-
+      A probability of 0.5 is a score of 0, not 0.5, so solve `w * x + b = 0`.
+    hints:
+      - What score does the sigmoid turn into 0.5?
+    variants:
+      - code: |
+          def boundary(w, b):
+              return b / w
+        hints:
+          - Solve `w * x + b = 0` for `x`. Where does the minus sign go?
+
+  - type: write
+    id: write-after
+    prompt: >-
+      A model gives an example a probability `p`. Write `prob_after(p, w, extra)`, the probability after one feature, with weight `w`, goes up by
+      `extra`. Go through the log-odds: turn `p` into log-odds, add what the weight adds, and turn it back. So `prob_after(0.5, np.log(3), 1)` is
+      `0.75`.
+    starter: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def prob_after(p, w, extra):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def prob_after(p, w, extra):
+          z = np.log(p / (1 - p))
+          return sigmoid(z + w * extra)
+    tests:
+      - { call: 'prob_after(0.5, np.log(3), 1)', expect: '0.75' }
+      - { call: 'prob_after(0.2, 0.0, 5)', expect: '0.2' }
+      - { call: 'prob_after(0.75, -np.log(3), 1)', expect: '0.5', hidden: true }
+      - { call: 'round(prob_after(0.5, 1.0, 2), 6)', expect: '0.880797', hidden: true }
+      - { call: 'round(prob_after(0.9, 0.5, -2), 6)', expect: '0.768031', hidden: true }
+    requires: ['name:sigmoid']
+    why: >-
+      In log-odds, a feature just adds `w` for each unit, so the change is `w * extra`. The sigmoid turns the new log-odds back into a probability.
+    hints:
+      - 'Start with `z = np.log(p / (1 - p))`.'
+      - Then give back `sigmoid(z + w * extra)`.
+
+  - type: choice
+    id: remember-sigmoid
+    prompt: From the last lesson. What does `sigmoid(-50.0)` give?
+    choices: ['A number just above 0', 'Exactly 0', '-50.0', 'A negative number near 0']
+    answer: 'A number just above 0'
+    why: >-
+      A very negative score gives a probability very close to 0, but the sigmoid never reaches 0 exactly, and never goes below it.
+    misses:
+      'Exactly 0': '`np.exp(50)` is huge, so the result is tiny, but never exactly 0.'
+      '-50.0': 'The sigmoid never gives back its input. Everything lands between 0 and 1.'
+      'A negative number near 0': 'The top is 1 and the bottom is positive, so the result is always positive.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      The odds are `p / (1 - p)`, and the log-odds is their log, which can be any number. A model's score is a log-odds, and the sigmoid turns it back
+      into a probability. Each unit of a feature adds its weight to the log-odds, which multiplies the odds by `np.exp(w)`, but doesn't add a fixed
+      amount to the probability. The decision boundary is where the score is 0: `x = -b / w` for one feature.
+
+
+      Next: many features at once, with the matrix product from Unit 5. That's one neuron.

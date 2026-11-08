@@ -42,6 +42,15 @@ describe('PlayPanel', () => {
     expect(playCall).toHaveBeenCalledWith('__ga_has("predict", "loss", "gradients", "step", "check")')
   })
 
+  it('asks for sigmoid() and predict() before scoring messages', async () => {
+    playLoad.mockResolvedValue(ok())
+    playCall.mockResolvedValue(ok(['sigmoid']))
+    render(<PlayPanel kind="spam" code="import numpy as np" />)
+    expect(await screen.findByText(/to score messages/)).toHaveTextContent(
+      'Write sigmoid() and predict() to score messages.',
+    )
+  })
+
   it("shows the program's crash with its line, instead of the game", async () => {
     playLoad.mockResolvedValue(crash('NameError', "name 'x' is not defined", 3))
     render(<PlayPanel kind="wordle" code="print(x)" />)

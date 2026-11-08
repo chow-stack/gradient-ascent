@@ -1,0 +1,214 @@
+id: p7-project-spam
+track: ml
+unit: 7
+order: 12
+kind: project
+title: 'Project: Spam filter'
+summary: Build a spam filter from scratch, train it on real-looking messages, and prove it beats doing nothing, with nothing leaked.
+
+cards:
+  - type: project
+    id: spam
+    play: spam
+    brief: >-
+      You'll build a spam filter: logistic regression on words, trained with your own gradient descent, then judged the honest way. Every part is yours
+      except turning messages into features. The Play tab gives each message one column per word it has seen, 1 if the message contains that word.
+
+
+      Then play with it. Train on 174 messages and watch the training and validation losses side by side. Type any message to see how likely it is to
+      be spam, and which words pushed it which way. Drag the threshold and watch precision and recall trade places. One warning: the messages include
+      copies, the way spam is really sent, and until you deal with them your validation score is lying to you.
+    starter: |
+      import numpy as np
+
+      # Try your functions on these. The Play tab brings 174 real-looking messages.
+      X = np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+      y = np.array([1.0, 0.0, 1.0, 0.0])
+      texts = ['win cash now', 'hi mum', 'win cash now', 'lunch at 1']
+      labels = [1, 0, 1, 0]
+    solution: |
+      import numpy as np
+
+      # Try your functions on these. The Play tab brings 174 real messages.
+      X = np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+      y = np.array([1.0, 0.0, 1.0, 0.0])
+      texts = ['win cash now', 'hi mum', 'win cash now', 'lunch at 1']
+      labels = [1, 0, 1, 0]
+
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+
+      def predict(X, w, b):
+          return sigmoid(X @ w + b)
+
+
+      def loss(p, y):
+          p = np.clip(p, 1e-7, 1 - 1e-7)
+          return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+
+      def step(X, y, w, b, lr):
+          p = predict(X, w, b)
+          return w - lr * X.T @ (p - y) / len(y), b - lr * np.mean(p - y)
+
+
+      def split(n, frac, seed):
+          idx = np.random.default_rng(seed).permutation(n)
+          k = int(n * frac)
+          return idx[:k], idx[k:]
+
+
+      def dedupe(texts, labels):
+          seen = set()
+          kept_texts, kept_labels = [], []
+          for text, label in zip(texts, labels):
+              if text not in seen:
+                  seen.add(text)
+                  kept_texts.append(text)
+                  kept_labels.append(label)
+          return kept_texts, kept_labels
+
+
+      def accuracy(p, y):
+          return np.mean((p >= 0.5) == y)
+
+
+      def baseline(y_train, y_val):
+          majority = int(np.mean(y_train) >= 0.5)
+          return np.mean(y_val == majority)
+
+
+      def precision_recall(pred, y):
+          tp = np.sum((pred == 1) & (y == 1))
+          fp = np.sum((pred == 1) & (y == 0))
+          fn = np.sum((pred == 0) & (y == 1))
+          precision = tp / (tp + fp) if tp + fp > 0 else 0.0
+          recall = tp / (tp + fn) if tp + fn > 0 else 0.0
+          return precision, recall
+    milestones:
+      - title: Probabilities
+        goal: >-
+          Write `sigmoid(z)` and `predict(X, w, b)`, the probability of spam for every row of `X`. Then open the Play tab and type a message. With
+          every weight at 0, everything is 50%.
+        tests:
+          - { call: 'sigmoid(0.0)', expect: '0.5' }
+          - { call: 'predict(X, np.array([1.0, -1.0, 0.5]), -0.5).round(4)', expect: '[0.7311, 0.1824, 0.3775, 0.5]' }
+          - {
+              call: 'predict(np.array([[2.0, 0.0], [0.0, 1.0]]), np.array([0.5, 2.0]), -1.0).round(4)',
+              expect: '[0.5, 0.7311]',
+              hidden: true,
+            }
+          - { call: 'round(sigmoid(-2.0), 4)', expect: '0.1192', hidden: true }
+        forbids: ['loop']
+        scope: predict
+        hints:
+          - '`sigmoid` is `1 / (1 + np.exp(-z))`.'
+          - '`predict` passes `X @ w + b` through your `sigmoid`.'
+      - title: Cross-entropy
+        goal: >-
+          Write `loss(p, y)`, the mean binary cross-entropy, clipping `p` to between `1e-7` and `1 - 1e-7` first. The Play tab then draws the
+          learning curve, starting at 0.693.
+        tests:
+          - { call: 'round(loss(np.array([0.9, 0.2, 0.6]), np.array([1, 0, 1])), 4)', expect: '0.2798' }
+          - { call: 'round(loss(np.array([0.5, 0.5]), np.array([0, 1])), 4)', expect: '0.6931' }
+          - { call: 'round(loss(np.array([1.0]), np.array([0.0])), 3)', expect: '16.118', hidden: true }
+          - { call: 'round(loss(np.array([0.25]), np.array([0])), 4)', expect: '0.2877', hidden: true }
+        forbids: ['loop']
+        scope: loss
+        hints:
+          - 'Clip first: `p = np.clip(p, 1e-7, 1 - 1e-7)`.'
+          - 'Then `np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))`.'
+      - title: One step downhill
+        goal: >-
+          Write `step(X, y, w, b, lr)`, one step of gradient descent on your loss, giving back the new `(w, b)`. Then press Train in the Play tab, and
+          type a spammy message.
+        tests:
+          - {
+              call: 'step(np.array([[1.0, 2.0], [0.0, 1.0], [3.0, 0.0]]), np.array([1.0, 0.0, 0.0]), np.zeros(2), 0.0, 0.6)',
+              expect: '([-0.2, 0.1], -0.1)',
+            }
+          - { call: 'step(X, y, np.zeros(3), 0.0, 1.0)', expect: '([0.25, 0.0, 0.0], 0.0)' }
+          - {
+              call: '[round(float(v), 4) for v in step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.array([1.0, -1.0]), 0.5, 0.1)[0]]',
+              expect: '[1.0182, -1.0015]',
+              hidden: true,
+            }
+          - {
+              call: 'round(float(step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.array([1.0, -1.0]), 0.5, 0.1)[1]), 4)',
+              expect: '0.5096',
+              hidden: true,
+            }
+        forbids: ['loop']
+        scope: step
+        hints:
+          - 'The error for each example is `predict(X, w, b) - y`.'
+          - 'The partials are `X.T @ err / len(y)` for `w` and `np.mean(err)` for `b`.'
+      - title: Hold some back
+        goal: >-
+          Write `split(n, frac, seed)`, which shuffles the positions `0` to `n - 1` with `np.random.default_rng(seed).permutation(n)`, and gives back
+          the first `int(n * frac)` for training and the rest for validation. The Play tab now trains on three quarters and draws the validation
+          curve too.
+        tests:
+          - { call: 'split(10, 0.8, 0)', expect: '([4, 6, 2, 7, 3, 5, 9, 0], [8, 1])' }
+          - { call: 'split(6, 0.5, 0)', expect: '([3, 2, 5], [4, 0, 1])' }
+          - { call: 'split(8, 0.75, 3)', expect: '([6, 7, 2, 1, 4, 5], [3, 0])', hidden: true }
+          - { call: '[len(a) for a in split(174, 0.75, 1)]', expect: '[130, 44]', hidden: true }
+        requires: ['name:permutation']
+        scope: split
+        hints:
+          - 'Shuffle once: `idx = np.random.default_rng(seed).permutation(n)`.'
+          - 'Then `k = int(n * frac)` and give back `idx[:k], idx[k:]`.'
+      - title: No copies
+        goal: >-
+          The Play tab has started warning you: some validation messages are copies of training ones. Write `dedupe(texts, labels)`, which keeps only
+          the first copy of each message, in order, and gives back the kept texts and their labels as two lists. Restart the Play tab and see what
+          honest validation looks like.
+        tests:
+          - { call: 'dedupe(texts, labels)', expect: "(['win cash now', 'hi mum', 'lunch at 1'], [1, 0, 0])" }
+          - { call: "dedupe(['a', 'b', 'a', 'a', 'c'], [1, 0, 1, 1, 0])", expect: "(['a', 'b', 'c'], [1, 0, 0])" }
+          - { call: "dedupe(['x', 'y'], [0, 1])", expect: "(['x', 'y'], [0, 1])", hidden: true }
+          - { call: "dedupe(['q', 'q', 'r', 'q', 'r'], [1, 1, 0, 1, 0])", expect: "(['q', 'r'], [1, 0])", hidden: true }
+        scope: dedupe
+        hints:
+          - Keep a set of the messages seen so far, and two lists for what you keep.
+          - Walk through `zip(texts, labels)`. Keep a pair only if its text isn't in the set yet, then add it to the set.
+      - title: Beat the baseline
+        goal: >-
+          Write `accuracy(p, y)`, the share of examples where `p >= 0.5` matches the label, and `baseline(y_train, y_val)`, the validation accuracy
+          of always predicting the most common training class (call a tie 1). The Play tab says whether you beat it.
+        tests:
+          - { call: 'accuracy(np.array([0.9, 0.4, 0.6, 0.1]), y)', expect: '1.0' }
+          - { call: 'accuracy(np.array([0.9, 0.2, 0.7, 0.4]), np.array([1, 0, 0, 0]))', expect: '0.75' }
+          - { call: 'baseline(np.array([1, 0, 0]), np.array([0, 1, 0, 0]))', expect: '0.75' }
+          - { call: 'baseline(np.array([1, 1, 0]), np.array([0, 0, 1]))', expect: '0.3333333333333333', hidden: true }
+          - { call: 'accuracy(np.array([0.5, 0.49]), np.array([1, 1]))', expect: '0.5', hidden: true }
+          - { call: 'baseline(np.array([1, 0]), np.array([1, 0, 0, 0]))', expect: '0.25', hidden: true }
+        hints:
+          - 'Accuracy compares classes, not probabilities: `np.mean((p >= 0.5) == y)`.'
+          - 'The majority is `int(np.mean(y_train) >= 0.5)`. Score it against `y_val`.'
+      - title: Precision and recall
+        goal: >-
+          Write `precision_recall(pred, y)` for classes and labels of 1s and 0s, giving back `(precision, recall)`, with 0.0 when a bottom would be
+          0. Then drag the threshold in the Play tab, and find one you'd trust with your own inbox.
+        tests:
+          - {
+              call: 'precision_recall(np.array([1, 1, 1, 0, 0, 0, 1, 0]), np.array([1, 0, 1, 1, 0, 0, 1, 0]))',
+              expect: '(0.75, 0.75)',
+            }
+          - {
+              call: 'precision_recall(np.array([1, 0, 0, 0]), np.array([1, 1, 1, 0]))',
+              expect: '(1.0, 0.3333333333333333)',
+            }
+          - { call: 'precision_recall(np.array([0, 0]), np.array([1, 0]))', expect: '(0.0, 0.0)', hidden: true }
+          - { call: 'precision_recall(np.array([1, 1, 0]), np.array([1, 0, 0]))', expect: '(0.5, 1.0)', hidden: true }
+        forbids: ['loop']
+        scope: precision_recall
+        hints:
+          - 'Count with masks, like `np.sum((pred == 1) & (y == 1))` for the true positives.'
+          - 'Precision is `tp / (tp + fp)`, recall is `tp / (tp + fn)`. Check each bottom for 0 first.'
+    extras:
+      - Write a message that fools your filter, real email it calls spam or the other way round. Which words did it?
+      - 'Early stopping: train for 2,000 steps at a learning rate of 2 and watch the validation curve. Where would you have stopped?'
+      - 'Weight decay: add `0.01 * w` to the gradient in your `step`, so big weights cost something. Does the validation curve still rise?'

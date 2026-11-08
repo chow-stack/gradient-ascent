@@ -1760,3 +1760,46 @@ svg .ga-play-here {
   outline: 2px solid var(--color-sky);
   outline-offset: 1px;
 }
+.ga-play-curve {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.ga-play-curve--val {
+  stroke: var(--color-sky);
+}
+.ga-play-key-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+.ga-play-key-swatch--val {
+  background: var(--color-sky);
+}
+.ga-play-meter {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-progress-track);
+  overflow: hidden;
+}
+.ga-play-meter > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transition: width var(--dur-base) var(--ease-out);
+}
+.ga-play-word {
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-play-meter > div {
+    transition: none;
+  }
+}

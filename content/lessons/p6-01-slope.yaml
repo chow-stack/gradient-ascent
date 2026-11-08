@@ -65,6 +65,10 @@ cards:
     answer: It goes down, about 5 times as much as `x` went up
     why: >-
       The slope is a rate, not the output's value. Negative means the output falls as `x` rises, and 5 is how many times faster.
+    misses:
+      'It goes up by 5': 'The sign matters: a negative slope means the output moves the opposite way to `x`.'
+      'It becomes -5': "The slope is how fast the output changes, not the output's value."
+      'Nothing, the slope only describes the whole function': "A curve's slope changes from point to point. This one is the slope at `x = 2`."
     variants:
       - prompt: At `x = 4`, a function's output is `100` and its slope is `0`. Which is true?
         choices:
@@ -132,6 +136,10 @@ cards:
     answer: '5.0'
     why: >-
       `x ** 2` adds about 4 per unit near 2 and `x` adds 1 more, so the slope is about 5. The output, 6, is a different thing.
+    misses:
+      '6.0': "That's `f(2)`, the output itself. The slope is how fast it changes."
+      '4.0': "That's the slope of `x ** 2` alone. The `+ x` adds 1 more."
+      '2.0': "That's `x`, not a slope. Work out how much `f` changes per unit of `x`."
     variants:
       - code: |
           def f(x):
@@ -232,6 +240,10 @@ cards:
     answer: The answer gets worse, because rounding errors dominate a tiny difference
     why: >-
       Smaller is better only until the subtraction loses its digits. After that, the result is mostly noise.
+    misses:
+      "It's exact, because smaller is always better": "Past a point, floats can't hold the tiny difference `f(x + h) - f(x)` accurately, so the error grows."
+      'Python refuses numbers that small': 'Python handles `1e-15` fine. The problem is the rounding in the subtraction.'
+      "It's the same as `h = 0.0001`": "It's worse: the difference is so small that rounding swamps it."
     variants:
       - prompt: Why does `h = 1` give a poor estimate of the slope of `x ** 2` at 3?
         choices:
@@ -346,6 +358,10 @@ cards:
     answer: '0.6666666666666666'
     why: >-
       The squares are 1, 0 and 1, and their mean is two thirds. You'll see this shape again: it's a mean squared error.
+    misses:
+      '2.0': "That's the mean of `x`. The question averages the squares of `x - 2`."
+      '[1. 0. 1.]': 'Those are the squares. `.mean()` turns them into one number.'
+      '0.0': "That's the mean of `x - 2` before squaring. The squares, 1, 0 and 1, can't cancel."
 
   - type: learn
     id: recap

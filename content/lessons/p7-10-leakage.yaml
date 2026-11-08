@@ -1,0 +1,281 @@
+id: p7-leakage
+track: ml
+unit: 7
+order: 10
+title: Leakage
+summary: How information from validation, or from the future, sneaks into training, and the checks that catch it before your score lies to you.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: A score that's too good
+    body: >-
+      Leakage is when a model gets information during training that it won't have when it's used for real. Usually that's information about the
+      validation or test data, or about the answer itself.
+
+
+      It's the most dangerous mistake in this unit, because nothing looks wrong. The loss falls, the validation score is excellent, and you're pleased.
+      Then the model meets real data and does far worse, because the edge it had was never real.
+
+
+      By the end you'll know the four common leaks and the habit that catches most of them: ask whether each piece of information would really exist
+      at prediction time.
+
+  - type: learn
+    id: standardise
+    title: Standardise with training numbers only
+    body: >-
+      Features on very different scales, like a count from 0 to 5 and a price from 0 to 500, make gradient descent struggle, because one learning rate
+      has to suit both. Standardising fixes it: subtract each column's mean and divide by its standard deviation, so every feature is centred on 0 with
+      a spread of 1.
+
+
+      Compute those means and spreads from the training data only, then apply the same numbers to validation. If you compute them from all the data
+      before splitting, the training set has been shaped by the validation examples. It's a small leak, but a real one, and with some methods it's a big
+      one.
+
+
+      Validation values can come out beyond the usual range, like 2.45 here. That's fine. It's what new data looks like.
+    code: |
+      import numpy as np
+
+      X_train = np.array([[1.0, 100.0], [3.0, 300.0], [5.0, 200.0]])
+      X_val = np.array([[3.0, 400.0], [7.0, 100.0]])
+
+      mean = X_train.mean(axis=0)
+      std = X_train.std(axis=0)
+      print(((X_train - mean) / std).round(2))
+      print(((X_val - mean) / std).round(2))
+    subgoals:
+      - { line: 6, label: 'Statistics from training only' }
+      - { line: 9, label: 'The same numbers for validation' }
+    predict: Will the validation values stay between -1.22 and 1.22?
+
+  - type: choice
+    id: where-stats
+    prompt: You standardise your features before training. Where should the mean and standard deviation come from?
+    choices:
+      ['The training data only', 'All the data, before splitting', 'The validation data', 'Each part from its own data']
+    answer: 'The training data only'
+    why: >-
+      The training numbers are part of the model, like its weights. Validation gets the same transformation, using numbers it had no part in.
+    misses:
+      'All the data, before splitting': 'Then validation examples have shaped the training data. The model has had a peek.'
+      'The validation data': 'Computing anything from validation and using it in training lets validation leak in.'
+      'Each part from its own data': "Then the same raw value means different things in each part. New data has to use training's numbers too."
+
+  - type: learn
+    id: future
+    title: Features from the future
+    body: >-
+      The worst leaks are features that give the answer away. Predicting fraud with a column called `refund_issued`, which is filled in after fraud is
+      found. Predicting whether a patient will be admitted using `days_in_hospital`. Predicting which customers will cancel with `cancellation_reason`.
+
+
+      Each looks like a strong feature, and the model leans on it hard. But at prediction time, the moment you'd actually use the model, that column is
+      empty or doesn't exist yet.
+
+
+      Warning signs are a score that seems too good to be true, or one feature with a huge weight. For every feature, ask: would I know this at the
+      moment of prediction?
+    deeper: >-
+      Kaggle competitions have been won by leaks, like file names or row order that happened to track the label. A model that exploits them is useless
+      for the real task, which is why careful competitions build their test sets to remove them.
+
+  - type: choice
+    id: which-leaks
+    prompt: You're predicting, at the start of each month, which customers will cancel their subscription that month. Which feature leaks?
+    choices:
+      [
+        'Whether they left feedback on the cancellation page',
+        'How many months they have been a customer',
+        'How often they logged in last month',
+        'Which plan they are on',
+      ]
+    answer: 'Whether they left feedback on the cancellation page'
+    why: >-
+      People only reach the cancellation page while cancelling, so the feature is recorded during the outcome itself. At the start of the month, it
+      doesn't exist yet.
+    misses:
+      'How many months they have been a customer': "That's known at the start of the month, so it's fair to use."
+      'How often they logged in last month': "Last month is in the past at prediction time. That's a fair feature."
+      'Which plan they are on': "The plan is known when you predict. It's a fair feature."
+
+  - type: learn
+    id: duplicates
+    title: Duplicates and time
+    body: >-
+      Duplicates leak too. Spam is sent in bulk, so one message can appear dozens of times. Split randomly, and copies land on both sides: the model
+      "predicts" validation messages it has already memorised. The fix is to remove duplicates before splitting, or to split by group, so all of one
+      patient's or one sender's examples land on the same side.
+
+
+      Time is the other trap. When the task is predicting the future, a random shuffle lets the model train on next week to predict last week. Split by
+      time instead: train on the past, validate on what came after. That's the one case where you shouldn't shuffle before splitting.
+
+
+      Counting the overlap is quick with sets from Unit 4: `len(set(train) & set(val))`.
+    code: |
+      train = ['win cash now', 'hi mum', 'win cash now', 'lunch at 1']
+      val = ['win cash now', 'see you soon', 'hi mum', 'hi mum']
+
+      both = set(train) & set(val)
+      print(len(both))
+      print(sum(text in both for text in val), 'of', len(val))
+    subgoals:
+      - { line: 4, label: 'Messages on both sides' }
+      - { line: 6, label: 'How much of validation the model has already seen' }
+    predict: How many of the validation messages did training already see?
+
+  - type: choice
+    id: time-split
+    prompt: You're building a model to predict next week's sales from past weeks. How should you split three years of weekly data?
+    choices:
+      [
+        'Train on the earlier weeks and validate on the latest ones',
+        'Shuffle the weeks, then split 80/20',
+        'Validate on the earliest weeks and train on the rest',
+        'Use every week for both',
+      ]
+    answer: 'Train on the earlier weeks and validate on the latest ones'
+    why: >-
+      In use, the model only ever knows the past. Validating on later weeks copies that. A shuffle would let it learn from the future.
+    misses:
+      'Shuffle the weeks, then split 80/20': "Then it trains on weeks after the ones it's tested on, which it never could in real use."
+      'Validate on the earliest weeks and train on the rest': "That's predicting the past from the future, backwards from the real task."
+      'Use every week for both': 'Then validation is training data, and the score says nothing about new weeks.'
+
+  - type: explain
+    id: explain-suspicious
+    prompt: >-
+      A first try at predicting loan defaults scores 99.6% on validation. Its biggest weight, by far, is on `collections_calls`, the number of calls
+      from a debt collector. What do you suspect, and how would you check?
+    code: |
+      import numpy as np
+
+      weights = {'income': 0.4, 'loan_size': -0.3, 'collections_calls': 9.8}
+      for name, w in weights.items():
+          print(name, w)
+    model: >-
+      Leakage: debt collectors call after someone has already defaulted, so the feature is recorded after the outcome and wouldn't exist when deciding
+      on the loan. Check when each feature becomes known, drop the ones from after the prediction, and retrain. The score will fall to an honest one.
+    keyPoints:
+      - The score is suspiciously high and one weight dominates
+      - The feature is only recorded after a default happens
+      - Remove features that wouldn't exist at prediction time and retrain
+
+  - type: choice
+    id: overlap-trace
+    kind: predict
+    prompt: What does this print?
+    code: |
+      train = ['free prize', 'meeting at 3', 'free prize', 'call me']
+      val = ['free prize', 'free prize', 'see you']
+      print(len(set(train) & set(val)))
+    choices: ['1', '2', '3', '0']
+    answer: '1'
+    why: >-
+      Sets keep one copy of each message, so the overlap is just `{'free prize'}`. Two of the three validation messages are that one, though.
+    misses:
+      '2': "That's how many validation messages are copies. The sets have one shared message."
+      '3': 'A set holds each message once, so repeats count once.'
+      '0': "'free prize' is in both lists."
+
+  - type: fix
+    id: fix-standardise
+    prompt: >-
+      `standardise(X_train, X_val)` should give back both parts standardised, using the training part's mean and standard deviation. Validation is
+      leaking into it. Fix it.
+    code: |
+      import numpy as np
+
+      def standardise(X_train, X_val):
+          everything = np.concatenate([X_train, X_val])
+          mean = everything.mean(axis=0)
+          std = everything.std(axis=0)
+          return (X_train - mean) / std, (X_val - mean) / std
+    solution: |
+      import numpy as np
+
+      def standardise(X_train, X_val):
+          mean = X_train.mean(axis=0)
+          std = X_train.std(axis=0)
+          return (X_train - mean) / std, (X_val - mean) / std
+    highlightLine: 4
+    tests:
+      - { call: 'standardise(np.array([[0.0], [2.0]]), np.array([[4.0]]))', expect: '([[-1.0], [1.0]], [[3.0]])' }
+      - {
+          call: 'standardise(np.array([[1.0, 10.0], [3.0, 30.0]]), np.array([[2.0, 50.0]]))',
+          expect: '([[-1.0, -1.0], [1.0, 1.0]], [[0.0, 3.0]])',
+        }
+      - {
+          call: 'standardise(np.array([[1.0, 100.0], [3.0, 300.0], [5.0, 200.0]]), np.array([[3.0, 400.0], [7.0, 100.0]]))[1].round(2)',
+          expect: '[[0.0, 2.45], [2.45, -1.22]]',
+          hidden: true,
+        }
+    forbids: ['loop']
+    why: >-
+      The validation examples shouldn't shape anything the model trains on. Compute the statistics from training, then apply them to both.
+    hints:
+      - Which data should the mean and standard deviation come from?
+
+  - type: write
+    id: write-leaks
+    prompt: >-
+      Write `seen_share(train, val)`, which takes two lists of messages and gives back the share of validation messages, counting repeats, that also
+      appear somewhere in training. So 0.0 means no leak, and 1.0 means the model has seen all of validation.
+    starter: |
+      def seen_share(train, val):
+          # Your code here
+    solution: |
+      def seen_share(train, val):
+          seen = set(train)
+          return sum(text in seen for text in val) / len(val)
+    tests:
+      - {
+          call: "seen_share(['win cash now', 'hi mum', 'lunch at 1'], ['win cash now', 'see you soon', 'hi mum', 'hi mum'])",
+          expect: '0.75',
+        }
+      - { call: "seen_share(['a', 'b'], ['c', 'd'])", expect: '0.0' }
+      - { call: "seen_share(['x'], ['x', 'x'])", expect: '1.0', hidden: true }
+      - {
+          call: "seen_share(['free prize', 'meeting at 3'], ['free prize', 'free prize', 'see you'])",
+          expect: '0.6666666666666666',
+          hidden: true,
+        }
+    why: >-
+      A set of the training messages makes each check fast. Then count the validation messages found in it, repeats included, and divide.
+    hints:
+      - '`seen = set(train)` holds each training message once.'
+      - '`sum(text in seen for text in val)` counts the ones already seen.'
+
+  - type: choice
+    id: remember-curves
+    prompt: 'From the last lesson. Why save the best weights with `best_w = w.copy()` instead of `best_w = w`?'
+    choices:
+      [
+        '`best_w = w` is a second name for the same array, which later updates change',
+        '`.copy()` makes training faster',
+        '`best_w = w` raises an error',
+        'They do the same thing',
+      ]
+    answer: '`best_w = w` is a second name for the same array, which later updates change'
+    why: >-
+      With `w -= ...`, the array itself changes, and every name for it sees the change. A copy is a separate array.
+    misses:
+      '`.copy()` makes training faster': 'It makes saving a little slower, if anything. It makes the snapshot real.'
+      '`best_w = w` raises an error': "It runs fine, which is the danger. It just doesn't save anything."
+      'They do the same thing': 'Only until `w` is changed in place. Then the shared array changes for both names.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      Leakage gives the model information it won't have for real, and shows up as a score that's too good. Standardise with training statistics only.
+      Drop features recorded after the outcome. Remove duplicates or split by group before splitting. When predicting the future, split by time. Ask of
+      every feature: would I know this at prediction time?
+
+
+      That's the unit. A checkpoint, and then a project: a spam filter of your own, judged honestly.

@@ -65,6 +65,11 @@ const choice = z.object({
   choices: z.array(z.string()).min(2).max(4),
   answer: z.string(),
   why: z.string(),
+  /**
+   * A note for each wrong choice, naming the mistake behind it, shown when it's picked. Optional, and per choice:
+   * a variant with new choices starts with none unless it gives its own.
+   */
+  misses: z.record(z.string(), z.string()).default({}),
   hints,
   variants,
 })
@@ -165,7 +170,7 @@ const milestone = z.object({
 })
 
 /** The Play panel games. Each calls functions the milestones ask for (see exercises/play/). */
-export const PLAY_KINDS = ['rps', 'hangman', 'wordle', 'blackjack', 'life', 'doodle', 'fit'] as const
+export const PLAY_KINDS = ['rps', 'hangman', 'wordle', 'blackjack', 'life', 'doodle', 'fit', 'spam'] as const
 export type PlayKind = (typeof PLAY_KINDS)[number]
 
 const project = z.object({
@@ -191,6 +196,10 @@ function checkCard(c: z.infer<typeof cardSchema>, at: (msg: string) => void) {
     if (!c.choices.includes(c.answer)) at('answer must be one of the choices')
     if (new Set(c.choices).size !== c.choices.length) at('choices must be unique')
     if (c.kind === 'predict' && !c.code) at('predict questions need code')
+    for (const k of Object.keys(c.misses)) {
+      if (!c.choices.includes(k)) at(`misses has a note for ${JSON.stringify(k)}, which isn't a choice`)
+      else if (k === c.answer) at('misses is for wrong choices, not the answer')
+    }
   }
   if (c.type === 'blank') {
     const slots = c.code.split('____').length - 1
@@ -288,7 +297,8 @@ export const isProject = (lesson: Lesson) => lesson.kind === 'project'
 /** A card's alternate versions, as full cards. */
 export function cardVariants(card: Card): Card[] {
   if (!('variants' in card)) return []
-  return card.variants.map((v) => ({ ...card, ...v, variants: [] }) as Card)
+  // Notes for wrong choices belong to those choices: a variant with new choices doesn't inherit them.
+  return card.variants.map((v) => ({ ...card, ...('choices' in v ? { misses: {} } : {}), ...v, variants: [] }) as Card)
 }
 
 /** The version to show on a card's nth review. The card itself came first, in its lesson. */

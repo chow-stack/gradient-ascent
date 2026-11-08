@@ -14,6 +14,10 @@ cards:
     answer: '`12 * x ** 2`'
     why: >-
       Bring the 3 down, multiply it by the 4, and drop the power by one.
+    misses:
+      '`4 * x ** 2`': 'Bring the 3 down and multiply it by the 4.'
+      '`12 * x ** 3`': 'The power drops by one, to 2.'
+      '`3 * x ** 2`': "That's the derivative of `x ** 3`. The 4 in front stays as a multiplier."
 
   - type: choice
     id: chain
@@ -22,6 +26,10 @@ cards:
     answer: '`5 * np.exp(5 * x)`'
     why: >-
       The outside, `exp`, is its own derivative at the inside's value, times the inside's slope, 5.
+    misses:
+      '`np.exp(5 * x)`': "You left out the inside's slope, 5."
+      '`np.exp(5)`': "The outside's slope is worked out at the inside's value, `5 * x`."
+      '`5 * x * np.exp(5 * x - 1)`': "The power rule doesn't apply to `exp`. It's its own derivative."
 
   - type: choice
     id: chain-trace
@@ -37,6 +45,10 @@ cards:
     answer: '12'
     why: >-
       At 1 the inside is 3. The outside's slope is `2 * 3`, times the inside's slope, 2.
+    misses:
+      '6': "That's the outside's slope, `2 * 3`, without the inside's 2."
+      '3': "That's the inside's value. The slope is `2 * 3 * 2`."
+      '9': "That's `u ** 2`, the value, not the slope."
 
   - type: choice
     id: partial
@@ -45,6 +57,10 @@ cards:
     answer: '`[2 * w * b, w ** 2]`'
     why: >-
       Hold `b` fixed: `w ** 2` gives `2 * w`, times `b`. Hold `w` fixed: `w ** 2` is a constant times `b`.
+    misses:
+      '`[2 * w, 1]`': 'Hold the other input fixed, but keep it as a multiplier: `w ** 2 * b` gives `2 * w * b`.'
+      '`[2 * w * b, 2 * w]`': 'With `w` fixed, `w ** 2` is a constant, so the partial for `b` is `w ** 2`.'
+      '`[w ** 2, 2 * w * b]`': 'Swapped: the first entry is the partial for `w`.'
 
   - type: choice
     id: direction
@@ -60,6 +76,10 @@ cards:
     answer: '`w = w - 0.1 * np.array([3, -1])`'
     why: >-
       The gradient points uphill, so subtract it to go down.
+    misses:
+      '`w = w + 0.1 * np.array([3, -1])`': 'Adding the gradient steps uphill. The loss grows.'
+      '`w = w - 0.1 * np.array([-3, 1])`': 'That flips the sign twice, so it also steps uphill.'
+      '`w = w * 0.1`': 'That shrinks the weights toward 0 and ignores the gradient.'
 
   - type: choice
     id: descent-trace
@@ -76,6 +96,10 @@ cards:
     answer: '3.0'
     why: >-
       The slope at 1 is -8, and a quarter of it, subtracted, adds 2.
+    misses:
+      '5.0': 'One step only goes part of the way: a quarter of the slope, 2.'
+      '-1.0': 'Subtracting a negative slope moves `w` up, not down.'
+      '2.0': "The step is 2, but it's added to where `w` started, 1."
 
   - type: choice
     id: rate
@@ -85,6 +109,10 @@ cards:
     answer: '0.1'
     why: >-
       It got the lowest loss. 1.0 diverged, and the smaller rates were still creeping.
+    misses:
+      '1.0': '`inf` means it diverged. That rate is too big.'
+      '0.001': 'It has the highest loss. It was still creeping.'
+      '0.01': 'Better than 0.001, but 0.1 got lower still without diverging.'
 
   - type: choice
     id: mse
@@ -100,6 +128,10 @@ cards:
     answer: '0.6666666666666666'
     why: >-
       The errors are -1, 0 and 1. Squared, 1, 0 and 1, and the mean is 2 / 3.
+    misses:
+      '2.0': '2 is the sum of the squared errors. There are three points, so divide by 3.'
+      '0.0': 'Squaring stops the -1 and 1 from cancelling.'
+      '1.0': 'The squared errors are 1, 0 and 1. The 0 counts too: 2 / 3.'
 
   - type: choice
     id: check
@@ -109,6 +141,10 @@ cards:
     answer: 'That partial has a bug'
     why: >-
       Anything above about `1e-3` means the formula doesn't match the nudges. The loss might still fall, which is why you check.
+    misses:
+      'Everything is fine': 'Anything above about `1e-3` means the formula disagrees with the nudge.'
+      '`h` should be bigger': 'A bad `h` gives small errors on every weight. 0.5 on one means its formula is wrong.'
+      'The loss will not fall': "A wrong gradient can still lower the loss. That's why you check."
 
   - type: fix
     id: fix-grad

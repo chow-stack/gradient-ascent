@@ -1,0 +1,391 @@
+id: p7-train
+track: ml
+unit: 7
+order: 5
+title: Training logistic regression
+summary: The gradient of the cross-entropy, a surprisingly familiar formula, and the loop that trains one neuron.
+
+cards:
+  - type: learn
+    id: goal
+    label: The goal
+    title: The same loop, a new model
+    body: >-
+      You have a prediction, `sigmoid(X @ w + b)`, and a loss, the cross-entropy. Training needs one more thing: the gradient of the loss for every
+      weight. Then it's Unit 6's loop, unchanged.
+
+
+      The gradient turns out to be one of the neatest results in machine learning. Its formula looks almost exactly like the one for fitting a line.
+
+
+      By the end you'll have trained a classifier from scratch, measured its accuracy, and seen why the loss keeps falling after every answer is right.
+
+  - type: learn
+    id: p-minus-y
+    title: The slope for the score is p - y
+    body: >-
+      Start with one example. The loss depends on the probability, which depends on the score. By the chain rule, the slope of the loss for the score
+      `z` is the loss's slope for `p` times the sigmoid's slope. Multiply them out and almost everything cancels, leaving just `p - y`.
+
+
+      Read it as the error. For spam (`y = 1`) at `p = 0.8`, it's -0.2: a small negative slope, so gradient descent raises the score a little. At
+      `p = 0.01`, it's about -1, a big push. For real email (`y = 0`), it's `p` itself, so the score is pushed down.
+
+
+      You don't have to trust the algebra. Below, a central difference from Unit 6 agrees with `p - y`.
+    deeper: >-
+      The loss's slope for `p` is `-y / p + (1 - y) / (1 - p)`. The sigmoid's slope is `p * (1 - p)`. Multiply them: `-y * (1 - p) + (1 - y) * p`,
+      which simplifies to `p - y`.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def loss(z, y):
+          p = sigmoid(z)
+          return -(y * np.log(p) + (1 - y) * np.log(1 - p))
+
+      z, y, h = 0.4, 1, 0.00001
+      print(round((loss(z + h, y) - loss(z - h, y)) / (2 * h), 6))
+      print(round(sigmoid(z) - y, 6))
+    subgoals:
+      - { line: 11, label: 'Measured with a nudge' }
+      - { line: 12, label: 'The formula, p - y' }
+    predict: Will the two numbers match?
+
+  - type: choice
+    id: push
+    prompt: 'An email is spam (`y = 1`), and the model gives it `p = 0.3`. Which way does one step of gradient descent move its score?'
+    choices:
+      [
+        'Up, by a step based on -0.7',
+        'Down, by a step based on 0.3',
+        'Up, by a step based on 0.3',
+        'Not at all, 0.3 is a valid probability',
+      ]
+    answer: 'Up, by a step based on -0.7'
+    why: >-
+      The slope is `p - y = -0.7`. Subtracting a negative slope raises the score, which raises `p` towards 1.
+    misses:
+      'Down, by a step based on 0.3': '`p - y` is `0.3 - 1`, which is negative, so the step raises the score.'
+      'Up, by a step based on 0.3': 'The slope is `p - y`, not `p`. Here it is -0.7.'
+      'Not at all, 0.3 is a valid probability': "Valid, but wrong: it's spam, so the model should say close to 1. The slope `p - y` is -0.7."
+    variants:
+      - prompt: 'A real email (`y = 0`) gets `p = 0.9`. What is the slope of the loss for its score?'
+        choices: ['0.9', '-0.9', '0.1', '-0.1']
+        answer: '0.9'
+        why: >-
+          `p - y` is `0.9 - 0`. A big positive slope, so gradient descent pushes the score down hard.
+        misses:
+          '-0.9': '`p - y` with `y = 0` is just `p`, which is positive.'
+          '0.1': "That's `1 - p`, the probability it gave the truth. The slope is `p - y`."
+          '-0.1': 'The slope is `p - y`, `0.9 - 0`.'
+
+  - type: learn
+    id: many
+    title: Every weight at once
+    body: >-
+      The score is `X @ w + b`, so each weight's slope is each example's `p - y` times that example's feature, averaged. In NumPy, that's
+      `X.T @ (p - y) / n`.
+
+
+      Check the shapes: `X.T` is `(d, n)` and `p - y` is `(n,)`, so the result is `(d,)`, one partial for each weight. `b` is added to every score, so its
+      partial is just `np.mean(p - y)`.
+
+
+      Compare Unit 6's line, `np.mean(2 * err * x)`. It's the same shape: error times input, averaged. The 2 is gone because the cross-entropy and the
+      sigmoid cancel so neatly. The mistake to watch for is using the score in place of the probability, writing `z - y`, which looks right and quietly
+      trains a different model.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      X = np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]])
+      y = np.array([1.0, 1.0, 0.0])
+      w, b = np.zeros(2), 0.0
+
+      p = sigmoid(X @ w + b)
+      dw = X.T @ (p - y) / len(y)
+      db = np.mean(p - y)
+      print(dw)
+      print(db)
+    subgoals:
+      - { line: 10, label: 'Probabilities first' }
+      - { line: 11, label: 'One partial per weight' }
+      - { line: 12, label: 'And one for b' }
+    predict: Will the partial for the second weight be positive or negative?
+
+  - type: choice
+    id: grad-shape
+    kind: predict
+    prompt: What does this print?
+    code: |
+      import numpy as np
+
+      X = np.ones((200, 4))
+      p = np.full(200, 0.5)
+      y = np.zeros(200)
+      print((X.T @ (p - y) / len(y)).shape)
+    choices: ['(4,)', '(200,)', '(4, 200)', 'An error']
+    answer: '(4,)'
+    why: >-
+      `(4, 200) @ (200,)` gives `(4,)`: one partial for each of the 4 weights, the same shape as `w`.
+    misses:
+      '(200,)': "That's one per example. The product with `X.T` sums over the examples, leaving one per weight."
+      '(4, 200)': '`p - y` is flat, so the product adds up each row of `X.T`, giving 4 numbers.'
+      'An error': "`X.T` is `(4, 200)`, and its inner size, 200, matches `p - y`. It's `X @ (p - y)` that would fail."
+    variants:
+      - code: |
+          import numpy as np
+
+          X = np.ones((200, 4))
+          p = np.full(200, 0.5)
+          y = np.zeros(200)
+          try:
+              print((X @ (p - y)).shape)
+          except ValueError:
+              print('error')
+        choices: ['error', '(4,)', '(200,)', '(200, 4)']
+        answer: 'error'
+        why: >-
+          `(200, 4) @ (200,)` doesn't line up: the inner sizes, 4 and 200, differ. You need `X.T` so the examples line up with the errors.
+        misses:
+          '(4,)': '`X @ (p - y)` needs the 4 columns to match 200 errors. You need `X.T`.'
+          '(200,)': 'For `@`, the inner sizes must match: 4 and 200 do not.'
+          '(200, 4)': '`@` never keeps both sizes like that, and these shapes do not line up at all.'
+
+  - type: blank
+    id: fill-grad
+    prompt: Fill in the blanks so `dw` and `db` are the gradient of the cross-entropy.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def gradients(X, y, w, b):
+          p = sigmoid(X @ w + b)
+          dw = X.____ @ (p - y) / len(y)
+          db = np.mean(____)
+          return dw, db
+    answers: [['T'], ['p - y', '(p - y)']]
+    tests:
+      - {
+          call: 'gradients(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.zeros(2), 0.0)[0].round(4)',
+          expect: '[-0.5, 0.3333]',
+        }
+      - {
+          call: 'round(gradients(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.zeros(2), 0.0)[1], 4)',
+          expect: '-0.1667',
+        }
+    why: >-
+      The transpose lines the examples up with the errors. `b` is added to every score, so its partial is the mean error.
+
+  - type: learn
+    id: worked
+    label: Worked example
+    title: Training the neuron
+    body: >-
+      Here's the whole thing on hours studied and passing. Start at zero, compute probabilities, step the weights against the gradient, and print the
+      loss now and then. Check the first loss: 0.693, as expected.
+
+
+      Accuracy is the share of examples it gets right: compare the classes, `p >= 0.5`, with the labels, and take the mean of the `True`s. Don't compare
+      the probabilities themselves with the labels. `p == y` is almost never true, because `p` is never exactly 0 or 1.
+
+
+      The two classes overlap in this data: one student who studied 5 hours passed, and one who studied 6 didn't. So the loss can't reach 0, and no
+      straight boundary gets every student right.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0]])
+      y = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0])
+      w, b, lr = np.zeros(1), 0.0, 0.1
+
+      for step in range(3001):
+          p = sigmoid(X @ w + b)
+          if step % 1000 == 0:
+              print(step, round(np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p))), 3))
+          w = w - lr * X.T @ (p - y) / len(y)
+          b = b - lr * np.mean(p - y)
+
+      print(w.round(2), round(b, 2))
+      print(np.mean((p >= 0.5) == y))
+    subgoals:
+      - { line: 11, label: 'Probabilities for the current weights' }
+      - { line: 13, label: 'Watch the loss' }
+      - { line: 14, label: 'Step against the gradient' }
+      - { line: 18, label: 'Accuracy: classes against labels' }
+    predict: What accuracy will it reach?
+
+  - type: explain
+    id: explain-confident
+    prompt: Here every example is right from step 500 on, but the loss keeps falling. What is training still changing?
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      X = np.array([[1.0], [2.0], [3.0], [6.0], [7.0], [8.0]])
+      y = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+      w, b = np.zeros(1), 0.0
+      for step in range(2001):
+          p = sigmoid(X @ w + b)
+          if step % 500 == 0:
+              loss = np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+              print(step, round(loss, 3), np.mean((p >= 0.5) == y))
+          w = w - 0.1 * X.T @ (p - y) / len(y)
+          b = b - 0.1 * np.mean(p - y)
+    model: >-
+      Accuracy only counts which side of 0.5 each probability lands on. The cross-entropy also rewards confidence, so training keeps pushing each
+      probability closer to 0 or 1 by growing the weights. The classes stop changing, but the probabilities don't.
+    keyPoints:
+      - Accuracy only checks which side of the threshold each example is on
+      - The loss still rewards more confident probabilities
+      - The weights keep growing, pushing probabilities towards 0 and 1
+
+  - type: fix
+    id: fix-z
+    prompt: >-
+      `step(X, y, w, b, lr)` should take one step of gradient descent on the cross-entropy and give back the new `(w, b)`. Training with it runs, but
+      learns the wrong weights. Fix it.
+    code: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def step(X, y, w, b, lr):
+          z = X @ w + b
+          err = z - y
+          return w - lr * X.T @ err / len(y), b - lr * np.mean(err)
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def step(X, y, w, b, lr):
+          z = X @ w + b
+          err = sigmoid(z) - y
+          return w - lr * X.T @ err / len(y), b - lr * np.mean(err)
+    highlightLine: 8
+    tests:
+      - {
+          call: 'step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.zeros(2), 0.0, 0.6)',
+          expect: '([0.3, -0.2], 0.1)',
+        }
+      - { call: 'step(np.array([[1.0], [-1.0]]), np.array([1.0, 0.0]), np.zeros(1), 0.0, 1.0)', expect: '([0.5], 0.0)' }
+      - {
+          call: '[round(float(v), 4) for v in step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.array([1.0, -1.0]), 0.5, 0.1)[0]]',
+          expect: '[1.0182, -1.0015]',
+          hidden: true,
+        }
+    requires: ['name:sigmoid']
+    why: >-
+      The gradient uses the error in the probability, `p - y`, not the raw score. `z - y` is the gradient of a squared error on a line, so this trains
+      a line on 0s and 1s.
+    hints:
+      - The slope for the score is `p - y`. Where is `p`?
+    variants:
+      - prompt: >-
+          `step(X, y, w, b, lr)` should take one step of gradient descent on the cross-entropy and give back the new `(w, b)`. With more data, its steps
+          get bigger, until training swings wildly. Fix it.
+        code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          def step(X, y, w, b, lr):
+              err = sigmoid(X @ w + b) - y
+              return w - lr * X.T @ err, b - lr * np.sum(err)
+        highlightLine: 8
+        hints:
+          - The loss is a mean over the examples. Is the gradient?
+
+  - type: write
+    id: write-step
+    prompt: >-
+      Write `step(X, y, w, b, lr)`, one step of gradient descent on the mean cross-entropy of `sigmoid(X @ w + b)`. Give back the new `(w, b)`. No
+      loops.
+    starter: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def step(X, y, w, b, lr):
+          # Your code here
+    solution: |
+      import numpy as np
+
+      def sigmoid(z):
+          return 1 / (1 + np.exp(-z))
+
+      def step(X, y, w, b, lr):
+          p = sigmoid(X @ w + b)
+          dw = X.T @ (p - y) / len(y)
+          db = np.mean(p - y)
+          return w - lr * dw, b - lr * db
+    tests:
+      - {
+          call: 'step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.zeros(2), 0.0, 0.6)',
+          expect: '([0.3, -0.2], 0.1)',
+        }
+      - { call: 'step(np.array([[1.0], [-1.0]]), np.array([1.0, 0.0]), np.zeros(1), 0.0, 1.0)', expect: '([0.5], 0.0)' }
+      - {
+          call: '[round(float(v), 4) for v in step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.array([1.0, -1.0]), 0.5, 0.1)[0]]',
+          expect: '[1.0182, -1.0015]',
+          hidden: true,
+        }
+      - {
+          call: 'round(float(step(np.array([[1.0, 0.0], [2.0, 1.0], [0.0, 3.0]]), np.array([1.0, 1.0, 0.0]), np.array([1.0, -1.0]), 0.5, 0.1)[1]), 4)',
+          expect: '0.5096',
+          hidden: true,
+        }
+    requires: ['name:sigmoid']
+    forbids: ['loop']
+    why: >-
+      Probabilities, then the error `p - y`, then each weight's partial is that error times its feature, averaged.
+    hints:
+      - 'Start with `p = sigmoid(X @ w + b)`.'
+      - '`dw = X.T @ (p - y) / len(y)` and `db = np.mean(p - y)`.'
+
+  - type: choice
+    id: remember-clip
+    prompt: From the last lesson. Why clip `p` before taking the cross-entropy?
+    choices:
+      [
+        'So the log never sees exactly 0',
+        'To make the loss smaller',
+        'Because the sigmoid can give numbers above 1',
+        'So that every prediction rounds to 0 or 1',
+      ]
+    answer: 'So the log never sees exactly 0'
+    why: >-
+      If rounding makes `p` exactly 0 or 1, one of the logs is `np.log(0)`, and the loss becomes `inf` or `nan`.
+    misses:
+      'To make the loss smaller': 'Clipping only changes probabilities right at 0 or 1. It stops an infinite loss, not a big one.'
+      'Because the sigmoid can give numbers above 1': 'The sigmoid never goes above 1. The danger is rounding to exactly 0 or 1.'
+      'So that every prediction rounds to 0 or 1': 'The opposite: it keeps `p` a tiny distance away from 0 and 1.'
+
+  - type: learn
+    id: recap
+    label: Recap
+    title: What you know now
+    body: >-
+      For the cross-entropy of a sigmoid, the slope for the score is just `p - y`. So the gradient is `X.T @ (p - y) / n` for the weights and
+      `np.mean(p - y)` for `b`: error times input, averaged, just like the line. Accuracy is `np.mean((p >= 0.5) == y)`. The loss can keep falling
+      after accuracy stops changing, because it also rewards confidence.
+
+
+      That's a trained classifier. Next: finding out whether it's any good.

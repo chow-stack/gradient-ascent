@@ -20,3 +20,6 @@ units:
   - unit: 6
     title: Calculus and gradient descent
     summary: Slopes, the chain rule and gradients, worked out in code, and how a model uses them to learn.
+  - unit: 7
+    title: First models, judged honestly
+    summary: Logistic regression from scratch, then splits, baselines, precision, recall and leakage, so a good score means a good model.
