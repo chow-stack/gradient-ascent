@@ -240,6 +240,7 @@ cards:
 
   - type: fix
     id: fix-comma
+    vary: [{ g: '[[2, 3], [4, 5]]' }, { g: '[[2, 4], [6, 8]]' }]
     prompt: This crashes with a `TypeError`. Fix it so it shows `4`.
     code: |
       g = [[1, 2], [3, 4]]
@@ -271,6 +272,8 @@ cards:
           `* 2` repeated one row. A loop makes a new row each pass.
         hints:
           - How many separate rows does line 1 make?
+        vary: []
+        requires: ['for', 'name:append']
       - prompt: This should show the totals for each row, `3` and `7`, but it shows `3` and `10`. Fix it.
         code: |
           g = [[1, 2], [3, 4]]
@@ -292,6 +295,7 @@ cards:
           A per-row total has to reset for each row, so it starts inside the outer loop.
         hints:
           - How often should the total go back to 0?
+        vary: [{ g: '[[2, 3], [4, 5]]' }, { g: '[[2, 4], [6, 8]]' }, { g: '[[3, 4], [1, 2]]' }]
 
   - type: learn
     id: worked

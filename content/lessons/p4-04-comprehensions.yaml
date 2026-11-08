@@ -254,6 +254,8 @@ cards:
         highlightLine: 2
         tests:
           - { call: 'double([1, 2])', expect: '[2, 4]' }
+          - { call: 'double([2, 1])', expect: '[4, 2]', hidden: true }
+          - { call: 'double([3, 4])', expect: '[6, 8]', hidden: true }
         why: >-
           A comprehension only builds a list. You still need to `return` it.
         hints:
@@ -292,6 +294,7 @@ cards:
 
   - type: write
     id: write-comp
+    requires: ['comprehension']
     prompt: Write `lengths(words)`, using a comprehension, which gives back the lengths of the words with more than one letter. So `lengths(["a", "bb", "ccc"])` gives back `[2, 3]`.
     starter: |
       def lengths(words):

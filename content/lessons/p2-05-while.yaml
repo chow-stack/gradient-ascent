@@ -209,6 +209,7 @@ cards:
 
   - type: fix
     id: if-not-while
+    vary: [{ n: '2' }, { n: '0' }, { n: '3' }]
     prompt: This should show `1`, `2` and `3`, but it only shows `1`. Fix it.
     code: |
       n = 1
@@ -244,6 +245,7 @@ cards:
           `n < 3` is false when `n` is 3, so that value never gets printed.
         hints:
           - Is the condition true when `n` is 3?
+        vary: [{ n: '2' }, { n: '0' }, { n: '3' }]
       - prompt: This should show `Done` once, but it's shown after every number. Fix it.
         code: |
           n = 1
@@ -263,6 +265,7 @@ cards:
           Indented lines are part of the loop. To run once at the end, the line has to come out of the block.
         hints:
           - Which lines belong to the loop?
+        vary: [{ n: '2' }, { n: '0' }, { n: '3' }]
 
   - type: learn
     id: worked

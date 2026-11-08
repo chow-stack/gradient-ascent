@@ -246,6 +246,8 @@ cards:
     highlightLine: 3
     tests:
       - { call: 'add_all([1, 2], 1)', expect: '[2, 3]' }
+      - { call: 'add_all([2, 1], 1)', expect: '[3, 2]', hidden: true }
+      - { call: 'add_all([3, 4], 1)', expect: '[4, 5]', hidden: true }
     why: >-
       To change a list, assign to a position. Building and returning a new list also works.
     hints:
@@ -293,6 +295,7 @@ cards:
           Inside the loop, `n` is the item, and `nums` is the whole list.
         hints:
           - Which name is the current item?
+        vary: [{ total: '1' }, { total: '-1' }, { total: '2' }]
 
   - type: learn
     id: worked

@@ -273,6 +273,8 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'sum_squares(np.array([1, 2]))', expect: '5' }
+      - { call: 'sum_squares(np.array([3, 4]))', expect: '25', hidden: true }
+      - { call: 'sum_squares(np.array([1, 2, 4]))', expect: '21', hidden: true }
     why: >-
       The order matters. This code adds first, and then squares.
     hints:
@@ -292,6 +294,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'best_class(np.array([0.2, 0.8]))', expect: '1' }
+          - { call: 'best_class(np.array([0.8, 0.2]))', expect: '0', hidden: true }
+          - { call: 'best_class(np.array([0.2, 0.8, 4]))', expect: '2', hidden: true }
         hints:
           - One method gives a value, and the other a position.
       - prompt: >-
@@ -309,6 +313,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'rms(np.array([1.0, 7.0]))', expect: '5.0' }
+          - { call: 'rms(np.array([3.0, 9.0]))', expect: '6.708203932', hidden: true }
+          - { call: 'rms(np.array([1.0, 7.0, 4]))', expect: '4.69041576', hidden: true }
         hints:
           - The formula is the root of the mean, so the mean goes on the inside.
 
@@ -350,6 +356,7 @@ cards:
 
   - type: write
     id: write-dist
+    forbids: ['loop']
     prompt: Rewrite this loop as one line of NumPy. Write `total_abs(nums)`, which takes an array and gives back the same answer as adding `abs(n)` for each number. So `total_abs(np.array([-1, 2]))` gives back `3`.
     starter: |
       import numpy as np

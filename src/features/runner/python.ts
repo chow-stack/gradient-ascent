@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { RunResult, TestCase } from './harness'
+import type { RunOptions, RunResult, TestCase } from './harness'
 
 /**
  * Main-thread client for the Python worker.
@@ -79,7 +79,12 @@ function stopped(): RunResult {
 }
 
 /** Run Python code (and optional tests). Never rejects for Python errors; they come back in the result. */
-export async function runPython(code: string, tests: TestCase[] = [], timeoutMs = DEFAULT_TIMEOUT_MS) {
+export async function runPython(
+  code: string,
+  tests: TestCase[] = [],
+  opts: RunOptions = {},
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+) {
   await warmUpPython()
   const id = nextId++
   return new Promise<RunResult>((resolve) => {
@@ -99,7 +104,7 @@ export async function runPython(code: string, tests: TestCase[] = [], timeoutMs 
       started.delete(id)
       resolve(r)
     })
-    worker!.postMessage({ id, code, tests })
+    worker!.postMessage({ id, code, tests, opts })
   })
 }
 

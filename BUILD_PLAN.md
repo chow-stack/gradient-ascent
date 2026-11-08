@@ -93,11 +93,11 @@ Next lesson, extra reviews (due soonest first), or practice on any passed lesson
 | Step-through question ("value of `x` at step 7?") | Trace              | Exact match               | Uses visualizer           |
 | Parsons (order the lines)                         | Trace → write      | Order / tests             | Distractor lines optional |
 | Fill in the blank (faded)                         | Write (scaffolded) | Tests                     | Fewer givens each time    |
-| Find & fix the bug                                | Debug              | Tests                     | Real-world bug patterns   |
-| Write a function                                  | Write              | Hidden + visible tests    | Core skill                |
+| Find & fix the bug                                | Debug              | Tests + reruns            | Real-world bug patterns   |
+| Write a function                                  | Write              | Hidden tests + reruns     | Core skill                |
 | Explain in plain English                          | Explain            | AI rubric (or self-grade) | Ends each concept         |
 | Code autopsy                                      | Read my code       | AI-generated Qs           | Phase 5                   |
-| Project milestone                                 | Make               | Tests                     | Multi-day                 |
+| Project (brief + milestone checklist)             | Make               | Tests per milestone       | Saved as you type         |
 
 ---
 
@@ -184,7 +184,11 @@ Optional. Without a key, explain cards are self-graded and nothing else changes.
   not to be harsh on wording, names or order, and not to credit vague phrases, reading the code aloud, or false statements.
 - **Guardrails in code:** every key point must come back. A hit must quote my real words or it becomes "unclear". The verdict is
   computed from the points, not taken from the model.
-- **Gemini suggests, I grade.** Explain cards aren't in spaced review, and if they ever join it, FSRS stays on my own grade.
+- **The AI grades, I can overrule it.** The verdict decides the card like any other: Nailed it or Partly → Continue,
+  Missed it → Try again or Show answer. The good answer stays hidden until then, so a retry isn't just rewording it.
+  "AI got it wrong" switches to self-grading; my grade counts, and the disagreement is saved in the `disputes` table (in
+  backups) so the prompt can be improved. Explain cards aren't in spaced review, and if they ever join it, FSRS uses
+  whichever grade counted. The UI says "AI"; Settings names the provider and says answers go to Google.
 - **Failures:** every error (key, limit, offline, timeout, bad reply) shows a message and leaves self-grading working.
   Results are cached in memory for the same answer.
 - **Limits:** check real ones in AI Studio. I couldn't verify "500 a day" for any model. Free-tier text may be used by Google to
@@ -246,6 +250,8 @@ Plan, design, and an empty-but-solid project. **No curriculum, no features.**
 - [x] matplotlib output
 - [ ] Shape viewer (not built; lessons teach printing `.shape`, so check whether it's still wanted)
 - [ ] Modify cards, per-choice feedback
+- [x] Checks a hard-coded answer can't pass: `vary` reruns, concept rules, a cheat test in `content:check`
+- [x] Projects as one brief, one editor and a milestone checklist; the five projects rewritten
 - [x] Content: Units 3–5
 - [ ] Watch-with-prediction and long-block lesson types; long blocks count for the streak
 
@@ -291,6 +297,22 @@ npm run setup:python   # download the Python packages (runs after npm install)
 From doing Unit 1, lessons 1–3. Research: `reports/Teaching Python and lesson design.md` (git-ignored, local only). Word,
 card and lesson counts below are judgement: no study tests whole-lesson formats or topic order for self-paced beginners.
 
+### Built (2026-11-07)
+
+- **Stronger checks on code cards.** From testing Unit 1: a write card could be passed with `size = "medium"`.
+  - `vary` reruns the answer and the solution with other values for the variables at the top, and compares printed output
+    and every test value.
+  - `requires` / `forbids` rules check for the concept (`elif`, a loop, `name:zip`, no loops in NumPy cards).
+  - `content:check` tries hard-coded fakes on every fix and write card and every project milestone, and fails the build if
+    one passes. 158 cards were flagged and fixed, mostly by adding `vary` or hidden tests.
+  - Failure messages say what went wrong: "It works for the values given, but not with n = 5", or "this one is about `elif`".
+- **AI grades explain cards** (see §6.5): a verdict, one line of feedback and a key-point checklist, with a loading state
+  while it reads. Self-grading is the fallback, and "AI got it wrong" overrules it.
+- **Projects rebuilt.** From testing: they weren't fun and were too easy. Now each is one brief, one editor and a milestone
+  checklist that ticks off as each part works, with hints only on request and the code saved as you type. The five projects
+  are new: Monster card, Adam climbs the hill, Autocomplete, Mini PyTorch and Doodle recogniser (`CURRICULUM.md` §3). Lesson
+  ids stayed the same, so finished projects stay finished.
+
 ### Built (2026-11-06)
 
 - **Practice mode uses variants.** Each practice round moves a card to its next version.
@@ -301,10 +323,10 @@ card and lesson counts below are judgement: no study tests whole-lesson formats 
   checkpoints stay closed-book, because recalling unaided is their purpose.
 - **Pilot lesson:** the strings lesson, in the new format with no Java. It's now two lessons, `p1-06-strings.yaml` and `p1-07-building-text.yaml`.
 - **Fix cards mark the bug:** the editor now shows a card's `highlightLine` until the code is edited, and Reset brings it back. Four marks that pointed at the wrong line were corrected.
-- **Unit 5, NumPy, shapes and plots:** 12 lessons, a checkpoint and the Nearest neighbours project, all in `p5-*.yaml`.
+- **Unit 5, NumPy, shapes and plots:** 12 lessons, a checkpoint and a project, all in `p5-*.yaml`.
 - **Plots:** matplotlib is self-hosted alongside NumPy. The runner draws any open figures off-screen, and the app shows them below the output.
-- **Unit 4, Python for ML code:** rewritten as 14 lessons, a checkpoint and the Vector class project, all in `p4-*.yaml`. It no longer assumes you've seen a class.
-- **Unit 3, Collections and libraries:** 12 lessons, a checkpoint and the Word stats project, all in `p3-*.yaml`. It replaces the last of the older Python lessons.
+- **Unit 4, Python for ML code:** rewritten as 14 lessons, a checkpoint and a project, all in `p4-*.yaml`. It no longer assumes you've seen a class.
+- **Unit 3, Collections and libraries:** 12 lessons, a checkpoint and a project, all in `p3-*.yaml`. It replaces the last of the older Python lessons.
 - **Java removed:** the `java` field, the "Compare with Java" button, the Java highlighter and all Java wording.
 - **Unit 2, Functions and repetition:** 11 lessons, a checkpoint and a project, all in `p2-*.yaml`. It replaces the older functions, `while` and `for` lessons. To support it, a crash inside a
   function now shows a real traceback, and the content check stops runaway loops with a step limit, so a fix card can start from a real infinite loop.

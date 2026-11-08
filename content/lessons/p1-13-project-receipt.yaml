@@ -3,115 +3,126 @@ track: ml
 unit: 1
 order: 13
 kind: project
-title: 'Project: Trail report'
-summary: Combine everything from this unit into one small program.
+title: 'Project: Monster card'
+summary: Design a creature for a card game and print its card, with a power score and a rank worked out from its stats.
 
 cards:
-  - type: learn
-    id: brief
-    label: The project
-    title: Reporting on a hike
-    body: >-
-      You'll build one small program in three steps. It takes the raw numbers from a hike, works out what they mean, decides how hard the hike was, and prints a
-      report that a person would want to read.
+  - type: project
+    id: monster-card
+    brief: >-
+      You're designing creatures for a card game. Each one has a name and four stats, and your program turns them into a printed card: a framed name, a power bar,
+      a rank and the creature's weak spot.
 
 
-      Each step adds to the last, and you'll see your earlier code in the starter. There's no new Python here, only what you already know, used together. This is what
-      real programming feels like. If you need a reminder, you can reread any earlier lesson from the path.
+      The stats sit at the top of the code. When you're done, change them and run it again. A good program makes a correct card for any creature, so the checks
+      will try other stats too. Hard-coding this creature's card won't pass.
 
-  - type: write
-    id: numbers
-    prompt: >-
-      Step 1 of 3. `name` has stray capitals, and `km` arrived as text. Make `clean_name` hold `name` in lowercase, `distance` hold `km` as a float, and `pace` hold the
-      minutes per kilometre, which is `minutes` divided by `distance`.
+
+      There's no new Python here, only what this unit taught, used together. Work through the milestones in order and press Check whenever you want to see how far
+      you've got. Your code is saved as you type, so you can stop and come back.
+    example: |
+      +----------------------+
+      | FLUFFY THE DESTROYER |
+      +----------------------+
+      HP 64  ATK 23  DEF 9  SPD 15
+      Power 70 #######
+      Rank: RARE
+      Weak spot: defence
     starter: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-    solution: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-      clean_name = name.lower()
-      distance = float(km)
-      pace = minutes / distance
-    tests:
-      - { call: clean_name, expect: "'eagle ridge'" }
-      - { call: distance, expect: '12.5' }
-      - { call: pace, expect: '16.0' }
-    hints:
-      - '`float()` converts text to a number with a decimal point.'
-      - Divide after converting, because you can't divide using text.
+      name = "fluffy the destroyer"
+      hp = 64
+      attack = 23
+      defence = 9
+      speed = 15
 
-  - type: write
-    id: rating
-    prompt: >-
-      Step 2 of 3. Make `rating` hold `"hard"` if `distance` is over 20 or `pace` is over 15, `"moderate"` if `distance` is over 8, and `"easy"` otherwise.
-    starter: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-      clean_name = name.lower()
-      distance = float(km)
-      pace = minutes / distance
-      # rating goes here
+      # Your code goes below.
     solution: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-      clean_name = name.lower()
-      distance = float(km)
-      pace = minutes / distance
-      if distance > 20 or pace > 15:
-          rating = "hard"
-      elif distance > 8:
-          rating = "moderate"
-      else:
-          rating = "easy"
-    tests:
-      - { call: rating, expect: "'hard'" }
-    hints:
-      - Use one chain. Each side of `or` must be a complete comparison.
+      name = "fluffy the destroyer"
+      hp = 64
+      attack = 23
+      defence = 9
+      speed = 15
 
-  - type: write
-    id: report
-    prompt: >-
-      Step 3 of 3. Make `report` hold exactly `Eagle ridge: 12.5 km, hard`. Use an f-string, and uppercase the first letter of `clean_name` with `[0]`, `.upper()` and a slice.
-      Then print `report`.
-    starter: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-      clean_name = name.lower()
-      distance = float(km)
-      pace = minutes / distance
-      if distance > 20 or pace > 15:
-          rating = "hard"
-      elif distance > 8:
-          rating = "moderate"
+      banner = name.upper()
+      power = attack * 2 + defence + speed
+      bar = "#" * (power // 10)
+
+      if power >= 80:
+          rank = "LEGENDARY"
+      elif power >= 50:
+          rank = "RARE"
       else:
-          rating = "easy"
-      # report goes here
-    solution: |
-      name = "EAGLE Ridge"
-      km = "12.5"
-      minutes = 200
-      clean_name = name.lower()
-      distance = float(km)
-      pace = minutes / distance
-      if distance > 20 or pace > 15:
-          rating = "hard"
-      elif distance > 8:
-          rating = "moderate"
+          rank = "COMMON"
+
+      low = min(attack, defence, speed)
+      if low == attack:
+          weak = "attack"
+      elif low == defence:
+          weak = "defence"
       else:
-          rating = "easy"
-      title = clean_name[0].upper() + clean_name[1:]
-      report = f"{title}: {distance} km, {rating}"
-      print(report)
-    tests:
-      - { call: report, expect: "'Eagle ridge: 12.5 km, hard'" }
-    expectOutput: 'Eagle ridge: 12.5 km, hard'
-    why: >-
-      Build the title first, then fill all three values into one f-string. In a few units, you'll wrap this in a function so it works on any hike.
-    hints:
-      - Make the title in its own variable first.
+          weak = "speed"
+
+      edge = "+" + "-" * (len(banner) + 2) + "+"
+      print(edge)
+      print("| " + banner + " |")
+      print(edge)
+      print(f"HP {hp}  ATK {attack}  DEF {defence}  SPD {speed}")
+      print(f"Power {power} {bar}")
+      print(f"Rank: {rank}")
+      print(f"Weak spot: {weak}")
+    milestones:
+      - title: Shout the name
+        goal: Make `banner` hold the creature's name in capitals.
+        tests:
+          - { call: banner, expect: "'FLUFFY THE DESTROYER'" }
+        vary: [{ name: '"mr nibbles"' }]
+        hints:
+          - Strings have a method that gives back a copy in capitals. You met it when building text.
+          - '`banner = name.upper()`'
+      - title: Power and a power bar
+        goal: >-
+          `power` is attack counted twice, plus defence and speed. `bar` is one `#` for every full 10 power, so 70 power gives 7 of them.
+        tests:
+          - { call: power, expect: '70' }
+          - { call: bar, expect: "'#######'" }
+        vary: [{ attack: '41' }, { speed: '0' }]
+        hints:
+          - '`attack * 2 + defence + speed` is the power. Multiplication happens before addition.'
+          - Floor division `//` gives the number of whole tens, and a string times a number repeats it.
+          - '`bar = "#" * (power // 10)`'
+      - title: Give it a rank
+        goal: '`rank` is `"LEGENDARY"` for 80 power or more, `"RARE"` for 50 or more, and `"COMMON"` otherwise.'
+        tests:
+          - { call: rank, expect: "'RARE'" }
+        vary: [{ attack: '40' }, { attack: '5' }, { attack: '13' }]
+        requires: ['if', 'elif']
+        hints:
+          - Check the biggest threshold first. Once one branch runs, the rest are skipped.
+          - 'Use `if power >= 80:`, then `elif power >= 50:`, then `else:`.'
+      - title: Find the weak spot
+        goal: >-
+          `weak` names the lowest of attack, defence and speed, as `"attack"`, `"defence"` or `"speed"`. If two are tied for lowest, the first in that order
+          wins.
+        tests:
+          - { call: weak, expect: "'defence'" }
+        vary: [{ attack: '3' }, { speed: '2' }, { defence: '30' }, { defence: '15' }]
+        requires: ['if']
+        hints:
+          - '`min()` gives you the lowest number. Then work out which stat it came from.'
+          - 'Store `low = min(attack, defence, speed)`, then compare: `if low == attack:` and so on.'
+      - title: Print the card
+        goal: >-
+          Print the card like the example. The frame is as wide as the name plus a space on each side, so a longer name makes a wider card.
+        expectOutput: |
+          +----------------------+
+          | FLUFFY THE DESTROYER |
+          +----------------------+
+          HP 64  ATK 23  DEF 9  SPD 15
+          Power 70 #######
+          Rank: RARE
+          Weak spot: defence
+        vary: [{ name: '"bob"' }, { hp: '7', attack: '50' }]
+        hints:
+          - The top edge is `+`, then one `-` for each character inside the frame, then `+`. Inside the frame is the name with a space either side.
+          - '`edge = "+" + "-" * (len(banner) + 2) + "+"`, then print `edge`, the name line, and `edge` again.'
+          - 'An f-string builds the stats line: `f"HP {hp}  ATK {attack}  DEF {defence}  SPD {speed}"`.'

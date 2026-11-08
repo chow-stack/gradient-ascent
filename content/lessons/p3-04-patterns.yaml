@@ -316,6 +316,8 @@ cards:
         highlightLine: 5
         tests:
           - { call: 'count_big([5, 50, 60], 10)', expect: '2' }
+          - { call: 'count_big([5, 50], 10)', expect: '1', hidden: true }
+          - { call: 'count_big([5, 50, 60], 0)', expect: '3', hidden: true }
         why: >-
           A count adds 1, and a sum adds the item.
         hints:

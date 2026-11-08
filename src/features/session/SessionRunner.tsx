@@ -2,12 +2,14 @@ import { BookOpen, Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
-import type { DailyResult } from '../../lib/db'
+import { db, type DailyResult } from '../../lib/db'
+import { checkExplanation, GeminiError, getGeminiKey } from '../ai/gemini'
 import { SegmentedProgress } from '../../components/ui/ProgressBar'
 import { ExerciseView } from '../exercises/ExerciseView'
+import { loadDraft } from '../exercises/drafts'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
 import { inline } from '../exercises/inline'
-import { type Phase } from '../exercises/types'
+import { type AiState, type Phase } from '../exercises/types'
 import {
   completeCheckpoint,
   completeLesson,
@@ -36,11 +38,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const checkpoint = useRef({ correct: 0, total: 0 })
   const [idx, setIdx] = useState(0)
   const item = queue[Math.min(idx, queue.length - 1)]
-  const [answer, setAnswer] = useState<Answer>(() => initialAnswer(item.card))
+  const [answer, setAnswer] = useState<Answer>(() => startAnswer(item))
   const [phase, setPhase] = useState<Phase>('answering')
   const [result, setResult] = useState<GradeResult | undefined>()
   const [hintsUsed, setHintsUsed] = useState(0)
   const [shake, setShake] = useState(0)
+  // Explain cards: the AI's grade, whether the learner grades themselves instead, and a saved disagreement.
+  const [ai, setAi] = useState<AiState>({ status: 'off' })
+  const [selfGrading, setSelfGrading] = useState(false)
+  const dispute = useRef<number | undefined>(undefined)
+  const aiRequest = useRef(0)
   const tries = useRef(0)
   const startedAt = useRef(0)
   const sessionStart = useRef(0)
@@ -140,28 +147,73 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
 
   const next = useCallback(() => {
     if (isLearn) resolve({ correct: true, firstTry: true, hintsUsed: 0, gaveUp: false })
+    // The AI said nailed or partly, and the learner accepted it.
+    if (card.type === 'explain' && phase === 'correct' && !selfGrading)
+      resolve({
+        correct: true,
+        firstTry: ai.status === 'done' && ai.check.verdict === 'nailed' && tries.current === 1,
+        hintsUsed,
+        gaveUp: false,
+      })
     if (idx + 1 >= queueRef.current.length) {
       void finish()
       return
     }
     const nextItem = queueRef.current[idx + 1]
     setIdx(idx + 1)
-    setAnswer(initialAnswer(nextItem.card))
+    setAnswer(startAnswer(nextItem))
     setPhase('answering')
     setResult(undefined)
     setHintsUsed(0)
+    setAi({ status: 'off' })
+    setSelfGrading(false)
+    dispute.current = undefined
+    aiRequest.current += 1
     tries.current = 0
     startedAt.current = Date.now()
     window.scrollTo({ top: 0 })
-  }, [idx, isLearn, resolve, finish])
+  }, [idx, isLearn, resolve, finish, card.type, phase, selfGrading, ai, hintsUsed])
+
+  /** Ask the AI to grade an explanation. With no key, offline, or on an error, the learner grades themselves. */
+  const askAi = useCallback(
+    async (text: string) => {
+      if (card.type !== 'explain') return
+      const key = getGeminiKey()
+      if (!key || !navigator.onLine) {
+        setAi(key ? { status: 'failed', message: 'You’re offline, so the AI can’t check this.' } : { status: 'off' })
+        setSelfGrading(true)
+        setPhase('revealed')
+        return
+      }
+      const request = ++aiRequest.current
+      setAi({ status: 'checking' })
+      setSelfGrading(false)
+      setPhase('checking')
+      try {
+        const c = await checkExplanation(card, text, key)
+        if (request !== aiRequest.current) return
+        setAi({ status: 'done', check: c })
+        if (c.verdict === 'missed') {
+          setPhase('wrong')
+          setShake((s) => s + 1)
+        } else setPhase('correct')
+      } catch (e) {
+        if (request !== aiRequest.current) return
+        setAi({ status: 'failed', message: e instanceof GeminiError ? e.message : 'The AI check didn’t work.' })
+        setSelfGrading(true)
+        setPhase('revealed')
+      }
+    },
+    [card],
+  )
 
   const check = useCallback(
     async (latest?: Answer) => {
       const current = latest ?? answer
       if (phase !== 'answering' || !canCheck(current)) return
-      if (card.type === 'explain') {
-        setPhase('revealed')
-        return
+      if (card.type === 'explain' && current.type === 'explain') {
+        tries.current += 1
+        return void askAi(current.text)
       }
       setPhase('checking')
       tries.current += 1
@@ -176,12 +228,31 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         if (card.type === 'choice') resolve({ correct: false, firstTry: true, hintsUsed, gaveUp: false })
       }
     },
-    [phase, answer, card, hintsUsed, resolve],
+    [phase, answer, card, hintsUsed, resolve, askAi],
   )
 
   const tryAgain = () => {
     setPhase('answering')
     setResult(undefined)
+    setAi({ status: 'off' })
+  }
+
+  /** The learner thinks the AI graded them wrongly: save that, and let them pick their own grade. */
+  const disputeAi = () => {
+    if (ai.status !== 'done' || answer.type !== 'explain') return
+    setSelfGrading(true)
+    setPhase('revealed')
+    const it = item
+    void db.disputes
+      .add({
+        itemId: it.itemId,
+        lessonId: it.lesson.id,
+        at: Date.now(),
+        answer: answer.text,
+        aiVerdict: ai.check.verdict,
+      })
+      .then((id) => (dispute.current = id))
+      .catch(console.error)
   }
 
   const reveal = () => {
@@ -193,6 +264,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   }
 
   const selfGrade = (level: 'missed' | 'partly' | 'nailed') => {
+    const id = dispute.current
+    if (id !== undefined) void db.disputes.update(id, { myVerdict: level }).catch(console.error)
     resolve({ correct: level !== 'missed', firstTry: level === 'nailed', hintsUsed: 0, gaveUp: false })
     next()
   }
@@ -203,10 +276,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       if (isLearn) return next()
       if (phase === 'answering') return void check(latest)
       if (phase === 'correct' || (phase === 'wrong' && card.type === 'choice')) return next()
-      if (phase === 'revealed' && card.type !== 'explain') return next()
+      if (phase === 'revealed' && !(card.type === 'explain' && selfGrading)) return next()
       if (phase === 'wrong') return tryAgain()
     },
-    [isLearn, phase, card.type, next, check],
+    [isLearn, phase, card.type, selfGrading, next, check],
   )
 
   useEffect(() => {
@@ -302,7 +375,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           )}
           <div
             key={shake}
-            className={phase === 'wrong' && card.type !== 'write' && card.type !== 'fix' ? 'ga-shake' : undefined}
+            className={
+              phase === 'wrong' && card.type !== 'write' && card.type !== 'fix' && card.type !== 'project'
+                ? 'ga-shake'
+                : undefined
+            }
           >
             <ExerciseView
               card={card}
@@ -310,6 +387,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
               setAnswer={setAnswer}
               phase={phase}
               result={result?.run}
+              milestones={result?.milestones}
+              draftKey={card.type === 'project' && item.source === 'project' ? item.itemId : undefined}
+              ai={ai}
+              selfGrading={selfGrading}
+              onRetryAi={answer.type === 'explain' ? () => void askAi(answer.text) : undefined}
               onSubmit={primary}
             />
           </div>
@@ -342,6 +424,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
               praise={praise}
               why={why}
               message={result?.message}
+              verdict={ai.status === 'done' ? ai.check.verdict : undefined}
+              selfGrading={selfGrading}
             />
           </div>
           <div className="flex flex-none flex-wrap items-center justify-end gap-2">
@@ -370,11 +454,31 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
                   disabled={!canCheck(answer) || phase === 'checking'}
                   onClick={() => void check()}
                 >
-                  {phase === 'checking' ? 'Checking…' : card.type === 'explain' ? 'Compare' : 'Check'}
+                  {phase === 'checking' ? 'Checking…' : 'Check'}
                   <span className="ga-kbd">↵</span>
                 </button>
               </>
-            ) : phase === 'revealed' && card.type === 'explain' ? (
+            ) : card.type === 'explain' && ai.status === 'done' && (phase === 'correct' || phase === 'wrong') ? (
+              <>
+                <button type="button" className="ga-btn ga-btn--ghost ga-btn--sm" onClick={disputeAi}>
+                  AI got it wrong
+                </button>
+                {phase === 'wrong' && (
+                  <button type="button" className="ga-btn ga-btn--ghost" onClick={reveal}>
+                    Show answer
+                  </button>
+                )}
+                <button
+                  type="button"
+                  autoFocus
+                  className={phase === 'correct' ? 'ga-btn ga-btn--success' : 'ga-btn ga-btn--danger'}
+                  onClick={phase === 'correct' ? next : tryAgain}
+                >
+                  {phase === 'wrong' ? 'Try again' : idx + 1 >= queue.length ? 'Finish' : 'Continue'}{' '}
+                  <span className="ga-kbd">↵</span>
+                </button>
+              </>
+            ) : phase === 'revealed' && card.type === 'explain' && selfGrading ? (
               <>
                 <button
                   type="button"
@@ -427,6 +531,12 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 }
 
+/** A project picks up from the learner's saved draft. Practising a project starts it fresh. */
+function startAnswer(item: SessionItem): Answer {
+  const draft = item.card.type === 'project' && item.source === 'project' ? loadDraft(item.itemId) : null
+  return draft ? { type: 'code', code: draft } : initialAnswer(item.card)
+}
+
 /**
  * What can be reread from this card: in a first pass, the teaching so far; in practice or a retry, all of it.
  * Daily sets, reviews and checkpoints stay closed-book, because recalling unaided is what they're for.
@@ -448,6 +558,8 @@ function FooterText({
   praise,
   why,
   message,
+  verdict,
+  selfGrading,
 }: {
   phase: Phase
   learnHint?: string
@@ -455,16 +567,31 @@ function FooterText({
   praise: string
   why?: string
   message?: string
+  verdict?: 'nailed' | 'partly' | 'missed'
+  selfGrading?: boolean
 }) {
   if (learnHint) return <p className="ga-footer-body hidden text-muted sm:block">{learnHint}</p>
   switch (phase) {
     case 'answering':
       return type === 'explain' ? (
-        <p className="ga-footer-body hidden text-muted sm:block">Write it in your own words, then compare.</p>
+        <p className="ga-footer-body hidden text-muted sm:block">Write it in your own words, then check.</p>
       ) : null
     case 'checking':
-      return <p className="ga-footer-body text-muted">Running your code…</p>
+      return (
+        <p className="ga-footer-body text-muted">
+          {type === 'explain' ? 'The AI is reading your answer…' : 'Running your code…'}
+        </p>
+      )
     case 'correct':
+      if (type === 'explain')
+        return (
+          <>
+            <p className="ga-footer-title">{verdict === 'partly' ? 'Partly right.' : 'Nailed it.'}</p>
+            <p className="ga-footer-body text-muted mt-0.5">
+              {verdict === 'partly' ? 'Check the points you missed, then carry on.' : 'Every key point is there.'}
+            </p>
+          </>
+        )
       return (
         <>
           <p className="ga-footer-title">{praise}</p>
@@ -476,11 +603,24 @@ function FooterText({
         <>
           <p className="ga-footer-title">Not quite.</p>
           <p className="ga-footer-body ga-prose mt-0.5">
-            {inline(type === 'choice' ? (why ?? '') : (message ?? 'Give it another go.'))}
+            {inline(
+              type === 'choice'
+                ? (why ?? '')
+                : type === 'explain'
+                  ? 'The checklist shows what’s missing. Try again in your own words.'
+                  : (message ?? 'Give it another go.'),
+            )}
           </p>
         </>
       )
     case 'revealed':
+      if (type === 'explain' && !selfGrading)
+        return (
+          <>
+            <p className="ga-footer-title">Here’s a good answer.</p>
+            <p className="ga-footer-body text-muted">This one comes back once at the end.</p>
+          </>
+        )
       return type === 'explain' ? (
         <>
           <p className="ga-footer-title">How close were you?</p>

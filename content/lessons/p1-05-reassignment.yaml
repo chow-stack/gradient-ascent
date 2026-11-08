@@ -246,6 +246,7 @@ cards:
 
   - type: fix
     id: forgot-store
+    vary: [{ points: '11' }, { points: '9' }]
     prompt: This should show `11`, but it shows `10`. Fix it.
     code: |
       points = 10
@@ -278,9 +279,11 @@ cards:
           `total` is only calculated when its line runs, so it must run after `price` has its final value.
         hints:
           - When is `total` worked out, compared to when `price` becomes 20?
+        vary: [{ price: '21' }, { price: '19' }]
 
   - type: write
     id: bank
+    vary: [{ balance: '101' }, { balance: '99' }]
     prompt: >-
       `balance` starts at 100. Add `deposit` to it, then take away `fee`, updating `balance` both times. Don't type the final
       number yourself.
@@ -316,6 +319,7 @@ cards:
           - { call: level, expect: '11' }
         hints:
           - '`*=` multiplies a variable, and `+=` adds to it.'
+        vary: [{ level: '5' }, { level: '3' }]
 
   - type: choice
     id: remember-name-text

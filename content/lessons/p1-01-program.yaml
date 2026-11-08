@@ -219,9 +219,11 @@ cards:
           With quotes, it's text and gets shown as written. Without them, Python calculates.
         hints:
           - What do the quotes tell Python?
+        requires: ['op:*']
 
   - type: write
     id: first-program
+    requires: ['op:+']
     prompt: Write a program that shows `I am learning Python` on one line, then the result of `20 + 22` on the next.
     starter: |
       # Your first program

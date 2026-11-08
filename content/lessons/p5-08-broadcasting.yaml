@@ -293,6 +293,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'centre_rows(np.array([[1.0, 3.0], [2.0, 2.0], [0.0, 4.0]]))', expect: '[[-1.0, 1.0], [0.0, 0.0], [-2.0, 2.0]]' }
+          - { call: 'centre_rows(np.array([[2.0, 6.0], [4.0, 4.0], [0.0, 8.0]]))', expect: '[[-2.0, 2.0], [0.0, 0.0], [-4.0, 4.0]]', hidden: true }
+          - { call: 'centre_rows(np.array([[0.0, 4.0], [2.0, 2.0], [1.0, 3.0]]))', expect: '[[-2.0, 2.0], [0.0, 0.0], [-1.0, 1.0]]', hidden: true }
         hints:
           - Keep the axis, so that it lines up.
       - prompt: This should add each row's bias, so it should show `[[11. 11.]` and `[21. 21.]` and `[31. 31.]]`, but it gives a `ValueError`. Fix the line that makes `bias`.
@@ -311,6 +313,7 @@ cards:
         expectOutput: "[[11. 11.]\n [21. 21.]\n [31. 31.]]"
         hints:
           - It needs to have shape `(3, 1)`.
+        requires: ['name:ones', 'name:array', 'op:+']
 
   - type: learn
     id: worked
@@ -347,6 +350,7 @@ cards:
 
   - type: write
     id: write-table
+    forbids: ['loop']
     prompt: Write `times_table(n)`, with no loops, which gives back an `n` by `n` table where the cell in row `i`, column `j` is `(i + 1) * (j + 1)`. So `times_table(2)` gives back `[[1, 2], [2, 4]]`.
     starter: |
       import numpy as np

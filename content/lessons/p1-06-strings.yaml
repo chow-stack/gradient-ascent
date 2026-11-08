@@ -248,6 +248,7 @@ cards:
 
   - type: fix
     id: past-end
+    vary: [{ word: '''summit''' }, { word: '''Ridge''' }]
     prompt: This should print the last letter, `t`, but it crashes with an `IndexError`. Fix it.
     code: |
       word = "goat"
@@ -275,9 +276,11 @@ cards:
           The stop index is left out, so to get three characters you stop at 3.
         hints:
           - Which index does a slice stop just before?
+        vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
 
   - type: write
     id: domain
+    vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
     prompt: Make `ending` hold the last three letters of `word`. Use a slice, so that it would work for any word.
     starter: |
       word = "summit"
@@ -301,6 +304,7 @@ cards:
           - { call: middle, expect: "'ummi'" }
         hints:
           - Start at index 1. A negative stop counts from the end, and it's left out too.
+        vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
 
   - type: choice
     id: remember-assignment

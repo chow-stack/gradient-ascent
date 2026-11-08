@@ -75,8 +75,8 @@ describe('checkExplanation', () => {
   })
 
   it('explains key and quota failures', () => {
-    expect(errorMessage(400, 'API key not valid. Please pass a valid API key.')).toMatch(/rejected your key/)
-    expect(errorMessage(403, '')).toMatch(/rejected your key/)
+    expect(errorMessage(400, 'API key not valid. Please pass a valid API key.')).toMatch(/key was rejected/)
+    expect(errorMessage(403, '')).toMatch(/key was rejected/)
     expect(errorMessage(429, '')).toMatch(/limit/)
   })
 })

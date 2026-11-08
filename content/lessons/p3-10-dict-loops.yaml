@@ -275,6 +275,7 @@ cards:
           To get two names on each pass, go through `.items()`.
         hints:
           - Which tool gives you pairs?
+        requires: ['for']
       - prompt: '`drop_zeros({"a": 0, "b": 1})` should give back `{"b": 1}`, but it gives a `RuntimeError`. Fix it by building a new dict.'
         code: |
           def drop_zeros(d):

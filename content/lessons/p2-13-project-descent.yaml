@@ -3,165 +3,142 @@ track: ml
 unit: 2
 order: 13
 kind: project
-title: 'Project: Find the bottom'
-summary: Use functions and a loop to find the lowest point of a curve, the way a model learns.
+title: 'Project: Adam climbs the hill'
+summary: Help Adam the goat find the top of a hill in the fog, one step at a time. It's the idea behind how models learn, and the name of this app.
 
 cards:
-  - type: learn
-    id: brief
-    label: The project
-    title: How a model learns, in miniature
-    body: >-
-      Training a model means finding the settings that make its error as small as possible. Imagine standing on a hillside in fog, trying to reach the bottom of the valley. You can't see far, but you can feel which way the ground slopes under your feet. So you take a small step downhill, and repeat.
+  - type: project
+    id: hill-climb
+    brief: >-
+      Adam is on a hillside in thick fog and wants to reach the top. He can't see the summit, but he can feel which way the ground rises under his hooves. So he
+      takes one step uphill, feels again, and repeats until every direction is down. That's gradient ascent. Training a model works the same way, only it walks
+      downhill on its error, and that version is called gradient descent.
 
 
-      That's all the algorithm does, and it's called gradient descent. Here the valley is the curve `(x - 3) ** 2`. Its lowest point is at `x = 3`, and we'll pretend we don't know that. We've given you `slope(x)`, which says how steep the ground is at `x`. You'll learn where it comes from later on, and all you need now is that it's positive when the bottom is to the left.
+      You'll write the hill, the "which way is up?" test, the climb itself, and a drawing of the hill made with loops inside loops. Then your program tells the
+      story of one climb. The starting point `start` is at the top of the code, and the checks will try other starting points.
 
 
-      You'll build this in three steps, using only what's in this unit.
-
-  - type: write
-    id: step
-    prompt: >-
-      Step 1 of 3. Write `loss(x)`, which gives back `(x - 3) ** 2`. Then write `step(x, lr=0.1)`, which gives back the new position after one step downhill: `x - lr * slope(x)`.
+      Everything you need is from this unit: functions, `return`, `if`, `while` and `for`. There are no lists yet, so the drawing is built up as one string.
+    example: |
+      ......#......
+      ...#######...
+      ..#########..
+      .###########.
+      Adam starts at x = 1, height 15.
+      Adam reached the summit in 5 steps.
     starter: |
-      def slope(x):
-          return 2 * (x - 3)
+      start = 1
 
-      # Write loss and step here
+      # Your functions go here.
     solution: |
-      def slope(x):
-          return 2 * (x - 3)
-
-      def loss(x):
-          return (x - 3) ** 2
-
-      def step(x, lr=0.1):
-          return x - lr * slope(x)
-    tests:
-      - { call: loss(5), expect: '4' }
-      - { call: loss(3), expect: '0' }
-      - { call: step(0), expect: '0.6' }
-      - { call: 'step(0, 0.5)', expect: '3.0' }
-      - { call: step(3), expect: '3.0' }
-    why: >-
-      `lr` stands for learning rate, the size of each step. It's one of the most important settings in machine learning.
-    hints:
-      - Both functions have to `return`, and the body of each is one line.
-
-  - type: write
-    id: descend
-    prompt: >-
-      Step 2 of 3. Write `descend(x, steps, lr=0.1)`, which starts at `x`, takes that many steps using your `step` function, and gives back the final position.
-    starter: |
-      def slope(x):
-          return 2 * (x - 3)
-
-      def loss(x):
-          return (x - 3) ** 2
-
-      def step(x, lr=0.1):
-          return x - lr * slope(x)
-
-      # Write descend here
-    solution: |
-      def slope(x):
-          return 2 * (x - 3)
-
-      def loss(x):
-          return (x - 3) ** 2
-
-      def step(x, lr=0.1):
-          return x - lr * slope(x)
-
-      def descend(x, steps, lr=0.1):
-          for i in range(steps):
-              x = step(x, lr)
-          return x
-    tests:
-      - { call: 'descend(0, 1)', expect: '0.6' }
-      - { call: 'descend(0, 2)', expect: '1.08' }
-      - { call: 'descend(0, 0)', expect: '0' }
-      - { call: 'round(descend(0, 100), 3)', expect: '3.0' }
-      - { call: 'round(descend(10, 100), 3)', expect: '3.0' }
-    why: >-
-      You know the number of steps in advance, so it's a `for` loop. Each pass replaces `x` with its new value. Check that it found 3 from both sides of the valley, without ever being told the answer.
-    hints:
-      - The new value of `x` comes from calling `step(x, lr)`.
-      - Remember to pass `lr` along, and to return after the loop.
-
-  - type: write
-    id: until-small
-    prompt: >-
-      Step 3 of 3. Real training often runs until the error is small enough. Write `steps_needed(x, lr=0.1)`, which keeps stepping while `loss(x)` is at least `0.01`, and gives back how many steps that took.
-    starter: |
-      def slope(x):
-          return 2 * (x - 3)
-
-      def loss(x):
-          return (x - 3) ** 2
-
-      def step(x, lr=0.1):
-          return x - lr * slope(x)
-
-      def descend(x, steps, lr=0.1):
-          for i in range(steps):
-              x = step(x, lr)
-          return x
-
-      # Write steps_needed here
-    solution: |
-      def slope(x):
-          return 2 * (x - 3)
-
-      def loss(x):
-          return (x - 3) ** 2
-
-      def step(x, lr=0.1):
-          return x - lr * slope(x)
-
-      def descend(x, steps, lr=0.1):
-          for i in range(steps):
-              x = step(x, lr)
-          return x
-
-      def steps_needed(x, lr=0.1):
-          count = 0
-          while loss(x) >= 0.01:
-              x = step(x, lr)
-              count += 1
-          return count
-    tests:
-      - { call: steps_needed(3), expect: '0' }
-      - { call: steps_needed(0), expect: '16' }
-      - { call: 'steps_needed(0, 0.4)', expect: '3' }
-    why: >-
-      You don't know how many steps it'll take, so it's a `while` loop with a counter. Compare the last two tests: a bigger learning rate got there in far fewer steps.
-    hints:
-      - You only know when to stop, so which loop fits?
-      - The count starts at 0 and goes up once per pass.
-
-  - type: learn
-    id: too-big
-    label: One more thing
-    title: When steps are too big
-    body: >-
-      If bigger steps are faster, why not use huge ones? Run this to find out. With a learning rate of 1.1, each step jumps clean over the bottom of the valley and lands higher up on the other side. So the error grows, and it keeps growing with every step. This really does happen in machine learning: when the loss suddenly shoots up, a learning rate that's too high is the first thing to suspect.
+      start = 1
 
 
-      You've now written the loop at the heart of machine learning. Real models have millions of settings rather than one `x`, and working out the slope takes real work, which is what micrograd will show you. But the idea is what you just built: measure, step downhill, repeat.
-    code: |
-      def slope(x):
-          return 2 * (x - 3)
+      def height(x):
+          return 40 - (x - 6) ** 2
 
-      def loss(x):
-          return (x - 3) ** 2
 
-      x = 0
-      for i in range(5):
-          x = x - 1.1 * slope(x)
-          print(f"Step {i}: x = {round(x, 2)}, loss = {round(loss(x), 2)}")
-    subgoals:
-      - { line: 9, label: 'A step that is too big' }
-      - { line: 10, label: 'Watch the loss grow' }
-    predict: Will the loss go up or down?
+      def uphill(x):
+          if height(x + 1) > height(x):
+              return "right"
+          elif height(x - 1) > height(x):
+              return "left"
+          return "summit"
+
+
+      def climb(x):
+          steps = 0
+          while uphill(x) != "summit":
+              if uphill(x) == "right":
+                  x = x + 1
+              else:
+                  x = x - 1
+              steps = steps + 1
+          return steps
+
+
+      def draw(rows):
+          picture = ""
+          for i in range(rows):
+              if i > 0:
+                  picture = picture + "\n"
+              level = 40 - 10 * i
+              for x in range(13):
+                  if height(x) >= level:
+                      picture = picture + "#"
+                  else:
+                      picture = picture + "."
+          return picture
+
+
+      print(draw(4))
+      print(f"Adam starts at x = {start}, height {height(start)}.")
+      print(f"Adam reached the summit in {climb(start)} steps.")
+    milestones:
+      - title: The hill
+        goal: Write `height(x)`, which gives back how high the hill is at `x`. The formula is `40 - (x - 6) ** 2`.
+        tests:
+          - { call: height(6), expect: '40' }
+          - { call: height(0), expect: '4' }
+          - { call: height(10), expect: '24', hidden: true }
+        hints:
+          - Use `def`, then `return` the formula. Don't print it.
+          - "`def height(x):` and on the next line, indented, `return 40 - (x - 6) ** 2`."
+      - title: Which way is up?
+        goal: >-
+          Write `uphill(x)`. It gives back `"right"` if the hill is higher one step to the right, `"left"` if it's higher one step to the left, and `"summit"` if
+          neither is higher.
+        tests:
+          - { call: uphill(2), expect: "'right'" }
+          - { call: uphill(9), expect: "'left'" }
+          - { call: uphill(6), expect: "'summit'" }
+          - { call: uphill(-3), expect: "'right'", hidden: true }
+          - { call: uphill(20), expect: "'left'", hidden: true }
+        requires: ['if', 'name:height']
+        scope: uphill
+        hints:
+          - Call `height` three times, at `x`, `x + 1` and `x - 1`, and compare.
+          - '`if height(x + 1) > height(x): return "right"`, then an `elif` for the left, and `return "summit"` at the end.'
+      - title: The climb
+        goal: >-
+          Write `climb(x)`. Starting at `x`, Adam steps one at a time in whichever direction `uphill` says, until he's at the summit. Give back how many steps
+          it took.
+        tests:
+          - { call: climb(2), expect: '4' }
+          - { call: climb(9), expect: '3' }
+          - { call: climb(6), expect: '0', hidden: true }
+          - { call: climb(-5), expect: '11', hidden: true }
+        requires: ['while', 'name:uphill']
+        scope: climb
+        hints:
+          - You don't know how many steps it will take, so this is a `while` loop. Keep going while `uphill(x)` isn't `"summit"`.
+          - Count with a variable that starts at 0 and goes up by 1 each step. Move `x` by 1 to the right or the left.
+          - 'The loop is `while uphill(x) != "summit":`. Inside it, an `if` moves `x`, then `steps = steps + 1`. Return `steps` after the loop.'
+      - title: Draw the hill
+        goal: >-
+          Write `draw(rows)`, which gives back a picture of the hill as one string. Each row is 13 characters, one for each `x` from 0 to 12. A character is
+          `#` if the hill reaches that row's level, and `.` if not. The top row's level is 40, and each row down is 10 lower. Rows are joined with `"\n"`, with
+          no newline at the end.
+        tests:
+          - { call: draw(1), expect: "'......#......'" }
+          - { call: draw(2), expect: '''......#......\n...#######...''' }
+          - { call: draw(4), expect: '''......#......\n...#######...\n..#########..\n.###########.''', hidden: true }
+        requires: ['for']
+        scope: draw
+        hints:
+          - One loop goes over the rows, and inside it another goes over `x` from 0 to 12. The row's level is `40 - 10 * i`.
+          - 'Start with `picture = ""` and add one character at a time: `"#"` if `height(x) >= level`, otherwise `"."`.'
+          - Add `"\n"` at the start of every row except the first, with `if i > 0:`.
+      - title: Tell the story
+        goal: Print the 4-row drawing, then where Adam starts, then how many steps he took, like the example. Use `start`, so a new start tells a new story.
+        expectOutput: |
+          ......#......
+          ...#######...
+          ..#########..
+          .###########.
+          Adam starts at x = 1, height 15.
+          Adam reached the summit in 5 steps.
+        vary: [{ start: '11' }, { start: '6' }, { start: '-2' }]
+        hints:
+          - '`print(draw(4))` prints the picture. The other two lines are f-strings that call `height(start)` and `climb(start)`.'

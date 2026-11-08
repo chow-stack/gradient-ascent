@@ -237,6 +237,7 @@ cards:
           With `<`, the loop can't step past the end without stopping.
         hints:
           - Which comparison stops once `x` has reached or passed 1.0?
+        requires: ['while', 'op:+']
       - prompt: This should show `Mean 2.50`, with two decimal places, but it shows `Mean 2.5`. Fix the f-string.
         code: |
           m = 5 / 2
@@ -251,6 +252,7 @@ cards:
           `:.2f` keeps exactly two places, including trailing zeros.
         hints:
           - What goes after the colon in the braces?
+        requires: ['op:/']
 
   - type: learn
     id: worked

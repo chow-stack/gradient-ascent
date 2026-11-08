@@ -322,6 +322,7 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'predict(np.array([[1, 2], [4, 3]]))', expect: '[1, 0]' }
+          - { call: 'predict(np.array([[4, 3], [1, 2]]))', expect: '[0, 1]', hidden: true }
         hints:
           - With no axis, it treats the grid as one long list.
       - prompt: '`row_probs(counts)` should make each row add up to 1, so for `[[1.0, 3.0], [2.0, 2.0]]`, the first row is `[0.25, 0.75]`. It gives a `ValueError` on some shapes, and a wrong answer on others. Fix it.'

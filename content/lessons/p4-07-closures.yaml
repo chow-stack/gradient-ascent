@@ -319,6 +319,7 @@ cards:
           Assigning to a name makes it local, unless you say `nonlocal`.
         hints:
           - The name belongs to the outer function, so how do you tell Python?
+        requires: ['def', 'return', 'name:make_counter']
       - prompt: This should show `[0, 10, 20]`, but it shows `[20, 20, 20]`. Fix the lambda.
         code: |
           fs = []
@@ -337,6 +338,7 @@ cards:
           All the lambdas shared one `k`. A default value gives each one its own.
         hints:
           - What's the value of `k` when these are finally called?
+        requires: ['for', 'lambda', 'name:range']
 
   - type: learn
     id: worked

@@ -280,6 +280,8 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'cosine(np.array([1.0, 0.0]), np.array([5.0, 0.0]))', expect: '1.0' }
+      - { call: 'cosine(np.array([0.0, 1.0]), np.array([5.0, 0.0]))', expect: '0.0', hidden: true }
+      - { call: 'cosine(np.array([3.0, 2.0]), np.array([5.0, 0.0]))', expect: '0.832050294', hidden: true }
     why: >-
       Without parentheses, it divides by the first length and multiplies by the second.
     hints:
@@ -299,6 +301,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'neuron(np.array([1.0, 2.0]), np.array([3.0, 4.0]), 1.0)', expect: '12.0' }
+          - { call: 'neuron(np.array([1.0, 2.0]), np.array([3.0, 4.0]), 2.5)', expect: '13.5', hidden: true }
+          - { call: 'neuron(np.array([1.0, 2.0]), np.array([3.0, 4.0]), 2.0)', expect: '13.0', hidden: true }
         hints:
           - Which operator adds the products up?
       - prompt: '`unit(a)` should give back a vector of length 1, so `unit(np.array([3.0, 4.0]))` is `[0.6, 0.8]`. It divides by the wrong thing. Fix it.'
@@ -315,6 +319,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'unit(np.array([3.0, 4.0]))', expect: '[0.6, 0.8]' }
+          - { call: 'unit(np.array([4.0, 3.0]))', expect: '[0.8, 0.6]', hidden: true }
+          - { call: 'unit(np.array([5.0, 6.0]))', expect: '[0.6401844, 0.76822128]', hidden: true }
         hints:
           - The length isn't the same as the total.
 

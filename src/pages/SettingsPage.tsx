@@ -105,7 +105,7 @@ export function SettingsPage() {
   )
 }
 
-/** The learner's own Gemini key, for checking "explain the code" answers. */
+/** The learner's own Gemini key, so the AI can grade "explain the code" answers. */
 function GeminiCard() {
   const [saved, setSaved] = useState(getGeminiKey)
   const [draft, setDraft] = useState('')
@@ -127,9 +127,10 @@ function GeminiCard() {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-h3">Gemini</h2>
-        <p className="text-small text-muted">
-          Checks your “explain the code” answers with <code className="font-mono">{GEMINI_MODEL}</code>.
+        <h2 className="text-h3">AI checking</h2>
+        <p className="max-w-[68ch] text-small text-muted">
+          Grades your “explain the code” answers and shows which key points you hit. It uses Google’s Gemini (
+          <code className="font-mono">{GEMINI_MODEL}</code>) with your own free key. Without a key, you grade yourself.
         </p>
       </div>
       {saved ? (

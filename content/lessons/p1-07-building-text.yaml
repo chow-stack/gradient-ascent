@@ -194,6 +194,7 @@ cards:
 
   - type: fix
     id: str-plus-int
+    vary: [{ level: '4' }, { level: '2' }]
     prompt: This should print `Level 3`, but it crashes. Fix it.
     code: |
       level = 3
@@ -223,6 +224,7 @@ cards:
           `.upper()` makes a new string and leaves the original alone. Store the copy, or print it directly.
         hints:
           - Does `.upper()` change `animal`, or give back something new?
+        vary: [{ animal: '''yak''' }, { animal: '''summit''' }]
       - prompt: This should print `10`, the sum of two numbers that arrived as text. Fix it.
         code: |
           a = "4"
@@ -238,6 +240,8 @@ cards:
           Text joins, so this printed `46`. Convert to numbers first, then add.
         hints:
           - What type do `a` and `b` hold?
+        requires: ['op:+']
+        vary: []
 
   - type: learn
     id: worked
@@ -262,6 +266,7 @@ cards:
 
   - type: write
     id: capitalize
+    vary: [{ word: '''yak''' }, { word: '''summit''' }]
     prompt: >-
       Make a variable `title` that holds `word` with only its first letter in uppercase. For `"goat"`, that's `"Goat"`.
     starter: |
@@ -290,6 +295,8 @@ cards:
           - { call: message, expect: "'Total: 12'" }
         hints:
           - Braces can hold a calculation.
+        vary: [{ a: '6' }, { a: '4' }]
+        requires: ['fstring']
 
   - type: choice
     id: remember-update

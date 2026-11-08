@@ -211,6 +211,7 @@ cards:
 
   - type: fix
     id: fix-wrong-answer
+    requires: ['op:/', 'op:+']
     prompt: This runs without an error, but it should show the average of 10 and 20, which is `15.0`. Fix it.
     code: |
       print(10 + 20 / 2)

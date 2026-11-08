@@ -207,6 +207,7 @@ cards:
 
   - type: fix
     id: fix-join
+    vary: [{ words: '[''b'', ''a'']' }, { words: '[''a'', ''b'', ''yak'']' }]
     prompt: This gives an `AttributeError`. Fix it so it shows `a b`.
     code: |
       words = ["a", "b"]
@@ -234,6 +235,8 @@ cards:
           The pieces are strings, so `+` joined them.
         hints:
           - What type does `split` give you?
+        requires: ['name:split', 'op:+']
+        vary: []
       - prompt: This should show `['hi', 'you']`, but the punctuation stays. Fix it.
         code: |
           out = []
@@ -252,6 +255,8 @@ cards:
           String tools give back a new string, so you have to use the result.
         hints:
           - What does `strip` do with its result?
+        requires: ['for', 'name:split', 'name:append']
+        vary: []
 
   - type: learn
     id: worked

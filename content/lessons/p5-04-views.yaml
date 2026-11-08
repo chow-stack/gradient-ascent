@@ -293,6 +293,8 @@ cards:
     tests:
       - { call: 'with_zero_first(np.array([1, 2]))', expect: '[0, 2]' }
       - { call: '(lambda a: (with_zero_first(a), a)[1])(np.array([1, 2]))', expect: '[1, 2]', hidden: true }
+      - { call: 'with_zero_first(np.array([2, 1]))', expect: '[0, 1]', hidden: true }
+      - { call: 'with_zero_first(np.array([3, 4]))', expect: '[0, 4]', hidden: true }
     why: >-
       `a[:]` copies a list, but for an array it's only a view.
     hints:
@@ -324,6 +326,7 @@ cards:
           `w = ...` only moves the local name, and `w -= ...` changes the array.
         hints:
           - Which form changes the array in place?
+        requires: ['def', 'op:-', 'name:array']
       - prompt: This should show `[3 1 2]` and then `[1 2 3]`, but `sorted_copy` changes its input. Fix it.
         code: |
           import numpy as np
@@ -353,6 +356,7 @@ cards:
           `np.sort` gives back a sorted copy, and `a.sort()` changes the array.
         hints:
           - Which version gives back a new array?
+        requires: ['def', 'return', 'name:array']
 
   - type: learn
     id: worked
@@ -401,6 +405,8 @@ cards:
     tests:
       - { call: 'clipped(np.array([1, 2, 3]), 1)', expect: '[2, 3]' }
       - { call: '(lambda a: not np.shares_memory(clipped(a, 1), a))(np.zeros(3))', expect: 'True', hidden: true }
+      - { call: 'clipped(np.array([1, 2, 3]), 2)', expect: '[3]', hidden: true }
+      - { call: 'clipped(np.array([1, 2, 3]), 0)', expect: '[1, 2, 3]', hidden: true }
     why: >-
       Slice it to get the items, and copy it to break the link.
     hints:

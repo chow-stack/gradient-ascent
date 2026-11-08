@@ -192,6 +192,7 @@ cards:
 
   - type: fix
     id: fix-caller
+    requires: ['def', 'return', 'op:+']
     prompt: This crashes inside `average`, but `average` is correct. Fix the bug in `total_of`, so this shows `3.0`.
     code: |
       def total_of(a, b):
@@ -237,6 +238,7 @@ cards:
           An empty string has no index 0. A guard deals with the awkward case first.
         hints:
           - Which input causes the crash, and what should happen for it?
+        requires: ['def', 'return', 'name:first_char']
       - prompt: This crashes with a `TypeError` because the arguments are the wrong way around in the call. Fix the call so it shows `goat goat`.
         code: |
           def repeat(word, times):
@@ -260,6 +262,7 @@ cards:
           The crash shows up at `range`, but the function is fine. The call passed its values in the wrong order.
         hints:
           - What did `times` hold when `range` ran?
+        requires: ['for', 'def', 'return']
 
   - type: learn
     id: worked

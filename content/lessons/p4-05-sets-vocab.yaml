@@ -263,6 +263,7 @@ cards:
           Empty braces make a dict.
         hints:
           - Which call makes an empty set?
+        requires: ['name:type']
       - prompt: This should show `6 6`, but it shows `6 0`, because the generator gets used up. Fix the first line.
         code: |
           g = (n for n in [1, 2, 3])
@@ -277,6 +278,7 @@ cards:
           A list can be used as many times as you like, and a generator only once.
         hints:
           - Which brackets make something you can reuse?
+        requires: ['for', 'name:sum']
 
   - type: learn
     id: worked

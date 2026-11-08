@@ -218,6 +218,7 @@ cards:
 
   - type: fix
     id: lost-return
+    vary: [{ n: '-7' }, { n: '-9' }]
     prompt: This should show `8`, but it shows `-8`. Fix it.
     code: |
       n = -8
@@ -247,6 +248,7 @@ cards:
           Without parentheses, `len` is only the function's name. Calling it needs parentheses and an argument.
         hints:
           - What makes a function actually run?
+        vary: [{ word: '''yak''' }, { word: '''summit''' }]
       - prompt: This should show `11`, but it crashes with a `TypeError`. Fix it.
         code: |
           total = print(5 + 5)
@@ -260,9 +262,12 @@ cards:
           `print` gives back `None`, so `total` held nothing that could be added to. To show 11 alone, store the sum directly.
         hints:
           - What does `print` give back?
+        requires: ['op:+']
+        vary: []
 
   - type: write
     id: spread
+    vary: [{ a: '13' }, { a: '11' }]
     prompt: Make `spread` hold the difference between the largest and the smallest of `a`, `b` and `c`.
     starter: |
       a = 12
@@ -290,6 +295,7 @@ cards:
           - { call: digits, expect: '5' }
         hints:
           - Convert it to text first, then count the characters.
+        vary: [{ n: '0' }, { n: '12' }]
 
   - type: choice
     id: remember-fstring

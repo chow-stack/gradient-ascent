@@ -1,5 +1,6 @@
 import { parse } from 'yaml'
 import { z } from 'zod'
+import { isRule, type RunOptions } from '../runner/harness.ts'
 
 /**
  * Curriculum content format. Lessons are YAML files in content/lessons/ (YAML because code blocks
@@ -18,6 +19,14 @@ const id = z.string().regex(/^[a-z0-9-]+$/, 'ids are lowercase-kebab')
 const hints = z.array(z.string()).default([])
 const testCase = z.object({ call: z.string(), expect: z.string(), hidden: z.boolean().optional() })
 const tests = z.array(testCase).optional()
+/**
+ * Proof that an answer uses the idea, not just the right printed text (CURRICULUM.md §2):
+ * - vary: other values for variables set at the top of the code, as Python source. The answer and the solution
+ *   rerun with each, and must print the same and give the same value for every test call.
+ * - requires / forbids: features the code must or mustn't use, such as `elif`, `loop` or `name:append`.
+ */
+const vary = z.array(z.record(z.string().regex(/^[A-Za-z_]\w*$/), z.string())).optional()
+const rules = z.array(z.string().refine(isRule, 'unknown rule (see RULE_LABELS in harness.ts)')).optional()
 /**
  * Other versions of a card: any fields here replace the card's own. Reviews cycle through them so an
  * answer can't just be remembered. Each one is validated, and checked in real Python by content:check.
@@ -98,6 +107,9 @@ const fix = z.object({
   highlightLine: z.number().int().positive().optional(),
   tests,
   expectOutput: z.string().optional(),
+  vary,
+  requires: rules,
+  forbids: rules,
   why: z.string(),
   hints,
   variants,
@@ -112,6 +124,9 @@ const write = z.object({
   tests,
   /** What the program should print, for programs too small to have anything else to test. */
   expectOutput: z.string().optional(),
+  vary,
+  requires: rules,
+  forbids: rules,
   why: z.string().optional(),
   hints,
   variants,
@@ -129,7 +144,39 @@ const explain = z.object({
   keyPoints: z.array(z.string()).min(1),
 })
 
-export const cardSchema = z.discriminatedUnion('type', [learn, choice, parsons, blank, fix, write, explain])
+/**
+ * One checkpoint in a project. The learner's whole program is checked against each milestone separately, so the
+ * checklist ticks off as the program grows. A milestone needs tests or expectOutput. Its vary reruns compare
+ * printed output only when it has expectOutput, so early milestones pass before the program prints anything.
+ */
+const milestone = z.object({
+  title: z.string(),
+  /** What this milestone asks for, in a sentence or two. */
+  goal: z.string(),
+  tests,
+  expectOutput: z.string().optional(),
+  vary,
+  requires: rules,
+  forbids: rules,
+  /** Check requires/forbids only inside this function or class, since the whole program may need other things. */
+  scope: z.string().optional(),
+  /** Shown one at a time with "Stuck? Show me the next step". The last one can be close to the code. */
+  hints,
+})
+
+const project = z.object({
+  type: z.literal('project'),
+  id,
+  /** What you're building and why it's fun. Blank-line paragraphs. */
+  brief: z.string(),
+  /** What a finished program might print, shown in the brief. */
+  example: z.string().optional(),
+  starter: z.string(),
+  solution: z.string(),
+  milestones: z.array(milestone).min(2),
+})
+
+export const cardSchema = z.discriminatedUnion('type', [learn, choice, parsons, blank, fix, write, explain, project])
 
 function checkCard(c: z.infer<typeof cardSchema>, at: (msg: string) => void) {
   if (c.type === 'choice') {
@@ -143,6 +190,10 @@ function checkCard(c: z.infer<typeof cardSchema>, at: (msg: string) => void) {
   }
   if ((c.type === 'fix' || c.type === 'parsons' || c.type === 'write') && !c.tests && c.expectOutput === undefined)
     at('needs tests or expectOutput')
+  if (c.type === 'project')
+    c.milestones.forEach((m, i) => {
+      if (!m.tests && m.expectOutput === undefined) at(`milestone ${i + 1} needs tests or expectOutput`)
+    })
 }
 
 export const lessonSchema = z
@@ -153,7 +204,8 @@ export const lessonSchema = z
     order: z.number().int().positive(),
     /**
      * A checkpoint ends a unit's lessons: a mixed quiz on the whole unit (CURRICULUM.md §1).
-     * A project is a program built step by step; its cards stay out of spaced review.
+     * A project is one longer program: a brief, an editor and a milestone checklist (one project card, after any
+     * learn cards). It stays out of spaced review.
      */
     kind: z.enum(['lesson', 'checkpoint', 'project']).default('lesson'),
     title: z.string(),
@@ -162,6 +214,8 @@ export const lessonSchema = z
   })
   .superRefine((lesson, ctx) => {
     const seen = new Set<string>()
+    if (lesson.kind === 'project' && lesson.cards.filter((c) => c.type === 'project').length !== 1)
+      ctx.addIssue({ code: 'custom', message: 'project lessons need exactly one project card', path: ['cards'] })
     if (lesson.kind === 'checkpoint' && lesson.cards.length < CHECKPOINT_MIN_CARDS)
       ctx.addIssue({
         code: 'custom',
@@ -177,6 +231,9 @@ export const lessonSchema = z
         if ('hints' in c && c.hints.length) at('checkpoint cards have no hints')
       }
       seen.add(c.id)
+      if (c.type === 'project' && lesson.kind !== 'project') at('project cards belong in project lessons')
+      if (lesson.kind === 'project' && c.type !== 'learn' && c.type !== 'project')
+        at('project lessons hold learn cards and one project card')
       checkCard(c, at)
       for (const v of cardVariants(c)) {
         const r = cardSchema.safeParse(v)
@@ -230,6 +287,27 @@ export function cardVariants(card: Card): Card[] {
 export function versionForReview(card: Card, reviewsSoFar: number): Card {
   const all = [card, ...cardVariants(card)]
   return all[(reviewsSoFar + 1) % all.length]
+}
+
+export type Milestone = z.infer<typeof milestone>
+
+/** The extra checks a fix or write card asks for (see `vary` above). */
+export function runOptions(card: Card): RunOptions {
+  if (card.type !== 'fix' && card.type !== 'write') return {}
+  return { solution: card.solution, vary: card.vary, requires: card.requires, forbids: card.forbids }
+}
+
+/** The checks for one project milestone. */
+export function milestoneOptions(solution: string, m: Milestone): RunOptions {
+  // An early milestone mustn't fail just because the finished program prints more.
+  return {
+    solution,
+    vary: m.vary,
+    requires: m.requires,
+    forbids: m.forbids,
+    scope: m.scope,
+    output: m.expectOutput !== undefined,
+  }
 }
 
 /** Exercise ids are global: "<lesson id>/<card id>". */

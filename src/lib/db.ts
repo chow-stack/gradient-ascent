@@ -52,12 +52,28 @@ export type DailyRow = {
   completedAt?: number
 }
 
+/**
+ * A time the learner said the AI graded an explanation wrongly, with both grades. Kept so the AI's
+ * instructions can be checked against real disagreements (BUILD_PLAN §6.5).
+ */
+export type DisputeRow = {
+  id?: number
+  itemId: string
+  lessonId: string
+  at: number
+  answer: string
+  aiVerdict: 'nailed' | 'partly' | 'missed'
+  /** Filled in when the learner picks their own grade. */
+  myVerdict?: 'nailed' | 'partly' | 'missed'
+}
+
 export class GradientDB extends Dexie {
   attempts!: EntityTable<AttemptRow, 'id'>
   reviews!: EntityTable<ReviewRow, 'itemId'>
   mastery!: EntityTable<MasteryRow, 'lessonId'>
   days!: EntityTable<DayRow, 'day'>
   dailies!: EntityTable<DailyRow, 'day'>
+  disputes!: EntityTable<DisputeRow, 'id'>
 
   constructor(name = 'gradient-ascent') {
     super(name)
@@ -68,6 +84,7 @@ export class GradientDB extends Dexie {
       days: 'day',
     })
     this.version(2).stores({ dailies: 'day' })
+    this.version(3).stores({ disputes: '++id, itemId' })
   }
 }
 
@@ -75,7 +92,9 @@ export const db = new GradientDB()
 
 // ---------- Backup ----------
 
-const TABLES = ['attempts', 'reviews', 'mastery', 'days', 'dailies'] as const
+const TABLES = ['attempts', 'reviews', 'mastery', 'days', 'dailies', 'disputes'] as const
+/** Tables added after the first backups, which older files won't have. */
+const OPTIONAL: readonly string[] = ['dailies', 'disputes']
 export type Backup = {
   app: 'gradient-ascent'
   version: 1
@@ -110,8 +129,8 @@ export async function importBackup(raw: unknown, database: GradientDB = db): Pro
     TABLES.map((t) => database.table(t)),
     async () => {
       for (const t of TABLES) {
-        // Backups from before the Daily 5 have no dailies table.
-        const rows = t === 'dailies' ? (b.tables![t] ?? []) : b.tables![t]
+        // Older backups lack the tables added since.
+        const rows = OPTIONAL.includes(t) ? (b.tables![t] ?? []) : b.tables![t]
         if (!Array.isArray(rows)) throw new Error(`Backup is missing "${t}".`)
         await database.table(t).clear()
         await database.table(t).bulkAdd(rows.map((r) => (t === 'reviews' ? reviveDates(r) : r)))

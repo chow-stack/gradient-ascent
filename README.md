@@ -18,8 +18,11 @@ code, and explain it in plain English. All code runs as real Python in your brow
 - **Daily 5:** one fixed set a day, tracked as tiles. It's what counts for your streak, so a busy day takes about five
   minutes. Cards can come back with new values, so answers can't just be memorised.
 - **Unlimited lessons:** on your own schedule, with a checkpoint and a project ending each unit.
-- **Seven exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
-  fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, and explain-in-your-own-words.
+- **Eight exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
+  fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, explain-in-your-own-words (graded by AI
+  if you add a key), and projects: one longer program with a milestone checklist.
+- **Checks you can't fool:** code is rerun with other values and checked for the idea the card is about, so printing the
+  expected answer doesn't pass.
 - **Real Python in the browser:** [Pyodide](https://pyodide.org) runs in a Web Worker, so the UI never freezes.
   Infinite loops are stopped by a timeout, and errors point to the line that caused them.
 - **A real editor:** [Monaco](https://microsoft.github.io/monaco-editor/), the editor from VS Code, with
@@ -160,8 +163,9 @@ Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The vis
 ## Privacy
 
 Everything runs in your browser. Progress lives in IndexedDB on your machine, so clearing site data erases it;
-use **Settings → Download backup** now and then. The one exception is optional: if you paste a Gemini key in **Settings**, it
-stays in this browser and is left out of backups, and your "explain the code" answers go to Google to be checked.
+use **Settings → Download backup** now and then. The one exception is optional: if you paste a Google Gemini key in
+**Settings → AI checking**, it stays in this browser and is left out of backups, and your "explain the code" answers go
+to Google to be graded.
 
 ## License
 

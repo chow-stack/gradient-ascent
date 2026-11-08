@@ -223,6 +223,7 @@ cards:
 
   - type: fix
     id: past-end
+    vary: [{ a: '[3, 2, 1]' }, { a: '[3, 4, 5]' }]
     prompt: This should change the last item to `0` and show `[1, 2, 0]`, but it crashes with an `IndexError`. Fix it.
     code: |
       a = [1, 2, 3]
@@ -252,6 +253,7 @@ cards:
           The mean is the total divided by the count.
         hints:
           - Which tool counts the items?
+        vary: [{ a: '[3, 4, 5]' }, { a: '[1, 2, 3, 4]' }]
       - prompt: This should show `True`, because `goat` is one of the items, but it crashes. Fix the line.
         code: |
           animals = ["goat", "yak"]
@@ -265,6 +267,7 @@ cards:
           To ask about the whole list, use the list itself, with no index.
         hints:
           - You want to look through all the items, not one of them.
+        vary: [{ animals: '[''yak'']' }]
 
   - type: learn
     id: worked

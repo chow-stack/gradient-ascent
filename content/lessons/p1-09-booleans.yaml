@@ -187,6 +187,7 @@ cards:
 
   - type: fix
     id: assign-vs-compare
+    vary: [{ x: '6' }]
     prompt: This should show `True` if `x` is 5, but it won't run. Fix it.
     code: |
       x = 5
@@ -214,6 +215,7 @@ cards:
           Each side of `or` must be a complete question. `2` alone isn't comparing anything.
         hints:
           - What is being compared with the 2?
+        vary: [{ x: '2' }]
       - prompt: This should show `True`, since the word is `goat` apart from its capitals. Fix it.
         code: |
           word = "GOAT"
@@ -227,6 +229,7 @@ cards:
           Capitals matter when comparing text, so convert to one case first.
         hints:
           - Which string tool can change `word` to lowercase?
+        vary: [{ word: '''yak''' }]
 
   - type: learn
     id: worked
@@ -259,6 +262,7 @@ cards:
 
   - type: write
     id: can-ride
+    vary: [{ height: '0' }]
     prompt: >-
       Make `can_ride` hold `True` if `height` is at least 120 and `age` is at least 8, and `False` otherwise. Use a comparison, rather than
       typing `True` yourself.
@@ -286,6 +290,7 @@ cards:
           - { call: in_range, expect: 'False' }
         hints:
           - You can use `0 <= score <= 100`, or two comparisons joined with `and`.
+        vary: [{ score: '0' }]
 
   - type: choice
     id: remember-call

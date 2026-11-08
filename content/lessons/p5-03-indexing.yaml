@@ -259,6 +259,8 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'first_column(np.array([[1, 2], [3, 4]]))', expect: '[1, 3]' }
+      - { call: 'first_column(np.array([[2, 3], [4, 5]]))', expect: '[2, 4]', hidden: true }
+      - { call: 'first_column(np.array([[2, 4], [6, 8]]))', expect: '[2, 6]', hidden: true }
     why: >-
       One index picks a row, so a column needs a colon for "every row".
     hints:
@@ -280,6 +282,7 @@ cards:
           Rows come first, and this array only has rows 0 and 1.
         hints:
           - Which comes first, the row or the column?
+        requires: ['name:array']
       - prompt: This should show `[[1 2]]`, keeping it as a grid with one row, but it shows `[1 2]`. Use a slice, so the axis stays.
         code: |
           import numpy as np
@@ -296,6 +299,7 @@ cards:
           A slice keeps the axis, even when it holds only one row.
         hints:
           - A number removes the axis, and a slice keeps it.
+        requires: ['name:array']
 
   - type: learn
     id: worked

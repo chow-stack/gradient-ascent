@@ -5,6 +5,7 @@ import { CodeView } from './CodeView'
 import { ExplainView } from './ExplainView'
 import { LearnView } from './LearnView'
 import { ParsonsView } from './ParsonsView'
+import { ProjectView } from './ProjectView'
 import type { ViewProps } from './types'
 
 /** Picks the right view for a card. */
@@ -24,5 +25,7 @@ export function ExerciseView(props: ViewProps<Card>) {
       return <CodeView {...props} card={card} />
     case 'explain':
       return <ExplainView {...props} card={card} />
+    case 'project':
+      return <ProjectView {...props} card={card} />
   }
 }

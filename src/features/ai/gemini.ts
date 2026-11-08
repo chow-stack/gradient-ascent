@@ -5,7 +5,8 @@ type ExplainCard = Extract<Card, { type: 'explain' }>
 /**
  * Optional check of "explain the code" answers, using the learner's own Gemini key.
  * The key stays in localStorage (never in backups) and goes only to Google, in a header.
- * Gemini suggests; the learner still picks the grade, and any failure leaves self-grading untouched.
+ * The app calls it "AI" everywhere. It grades the answer; the learner can overrule it ("AI got it wrong"),
+ * and any failure falls back to self-grading.
  */
 export const GEMINI_MODEL = 'gemini-3.5-flash-lite'
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
@@ -115,7 +116,7 @@ export function parseExplainCheck(raw: string, keyPointCount: number, answer: st
   try {
     data = JSON.parse(raw)
   } catch {
-    throw new GeminiError('Gemini sent back something unreadable.')
+    throw new GeminiError('The AI sent back something unreadable.')
   }
   const rows = Array.isArray(data.keyPoints) ? (data.keyPoints as Record<string, unknown>[]) : []
   const said = normalize(answer)
@@ -123,14 +124,14 @@ export function parseExplainCheck(raw: string, keyPointCount: number, answer: st
   for (let i = 1; i <= keyPointCount; i++) {
     const row = rows.find((r) => r.number === i)
     if (!row || !['hit', 'missed', 'unclear'].includes(row.status as string))
-      throw new GeminiError('Gemini sent back an incomplete check.')
+      throw new GeminiError('The AI sent back an incomplete check.')
     const evidence = typeof row.evidence === 'string' ? row.evidence.trim() : ''
     if (row.status !== 'hit') points.push({ status: row.status as PointStatus })
     else if (evidence && said.includes(normalize(evidence))) points.push({ status: 'hit', evidence })
     else points.push({ status: 'unclear' })
   }
   if (typeof data.feedback !== 'string' || !data.feedback.trim())
-    throw new GeminiError('Gemini sent back an incomplete check.')
+    throw new GeminiError('The AI sent back an incomplete check.')
   const misconception = typeof data.misconception === 'string' ? data.misconception.trim() : ''
   const hits = points.filter((p) => p.status === 'hit').length
   const verdict: Verdict = hits === 0 ? 'missed' : hits === points.length && !misconception ? 'nailed' : 'partly'
@@ -150,8 +151,8 @@ async function generate(key: string, body: object): Promise<string> {
   } catch (e) {
     throw new GeminiError(
       (e as Error).name === 'TimeoutError'
-        ? 'Gemini took too long to answer.'
-        : 'Couldn’t reach Gemini. Are you online?',
+        ? 'The AI took too long to answer.'
+        : 'Couldn’t reach the AI. Are you online?',
     )
   }
   if (!res.ok) {
@@ -160,17 +161,17 @@ async function generate(key: string, body: object): Promise<string> {
   }
   const data = await res.json().catch(() => null)
   const text = data?.candidates?.[0]?.content?.parts?.find((p: { text?: string }) => p.text)?.text
-  if (typeof text !== 'string') throw new GeminiError('Gemini sent back an empty answer.')
+  if (typeof text !== 'string') throw new GeminiError('The AI sent back an empty answer.')
   return text
 }
 
 export function errorMessage(status: number, detail: string): string {
-  if (status === 429) return 'You’ve hit your Gemini limit for now.'
-  if (status >= 500) return 'Gemini is busy right now.'
+  if (status === 429) return 'You’ve hit your AI limit for now.'
+  if (status >= 500) return 'The AI is busy right now.'
   if (status === 401 || status === 403 || /api key/i.test(detail))
-    return 'Gemini rejected your key. Check it in Settings.'
-  if (status === 404) return `Gemini doesn’t recognise the model ${GEMINI_MODEL}.`
-  return `Gemini returned an error (${status}).`
+    return 'Your AI key was rejected. Check it in Settings.'
+  if (status === 404) return `The AI service doesn’t recognise the model ${GEMINI_MODEL}.`
+  return `The AI returned an error (${status}).`
 }
 
 // Same answer, same result: avoids spending quota twice, including on React's double effects in dev.

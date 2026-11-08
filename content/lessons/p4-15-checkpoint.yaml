@@ -187,6 +187,8 @@ cards:
     tests:
       - { call: 'normalize([1, 3])', expect: '[0.25, 0.75]' }
       - { call: '(lambda a: (normalize(a), a)[1])([1, 3])', expect: '[1, 3]', hidden: true }
+      - { call: 'normalize([3, 1])', expect: '[0.75, 0.25]', hidden: true }
+      - { call: 'normalize([3, 5])', expect: '[0.375, 0.625]', hidden: true }
     why: >-
       A parameter names the caller's list, so assigning to `nums[i]` changes it. A comprehension makes a new list.
 

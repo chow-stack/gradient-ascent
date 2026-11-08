@@ -256,6 +256,7 @@ cards:
 
   - type: fix
     id: fix-assign
+    vary: [{ a: '[5, 3, 4]' }, { a: '[3, 1, 2, 4]' }]
     prompt: This should show `[1, 2, 3]`, but it shows `None`. Fix it.
     code: |
       a = [3, 1, 2]
@@ -289,6 +290,8 @@ cards:
           `out = [i]` replaces the whole list on each pass. `append` adds to it.
         hints:
           - Which tool adds to a list?
+        requires: ['for', 'name:range']
+        vary: []
       - prompt: This should show `[1, 3]`, by removing the value `2`, but it gives an `IndexError`. Fix it.
         code: |
           a = [1, 2, 3]
@@ -305,6 +308,7 @@ cards:
           `pop` takes a position, and `remove` takes a value.
         hints:
           - Which method takes a value rather than a position?
+        vary: [{ a: '[3, 2, 1]' }, { a: '[1, 2, 3, 4]' }]
 
   - type: learn
     id: worked

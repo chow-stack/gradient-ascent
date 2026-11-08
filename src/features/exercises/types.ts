@@ -1,7 +1,15 @@
+import type { ExplainCheck } from '../ai/gemini'
 import type { RunResult } from '../runner/harness'
-import type { Answer } from './grading'
+import type { Answer, MilestoneResult } from './grading'
 
 export type Phase = 'answering' | 'checking' | 'correct' | 'wrong' | 'revealed'
+
+/** Where an explain card's AI check is up to. */
+export type AiState =
+  | { status: 'off' }
+  | { status: 'checking' }
+  | { status: 'done'; check: ExplainCheck }
+  | { status: 'failed'; message: string }
 
 export type ViewProps<C> = {
   card: C
@@ -9,6 +17,13 @@ export type ViewProps<C> = {
   setAnswer: (a: Answer) => void
   phase: Phase
   result?: RunResult
+  /** Projects: how each milestone went on the last check, and where to keep the draft. */
+  milestones?: MilestoneResult[]
+  draftKey?: string
+  /** Explain cards: the AI's check, and whether the learner is grading themselves instead. */
+  ai?: AiState
+  selfGrading?: boolean
+  onRetryAi?: () => void
   /** Check/continue. An editor passes its latest answer, which may be newer than `answer`. */
   onSubmit: (latest?: Answer) => void
 }

@@ -316,6 +316,8 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'predict(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 1.0]))', expect: '[3.0, 7.0]' }
+      - { call: 'predict(np.array([[2.0, 3.0], [4.0, 5.0]]), np.array([1.0, 1.0]))', expect: '[5.0, 9.0]', hidden: true }
+      - { call: 'predict(np.array([[2.0, 4.0], [6.0, 8.0]]), np.array([1.0, 1.0]))', expect: '[6.0, 14.0]', hidden: true }
     why: >-
       `*` works item by item, and broadcasts. `@` does dot products.
     hints:
@@ -428,6 +430,7 @@ cards:
           - { call: 'row_lengths(np.zeros((3, 2))).shape', expect: '(3,)' }
         hints:
           - Square, sum along the row, and take the root.
+        forbids: ['loop']
 
   - type: choice
     id: remember-dot

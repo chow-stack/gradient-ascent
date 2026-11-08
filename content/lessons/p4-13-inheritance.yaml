@@ -394,6 +394,7 @@ cards:
           To override a method, the child has to use exactly the same name.
         hints:
           - Compare the two method names.
+        requires: ['def', 'return', 'class']
       - prompt: '`Child(5).size` should give back `5`, but it gives a `TypeError`, because the parent''s `__init__` needs an argument. Fix it.'
         code: |
           class Base:

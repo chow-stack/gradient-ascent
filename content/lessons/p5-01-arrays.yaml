@@ -290,6 +290,7 @@ cards:
           An integer array cuts off decimals, so make it hold floats from the start.
         hints:
           - What type does this array hold?
+        requires: ['name:array']
       - prompt: This crashes with an `AttributeError`, since arrays have no `append`. Collect the values in a list first, so that it shows `[1 2]`.
         code: |
           import numpy as np
@@ -310,6 +311,7 @@ cards:
           Arrays have a fixed length, so build a list, and convert it at the end.
         hints:
           - Which kind of collection can grow?
+        requires: ['for', 'name:append', 'name:array']
 
   - type: learn
     id: worked
@@ -344,6 +346,7 @@ cards:
 
   - type: write
     id: write-mse
+    forbids: ['loop']
     prompt: Write `mean_squared_error(preds, targets)`, which takes two lists and gives back the mean of the squared differences, using NumPy and no loop. So `mean_squared_error([1, 2], [1, 4])` gives back `2.0`.
     starter: |
       import numpy as np

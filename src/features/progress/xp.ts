@@ -11,6 +11,7 @@ const BASE: Record<CardType, number> = {
   fix: 12,
   write: 15,
   explain: 8,
+  project: 40,
 }
 
 const SOURCE_FACTOR: Record<ItemSource, number> = {

@@ -223,6 +223,7 @@ cards:
 
   - type: fix
     id: case-sensitive
+    vary: [{ score: '11' }, { score: '9' }]
     prompt: This should print `10` but crashes. Fix it.
     code: |
       score = 10
@@ -250,6 +251,7 @@ cards:
           Python runs top to bottom, so a name must be stored before it's used.
         hints:
           - What does `total` hold when line 1 runs?
+        vary: [{ total: '16' }, { total: '14' }]
       - prompt: This should store 8 and show it, but it won't run. Fix it.
         code: |
           8 = size
@@ -263,9 +265,12 @@ cards:
           The name always goes on the left of `=`, because the line means "store the right side under this name".
         hints:
           - Which side of `=` does the name go on?
+        vary: []
+        requires: ['name:size']
 
   - type: write
     id: minutes
+    vary: [{ hours: '4' }, { hours: '2' }]
     prompt: Make a variable named `minutes` that holds `hours` converted to minutes.
     starter: |
       hours = 3
@@ -290,6 +295,7 @@ cards:
           change = paid - price
         tests:
           - { call: change, expect: '7' }
+        vary: [{ paid: '21' }, { paid: '19' }]
       - prompt: Make a variable named `average` holding the average of `a` and `b`.
         starter: |
           a = 6
@@ -303,6 +309,7 @@ cards:
           - { call: average, expect: '7.5' }
         hints:
           - Add first, then divide. How do you make sure the adding happens first?
+        vary: [{ a: '7' }, { a: '5' }]
 
   - type: choice
     id: remember-division

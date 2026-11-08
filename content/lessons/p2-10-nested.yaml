@@ -262,6 +262,7 @@ cards:
           Each value has to stay on the row's line, so it needs `end=""`.
         hints:
           - What does `print` put at the end by default?
+        requires: ['for', 'name:range']
       - prompt: 'The two loops share a variable. This should show `0 done` and then `1 done`, but it shows `2 done` twice. Fix it.'
         code: |
           for i in range(2):
@@ -280,6 +281,7 @@ cards:
           The inner loop overwrote `i`. Each loop needs its own name.
         hints:
           - What is `i` when the inner loop has finished?
+        requires: ['for', 'name:range']
 
   - type: learn
     id: worked
@@ -351,6 +353,7 @@ cards:
         hints:
           - The inner range depends on the row.
           - End each row with an empty `print()`.
+        requires: ['for', 'def', 'name:triangle']
 
   - type: choice
     id: remember-search

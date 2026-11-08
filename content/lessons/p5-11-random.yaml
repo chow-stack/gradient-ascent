@@ -302,6 +302,7 @@ cards:
 
   - type: fix
     id: fix-shuffle
+    requires: ['name:default_rng', 'name:arange', 'op:*']
     prompt: This shuffle should keep each `x` with its `y`, so it should show `True`. Fix it.
     code: |
       import numpy as np
@@ -351,6 +352,7 @@ cards:
           Make the generator once, and keep using it.
         hints:
           - The same seed restarts the same sequence.
+        requires: ['def', 'return', 'name:default_rng']
       - prompt: These dice rolls should include a 6, so this should show `6`, but the highest is always 5. Fix it.
         code: |
           import numpy as np
@@ -368,6 +370,7 @@ cards:
           `integers` stops before the end, like `range`.
         hints:
           - Does the range include its end?
+        requires: ['name:default_rng', 'name:integers', 'name:max']
 
   - type: learn
     id: worked

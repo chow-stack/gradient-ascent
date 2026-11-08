@@ -231,6 +231,7 @@ cards:
 
   - type: fix
     id: call-before-def
+    requires: ['def', 'name:pack']
     prompt: This crashes with a `NameError`. Fix it so it shows `Packed`.
     code: |
       pack()
@@ -266,6 +267,7 @@ cards:
           `greet` has one parameter, so each call has to pass one argument.
         hints:
           - What does the function need in order to run?
+        requires: ['def', 'name:greet']
       - prompt: This should show `20 km left`, but it shows `km 20 left`. Fix the call without changing the function.
         code: |
           def status(distance, unit):
@@ -283,6 +285,7 @@ cards:
           Arguments go to parameters by position, so the distance has to come first.
         hints:
           - Which parameter gets the first argument?
+        requires: ['def', 'name:status']
 
   - type: learn
     id: worked
@@ -315,6 +318,7 @@ cards:
 
   - type: write
     id: announce
+    requires: ['def', 'name:announce', 'fstring']
     prompt: >-
       Write a function `announce(item, price)` that prints a line like `rope costs 12`. Then call it with `"rope"` and `12`.
     starter: |
@@ -342,6 +346,7 @@ cards:
         expectOutput: SUMMIT
         hints:
           - Use the string tool `.upper()` on the parameter.
+        requires: ['def', 'name:shout', 'name:upper']
 
   - type: choice
     id: remember-elif

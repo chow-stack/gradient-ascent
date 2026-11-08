@@ -362,6 +362,7 @@ cards:
           The list raises an `IndexError` past its end, and that's what stops a `for` loop.
         hints:
           - What happens when a list is asked for an item past its end?
+        requires: ['if', 'for', 'def']
       - prompt: '`Pairs([1], [2])[0]` should give back `(1, 2)`, but it gives a `TypeError`. Fix `__getitem__`.'
         code: |
           class Pairs:

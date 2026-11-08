@@ -216,6 +216,7 @@ cards:
 
   - type: fix
     id: fix-early
+    requires: ['def', 'return', 'name:f']
     prompt: '`run_later` should be passed the function and call it afterwards, so this shows `done`. But the function is called too early. Fix it.'
     code: |
       def job():
@@ -251,6 +252,7 @@ cards:
           Pass `len` itself. `sorted` will call it on each word.
         hints:
           - Should `len` have parentheses here?
+        requires: ['name:sorted']
       - prompt: 'This should give the word with the top count, `b`, but `max(c)` compares the keys and gives `z`. Fix it.'
         code: |
           c = {"b": 9, "z": 1}
@@ -264,6 +266,7 @@ cards:
           With `key=c.get`, `max` compares counts, and gives back the key.
         hints:
           - You need to tell `max` what to compare.
+        requires: ['name:max']
 
   - type: learn
     id: worked

@@ -270,6 +270,7 @@ cards:
 
   - type: fix
     id: fix-zeros
+    requires: ['name:zeros']
     prompt: This should make a grid of zeros with 2 rows and 3 columns, and show `(2, 3)`, but it gives a `TypeError`. Fix it.
     code: |
       import numpy as np
@@ -297,6 +298,7 @@ cards:
           `.shape` is an attribute, so it has no parentheses.
         hints:
           - What's after `.shape`?
+        requires: ['name:ones']
       - prompt: '`flatten_batch(images)` should give each image one long row, so this batch of 3 images should show `(3, 4)`. It shows `(2, 6)`, because the batch size is hard-coded. Fix it.'
         code: |
           import numpy as np
@@ -318,6 +320,7 @@ cards:
           Don't hard-code the batch size. Using `len` means that it works for any batch.
         hints:
           - What gives the number of images?
+        requires: ['def', 'return', 'name:reshape']
 
   - type: learn
     id: worked

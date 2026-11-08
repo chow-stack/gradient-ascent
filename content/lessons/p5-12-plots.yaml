@@ -303,6 +303,7 @@ cards:
 
   - type: fix
     id: fix-lengths
+    requires: ['name:array', 'name:linspace', 'name:plot']
     prompt: This crashes with a `ValueError`, because `x` and `y` have different lengths. Fix the line that makes `x`, so that this draws the line, and shows `4`.
     code: |
       import numpy as np
@@ -340,6 +341,7 @@ cards:
           `linspace` takes the number of points, and `arange` takes the step.
         hints:
           - Which function takes the number of points?
+        requires: ['name:len']
       - prompt: This should keep the two plots separate, so it should show `2`. But both lines land on one plot. Fix it.
         code: |
           import matplotlib.pyplot as plt
@@ -358,6 +360,7 @@ cards:
           `plt.figure()` starts a new plot.
         hints:
           - What starts a new plot?
+        requires: ['name:plot', 'name:len', 'name:get_fignums']
 
   - type: learn
     id: worked

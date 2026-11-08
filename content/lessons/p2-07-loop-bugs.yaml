@@ -197,6 +197,7 @@ cards:
 
   - type: fix
     id: fix-infinite
+    vary: [{ n: '4' }, { n: '2' }, { n: '7' }]
     prompt: This never ends, so it gets stopped after a few seconds. It should show `3`, `2` and `1`. Fix it.
     code: |
       n = 3
@@ -232,6 +233,7 @@ cards:
           The loop updated the wrong variable, so `i` never changed.
         hints:
           - Which variable does the condition look at?
+        vary: [{ i: '2' }, { i: '0' }, { i: '3' }]
       - prompt: This should show `3` and then `0`, but it shows `4` and `1`. Fix the loop.
         code: |
           def count_to(limit):
@@ -261,6 +263,8 @@ cards:
           Starting at 0 with `<=` gives one extra pass. Starting at 1, or using `<`, fixes it.
         hints:
           - Try `limit = 0`. How many passes should there be?
+        requires: ['while', 'def', 'return']
+        vary: []
 
   - type: learn
     id: worked

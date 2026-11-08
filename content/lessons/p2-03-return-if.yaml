@@ -258,6 +258,8 @@ cards:
         tests:
           - { call: 'biggest(9, 2)', expect: '9' }
           - { call: 'biggest(2, 9)', expect: '9' }
+          - { call: 'biggest(10, 2)', expect: '10', hidden: true }
+          - { call: 'biggest(8, 2)', expect: '8', hidden: true }
         why: >-
           `print` shows `a` and then carries on to the last line. Only `return` leaves the function with an answer.
         hints:

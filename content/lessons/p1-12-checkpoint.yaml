@@ -114,6 +114,7 @@ cards:
 
   - type: fix
     id: fix-lost-value
+    vary: [{ text: '''yak''' }, { text: '''summit''' }]
     prompt: This should print `HELLO`. Fix it.
     code: |
       text = "hello"
@@ -129,6 +130,7 @@ cards:
 
   - type: fix
     id: fix-compare
+    vary: [{ x: '4' }]
     prompt: This should print `yes` when `x` is 3, but it won't run. Fix it.
     code: |
       x = 3
@@ -144,6 +146,7 @@ cards:
 
   - type: write
     id: write-convert
+    requires: ['op:+', 'name:int']
     prompt: '`a` and `b` hold numbers as text. Make `total` hold their sum, as a number.'
     starter: |
       a = "12"
@@ -159,6 +162,7 @@ cards:
 
   - type: write
     id: write-chain
+    vary: [{ score: '0' }, { score: '50' }]
     prompt: Make `result` hold `"pass"` if `score` is at least 50 and `"fail"` otherwise, and then add the word `" (high)"` to the end if `score` is at least 90.
     starter: |
       score = 95

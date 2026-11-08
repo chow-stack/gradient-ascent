@@ -278,6 +278,7 @@ cards:
           On the last character, `word[i + 1]` is past the end, so the loop has to stop one position early.
         hints:
           - What is `i + 1` on the last pass?
+        vary: [{ word: '''summit''' }, { matches: '-1' }, { matches: '2' }]
       - prompt: '`reverse("abc")` should give back `"cba"`, but it gives back `"abc"`. Fix it.'
         code: |
           def reverse(text):
@@ -331,6 +332,7 @@ cards:
 
   - type: write
     id: count-char
+    requires: ['loop']
     prompt: Write `count_char(text, target)`, which gives back how many times the character `target` appears in `text`. So `count_char("banana", "n")` gives back `2`. Use a loop, not a string method.
     starter: |
       def count_char(text, target):

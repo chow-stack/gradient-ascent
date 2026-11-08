@@ -370,6 +370,7 @@ cards:
           A default of `None` means a new list can be made on each call.
         hints:
           - Use `None` as the default, and make the list inside.
+        requires: ['def', 'class', 'name:Box']
       - prompt: The saved copy should keep the old value, and this should show `1`. Fix the line that saves it.
         code: |
           import copy
@@ -400,6 +401,7 @@ cards:
           `best = m` is only a second name, so you need a real copy.
         hints:
           - The `copy` module is already imported.
+        requires: ['def', 'class', 'name:Model']
 
   - type: learn
     id: worked

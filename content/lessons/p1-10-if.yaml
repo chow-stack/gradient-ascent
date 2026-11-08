@@ -231,6 +231,7 @@ cards:
 
   - type: fix
     id: missing-colon
+    vary: [{ hour: '0' }]
     prompt: This won't run. Fix it so it shows `open`.
     code: |
       hour = 10
@@ -262,6 +263,7 @@ cards:
           The block under an `if` has to be indented, usually with four spaces.
         hints:
           - What marks a line as part of the `if`?
+        vary: [{ hour: '0' }]
       - prompt: This should show only `closed` when `hour` is 22, but it also shows `Welcome`. Fix it.
         code: |
           hour = 22
@@ -283,9 +285,11 @@ cards:
           `Welcome` should only appear when it's open, so it belongs in the first block.
         hints:
           - Which block should `Welcome` be part of?
+        vary: [{ hour: '0' }]
 
   - type: write
     id: discount
+    vary: [{ age: '19' }, { price: '21' }, { price: '19' }]
     prompt: >-
       Tickets cost `price`. If `age` is under 12, take 5 off. Use an `if` to update `price`, so that it works for any age.
     starter: |
@@ -316,6 +320,8 @@ cards:
           - { call: label, expect: "'even'" }
         hints:
           - A number is even when `n % 2 == 0`.
+        vary: [{ n: '15' }]
+        requires: ['if']
 
   - type: choice
     id: remember-compare

@@ -216,6 +216,7 @@ cards:
 
   - type: fix
     id: fix-local-outside
+    requires: ['def', 'return', 'name:add']
     prompt: This crashes with a `NameError`, because `total` only exists inside the function. Fix it so it shows `7`.
     code: |
       def add(a, b):
@@ -261,6 +262,8 @@ cards:
           With a parameter, the function has its own `steps` with a value from the start.
         hints:
           - The function needs to get `steps` from the call.
+        vary: [{ steps: '2' }, { steps: '0' }]
+        requires: []
       - prompt: This `def` line gives a `SyntaxError`. Fix it so the program shows `20`.
         code: |
           def scale(by=10, x):
@@ -278,6 +281,7 @@ cards:
           Parameters with defaults have to come after those without.
         hints:
           - Which kind of parameter has to come first?
+        requires: ['def', 'return', 'op:*']
 
   - type: learn
     id: worked

@@ -208,6 +208,7 @@ cards:
 
   - type: fix
     id: wrong-order
+    vary: [{ score: '0' }, { score: '75' }]
     prompt: This should show `A` for a score of 95, but it shows `B`. Fix it without changing any numbers.
     code: |
       score = 95
@@ -247,6 +248,7 @@ cards:
           Separate `if`s are separate questions. `elif` makes the second depend on the first being false.
         hints:
           - What makes the second check run only if the first was false?
+        vary: [{ n: '7' }, { n: '12' }]
       - prompt: This has a `SyntaxError`. Fix it so that it shows `other`.
         code: |
           n = 3
@@ -270,6 +272,7 @@ cards:
           `else` has no condition. Use `elif` when there's a question to ask.
         hints:
           - Which word takes a condition?
+        vary: [{ n: '2' }, { n: '1' }]
 
   - type: learn
     id: worked
@@ -304,6 +307,8 @@ cards:
 
   - type: write
     id: size-label
+    requires: ['if', 'elif']
+    vary: [{ n: '0' }, { n: '100' }]
     prompt: >-
       Make `size` hold `"small"` if `n` is under 10, `"medium"` if it's under 100, and `"large"` otherwise. Use one chain.
     starter: |
@@ -341,6 +346,7 @@ cards:
           - { call: fizz, expect: "'both'" }
         hints:
           - Divisible means the remainder is 0. Which condition has to go first?
+        vary: [{ n: '31' }, { n: '3' }, { n: '5' }]
 
   - type: choice
     id: remember-reassign

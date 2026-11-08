@@ -268,16 +268,20 @@ cards:
           Unpack the tuple so that `high` holds only the second value.
         hints:
           - The function gives back two values, so how many names do you need?
+        requires: ['def', 'return', 'name:stats']
       - prompt: This should show `1 2`, but it crashes with a `ValueError`. Fix the unpacking, so that the last item is ignored.
         code: |
-          a, b = (1, 2, 3)
+          t = (1, 2, 3)
+          a, b = t
           print(a, b)
         solution: |
-          a, b, _ = (1, 2, 3)
+          t = (1, 2, 3)
+          a, b, _ = t
           print(a, b)
-        highlightLine: 1
+        highlightLine: 2
         tests: []
         expectOutput: 1 2
+        vary: [{ t: '(4, 5, 6)' }, { t: '(7, 8, 9)' }]
         why: >-
           There has to be a name for every item, and `_` is the one for an item you don't need.
         hints:

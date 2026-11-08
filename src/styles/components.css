@@ -1041,3 +1041,160 @@
     transition: none;
   }
 }
+
+/* ───────────── AI check (explain cards) ───────────── */
+.ga-ai-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.ga-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: var(--weight-strong);
+  color: var(--color-sky);
+}
+.ga-verdict {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: var(--weight-strong);
+  background: color-mix(in oklab, var(--color-success) 16%, transparent);
+  color: var(--color-success);
+}
+.ga-verdict[data-verdict='partly'] {
+  background: color-mix(in oklab, var(--color-xp) 16%, transparent);
+  color: var(--color-xp);
+}
+.ga-verdict[data-verdict='missed'] {
+  background: color-mix(in oklab, var(--color-danger) 16%, transparent);
+  color: var(--color-danger);
+}
+.ga-ai-point {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-raised);
+}
+.ga-ai-point[data-status='missed'] {
+  background: color-mix(in oklab, var(--color-danger) 9%, var(--color-raised));
+}
+.ga-ai-model summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: var(--weight-strong);
+  color: var(--color-sky);
+  list-style: none;
+}
+.ga-ai-model summary::-webkit-details-marker {
+  display: none;
+}
+.ga-ai-model summary svg {
+  transition: transform 160ms ease;
+  transform: rotate(-90deg);
+}
+.ga-ai-model[open] summary svg {
+  transform: none;
+}
+.ga-ai-orb {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--color-sky);
+  background: color-mix(in oklab, var(--color-sky) 14%, transparent);
+  animation: ga-ai-pulse 1.4s ease-in-out infinite;
+}
+.ga-ai-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.ga-ai-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: ga-ai-dot 1.2s ease-in-out infinite;
+}
+.ga-ai-dots span:nth-child(2) {
+  animation-delay: 160ms;
+}
+.ga-ai-dots span:nth-child(3) {
+  animation-delay: 320ms;
+}
+.ga-ai-skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--color-raised) 0%, var(--color-progress-track) 50%, var(--color-raised) 100%);
+  background-size: 200% 100%;
+  animation: ga-ai-shimmer 1.3s linear infinite;
+}
+@keyframes ga-ai-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes ga-ai-pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
+@keyframes ga-ai-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-ai-orb,
+  .ga-ai-dots span,
+  .ga-ai-skeleton {
+    animation: none;
+  }
+}
+
+/* ───────────── Project ───────────── */
+.ga-milestone {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.ga-milestone[data-state='next'] {
+  border-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+}
+.ga-milestone[data-state='done'] {
+  background: color-mix(in oklab, var(--color-success) 7%, var(--color-surface));
+}
+.ga-project-example {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.5;
+  overflow-x: auto;
+}

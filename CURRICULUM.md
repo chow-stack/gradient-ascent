@@ -84,22 +84,28 @@ A checkpoint ends every unit before the project:
 
 ### Projects
 
-Each unit ends with a project: one program built step by step.
+Each unit ends with a project: one longer program with a playful goal that still uses only that unit's ideas.
 
-- Each step is a write card checked by tests. Its starter includes reference solutions for the earlier steps.
-- Project cards aren't added to spaced review; the ideas they use already are.
+- **One brief, one editor, a milestone checklist.** The brief says what you're building and why it's fun, with an example of
+  what the finished program prints. There's no step-by-step code: you plan and write the whole program yourself.
+- **Milestones tick off as they pass.** Check runs the whole program against each milestone separately, so the checklist shows
+  how far it has got. A milestone has its own tests, `vary` reruns and concept rules (which can be scoped to one function).
+- **Hints only on request.** "Stuck? Show me the next step" shows the next hint for the first unfinished milestone. The last
+  hint can be close to the code.
+- **Saved as you type**, so a project can be left and finished another day. Practising a project later starts it fresh.
+- Projects aren't added to spaced review; the ideas they use already are.
 - Units 5–11 also have a project outside the app, done in a long block (§5).
 
 ### Threads that come back
 
-| Idea                    | First                    | Again                 | Again                                  |
-| ----------------------- | ------------------------ | --------------------- | -------------------------------------- |
-| References and aliasing | Python lists (U1)        | Names and copies (U2) | NumPy views (U3)                       |
-| Accumulator loops       | Loop patterns (U1)       | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
-| Functions as values     | Passing functions (U4)   | —                     | `_backward` closures in micrograd (U8) |
-| Operator overloading    | Special methods (U4)     | Vector project (U4)   | `Value.__add__` in micrograd (U8)      |
-| Word counts             | Word stats project (U1)  | —                     | Bigram counts (U9, U10)                |
-| Likelihood              | Logistic regression (U5) | Probability (U9)      | makemore's loss (U10)                  |
+| Idea                    | First                     | Again                 | Again                                  |
+| ----------------------- | ------------------------- | --------------------- | -------------------------------------- |
+| References and aliasing | Python lists (U1)         | Names and copies (U2) | NumPy views (U3)                       |
+| Accumulator loops       | Loop patterns (U1)        | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
+| Functions as values     | Passing functions (U4)    | —                     | `_backward` closures in micrograd (U8) |
+| Operator overloading    | Special methods (U4)      | Mini PyTorch (U4)     | `Value.__add__` in micrograd (U8)      |
+| Next-word prediction    | Autocomplete project (U3) | —                     | Bigram counts (U11, U12)               |
+| Likelihood              | Logistic regression (U5)  | Probability (U9)      | makemore's loss (U10)                  |
 
 ---
 
@@ -117,6 +123,20 @@ Each unit ends with a project: one program built step by step.
 7. **Math and code cards should have variants** with fresh values. Retrieval over restudy is unproven in math, while
    spacing helps modestly, so the skill being practised has to be working it out rather than recalling an answer.
 8. **Visuals need work around them.** A prediction first and a graded question after.
+9. **A check must tell a real answer from a fake one.** Output alone isn't enough, since `size = "medium"` prints the
+   same as working it out. So code cards also use:
+   - `vary`: other values for the variables at the top of the code. The answer and the solution rerun with each and must
+     print the same and give the same test values.
+   - Hidden tests with other inputs, for functions.
+   - `requires` / `forbids`: the concept the card is about (`elif`, a loop, a comprehension, `name:zip`), or what it must
+     do without (no loops in the NumPy unit).
+
+   `content:check` tries hard-coded fakes against every code card and project milestone (printing the expected output,
+   assigning the expected values, functions that return the first expected value) and fails if any of them pass.
+
+10. **Explain cards are graded by AI when there's a key.** It marks each key point hit, missed or unclear and picks
+    Nailed it, Partly or Missed it. "AI got it wrong" lets you grade yourself instead; the learner's grade counts and the
+    disagreement is saved. With no key, offline, or on an error, you compare with a good answer and grade yourself.
 
 ---
 
@@ -146,7 +166,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Making decisions with if | `if`, `else`, indentation, default-then-update                           | `if` repeats like a loop; `else` with a condition; indentation is only style        |
 | 11  | Many choices with elif   | `elif`, first match wins, chain vs separate `if`s, boundaries            | Every matching branch runs; order doesn't matter; `>` vs `>=`                       |
 
-**Checkpoint:** built (12 cards). **Project · Trail report** _(built)_: clean and convert the input, rate the hike, build the report.
+**Checkpoint:** built (12 cards). **Project · Monster card** _(built)_: a creature for a card game. Shout its name, work out a power score and bar, rank it with `if`/`elif`, find its weak spot, and print a framed card that resizes to the name. Checked with other stats.
 
 ### Unit 2 · Functions and repetition _(built)_
 
@@ -164,7 +184,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Loops inside loops     | Nested loops, grids, `end=`, every pair                      | Inner loop runs once; a shared variable; an accumulator at the wrong level; `break` scope  |
 | 11  | Reading a traceback    | Tracebacks through calls, finding the cause                  | Reading from the top; assuming the crash line is the bug                                   |
 
-**Checkpoint:** built (12 cards). **Project · Find the bottom** _(built)_: gradient descent on one number, using `loss`, `step`, `descend` and `steps_needed`, and then a learning rate that's too big.
+**Checkpoint:** built (12 cards). **Project · Adam climbs the hill** _(built)_: gradient ascent in the fog. `height`, `uphill` (which way is up), `climb` with a `while` loop, a hill drawn with nested loops into one string, then the story of a climb from any start.
 
 ### Unit 3 · Collections and libraries _(built)_
 
@@ -183,7 +203,7 @@ error lesson moving from introduction to consolidation.
 | 11  | Using libraries                 | `import`, `math`, `random`, seeds, `as`, `from`                   | Missing import or prefix; `randint` excludes the end; `shuffle` gives back a list          |
 | 12  | Numbers that don't quite add up | Float precision, tolerance, formatting decimals                   | `==` on floats; `while x != 1.0`; rounding in the middle of a calculation                  |
 
-**Checkpoint:** built (12 cards). **Project · Word stats** _(built)_: `clean`, `word_counts`, `most_common` and `report`. Reading text files was optional and is left out, because the browser runner has no files of the learner's own.
+**Checkpoint:** built (12 cards). **Project · Autocomplete** _(built)_: a phone-keyboard word suggester trained on Adam's diary. A table of what follows what, the best guess with ties, greedy completion (which loops, like a real phone), then sampling with `random.choice` and a seed. Reading text files is left out, because the browser runner has no files of the learner's own.
 
 ### Unit 4 · Python for ML code _(built)_
 
@@ -206,7 +226,7 @@ Rewritten in the current format. Each topic had to earn its place: micrograd, Py
 | 13  | Building on a class                       | Inheritance, overriding, `super().__init__()`, `forward`                          | A child's `__init__` runs the parent's automatically; `self` in a parent's method is the parent        |
 | 14  | Raising and catching errors               | `raise`, `try`, `except`, `assert`, debugging silent bugs                         | Giving back a made-up 0; bare `except:` is a good default; no crash means no bug                       |
 
-**Checkpoint:** built (13 cards). **Project · Vector class** _(built)_: `__init__`/`__repr__`, arithmetic, `dot`/`length`, `__eq__` with a float tolerance.
+**Checkpoint:** built (13 cards). **Project · Mini PyTorch** _(built)_: a `Module` base with `__call__`, `Linear` and `ReLU` subclasses, a `Sequential` with `__len__` and `__getitem__`, `__repr__`s and a `ValueError`, then a network wired by hand that solves XOR.
 
 Moved out on purpose: recursion and DFS are taught in micrograd (U8), where they're needed. Custom decorators, generator functions, packaging and the `if __name__` check wait until local projects need them.
 
@@ -229,7 +249,7 @@ Written in the current format. Each lesson's code runs in real NumPy, and plots 
 | 11  | Randomness and batches    | `default_rng`, seeds, `normal`, `permutation`, `choice`, `concatenate`, `stack`, batches  | Shuffling inputs and labels separately; recreating the generator; `integers` includes its end       |
 | 12  | Plots                     | `plot`, `scatter`, `hist`, `imshow`, labels, reading a loss curve                         | Different lengths; `arange` takes a count; flat loss means finished; a mean shows the whole picture |
 
-**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Nearest neighbours** _(built)_: normalise rows, a similarity table, most similar row, a classifier and its accuracy, then a plot.
+**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Doodle recogniser** _(built)_: nearest neighbours on 5×5 doodles with no loops in the maths. Flatten, distances, one prediction, all predictions at once by broadcasting, then accuracy and an `imshow` of the doodle it gets wrong, and why.
 
 **Exit test:** predict shapes and vectorise loops. It's the checkpoint.
 
@@ -335,7 +355,9 @@ Signals that matter more than XP: delayed unaided tasks, completed long blocks, 
 - [x] Unit checkpoints and unit-level unlocking.
 - [x] Daily 5, with one fixed set a day and its own streak rule.
 - [x] Card variants with fresh values, each checked in real Python.
-- [x] Projects as step-by-step write cards, kept out of spaced review.
+- [x] Projects as one brief and editor with a milestone checklist, saved as you type, kept out of spaced review.
+- [x] Checks that can't be passed by hard-coding: `vary` reruns, hidden tests, concept rules, and a cheat test in `content:check`.
+- [x] AI grading of explain cards, with self-grading as the fallback and when the learner disagrees.
 - [x] NumPy, self-hosted so it works offline.
 - [ ] **Modify** card type: starting code plus an instruction, checked by tests.
 - [ ] Parsons cards with blanks inside lines.

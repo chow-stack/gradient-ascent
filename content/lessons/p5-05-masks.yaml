@@ -273,6 +273,8 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'in_range(np.array([-1, 5, 20]))', expect: '[5]' }
+      - { call: 'in_range(np.array([1, 7, 22]))', expect: '[1, 7]', hidden: true }
+      - { call: 'in_range(np.array([-1, 5, 20, 4]))', expect: '[5, 4]', hidden: true }
     why: >-
       `and` wants a single true or false. `&` works item by item, and it needs parentheses around each comparison.
     hints:
@@ -296,6 +298,7 @@ cards:
           An `if` needs one answer, and `.any()` gives one.
         hints:
           - Which method turns many answers into one?
+        requires: ['if', 'name:array']
       - prompt: '`accuracy(p, y)` should give back a fraction, so `accuracy(np.array([1, 0]), np.array([1, 1]))` is `0.5`. But it gives back `1`. Fix it.'
         code: |
           import numpy as np
@@ -310,6 +313,8 @@ cards:
         highlightLine: 4
         tests:
           - { call: 'accuracy(np.array([1, 0]), np.array([1, 1]))', expect: '0.5' }
+          - { call: 'accuracy(np.array([3, 2]), np.array([1, 1]))', expect: '0.0', hidden: true }
+          - { call: 'accuracy(np.array([1]), np.array([1, 1]))', expect: '1.0', hidden: true }
         why: >-
           `.sum()` counts how many are right, and `.mean()` gives the fraction.
         hints:
@@ -353,6 +358,7 @@ cards:
 
   - type: write
     id: write-accuracy
+    forbids: ['loop']
     prompt: Write `above_mean(a)`, with no loop, which gives back the items of `a` that are greater than its mean. So `above_mean(np.array([1, 2, 6]))` gives back `[6]`.
     starter: |
       import numpy as np
@@ -402,6 +408,8 @@ cards:
         tests:
           - { call: 'clip_negative(np.array([1, -2]))', expect: '[1, 0]' }
           - { call: '(lambda a: (clip_negative(a), a)[1])(np.array([-1]))', expect: '[-1]', hidden: true }
+          - { call: 'clip_negative(np.array([-2, 1]))', expect: '[0, 1]', hidden: true }
+          - { call: 'clip_negative(np.array([3, 0]))', expect: '[3, 0]', hidden: true }
         hints:
           - '`np.where` makes a new array. So does `.copy()`, if you want to assign through a mask.'
 

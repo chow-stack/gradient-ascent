@@ -226,6 +226,7 @@ cards:
 
   - type: fix
     id: average
+    requires: ['op:/', 'op:+']
     prompt: This should show the average of 80 and 90, which is `85.0`. It runs, but the answer is wrong. Fix it.
     code: |
       print(80 + 90 / 2)
@@ -249,9 +250,11 @@ cards:
           In Python, `^` isn't power. It's a different operation on the bits of a number. Use `**`.
         hints:
           - Which operator means "to the power of"?
+        requires: ['op:**']
 
   - type: write
     id: split-sweets
+    requires: ['op://', 'op:%']
     prompt: >-
       29 sweets are shared between 4 people. On one line, show how many whole sweets each person gets. On the next line,
       show how many are left over.

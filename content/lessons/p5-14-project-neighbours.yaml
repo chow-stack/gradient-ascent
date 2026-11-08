@@ -3,211 +3,171 @@ track: ml
 unit: 5
 order: 14
 kind: project
-title: 'Project: Nearest neighbours'
-summary: Build a similarity search and your first classifier, with no loops.
+title: 'Project: Doodle recogniser'
+summary: Teach the computer to recognise tiny doodles by finding the most similar one it has seen, with no loops. Then catch it getting one wrong.
 
 cards:
-  - type: learn
-    id: brief
-    label: The project
-    title: A classifier with no training
-    body: >-
-      Here's a simple and surprisingly strong idea: to classify something new, find the most similar example you've already seen, and copy its label. It's called nearest neighbours. Search engines, recommendation systems and language model tools all rely on this same step of finding the most similar vectors.
+  - type: project
+    id: doodles
+    brief: >-
+      Here's a simple and surprisingly strong idea. To recognise something new, find the most similar thing you've already seen and copy its label. It's
+      called nearest neighbours. You'll use it to recognise 5 by 5 doodles of a cross, a plus and a square.
 
 
-      You'll build it with cosine similarity, and with no loops, so it stays fast with thousands of examples. It uses this unit's main ideas: `keepdims`, broadcasting, a table of dot products, masks and `argmax`. There are 4 steps, and your earlier work is in the starter each time. At the end, you can run it on some data and see a plot.
+      An image is a grid of numbers, 1 for ink and 0 for paper. Flatten each grid into a row of 25 numbers, and "most similar" becomes "closest", measured
+      with the distance formula. You'll do it with no loops in the maths, using this unit's reshaping, axes and broadcasting, so it would stay fast with
+      thousands of images.
 
 
-      Before you write each line, say what shape it should give. `X` always has a row for each example, and a column for each feature.
-
-  - type: write
-    id: normalise
-    prompt: >-
-      Step 1 of 4. Write `normalise_rows(X)`, which gives back `X` with each row divided by its own length, so that every row has a length of 1. `np.linalg.norm(X, axis=1, keepdims=True)` gives the lengths, in a shape that lines up.
+      The training doodles and three test doodles are in the starter, built from text by `doodle()`. One test doodle will fool your recogniser. When it
+      does, draw it with `imshow` and work out why. Before each line, say what shape it should give.
+    example: |
+      Doodle 1: looks like a cross (it's a cross)
+      Doodle 2: looks like a plus (it's a plus)
+      Doodle 3: looks like a plus (it's a square)
+      Accuracy: 67%
     starter: |
-      import numpy as np
-
-      def normalise_rows(X):
-          # Your code here
-    solution: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-    tests:
-      - { call: 'normalise_rows(np.array([[3.0, 4.0], [0.0, 2.0]]))', expect: '[[0.6, 0.8], [0.0, 1.0]]' }
-      - { call: 'normalise_rows(np.ones((5, 2))).shape', expect: '(5, 2)' }
-    why: >-
-      The lengths have shape `(rows, 1)`, which stretches across the columns, so each row uses its own length.
-    hints:
-      - The shapes are `(rows, columns)` and `(rows, 1)`.
-
-  - type: write
-    id: similarity
-    prompt: >-
-      Step 2 of 4. Write `similarity(X)`, which gives back a table where the cell in row `i`, column `j` is the cosine similarity of rows `i` and `j`. Its shape is `(rows, rows)`.
-    starter: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          # Your code here
-    solution: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          U = normalise_rows(X)
-          return U @ U.T
-    tests:
-      - { call: 'similarity(np.array([[1.0, 0.0], [2.0, 0.0], [0.0, 3.0]]))', expect: '[[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]]' }
-      - { call: 'similarity(np.ones((4, 3))).shape', expect: '(4, 4)' }
-    why: >-
-      A matrix product is a table of dot products. With unit rows, each dot product is a cosine similarity.
-    hints:
-      - The product you want is `(rows, columns) @ (columns, rows)`.
-
-  - type: write
-    id: most-similar
-    prompt: >-
-      Step 3 of 4. Write `most_similar(X, i)`, which gives back the position of the row most similar to row `i`, leaving out row `i` itself. Every row is a perfect match with itself, so set that one's score to `-np.inf`, which is lower than any number, before you take the `argmax`.
-    starter: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          U = normalise_rows(X)
-          return U @ U.T
-
-      def most_similar(X, i):
-          # Your code here
-    solution: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          U = normalise_rows(X)
-          return U @ U.T
-
-      def most_similar(X, i):
-          scores = similarity(X)[i]
-          scores[i] = -np.inf
-          return scores.argmax()
-    tests:
-      - { call: 'most_similar(np.array([[1.0, 0.0], [1.0, 0.1], [0.0, 1.0]]), 0)', expect: '1' }
-      - { call: 'most_similar(np.array([[1.0, 0.0], [1.0, 0.1], [0.0, 1.0]]), 2)', expect: '1' }
-      - { call: 'most_similar(np.array([[0.0, 1.0], [1.0, 0.0], [0.1, 1.0]]), 0)', expect: '2' }
-    why: >-
-      Assigning to a row changes the table, but this table is new each time, so that's safe here. If you kept one table to use again, you'd want `.copy()`.
-    hints:
-      - Row `i` of the table holds that row's similarity to every other.
-
-  - type: write
-    id: classify
-    prompt: >-
-      Step 4 of 4. Write `predict(X_train, y_train, X_test)`, which gives each test row the label of its most similar training row. Work out a table with a row per test example and a column per training example, take the best column in each row, and use those positions to pick from `y_train`. Then write `accuracy(preds, labels)`.
-    starter: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          U = normalise_rows(X)
-          return U @ U.T
-
-      def most_similar(X, i):
-          scores = similarity(X)[i]
-          scores[i] = -np.inf
-          return scores.argmax()
-
-      def predict(X_train, y_train, X_test):
-          # Your code here
-
-      def accuracy(preds, labels):
-          # Your code here
-    solution: |
-      import numpy as np
-
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
-
-      def similarity(X):
-          U = normalise_rows(X)
-          return U @ U.T
-
-      def most_similar(X, i):
-          scores = similarity(X)[i]
-          scores[i] = -np.inf
-          return scores.argmax()
-
-      def predict(X_train, y_train, X_test):
-          scores = normalise_rows(X_test) @ normalise_rows(X_train).T
-          return y_train[scores.argmax(axis=1)]
-
-      def accuracy(preds, labels):
-          return (preds == labels).mean()
-    tests:
-      - { call: 'predict(np.array([[1.0, 0.0], [0.0, 1.0]]), np.array([7, 9]), np.array([[5.0, 1.0], [1.0, 5.0], [2.0, 0.0]]))', expect: '[7, 9, 7]' }
-      - { call: 'predict(np.ones((6, 2)), np.zeros(6), np.ones((3, 2))).shape', expect: '(3,)' }
-      - { call: 'accuracy(np.array([1, 0, 1, 1]), np.array([1, 1, 1, 1]))', expect: '0.75' }
-    why: >-
-      The shapes tell the whole story. `(test, features) @ (features, train)` gives `(test, train)`, `argmax(axis=1)` gives `(test,)`, and those positions pick the labels.
-    hints:
-      - The product you want is `(test, features) @ (features, train)`.
-      - An array of positions picks items from `y_train`.
-
-  - type: learn
-    id: see-it
-    label: Recap
-    title: See it work
-    body: >-
-      Run this to try your classifier on two clouds of points, each pointing in a different direction. It splits them into training and test sets, measures the accuracy and plots the result. Change the seed or the noise and see what happens to the accuracy.
-
-
-      You've now got the tools that the rest of the course is built on. Without any training, this model already gets most of them right, which makes it a useful baseline: any model you train later has to beat it. Next unit is the calculus behind the gradient lines you've been copying, and how a model can improve itself by following them.
-    code: |
       import numpy as np
       import matplotlib.pyplot as plt
 
-      def normalise_rows(X):
-          return X / np.linalg.norm(X, axis=1, keepdims=True)
 
-      def predict(X_train, y_train, X_test):
-          scores = normalise_rows(X_test) @ normalise_rows(X_train).T
-          return y_train[scores.argmax(axis=1)]
+      def doodle(text):
+          return np.array([[1.0 if c == "#" else 0.0 for c in row] for row in text.split()])
 
-      rng = np.random.default_rng(0)
-      noise = 0.5
-      a = rng.normal([3.0, 1.0], noise, size=(60, 2))
-      b = rng.normal([1.0, 3.0], noise, size=(60, 2))
-      X = np.concatenate([a, b])
-      y = np.array([0] * 60 + [1] * 60)
 
-      order = rng.permutation(len(X))
-      X, y = X[order], y[order]
-      X_train, y_train = X[:90], y[:90]
-      X_test, y_test = X[90:], y[90:]
+      train = np.array([
+          doodle("#...# .#.#. ..#.. .#.#. #...#"),
+          doodle("#...# .#.#. ..#.. .#.#. #..##"),
+          doodle("..#.. ..#.. ##### ..#.. ..#.."),
+          doodle("..#.. ..#.. ####. ..#.. ..#.."),
+          doodle("##### #...# #...# #...# #####"),
+          doodle("####. #...# #...# #...# #####"),
+      ])
+      labels = np.array(["cross", "cross", "plus", "plus", "square", "square"])
 
-      preds = predict(X_train, y_train, X_test)
-      print("accuracy:", (preds == y_test).mean())
+      tests = np.array([
+          doodle("#...# .#.#. ..#.. .#.#. ##..#"),
+          doodle("..#.. ..#.. ##### ..#.. ..##."),
+          doodle("..... .###. .#.#. .###. ....."),
+      ])
+      test_labels = np.array(["cross", "plus", "square"])
 
-      plt.scatter(X_test[preds == 0, 0], X_test[preds == 0, 1], label="predicted 0")
-      plt.scatter(X_test[preds == 1, 0], X_test[preds == 1, 1], label="predicted 1")
-      plt.xlabel("feature 1")
-      plt.ylabel("feature 2")
-      plt.legend()
-    subgoals:
-      - { line: 13, label: 'Two clouds of points' }
-      - { line: 18, label: 'One shuffle for both' }
-      - { line: 23, label: 'One line of prediction' }
-      - { line: 26, label: 'Each predicted class in its own colour' }
-    predict: How accurate do you think it will be?
+      # Your functions go here.
+    solution: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+
+      def doodle(text):
+          return np.array([[1.0 if c == "#" else 0.0 for c in row] for row in text.split()])
+
+
+      train = np.array([
+          doodle("#...# .#.#. ..#.. .#.#. #...#"),
+          doodle("#...# .#.#. ..#.. .#.#. #..##"),
+          doodle("..#.. ..#.. ##### ..#.. ..#.."),
+          doodle("..#.. ..#.. ####. ..#.. ..#.."),
+          doodle("##### #...# #...# #...# #####"),
+          doodle("####. #...# #...# #...# #####"),
+      ])
+      labels = np.array(["cross", "cross", "plus", "plus", "square", "square"])
+
+      tests = np.array([
+          doodle("#...# .#.#. ..#.. .#.#. ##..#"),
+          doodle("..#.. ..#.. ##### ..#.. ..##."),
+          doodle("..... .###. .#.#. .###. ....."),
+      ])
+      test_labels = np.array(["cross", "plus", "square"])
+
+
+      def flatten(images):
+          return images.reshape(len(images), -1)
+
+
+      def distances(X, x):
+          return np.sqrt(((X - x) ** 2).sum(axis=1))
+
+
+      def predict(X, labels, x):
+          return labels[np.argmin(distances(X, x))]
+
+
+      def predict_all(X, labels, T):
+          gaps = np.sqrt(((T[:, None, :] - X[None, :, :]) ** 2).sum(axis=2))
+          return labels[gaps.argmin(axis=1)]
+
+
+      guesses = predict_all(flatten(train), labels, flatten(tests))
+      for i in range(len(tests)):
+          print(f"Doodle {i + 1}: looks like a {guesses[i]} (it's a {test_labels[i]})")
+      print(f"Accuracy: {round((guesses == test_labels).mean() * 100)}%")
+
+      plt.imshow(tests[2], cmap="gray")
+      plt.title("A square it called a plus")
+      plt.show()
+    milestones:
+      - title: Flatten
+        goal: Write `flatten(images)`. It takes a stack of grids, shape `(n, rows, cols)`, and gives back one row per image, shape `(n, rows * cols)`.
+        tests:
+          - { call: 'flatten(np.zeros((3, 5, 5))).shape', expect: '(3, 25)' }
+          - { call: 'flatten(np.arange(8).reshape(2, 2, 2))', expect: '[[0, 1, 2, 3], [4, 5, 6, 7]]' }
+          - { call: 'flatten(np.ones((1, 4, 2))).shape', expect: '(1, 8)', hidden: true }
+        forbids: ['loop']
+        scope: flatten
+        hints:
+          - '`reshape` can change the shape without changing the numbers. `-1` means "whatever size fits".'
+          - '`return images.reshape(len(images), -1)`'
+      - title: How far apart?
+        goal: >-
+          Write `distances(X, x)`. `X` has one row per image and `x` is one image. Give back the distance from `x` to each row: subtract, square, add up along
+          each row, and take the square root.
+        tests:
+          - { call: 'distances(np.array([[0.0, 0.0], [3.0, 4.0]]), np.array([0.0, 0.0]))', expect: '[0.0, 5.0]' }
+          - { call: 'distances(np.array([[1.0, 1.0], [1.0, 2.0], [4.0, 5.0]]), np.array([1.0, 1.0]))', expect: '[0.0, 1.0, 5.0]', hidden: true }
+          - { call: 'distances(np.ones((4, 25)), np.zeros(25)).shape', expect: '(4,)', hidden: true }
+        forbids: ['loop']
+        scope: distances
+        hints:
+          - '`X - x` broadcasts: `x` is taken away from every row at once.'
+          - Add up along each row with `axis=1`, so you get one number per image.
+          - '`return np.sqrt(((X - x) ** 2).sum(axis=1))`'
+      - title: Nearest neighbour
+        goal: Write `predict(X, labels, x)`, which gives back the label of the row of `X` closest to `x`.
+        tests:
+          - { call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([4.0, 4.0]))", expect: "'b'" }
+          - { call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([1.0, 2.0]))", expect: "'a'" }
+          - { call: "predict(flatten(train), labels, flatten(tests)[0])", expect: "'cross'", hidden: true }
+        requires: ['name:distances']
+        forbids: ['loop']
+        scope: predict
+        hints:
+          - '`np.argmin` gives the position of the smallest value.'
+          - '`return labels[np.argmin(distances(X, x))]`'
+      - title: All at once
+        goal: >-
+          Write `predict_all(X, labels, T)`, which predicts a label for every row of `T` with no loop. Make a table of distances with one row per test image
+          and one column per training image, then take the closest in each row.
+        tests:
+          - { call: "predict_all(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([[1.0, 0.0], [6.0, 5.0], [4.0, 5.0]]))", expect: "['a', 'b', 'b']" }
+          - { call: "predict_all(np.array([[0.0], [10.0], [20.0]]), np.array(['x', 'y', 'z']), np.array([[19.0], [1.0]]))", expect: "['z', 'x']", hidden: true }
+        forbids: ['loop']
+        scope: predict_all
+        hints:
+          - '`T[:, None, :]` has shape `(m, 1, d)` and `X[None, :, :]` has shape `(1, n, d)`. Subtracting them broadcasts to `(m, n, d)`: every test image minus every training image.'
+          - Square, add up along the last axis (`axis=2`), and take the square root. That's the `(m, n)` table.
+          - '`labels[gaps.argmin(axis=1)]` picks the closest training label for each row.'
+      - title: Test it, and catch the mistake
+        goal: >-
+          Run `predict_all` on the test doodles. Print one line per doodle and the accuracy as a whole percentage, like the example. Then draw the doodle it got
+          wrong with `plt.imshow`. Why did it get that one wrong?
+        tests:
+          - { call: 'predict_all(flatten(train), labels, flatten(tests)).tolist()', expect: "['cross', 'plus', 'plus']" }
+        expectOutput: |
+          Doodle 1: looks like a cross (it's a cross)
+          Doodle 2: looks like a plus (it's a plus)
+          Doodle 3: looks like a plus (it's a square)
+          Accuracy: 67%
+        hints:
+          - '`guesses == test_labels` gives an array of `True` and `False`. Its `.mean()` is the share that are right.'
+          - '`round(... * 100)` turns 0.666 into 67.'
+          - 'The third doodle is a small square. Nearest neighbours compares pixel by pixel, and the small square''s ink is in the middle, where the plus has its ink.'

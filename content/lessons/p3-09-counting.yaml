@@ -291,6 +291,8 @@ cards:
         highlightLine: 3
         tests:
           - { call: 'count_clean("Go go")', expect: "{'go': 2}" }
+          - { call: 'count_clean(''yak'')', expect: '{''yak'': 1}', hidden: true }
+          - { call: 'count_clean(''summit'')', expect: '{''summit'': 1}', hidden: true }
         why: >-
           Clean the text before counting, or the two forms get separate keys.
         hints:

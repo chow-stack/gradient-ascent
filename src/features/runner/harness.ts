@@ -8,9 +8,15 @@
  * - Tests are `{call, expect}` pairs of Python expressions, compared with == (floats with isclose).
  *   NumPy values are compared as plain lists, so `np.array([1, 2])` passes `[1, 2]`.
  * - Plots are drawn off-screen and come back as PNGs in `figures`, whether or not the code calls plt.show().
+ * - Options (all optional) make a correct-looking answer prove itself:
+ *   - `vary`: other values for variables the code sets at the top. The code and the reference solution both
+ *     rerun with each set of values, and must print the same thing and give the same value for every test
+ *     call. So hard-coding the answer fails.
+ *   - `requires` / `forbids`: language features the code must or mustn't use, read from its syntax
+ *     (see RULE_LABELS), so a card about `elif` can insist on an `elif`.
  */
 export const HARNESS_PY = String.raw`
-import base64, io, json, math, os, sys, traceback, contextlib, builtins, warnings
+import ast, base64, io, json, math, os, sys, tokenize, traceback, contextlib, builtins, warnings
 
 os.environ["MPLBACKEND"] = "AGG"
 warnings.filterwarnings("ignore", message=".*non-interactive.*")
@@ -77,11 +83,114 @@ def __ga_same(a, b):
             return False
     return a == b
 
-def __ga_run(code, tests_json):
-    tests = json.loads(tests_json)
+_GA_KEYWORDS = {"if", "elif", "else", "for", "while", "def", "return", "class", "lambda", "try", "except",
+    "break", "continue", "and", "or", "not", "in", "is", "import", "with", "global", "nonlocal", "yield", "raise", "assert"}
+_GA_OPS = {ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%",
+    ast.Pow: "**", ast.MatMult: "@"}
+
+def __ga_features(code):
+    """Everything a requires/forbids rule can name, found in the code's tokens and syntax tree."""
+    found = set()
+    for tok in tokenize.generate_tokens(io.StringIO(code).readline):
+        if tok.type == tokenize.NAME and tok.string in _GA_KEYWORDS:
+            found.add(tok.string)
+    if "for" in found or "while" in found:
+        found.add("loop")
+    for node in ast.walk(ast.parse(code)):
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            found.add("comprehension")
+        elif isinstance(node, ast.JoinedStr):
+            found.add("fstring")
+        elif isinstance(node, ast.AugAssign):
+            found.add("augassign")
+            found.add("op:" + _GA_OPS.get(type(node.op), "?"))
+        elif isinstance(node, ast.BinOp):
+            found.add("op:" + _GA_OPS.get(type(node.op), "?"))
+        elif isinstance(node, ast.Name):
+            found.add("name:" + node.id)
+        elif isinstance(node, ast.Attribute):
+            found.add("name:" + node.attr)
+    return found
+
+def __ga_with(code, values):
+    """The code with the first top-level "name = ..." of each name given a new value. None if one is missing."""
+    tree = ast.parse(code)
+    raw = code.encode("utf-8")
+    starts = [0]
+    for line in raw.splitlines(keepends=True):
+        starts.append(starts[-1] + len(line))
+    spans = []
+    for name, expr in values.items():
+        node = next((n for n in tree.body if isinstance(n, ast.Assign) and len(n.targets) == 1
+                     and isinstance(n.targets[0], ast.Name) and n.targets[0].id == name), None)
+        if node is None:
+            return None
+        v = node.value
+        spans.append((starts[v.lineno - 1] + v.col_offset, starts[v.end_lineno - 1] + v.end_col_offset, expr))
+    for a, b, expr in sorted(spans, reverse=True):
+        raw = raw[:a] + expr.encode("utf-8") + raw[b:]
+    return raw.decode("utf-8")
+
+def __ga_exec(code, calls):
+    """Runs code in a fresh namespace, then evaluates each test call. Returns (stdout, error, values)."""
     ns = {"__name__": "__main__", "input": __ga_no_input}
     out = io.StringIO()
-    result = {"ok": True, "stdout": "", "error": None, "tests": [], "figures": []}
+    err = None
+    values = []
+    with contextlib.redirect_stdout(out):
+        try:
+            exec(compile(code, "main.py", "exec"), ns)
+            for call in calls:
+                try:
+                    values.append(("ok", eval(compile(call, "main.py", "eval"), ns)))
+                except BaseException as e:
+                    values.append(("error", type(e).__name__))
+        except BaseException as e:
+            err = __ga_err(e)
+    __ga_figures()
+    return out.getvalue(), err, values
+
+def __ga_norm(s):
+    return "\n".join(line.rstrip() for line in s.replace("\r\n", "\n").split("\n")).strip()
+
+def __ga_cases(code, solution, vary, calls, output=True):
+    rows = []
+    for values in vary:
+        label = ", ".join(f"{k} = {v}" for k, v in values.items())
+        row = {"set": label, "passed": False, "got": None, "expected": None}
+        mine = __ga_with(code, values)
+        ref = __ga_with(solution, values)
+        if ref is None:
+            row["error"] = {"type": "ContentError", "message": "the solution doesn't set " + label, "line": None}
+        elif mine is None:
+            row["missing"] = True
+        else:
+            expected, ref_err, ref_values = __ga_exec(ref, calls)
+            got, err, values = __ga_exec(mine, calls)
+            row["expected"] = expected
+            row["got"] = got
+            if ref_err:
+                row["error"] = {"type": "ContentError", "message": "the solution crashes with " + label, "line": None}
+            elif err:
+                row["error"] = err
+            else:
+                row["passed"] = not output or __ga_norm(got) == __ga_norm(expected)
+                for call, (kind, mine_v), (ref_kind, ref_v) in zip(calls, values, ref_values):
+                    if kind != ref_kind or (kind == "ok" and not __ga_same(mine_v, ref_v)) or (kind == "error" and mine_v != ref_v):
+                        row["passed"] = False
+                        row["call"] = call
+                        row["got"] = repr(mine_v) if kind == "ok" else mine_v
+                        row["expected"] = repr(ref_v) if ref_kind == "ok" else ref_v
+                        break
+        rows.append(row)
+    return rows
+
+def __ga_run(code, tests_json, opts_json="{}"):
+    tests = json.loads(tests_json)
+    opts = json.loads(opts_json)
+    ns = {"__name__": "__main__", "input": __ga_no_input}
+    out = io.StringIO()
+    result = {"ok": True, "stdout": "", "error": None, "tests": [], "figures": [], "cases": [], "rules": []}
     with contextlib.redirect_stdout(out):
         try:
             exec(compile(code, "main.py", "exec"), ns)
@@ -104,7 +213,38 @@ def __ga_run(code, tests_json):
                 result["tests"].append(row)
     result["figures"] = __ga_figures()
     result["stdout"] = out.getvalue()
+    if result["ok"]:
+        if opts.get("requires") or opts.get("forbids"):
+            found = __ga_features(__ga_scope(code, opts.get("scope")))
+            for rule in opts.get("requires", []):
+                result["rules"].append({"rule": rule, "kind": "requires", "passed": rule in found})
+            for rule in opts.get("forbids", []):
+                result["rules"].append({"rule": rule, "kind": "forbids", "passed": rule not in found})
+        if opts.get("vary") and opts.get("solution"):
+            result["cases"] = __ga_cases(code, opts["solution"], opts["vary"], [t["call"] for t in tests], opts.get("output", True))
     return json.dumps(result)
+
+def __ga_scope(code, name):
+    """The source of the top-level function or class called name (empty if it's missing), or all the code."""
+    if not name:
+        return code
+    for node in ast.parse(code).body:
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name == name:
+            return ast.get_source_segment(code, node) or ""
+    return ""
+
+def __ga_trivial(code):
+    """True when code only prints fixed values, so printing the answer IS the task."""
+    def fixed(n):
+        return isinstance(n, ast.Constant)
+    for node in ast.parse(code).body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name) and node.value.func.id == "print"
+                and all(fixed(a) for a in node.value.args) and all(fixed(k.value) for k in node.value.keywords)):
+            return False
+    return True
 `
 
 /** One step of the call chain when a run crashed, outermost first. */
@@ -113,6 +253,75 @@ export type TraceFrame = { line: number; where: string; code: string }
 export type RunError = { type: string; message: string; line: number | null; trace?: TraceFrame[] }
 
 export type TestCase = { call: string; expect: string; hidden?: boolean }
+
+/** What a requires/forbids rule can name. `name:x` is any use of the name or attribute `x`. */
+export const RULE_LABELS: Record<string, string> = {
+  if: 'an `if`',
+  elif: 'an `elif`',
+  else: 'an `else`',
+  for: 'a `for` loop',
+  while: 'a `while` loop',
+  loop: 'a loop',
+  def: 'a function (`def`)',
+  return: '`return`',
+  class: 'a class',
+  lambda: 'a `lambda`',
+  try: '`try`',
+  except: '`except`',
+  break: '`break`',
+  continue: '`continue`',
+  and: '`and`',
+  or: '`or`',
+  not: '`not`',
+  in: '`in`',
+  is: '`is`',
+  import: 'an `import`',
+  with: '`with`',
+  global: '`global`',
+  nonlocal: '`nonlocal`',
+  yield: '`yield`',
+  raise: '`raise`',
+  assert: '`assert`',
+  comprehension: 'a comprehension',
+  fstring: 'an f-string',
+  augassign: 'an update like `+=`',
+}
+
+export function ruleLabel(rule: string): string {
+  if (rule.startsWith('op:')) return `the \`${rule.slice(3)}\` operator`
+  if (rule.startsWith('name:')) return `\`${rule.slice(5)}\``
+  return RULE_LABELS[rule] ?? rule
+}
+
+export const isRule = (rule: string) =>
+  rule in RULE_LABELS || /^op:(\+|-|\*|\/|\/\/|%|\*\*|@)$/.test(rule) || /^name:\w+$/.test(rule)
+
+/** Extra checks on a run. See the harness notes above. */
+export type RunOptions = {
+  solution?: string
+  vary?: Record<string, string>[]
+  requires?: string[]
+  forbids?: string[]
+  /** Compare printed output on the reruns too (default). Project milestones that aren't about printing turn it off. */
+  output?: boolean
+  /** Check requires/forbids only inside this top-level function or class. */
+  scope?: string
+}
+
+/** One rerun with other values: what the code printed, and what the solution printed. */
+export type CaseResult = {
+  set: string
+  passed: boolean
+  got: string | null
+  expected: string | null
+  /** The code no longer sets one of these names at the top. */
+  missing?: boolean
+  /** Set when a checked value differed, rather than the printed output. */
+  call?: string
+  error?: RunError
+}
+
+export type RuleResult = { rule: string; kind: 'requires' | 'forbids'; passed: boolean }
 
 export type TestResult = {
   call: string
@@ -130,6 +339,8 @@ export type RunResult = {
   tests: TestResult[]
   /** PNGs of any plots the code drew, base64 encoded. */
   figures?: string[]
+  cases?: CaseResult[]
+  rules?: RuleResult[]
   /** Set by the client when the run was stopped (infinite loop, too slow). */
   timedOut?: boolean
 }
@@ -144,10 +355,12 @@ export function normalizeOutput(s: string): string {
     .trim()
 }
 
-/** Did a run satisfy the exercise? Checks for errors, every test, and the expected printed output if given. */
+/** Did a run satisfy the exercise? Checks for errors, every test, the printed output, other values and rules. */
 export function runPassed(r: RunResult, expectOutput?: string): boolean {
   if (!r.ok || r.timedOut) return false
   if (r.tests.some((t) => !t.passed)) return false
   if (expectOutput !== undefined && normalizeOutput(r.stdout) !== normalizeOutput(expectOutput)) return false
+  if (r.cases?.some((c) => !c.passed)) return false
+  if (r.rules?.some((c) => !c.passed)) return false
   return true
 }

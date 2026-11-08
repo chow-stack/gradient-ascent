@@ -240,6 +240,7 @@ cards:
 
   - type: fix
     id: fix-missing
+    vary: [{ counts: '{"yak": 4}' }, { counts: '{"goat": 1, "yak": 7}' }]
     prompt: This crashes with a `KeyError`. Fix it so a missing word shows `0`.
     code: |
       counts = {"goat": 2}
@@ -267,6 +268,7 @@ cards:
           Dicts don't go by position. You look up by key.
         hints:
           - What are the keys in this dict?
+        vary: [{ names: '{"first": "Grace", "last": "Hopper"}' }]
       - prompt: This should show `5`, but it crashes, because the key was stored as a number. Fix the lookup.
         code: |
           scores = {7: 5}
@@ -282,6 +284,7 @@ cards:
           `"7"` and `7` are different keys, so convert first.
         hints:
           - What type is `typed`, and what type is the key?
+        vary: [{ scores: '{3: 8}', typed: '"3"' }, { scores: '{12: 1, 7: 2}', typed: '"12"' }]
 
   - type: learn
     id: worked

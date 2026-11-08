@@ -1,5 +1,5 @@
 import { CheckCircle2, CircleX, EyeOff, Play } from 'lucide-react'
-import { normalizeOutput, type RunError, type RunResult } from '../runner/harness'
+import { normalizeOutput, ruleLabel, type RunError, type RunResult } from '../runner/harness'
 import { usePythonStatus } from '../runner/python'
 import { inline } from './inline'
 
@@ -110,6 +110,49 @@ export function RunOutput({ result, expectOutput }: { result: RunResult; expectO
           </div>
         )
       })}
+      {result.rules
+        ?.filter((r) => !r.passed)
+        .map((r) => (
+          <div key={r.rule} className="ga-test">
+            <CircleX size={16} className="mt-0.5 flex-none text-danger" aria-label="failed" />
+            <span className="ga-prose">
+              {inline(r.kind === 'requires' ? `Use ${ruleLabel(r.rule)}` : `Don't use ${ruleLabel(r.rule)}`)}
+            </span>
+          </div>
+        ))}
+      {result.cases
+        ?.filter((c) => !c.passed)
+        .map((c) => (
+          <div key={c.set} className="ga-test">
+            <CircleX size={16} className="mt-0.5 flex-none text-danger" aria-label="failed" />
+            <span className="min-w-0">
+              With <code>{c.set}</code>
+              {c.missing ? (
+                <span className="text-muted">: the line that sets it is gone, so it can't be changed.</span>
+              ) : c.error ? (
+                <span className="text-danger">
+                  {' '}
+                  it crashes: {c.error.type}: {c.error.message}
+                </span>
+              ) : (
+                <>
+                  <span className="text-muted">
+                    , {c.call ? <code>{c.call}</code> : 'it'} {c.call ? 'is' : 'printed'}
+                  </span>
+                  <pre className="mt-1 !p-0 text-danger">{normalizeOutput(c.got ?? '') || '(nothing)'}</pre>
+                  <span className="text-muted">but should {c.call ? 'be' : 'print'}</span>
+                  <pre className="mt-1 !p-0 text-muted">{normalizeOutput(c.expected ?? '')}</pre>
+                </>
+              )}
+            </span>
+          </div>
+        ))}
+      {!!result.cases?.length && result.cases.every((c) => c.passed) && (
+        <div className="ga-test text-muted">
+          <CheckCircle2 size={16} className="mt-0.5 flex-none text-success" aria-hidden />
+          Also right with other values: {result.cases.length}
+        </div>
+      )}
       {result.tests.some((t) => t.hidden && t.passed) && (
         <div className="ga-test text-muted">
           <CheckCircle2 size={16} className="mt-0.5 flex-none text-success" aria-hidden />

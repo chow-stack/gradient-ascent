@@ -1,5 +1,5 @@
-import { fillBlanks, type Card } from '../content/schema'
-import { runPassed, type RunResult } from '../runner/harness'
+import { fillBlanks, milestoneOptions, runOptions, type Card } from '../content/schema'
+import { normalizeOutput, ruleLabel, runPassed, type RunResult } from '../runner/harness'
 import { runPython } from '../runner/python'
 
 /** What the learner has entered so far, per card type. */
@@ -11,7 +11,13 @@ export type Answer =
   | { type: 'code'; code: string }
   | { type: 'explain'; text: string }
 
-export type GradeResult = { correct: boolean; run?: RunResult; message?: string }
+/** How one project milestone went. */
+export type MilestoneResult = { passed: boolean; message?: string }
+
+export type GradeResult = { correct: boolean; run?: RunResult; message?: string; milestones?: MilestoneResult[] }
+
+/** Projects are longer programs, so they get longer to run. */
+export const PROJECT_TIMEOUT_MS = 10_000
 
 export function initialAnswer(card: Card): Answer {
   switch (card.type) {
@@ -26,6 +32,7 @@ export function initialAnswer(card: Card): Answer {
     case 'fix':
       return { type: 'code', code: card.code }
     case 'write':
+    case 'project':
       return { type: 'code', code: card.starter }
     case 'explain':
       return { type: 'explain', text: '' }
@@ -53,6 +60,7 @@ export function canCheck(answer: Answer): boolean {
 export const needsPython = (card: Card) =>
   card.type === 'fix' ||
   card.type === 'write' ||
+  card.type === 'project' ||
   card.type === 'learn' ||
   ((card.type === 'blank' || card.type === 'parsons') && (!!card.tests || card.expectOutput !== undefined))
 
@@ -75,7 +83,19 @@ export function describeRun(r: RunResult, expectOutput?: string): string {
   if (r.error) return `${r.error.type}${r.error.line ? ` on line ${r.error.line}` : ''}: ${r.error.message}`
   const failed = r.tests.filter((t) => !t.passed).length
   if (failed) return `${failed} of ${r.tests.length} tests failed. Check the results above.`
-  if (expectOutput !== undefined) return 'It runs, but the printed output isn’t what was expected.'
+  if (expectOutput !== undefined && normalizeOutput(r.stdout) !== normalizeOutput(expectOutput))
+    return 'It runs, but the printed output isn’t what was expected.'
+  const rule = r.rules?.find((x) => !x.passed)
+  if (rule)
+    return rule.kind === 'requires'
+      ? `It works, but this one is about ${ruleLabel(rule.rule)}. Use it in your answer.`
+      : `It works, but try it without ${ruleLabel(rule.rule)}.`
+  const c = r.cases?.find((x) => !x.passed)
+  if (c) {
+    if (c.missing) return `Keep the line that sets ${c.set.split(' = ')[0]}. The check changes it to try other values.`
+    if (c.error) return `It works for the values given, but with ${c.set} it crashes: ${c.error.type}.`
+    return `It works for the values given, but not with ${c.set}. Does it work out the answer, or just print it?`
+  }
   return 'Not quite.'
 }
 
@@ -105,9 +125,32 @@ export async function grade(card: Card, answer: Answer): Promise<GradeResult> {
 
   if ((card.type === 'fix' || card.type === 'write') && answer.type === 'code') {
     const { expectOutput } = card
-    const run = await runPython(answer.code, card.tests)
+    const run = await runPython(answer.code, card.tests, runOptions(card))
     const correct = runPassed(run, expectOutput)
     return { correct, run, message: correct ? undefined : describeRun(run, expectOutput) }
+  }
+
+  if (card.type === 'project' && answer.type === 'code') {
+    // Each milestone is checked on its own, so the checklist shows how far the program has got.
+    const runs: RunResult[] = []
+    const milestones: MilestoneResult[] = []
+    for (const m of card.milestones) {
+      const run = await runPython(answer.code, m.tests, milestoneOptions(card.solution, m), PROJECT_TIMEOUT_MS)
+      const passed = runPassed(run, m.expectOutput)
+      runs.push(run)
+      milestones.push({ passed, message: passed ? undefined : describeRun(run, m.expectOutput) })
+      if (run.timedOut) break // the rest would time out too
+    }
+    while (milestones.length < card.milestones.length) milestones.push({ passed: false })
+    const first = milestones.findIndex((m) => !m.passed)
+    if (first < 0) return { correct: true, run: runs[runs.length - 1], milestones }
+    const done = milestones.filter((m) => m.passed).length
+    return {
+      correct: false,
+      run: runs[Math.min(first, runs.length - 1)],
+      milestones,
+      message: `${done} of ${milestones.length} milestones done. Next: ${card.milestones[first].title}.`,
+    }
   }
 
   throw new Error(`Can't grade a ${card.type} card with a ${answer.type} answer`)
@@ -124,6 +167,7 @@ export function solutionFor(card: Card): Answer | null {
       return { type: 'blank', values: card.answers.map((a) => a[0]) }
     case 'fix':
     case 'write':
+    case 'project':
       return { type: 'code', code: card.solution }
     default:
       return null

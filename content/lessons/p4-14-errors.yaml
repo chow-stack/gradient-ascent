@@ -337,6 +337,7 @@ cards:
           Inside the loop, an error only affects that one value. `pass` means "do nothing".
         hints:
           - The error from `float` is a `ValueError`.
+        vary: [{ total: '1' }, { total: '-1' }, { total: '2' }]
       - prompt: '`mean([])` should stop with a `ValueError`, but it gives back a made-up `0`. Fix it.'
         code: |
           def mean(nums):
@@ -366,6 +367,8 @@ cards:
         tests:
           - { call: 'mean([2, 4])', expect: '3.0' }
           - { call: '_raises()', expect: 'True' }
+          - { call: 'mean([4, 6])', expect: '5.0', hidden: true }
+          - { call: 'mean([2, 4, 4])', expect: '3.333333333', hidden: true }
         why: >-
           A made-up 0 looks like a real answer, while an error shows the problem.
         hints:

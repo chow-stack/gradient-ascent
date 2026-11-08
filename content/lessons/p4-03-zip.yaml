@@ -277,6 +277,8 @@ cards:
           With `zip`, the loop can't run past the end.
         hints:
           - You saw how to pair each item with the next one.
+        vary: [{ nums: '[3, 1, 2, 1]' }, { nums: '[1, 2, 1, 3, 4]' }, { count: '2' }]
+        requires: ['name:zip']
 
   - type: learn
     id: worked

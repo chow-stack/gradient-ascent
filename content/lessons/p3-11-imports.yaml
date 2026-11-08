@@ -223,6 +223,7 @@ cards:
 
   - type: fix
     id: fix-missing-import
+    requires: ['name:sqrt']
     prompt: This crashes with a `NameError`. Fix it so it shows `4.0`.
     code: |
       print(math.sqrt(16))
@@ -249,6 +250,7 @@ cards:
           After `import math`, its tools are reached through `math.`.
         hints:
           - Where does `floor` live?
+        requires: ['name:floor']
       - prompt: This should show a list of 3 items, but it crashes, because `shuffle` gives back `None`. Fix it.
         code: |
           import random
@@ -266,6 +268,8 @@ cards:
           `shuffle` changes the list in place, just like `.sort()`.
         hints:
           - What does `shuffle` give back?
+        vary: [{ a: '[1, 2, 3, 4]' }, { a: '[1, 2]' }]
+        requires: []
 
   - type: learn
     id: worked

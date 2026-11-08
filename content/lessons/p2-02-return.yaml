@@ -267,6 +267,7 @@ cards:
           The body worked out the sum and threw it away, so the function gave back `None`.
         hints:
           - What does the function give back at the moment?
+        requires: ['def', 'op:+', 'name:plus_one']
       - prompt: '`price(10)` should give back `12`, but it gives back `10`. Fix it.'
         code: |
           def price(base):
@@ -279,6 +280,8 @@ cards:
         highlightLine: 2
         tests:
           - { call: price(10), expect: '12' }
+          - { call: 'price(11)', expect: '13', hidden: true }
+          - { call: 'price(9)', expect: '11', hidden: true }
         why: >-
           `return` leaves the function straight away, so the line under it never ran.
         hints:
