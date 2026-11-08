@@ -164,11 +164,19 @@ const milestone = z.object({
   hints,
 })
 
+/** The Play panel games. Each calls functions the milestones ask for (see exercises/play/). */
+export const PLAY_KINDS = ['rps', 'hangman', 'wordle', 'blackjack', 'life', 'doodle'] as const
+export type PlayKind = (typeof PLAY_KINDS)[number]
+
 const project = z.object({
   type: z.literal('project'),
   id,
-  /** What you're building and why it's fun. Blank-line paragraphs. */
+  /** What you're building and why it's fun. Blank-line paragraphs. Keep it short: the Play panel shows the rest. */
   brief: z.string(),
+  /** The game in the Play panel, driven by the learner's own code. */
+  play: z.enum(PLAY_KINDS).optional(),
+  /** Ungraded ideas for making it yours, shown once every milestone is done. */
+  extras: z.array(z.string()).default([]),
   /** What a finished program might print, shown in the brief. */
   example: z.string().optional(),
   starter: z.string(),

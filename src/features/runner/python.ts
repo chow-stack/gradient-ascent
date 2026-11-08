@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { RunOptions, RunResult, TestCase } from './harness'
+import type { PlayReply, RunOptions, RunResult, TestCase } from './harness'
 
 /**
  * Main-thread client for the Python worker.
@@ -17,7 +17,8 @@ let worker: Worker | null = null
 let status: PythonStatus = 'idle'
 let ready: Promise<void> | null = null
 let nextId = 1
-const pending = new Map<number, (r: RunResult) => void>()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pending = new Map<number, (r: any) => void>()
 const started = new Map<number, () => void>()
 const listeners = new Set<() => void>()
 
@@ -79,19 +80,35 @@ function stopped(): RunResult {
 }
 
 /** Run Python code (and optional tests). Never rejects for Python errors; they come back in the result. */
-export async function runPython(
-  code: string,
-  tests: TestCase[] = [],
-  opts: RunOptions = {},
-  timeoutMs = DEFAULT_TIMEOUT_MS,
-) {
+export function runPython(code: string, tests: TestCase[] = [], opts: RunOptions = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  return request<RunResult>({ code, tests, opts }, timeoutMs, stopped)
+}
+
+/**
+ * The Play panel's side of Python: load the learner's program once (optionally with new values for variables
+ * set at its top), then call into it as the player clicks. Loading again replaces it.
+ */
+export function playLoad(code: string, values?: Record<string, string>, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  return request<PlayReply>({ kind: 'play-load', code, values }, timeoutMs, playStopped)
+}
+
+/** Run statements in the loaded program and get back the last expression's value. */
+export function playCall<T = unknown>(src: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  return request<PlayReply<T>>({ kind: 'play-call', src }, timeoutMs, playStopped as () => PlayReply<T>)
+}
+
+function playStopped(): PlayReply {
+  return { ok: false, stdout: '', value: null, error: stopped().error }
+}
+
+async function request<R>(msg: object, timeoutMs: number, onStop: () => R): Promise<R> {
   await warmUpPython()
   const id = nextId++
-  return new Promise<RunResult>((resolve) => {
+  return new Promise<R>((resolve) => {
     const stop = () => {
       pending.delete(id)
       started.delete(id)
-      resolve(stopped())
+      resolve(onStop())
       restart()
     }
     let timer = setTimeout(stop, PACKAGE_LOAD_TIMEOUT_MS)
@@ -99,12 +116,12 @@ export async function runPython(
       clearTimeout(timer)
       timer = setTimeout(stop, timeoutMs)
     })
-    pending.set(id, (r) => {
+    pending.set(id, (r: R) => {
       clearTimeout(timer)
       started.delete(id)
       resolve(r)
     })
-    worker!.postMessage({ id, code, tests, opts })
+    worker!.postMessage({ id, ...msg })
   })
 }
 

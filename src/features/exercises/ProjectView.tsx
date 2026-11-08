@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Circle, FileText, Flag, Lightbulb, X } from 'lucide-react'
+import { Check, ChevronDown, Circle, FileText, Flag, Lightbulb, Sparkles, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { CodeEditor } from '../../components/editor'
 import type { Card } from '../content/schema'
@@ -7,6 +7,7 @@ import { runPython } from '../runner/python'
 import { saveDraft } from './drafts'
 import type { MilestoneResult } from './grading'
 import { inline } from './inline'
+import { PlayPanel } from './play/PlayPanel'
 import { Prose, RunButton, RunOutput } from './shared'
 import { locked, type ViewProps } from './types'
 
@@ -19,7 +20,8 @@ const SPLIT_DEFAULT = 64
 const SPLIT_MIN = 25
 const SPLIT_MAX = 85
 
-type Tab = 'brief' | 'code' | 'output'
+type Tab = 'brief' | 'code' | 'play' | 'output'
+type Side = 'brief' | 'play'
 
 /**
  * A project: a brief, one editor for the whole program, and a milestone checklist that ticks off as each part
@@ -50,6 +52,9 @@ export function ProjectView({
   // The brief starts folded once there's work in progress: it's been read already.
   const [briefOpen, setBriefOpen] = useState(code === card.starter)
   const [tab, setTab] = useState<Tab>(code === card.starter ? 'brief' : 'code')
+  const [side, setSide] = useState<Side>('brief')
+  // The game stays mounted once opened, so switching tabs doesn't lose it.
+  const [played, setPlayed] = useState(false)
   const [split, setSplit] = useState(SPLIT_DEFAULT)
   const box = useRef<HTMLDivElement>(null)
   const width = useWidth(box)
@@ -79,6 +84,15 @@ export function ProjectView({
     setRunning(false)
     setTab('output')
   }
+
+  const openTab = (t: Tab | Side) => {
+    if (t === 'play') setPlayed(true)
+    if (wide && (t === 'brief' || t === 'play')) setSide(t)
+    else setTab(t as Tab)
+  }
+
+  const play = card.play && played && <PlayPanel kind={card.play} code={code} />
+  const playShown = wide ? side === 'play' : tab === 'play'
 
   const milestoneList = (
     <Milestones
@@ -119,12 +133,29 @@ export function ProjectView({
     <div ref={box} className="flex min-h-0 flex-1 flex-col">
       {width === 0 ? null : wide ? (
         <div className="flex min-h-0 flex-1 gap-5">
-          <section
-            className="ga-project-pane flex w-[40%] max-w-[540px] min-w-[320px] flex-col gap-5 overflow-y-auto pr-2"
-            aria-label="Brief and milestones"
-          >
-            <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
-            {milestoneList}
+          <section className="flex w-[40%] max-w-[540px] min-w-[340px] flex-col gap-3" aria-label="Brief and play">
+            {card.play && (
+              <Tabs
+                tabs={[
+                  ['brief', `Brief · ${done}/${card.milestones.length}`],
+                  ['play', 'Play'],
+                ]}
+                current={side}
+                onPick={openTab}
+              />
+            )}
+            <div
+              className="ga-project-pane flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-2"
+              hidden={side !== 'brief'}
+            >
+              <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
+              {milestoneList}
+            </div>
+            {play && (
+              <div className="ga-project-pane flex min-h-0 flex-1 flex-col overflow-y-auto pr-2" hidden={!playShown}>
+                {play}
+              </div>
+            )}
           </section>
           <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label="Your program">
             <div className="min-h-0" style={{ height: `${split}%` }}>
@@ -136,14 +167,17 @@ export function ProjectView({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <div className="ga-project-tabs" role="tablist" aria-label="Project">
-            {(['brief', 'code', 'output'] as const).map((t) => (
-              <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>
-                {t === 'brief' ? `Brief · ${done}/${card.milestones.length}` : t === 'code' ? 'Code' : 'Output'}
-                {t === 'output' && scratch && tab !== 'output' && <span className="ga-project-dot" aria-hidden />}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            tabs={[
+              ['brief', `Brief · ${done}/${card.milestones.length}`],
+              ['code', 'Code'],
+              ...(card.play ? [['play', 'Play'] as [Tab, string]] : []),
+              ['output', 'Output'],
+            ]}
+            current={tab}
+            onPick={openTab}
+            dot={scratch && tab !== 'output' ? 'output' : undefined}
+          />
           {tab === 'brief' && (
             <div className="ga-project-pane flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto" role="tabpanel">
               <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
@@ -165,6 +199,15 @@ export function ProjectView({
               <Toolbar running={running} onRun={run} />
             </div>
           )}
+          {play && (
+            <div
+              className="ga-project-pane flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
+              role="tabpanel"
+              hidden={!playShown}
+            >
+              {play}
+            </div>
+          )}
           {tab === 'output' && (
             <div className="ga-project-pane min-h-0 flex-1 overflow-y-auto" role="tabpanel">
               {output}
@@ -172,6 +215,29 @@ export function ProjectView({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function Tabs<T extends string>({
+  tabs,
+  current,
+  onPick,
+  dot,
+}: {
+  tabs: [T, string][]
+  current: T
+  onPick: (t: T) => void
+  dot?: T
+}) {
+  return (
+    <div className="ga-project-tabs flex-none" role="tablist" aria-label="Project">
+      {tabs.map(([t, label]) => (
+        <button key={t} type="button" role="tab" aria-selected={current === t} onClick={() => onPick(t)}>
+          {label}
+          {dot === t && <span className="ga-project-dot" aria-hidden />}
+        </button>
+      ))}
     </div>
   )
 }
@@ -264,6 +330,20 @@ function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint }: M
           )
         })}
       </ol>
+      {next < 0 && ticks && card.extras.length > 0 && (
+        <div className="ga-milestone flex-col gap-1.5!" data-state="extra">
+          <p className="flex items-center gap-2 font-semibold">
+            <Sparkles size={16} className="text-xp" aria-hidden /> Make it yours
+          </p>
+          <ul className="flex list-disc flex-col gap-1 pl-5 text-small text-muted">
+            {card.extras.map((x) => (
+              <li key={x} className="ga-prose">
+                {inline(x)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   )
 }

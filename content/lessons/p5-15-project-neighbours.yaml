@@ -1,31 +1,25 @@
 id: p5-project-neighbours
 track: ml
 unit: 5
-order: 14
+order: 15
 kind: project
 title: 'Project: Doodle recogniser'
-summary: Teach the computer to recognise tiny doodles by finding the most similar one it has seen, with no loops. Then catch it getting one wrong.
+summary: Teach the computer to recognise tiny doodles by finding the most similar one it has seen. Then draw your own, and teach it new ones.
 
 cards:
   - type: project
     id: doodles
+    play: doodle
     brief: >-
-      Here's a simple and surprisingly strong idea. To recognise something new, find the most similar thing you've already seen and copy its label. It's
-      called nearest neighbours. You'll use it to recognise 5 by 5 doodles of a cross, a plus and a square.
+      To recognise something new, find the most similar thing you've already seen and copy its label. It's called nearest neighbours, and it's
+      surprisingly strong. You'll use it to recognise 5 by 5 doodles of a cross, a plus and a square.
 
 
       An image is a grid of numbers, 1 for ink and 0 for paper. Flatten each grid into a row of 25 numbers, and "most similar" becomes "closest", measured
-      with the distance formula. You'll do it with no loops in the maths, using this unit's reshaping, axes and broadcasting, so it would stay fast with
-      thousands of images.
+      with the distance formula. You'll do it with no loops in the maths, so it would stay fast with thousands of images.
 
 
-      The training doodles and three test doodles are in the starter, built from text by `doodle()`. One test doodle will fool your recogniser. When it
-      does, draw it with `imshow` and work out why. Before each line, say what shape it should give.
-    example: |
-      Doodle 1: looks like a cross (it's a cross)
-      Doodle 2: looks like a plus (it's a plus)
-      Doodle 3: looks like a plus (it's a square)
-      Accuracy: 67%
+      Once `predict` works, draw your own doodles in the Play tab. When it guesses wrong, teach it the right answer and draw again.
     starter: |
       import numpy as np
       import matplotlib.pyplot as plt
@@ -100,7 +94,8 @@ cards:
       guesses = predict_all(flatten(train), labels, flatten(tests))
       for i in range(len(tests)):
           print(f"Doodle {i + 1}: looks like a {guesses[i]} (it's a {test_labels[i]})")
-      print(f"Accuracy: {round((guesses == test_labels).mean() * 100)}%")
+      accuracy = round((guesses == test_labels).mean() * 100)
+      print(f"Accuracy: {accuracy}%")
 
       plt.imshow(tests[2], cmap="gray")
       plt.title("A square it called a plus")
@@ -123,7 +118,11 @@ cards:
           each row, and take the square root.
         tests:
           - { call: 'distances(np.array([[0.0, 0.0], [3.0, 4.0]]), np.array([0.0, 0.0]))', expect: '[0.0, 5.0]' }
-          - { call: 'distances(np.array([[1.0, 1.0], [1.0, 2.0], [4.0, 5.0]]), np.array([1.0, 1.0]))', expect: '[0.0, 1.0, 5.0]', hidden: true }
+          - {
+              call: 'distances(np.array([[1.0, 1.0], [1.0, 2.0], [4.0, 5.0]]), np.array([1.0, 1.0]))',
+              expect: '[0.0, 1.0, 5.0]',
+              hidden: true,
+            }
           - { call: 'distances(np.ones((4, 25)), np.zeros(25)).shape', expect: '(4,)', hidden: true }
         forbids: ['loop']
         scope: distances
@@ -134,9 +133,15 @@ cards:
       - title: Nearest neighbour
         goal: Write `predict(X, labels, x)`, which gives back the label of the row of `X` closest to `x`.
         tests:
-          - { call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([4.0, 4.0]))", expect: "'b'" }
-          - { call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([1.0, 2.0]))", expect: "'a'" }
-          - { call: "predict(flatten(train), labels, flatten(tests)[0])", expect: "'cross'", hidden: true }
+          - {
+              call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([4.0, 4.0]))",
+              expect: "'b'",
+            }
+          - {
+              call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([1.0, 2.0]))",
+              expect: "'a'",
+            }
+          - { call: 'predict(flatten(train), labels, flatten(tests)[0])', expect: "'cross'", hidden: true }
         requires: ['name:distances']
         forbids: ['loop']
         scope: predict
@@ -148,8 +153,15 @@ cards:
           Write `predict_all(X, labels, T)`, which predicts a label for every row of `T` with no loop. Make a table of distances with one row per test image
           and one column per training image, then take the closest in each row.
         tests:
-          - { call: "predict_all(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([[1.0, 0.0], [6.0, 5.0], [4.0, 5.0]]))", expect: "['a', 'b', 'b']" }
-          - { call: "predict_all(np.array([[0.0], [10.0], [20.0]]), np.array(['x', 'y', 'z']), np.array([[19.0], [1.0]]))", expect: "['z', 'x']", hidden: true }
+          - {
+              call: "predict_all(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([[1.0, 0.0], [6.0, 5.0], [4.0, 5.0]]))",
+              expect: "['a', 'b', 'b']",
+            }
+          - {
+              call: "predict_all(np.array([[0.0], [10.0], [20.0]]), np.array(['x', 'y', 'z']), np.array([[19.0], [1.0]]))",
+              expect: "['z', 'x']",
+              hidden: true,
+            }
         forbids: ['loop']
         scope: predict_all
         hints:
@@ -158,16 +170,19 @@ cards:
           - '`labels[gaps.argmin(axis=1)]` picks the closest training label for each row.'
       - title: Test it, and catch the mistake
         goal: >-
-          Run `predict_all` on the test doodles. Print one line per doodle and the accuracy as a whole percentage, like the example. Then draw the doodle it got
-          wrong with `plt.imshow`. Why did it get that one wrong?
+          Run `predict_all` on the test doodles and set `accuracy` to the share it gets right, as a whole percentage. Print a line for each doodle if you
+          like. Then draw the one it got wrong with `plt.imshow`. Why did it get that one wrong?
         tests:
-          - { call: 'predict_all(flatten(train), labels, flatten(tests)).tolist()', expect: "['cross', 'plus', 'plus']" }
-        expectOutput: |
-          Doodle 1: looks like a cross (it's a cross)
-          Doodle 2: looks like a plus (it's a plus)
-          Doodle 3: looks like a plus (it's a square)
-          Accuracy: 67%
+          - {
+              call: 'predict_all(flatten(train), labels, flatten(tests)).tolist()',
+              expect: "['cross', 'plus', 'plus']",
+            }
+          - { call: accuracy, expect: '67' }
         hints:
           - '`guesses == test_labels` gives an array of `True` and `False`. Its `.mean()` is the share that are right.'
           - '`round(... * 100)` turns 0.666 into 67.'
-          - 'The third doodle is a small square. Nearest neighbours compares pixel by pixel, and the small square''s ink is in the middle, where the plus has its ink.'
+          - "The third doodle is a small square. Nearest neighbours compares pixel by pixel, and the small square's ink is in the middle, where the plus has its ink."
+    extras:
+      - In the Play tab, teach it a new shape, like a heart or a letter, with two or three examples. How few does it need?
+      - Try k nearest neighbours. Take the 3 closest training doodles and let them vote.
+      - Shift a doodle one square to the right and see whether it still recognises it. Why not?

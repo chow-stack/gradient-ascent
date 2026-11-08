@@ -20,7 +20,7 @@ code, and explain it in plain English. All code runs as real Python in your brow
 - **Unlimited lessons:** on your own schedule, with a checkpoint and a project ending each unit.
 - **Eight exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
   fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, explain-in-your-own-words (graded by AI
-  if you add a key), and projects: one longer program with a milestone checklist.
+  if you add a key), and projects: a game your own code runs, like Wordle with a solver bot, built milestone by milestone.
 - **Checks you can't fool:** code is rerun with other values and checked for the idea the card is about, so printing the
   expected answer doesn't pass.
 - **Real Python in the browser:** [Pyodide](https://pyodide.org) runs in a Web Worker, so the UI never freezes.

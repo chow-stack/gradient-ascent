@@ -84,10 +84,18 @@ A checkpoint ends every unit before the project:
 
 ### Projects
 
-Each unit ends with a project: one longer program with a playful goal that still uses only that unit's ideas.
+Each unit ends with a project: a real, playable program that uses only that unit's ideas. You write the brain; the app
+draws the board.
 
-- **One brief, one editor, a milestone checklist.** The brief says what you're building and why it's fun, with an example of
-  what the finished program prints. There's no step-by-step code: you plan and write the whole program yourself.
+- **A Play tab.** Each project is a game or tool whose logic is the learner's code: rock, paper, scissors, Hangman,
+  Wordle, blackjack, the Game of Life, a doodle recogniser. The app loads the program once and calls its functions as you
+  click, so it plays with whatever's written so far, and Restart loads the latest code. Unit 1 has no functions yet, so
+  each round reruns the whole program with the move set at the top and the score carried over.
+- **One brief, one editor, a milestone checklist.** The brief is short: what you're building and how to play it. There's
+  no step-by-step code: you plan and write the whole program yourself.
+- **Behaviour is graded, not exact text.** Milestones test values and functions, with `vary` reruns. What a program
+  prints is up to the learner and shows up in the Play tab.
+- **Make it yours.** Once every milestone passes, a few ungraded ideas appear for taking it further.
 - **Milestones tick off as they pass.** Check runs the whole program against each milestone separately, so the checklist shows
   how far it has got. A milestone has its own tests, `vary` reruns and concept rules (which can be scoped to one function).
 - **Hints only on request.** "Stuck? Show me the next step" shows the next hint for the first unfinished milestone. The last
@@ -98,14 +106,14 @@ Each unit ends with a project: one longer program with a playful goal that still
 
 ### Threads that come back
 
-| Idea                    | First                     | Again                 | Again                                  |
-| ----------------------- | ------------------------- | --------------------- | -------------------------------------- |
-| References and aliasing | Python lists (U1)         | Names and copies (U2) | NumPy views (U3)                       |
-| Accumulator loops       | Loop patterns (U1)        | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
-| Functions as values     | Passing functions (U4)    | —                     | `_backward` closures in micrograd (U8) |
-| Operator overloading    | Special methods (U4)      | Mini PyTorch (U4)     | `Value.__add__` in micrograd (U8)      |
-| Next-word prediction    | Autocomplete project (U3) | —                     | Bigram counts (U11, U12)               |
-| Likelihood              | Logistic regression (U5)  | Probability (U9)      | makemore's loss (U10)                  |
+| Idea                    | First                    | Again                 | Again                                  |
+| ----------------------- | ------------------------ | --------------------- | -------------------------------------- |
+| References and aliasing | Python lists (U1)        | Names and copies (U2) | NumPy views (U3)                       |
+| Accumulator loops       | Loop patterns (U1)       | Comprehensions (U2)   | NumPy operations on whole arrays (U3)  |
+| Functions as values     | Passing functions (U4)   | —                     | `_backward` closures in micrograd (U8) |
+| Operator overloading    | Special methods (U4)     | Blackjack (U4)        | `Value.__add__` in micrograd (U8)      |
+| Search by elimination   | Wordle bot (U3)          | —                     | Entropy and information (U9)           |
+| Likelihood              | Logistic regression (U5) | Probability (U9)      | makemore's loss (U10)                  |
 
 ---
 
@@ -166,7 +174,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Making decisions with if | `if`, `else`, indentation, default-then-update                           | `if` repeats like a loop; `else` with a condition; indentation is only style        |
 | 11  | Many choices with elif   | `elif`, first match wins, chain vs separate `if`s, boundaries            | Every matching branch runs; order doesn't matter; `>` vs `>=`                       |
 
-**Checkpoint:** built (12 cards). **Project · Monster card** _(built)_: a creature for a card game. Shout its name, work out a power score and bar, rank it with `if`/`elif`, find its weak spot, and print a framed card that resizes to the name. Checked with other stats.
+**Checkpoint:** built (12 cards). **Project · Rock, paper, scissors** _(built)_: the brain of the game. `result` with `if`/`elif` and `or`, the score in `wins` and `losses` (carried into the next round by the Play tab), a `reason` sentence, and a `winner` for a first-to-three match. Checked with every pair of moves.
 
 ### Unit 2 · Functions and repetition _(built)_
 
@@ -184,7 +192,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Loops inside loops     | Nested loops, grids, `end=`, every pair                      | Inner loop runs once; a shared variable; an accumulator at the wrong level; `break` scope  |
 | 11  | Reading a traceback    | Tracebacks through calls, finding the cause                  | Reading from the top; assuming the crash line is the bug                                   |
 
-**Checkpoint:** built (12 cards). **Project · Adam climbs the hill** _(built)_: gradient ascent in the fog. `height`, `uphill` (which way is up), `climb` with a `while` loop, a hill drawn with nested loops into one string, then the story of a climb from any start.
+**Checkpoint:** built (12 cards). **Project · Hangman, and a bot that plays it** _(built)_: `masked`, `misses` and `status` run the game in the Play tab, with the guesses kept as one string (no lists yet). Then `next_guess` walks a string of letters in order of how common they are, and the bot plays by itself.
 
 ### Unit 3 · Collections and libraries _(built)_
 
@@ -203,7 +211,7 @@ error lesson moving from introduction to consolidation.
 | 11  | Using libraries                 | `import`, `math`, `random`, seeds, `as`, `from`                   | Missing import or prefix; `randint` excludes the end; `shuffle` gives back a list          |
 | 12  | Numbers that don't quite add up | Float precision, tolerance, formatting decimals                   | `==` on floats; `while x != 1.0`; rounding in the middle of a calculation                  |
 
-**Checkpoint:** built (12 cards). **Project · Autocomplete** _(built)_: a phone-keyboard word suggester trained on Adam's diary. A table of what follows what, the best guess with ties, greedy completion (which loops, like a real phone), then sampling with `random.choice` and a seed. Reading text files is left out, because the browser runner has no files of the learner's own.
+**Checkpoint:** built (12 cards). **Project · Wordle, and a bot that solves it** _(built)_: `score` colours a guess, then handles repeated letters with a dictionary of spare letters. `remaining` keeps the words that would have scored the same, and `pick` chooses the word whose different letters are most common. The bot averages three guesses on the app's 484 words.
 
 ### Unit 4 · Python for ML code _(built)_
 
@@ -226,7 +234,7 @@ Rewritten in the current format. Each topic had to earn its place: micrograd, Py
 | 13  | Building on a class                       | Inheritance, overriding, `super().__init__()`, `forward`                          | A child's `__init__` runs the parent's automatically; `self` in a parent's method is the parent        |
 | 14  | Raising and catching errors               | `raise`, `try`, `except`, `assert`, debugging silent bugs                         | Giving back a made-up 0; bare `except:` is a good default; no crash means no bug                       |
 
-**Checkpoint:** built (13 cards). **Project · Mini PyTorch** _(built)_: a `Module` base with `__call__`, `Linear` and `ReLU` subclasses, a `Sequential` with `__len__` and `__getitem__`, `__repr__`s and a `ValueError`, then a network wired by hand that solves XOR.
+**Checkpoint:** built (13 cards). **Project · Blackjack** _(built)_: `Card` with `__repr__` and `value`, `Deck` with `__len__`, `deal`, `shuffle` and a `ValueError` when empty, `Hand` with aces that drop to 1, then `dealer_turn` and `outcome`. The Play tab deals real hands with these classes.
 
 Moved out on purpose: recursion and DFS are taught in micrograd (U8), where they're needed. Custom decorators, generator functions, packaging and the `if __name__` check wait until local projects need them.
 
@@ -249,7 +257,7 @@ Written in the current format. Each lesson's code runs in real NumPy, and plots 
 | 11  | Randomness and batches    | `default_rng`, seeds, `normal`, `permutation`, `choice`, `concatenate`, `stack`, batches  | Shuffling inputs and labels separately; recreating the generator; `integers` includes its end       |
 | 12  | Plots                     | `plot`, `scatter`, `hist`, `imshow`, labels, reading a loss curve                         | Different lengths; `arange` takes a count; flat loss means finished; a mean shows the whole picture |
 
-**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Doodle recogniser** _(built)_: nearest neighbours on 5×5 doodles with no loops in the maths. Flatten, distances, one prediction, all predictions at once by broadcasting, then accuracy and an `imshow` of the doodle it gets wrong, and why.
+**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Game of Life** _(built)_: `neighbours` adds up 8 shifted copies made with `np.roll`, `step` applies the rules with masks and no loops, `random_world` uses a seeded generator, and `stamp` pastes a pattern into a copy. The Play tab animates it, with gliders and a glider gun. **Project · Doodle recogniser** _(built)_: nearest neighbours on 5×5 doodles with no loops in the maths. Flatten, distances, one prediction, all predictions at once by broadcasting, then accuracy and why one doodle fools it. In the Play tab you draw a doodle, it names it and shows the closest one it knows, and you can teach it new shapes.
 
 **Exit test:** predict shapes and vectorise loops. It's the checkpoint.
 

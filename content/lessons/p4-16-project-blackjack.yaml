@@ -1,0 +1,187 @@
+id: p4-project-blackjack
+track: ml
+unit: 4
+order: 16
+kind: project
+title: 'Project: Blackjack'
+summary: Model cards, a deck and a hand as classes, then deal yourself in and play blackjack against a dealer that follows your rules.
+
+cards:
+  - type: project
+    id: blackjack
+    play: blackjack
+    brief: >-
+      Build blackjack. You and the dealer each get two cards, and you want a total closer to 21 than the dealer's without going over. Number cards count
+      their number, J, Q and K count 10, and an ace counts 11, or 1 if 11 would take you over 21.
+
+
+      Cards, a deck and a hand are natural objects, so you'll write each one as a class, with special methods so they print and measure themselves. The
+      Play tab deals with your classes as soon as they exist.
+    starter: |
+      import random
+
+      RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+      SUITS = ["♠", "♥", "♦", "♣"]
+
+      # Your classes go here.
+    solution: |
+      import random
+
+      RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+      SUITS = ["♠", "♥", "♦", "♣"]
+
+
+      class Card:
+          def __init__(self, rank, suit):
+              self.rank = rank
+              self.suit = suit
+
+          def __repr__(self):
+              return self.rank + self.suit
+
+          def value(self):
+              if self.rank == "A":
+                  return 11
+              if self.rank in ["J", "Q", "K"]:
+                  return 10
+              return int(self.rank)
+
+
+      class Deck:
+          def __init__(self):
+              self.cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
+
+          def __len__(self):
+              return len(self.cards)
+
+          def deal(self):
+              if not self.cards:
+                  raise ValueError("the deck is empty")
+              return self.cards.pop()
+
+          def shuffle(self):
+              random.shuffle(self.cards)
+
+
+      class Hand:
+          def __init__(self, cards):
+              self.cards = cards
+
+          def add(self, card):
+              self.cards.append(card)
+
+          def total(self):
+              total = sum([card.value() for card in self.cards])
+              aces = len([card for card in self.cards if card.rank == "A"])
+              while total > 21 and aces > 0:
+                  total = total - 10
+                  aces = aces - 1
+              return total
+
+          def __len__(self):
+              return len(self.cards)
+
+          def __repr__(self):
+              return " ".join([repr(card) for card in self.cards])
+
+
+      def dealer_turn(hand, deck):
+          while hand.total() < 17:
+              hand.add(deck.deal())
+          return hand
+
+
+      def outcome(player, dealer):
+          if player.total() > 21:
+              return "lose"
+          if dealer.total() > 21 or player.total() > dealer.total():
+              return "win"
+          if player.total() == dealer.total():
+              return "push"
+          return "lose"
+    milestones:
+      - title: A card
+        goal: >-
+          Write a `Card` class. `Card(rank, suit)` keeps both, like `Card("10", "♥")`. It prints as rank then suit, `10♥`, and its `value()` method gives
+          11 for an ace, 10 for J, Q and K, and the number for the rest.
+        tests:
+          - { call: 'repr(Card("10", "♥"))', expect: "'10♥'" }
+          - { call: 'Card("K", "♠").value()', expect: '10' }
+          - { call: 'Card("A", "♦").value()', expect: '11' }
+          - { call: 'Card("7", "♣").value()', expect: '7', hidden: true }
+          - { call: 'Card("Q", "♥").rank + Card("Q", "♥").suit', expect: "'Q♥'", hidden: true }
+        hints:
+          - '`__repr__` is what Python uses to show an object, including inside lists.'
+          - '`int(self.rank)` turns `"7"` into `7`. Check for the ace and the picture cards before you do that.'
+      - title: A deck
+        goal: >-
+          Write `Deck`. A new deck keeps all 52 cards in `self.cards`, suit by suit, in the order of `RANKS` and `SUITS`. `len()` gives how many are left,
+          `deal()` removes the last card and gives it back, and `shuffle()` mixes them with `random.shuffle`. Dealing from an empty deck raises a
+          `ValueError` saying `the deck is empty`.
+        tests:
+          - { call: 'len(Deck())', expect: '52' }
+          - { call: 'repr(Deck().deal())', expect: "'K♣'" }
+          - { call: 'repr(Deck().cards[:3])', expect: "'[A♠, 2♠, 3♠]'" }
+          - { call: "'shuffle' in Deck.__dict__", expect: 'True', hidden: true }
+          - { call: '(lambda d: (d.deal(), d.deal(), len(d))[2])(Deck())', expect: '50', hidden: true }
+        requires: ['raise']
+        scope: Deck
+        hints:
+          - 'A comprehension with two `for`s builds the deck: `[Card(rank, suit) for suit in SUITS for rank in RANKS]`.'
+          - '`self.cards.pop()` removes and gives back the last card.'
+          - 'At the start of `deal`: `if not self.cards: raise ValueError("the deck is empty")`.'
+      - title: A hand
+        goal: >-
+          Write `Hand`. `Hand(cards)` starts with a list of cards and `add(card)` puts one more in. `total()` adds up the values, but while the total is
+          over 21 and there's an ace still counted as 11, it counts that ace as 1 instead. A hand prints as its cards with spaces between, and `len()` gives
+          how many it holds.
+        tests:
+          - { call: 'Hand([Card("A", "♠"), Card("7", "♥")]).total()', expect: '18' }
+          - { call: 'Hand([Card("A", "♠"), Card("7", "♥"), Card("9", "♦")]).total()', expect: '17' }
+          - { call: 'repr(Hand([Card("A", "♠"), Card("7", "♥")]))', expect: "'A♠ 7♥'" }
+          - { call: 'Hand([Card("A", "♠"), Card("A", "♥")]).total()', expect: '12', hidden: true }
+          - { call: 'Hand([Card("K", "♠"), Card("Q", "♥"), Card("5", "♦")]).total()', expect: '25', hidden: true }
+          - { call: 'len(Hand([Card("2", "♠")]))', expect: '1', hidden: true }
+          - {
+              call: '(lambda h: (h.add(Card("3", "♠")), h.total())[1])(Hand([Card("2", "♠")]))',
+              expect: '5',
+              hidden: true,
+            }
+        hints:
+          - "Start `total` by adding up every card's `value()`, counting each ace as 11."
+          - Count the aces too. Then, `while` the total is over 21 and you still have an ace to change, take off 10 and one ace.
+      - title: The dealer and the result
+        goal: >-
+          Write `dealer_turn(hand, deck)`, which deals cards into the dealer's hand until its total is 17 or more, then gives back the hand. Then write
+          `outcome(player, dealer)`: `"lose"` if the player went over 21, `"win"` if the dealer did or the player is higher, `"push"` on a tie, and
+          `"lose"` otherwise.
+        tests:
+          - { call: 'dealer_turn(Hand([Card("2", "♠")]), Deck()).total()', expect: '22' }
+          - {
+              call: 'outcome(Hand([Card("K", "♠"), Card("9", "♥")]), Hand([Card("K", "♦"), Card("8", "♣")]))',
+              expect: "'win'",
+            }
+          - {
+              call: 'outcome(Hand([Card("K", "♠"), Card("8", "♥")]), Hand([Card("Q", "♦"), Card("8", "♣")]))',
+              expect: "'push'",
+            }
+          - {
+              call: 'outcome(Hand([Card("K", "♠"), Card("Q", "♥"), Card("5", "♦")]), Hand([Card("K", "♦"), Card("Q", "♣"), Card("4", "♥")]))',
+              expect: "'lose'",
+              hidden: true,
+            }
+          - {
+              call: 'outcome(Hand([Card("7", "♠")]), Hand([Card("K", "♦"), Card("Q", "♣"), Card("4", "♥")]))',
+              expect: "'win'",
+              hidden: true,
+            }
+          - { call: 'len(dealer_turn(Hand([Card("9", "♠")]), Deck()))', expect: '2', hidden: true }
+        requires: ['while']
+        scope: dealer_turn
+        hints:
+          - '`while hand.total() < 17: hand.add(deck.deal())`, then return the hand.'
+          - In `outcome`, check the player going bust first. A player who's bust loses even if the dealer is bust too.
+    extras:
+      - Pay out 3 to 2 for a blackjack, an ace and a ten-value card in the first two cards. Add an `is_blackjack()` method to `Hand`.
+      - Give `Hand` a `__lt__` method so two hands can be compared with `<`, and use it in `outcome`.
+      - Write a bot that hits below 17 and stands otherwise, deal it 1,000 hands, and print how often it wins.

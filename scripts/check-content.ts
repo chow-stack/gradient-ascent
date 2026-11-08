@@ -32,6 +32,7 @@ import {
   type RunResult,
   type TestCase,
 } from '../src/features/runner/harness.ts'
+import { PLAY_SMOKE } from '../src/features/exercises/play/api.ts'
 
 const root = join(import.meta.dirname, '..')
 const problems: string[] = []
@@ -64,6 +65,19 @@ const pyRun = py.globals.get('__ga_run_limited') as (code: string, tests: string
 const run = (code: string, tests: TestCase[] = [], opts: RunOptions = {}): RunResult =>
   JSON.parse(pyRun(code, JSON.stringify(tests), JSON.stringify(opts)))
 const trivial = py.globals.get('__ga_trivial') as (code: string) => boolean
+const playLoad = py.globals.get('__ga_play_load') as (code: string, values: string) => string
+const playCall = py.globals.get('__ga_play_call') as (src: string) => string
+type Reply = { ok: boolean; value: unknown; error: { type: string; message: string } | null }
+
+/** Loads a project's solution the way its Play panel does, and runs the game's contract check. */
+function playSmoke(kind: keyof typeof PLAY_SMOKE, code: string): string | null {
+  const { values, check } = PLAY_SMOKE[kind]
+  const loaded = JSON.parse(playLoad(code, JSON.stringify(values ?? {}))) as Reply
+  if (!loaded.ok) return `loading fails: ${loaded.error?.type}: ${loaded.error?.message}`
+  const r = JSON.parse(playCall(check)) as Reply
+  if (!r.ok) return `${r.error?.type}: ${r.error?.message}`
+  return r.value === true ? null : `the check gave ${JSON.stringify(r.value)}`
+}
 
 /**
  * Answers that only hard-code what the checks look for: print the expected output, or define each tested
@@ -269,6 +283,12 @@ function checkCard(card: Card, at: string) {
         const first = card.milestones[0]
         const starter = run(card.starter, first.tests, milestoneOptions(card.solution, first))
         expect(!runPassed(starter, first.expectOutput), at, 'the starter code already passes milestone 1')
+        if (card.play) {
+          const problem = playSmoke(card.play, card.solution)
+          expect(problem === null, at, `the solution can't drive the ${card.play} game: ${problem}`)
+          const starterLoad = JSON.parse(playLoad(card.starter, '{}')) as Reply
+          expect(starterLoad.ok, at, `the starter crashes in the Play panel: ${starterLoad.error?.message}`)
+        }
         break
       }
       case 'explain': {

@@ -1,0 +1,130 @@
+id: p1-project-rps
+track: ml
+unit: 1
+order: 13
+kind: project
+title: 'Project: Rock, paper, scissors'
+summary: Write the brain of a rock, paper, scissors game, then play a match against the computer, first to three.
+
+cards:
+  - type: project
+    id: rps
+    play: rps
+    brief: >-
+      Build rock, paper, scissors. In the Play tab you pick a move, the computer picks one at random, and your program decides who won. Each round runs your
+      whole program with `player` and `computer` set at the top. Your score carries into the next round, so the program can play a whole match.
+
+
+      Print anything you like. It shows up under the game.
+    starter: |
+      player = "rock"
+      computer = "scissors"
+      wins = 0
+      losses = 0
+
+      # Decide who won, keep score, and print something about the round.
+    solution: |
+      player = "rock"
+      computer = "scissors"
+      wins = 0
+      losses = 0
+
+      if player == computer:
+          result = "draw"
+      elif (
+          (player == "rock" and computer == "scissors")
+          or (player == "scissors" and computer == "paper")
+          or (player == "paper" and computer == "rock")
+      ):
+          result = "win"
+      else:
+          result = "lose"
+
+      if result == "win":
+          wins = wins + 1
+      elif result == "lose":
+          losses = losses + 1
+
+      if result == "win":
+          best = player
+      else:
+          best = computer
+
+      if result == "draw":
+          reason = "same move"
+      elif best == "rock":
+          reason = "rock crushes scissors"
+      elif best == "scissors":
+          reason = "scissors cut paper"
+      else:
+          reason = "paper covers rock"
+
+      if wins == 3:
+          winner = "you"
+      elif losses == 3:
+          winner = "computer"
+      else:
+          winner = "nobody"
+
+      print(f"You {result}: {reason}.")
+      print(f"Score: {wins} to {losses}")
+    milestones:
+      - title: Who won?
+        goal: >-
+          Set `result` to `"win"`, `"lose"` or `"draw"`, from your side. Rock beats scissors, scissors beats paper, and paper beats rock.
+        tests:
+          - { call: result, expect: "'win'" }
+        vary:
+          - { player: '"paper"', computer: '"scissors"' }
+          - { player: '"scissors"', computer: '"scissors"' }
+          - { player: '"rock"', computer: '"paper"' }
+          - { player: '"scissors"', computer: '"paper"' }
+          - { player: '"paper"', computer: '"rock"' }
+        requires: ['elif']
+        hints:
+          - 'Check for a draw first: `if player == computer:`.'
+          - 'There are only three ways to win. Join them with `or`, like `(player == "rock" and computer == "scissors") or ...`. Anything else is a loss.'
+      - title: Keep score
+        goal: Add 1 to `wins` when you win, and to `losses` when you lose. The game feeds the new numbers into the next round.
+        tests:
+          - { call: wins, expect: '1' }
+          - { call: losses, expect: '0' }
+        vary:
+          - { player: '"rock"', computer: '"paper"', wins: '3', losses: '5' }
+          - { player: '"paper"', computer: '"rock"', wins: '2', losses: '0' }
+          - { player: '"paper"', computer: '"paper"', wins: '1', losses: '1' }
+        hints:
+          - Use `result`, which you've already worked out.
+          - '`if result == "win": wins = wins + 1`, then an `elif` for losing.'
+      - title: Say why
+        goal: >-
+          Set `reason` to what happened, with the winning move first: `"rock crushes scissors"`, `"scissors cut paper"` or `"paper covers rock"`. On a
+          draw, make it `"same move"`.
+        tests:
+          - { call: reason, expect: "'rock crushes scissors'" }
+        vary:
+          - { player: '"rock"', computer: '"paper"' }
+          - { player: '"scissors"', computer: '"paper"' }
+          - { player: '"rock"', computer: '"scissors"' }
+          - { player: '"paper"', computer: '"scissors"' }
+          - { player: '"rock"', computer: '"rock"' }
+        hints:
+          - "Work out the winning move first: it's `player` if you won, and `computer` otherwise."
+          - 'Then one `if`/`elif` on that move picks the sentence. Handle the draw before the rest.'
+      - title: First to three
+        goal: >-
+          Set `winner` to `"you"` once `wins` reaches 3, to `"computer"` once `losses` does, and to `"nobody"` before then. The game ends the match when
+          it sees a winner.
+        tests:
+          - { call: winner, expect: "'nobody'" }
+        vary:
+          - { player: '"rock"', computer: '"scissors"', wins: '2', losses: '1' }
+          - { player: '"rock"', computer: '"paper"', wins: '0', losses: '2' }
+          - { player: '"rock"', computer: '"rock"', wins: '2', losses: '2' }
+        hints:
+          - Do this after the score is updated, so the winning round counts.
+          - '`if wins == 3: winner = "you"`, then `elif` for the computer and `else` for nobody.'
+    extras:
+      - Add lizard and Spock. Lizard eats paper, Spock smashes scissors, rock crushes lizard, and so on. Try the new moves by changing `player` at the top and pressing Run.
+      - Print a different taunt from the computer depending on the score, like when it's two ahead.
+      - Make the match first to five.

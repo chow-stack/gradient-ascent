@@ -233,6 +233,65 @@ def __ga_scope(code, name):
             return ast.get_source_segment(code, node) or ""
     return ""
 
+__ga_play_ns = None
+
+def __ga_json(value):
+    def plain(o):
+        if hasattr(o, "tolist"):
+            return o.tolist()
+        if isinstance(o, (set, frozenset)):
+            return sorted(o, key=repr)
+        return repr(o)
+    return json.dumps(value, default=plain)
+
+def __ga_play_reply(ok, out, err, value=None):
+    return json.dumps({"ok": ok, "stdout": out, "error": err, "value": json.loads(__ga_json(value)) if ok else None})
+
+def __ga_play_load(code, values_json="{}"):
+    """Runs the learner's program into a namespace that stays alive, so the Play panel can call into it."""
+    global __ga_play_ns
+    __ga_play_ns = None
+    values = json.loads(values_json)
+    src = code
+    if values:
+        try:
+            src = __ga_with(code, values)
+        except SyntaxError as e:
+            return __ga_play_reply(False, "", __ga_err(e))
+        if src is None:
+            names = " and ".join(f"{k} = ..." for k in values)
+            return __ga_play_reply(False, "", {"type": "Missing", "message": f"Keep {names} at the top of your code.", "line": None})
+    ns = {"__name__": "__main__", "input": __ga_no_input}
+    ns["__ga_has"] = lambda *names: [n for n in names if callable(ns.get(n))]
+    out = io.StringIO()
+    err = None
+    with contextlib.redirect_stdout(out):
+        try:
+            exec(compile(src, "main.py", "exec"), ns)
+        except BaseException as e:
+            err = __ga_err(e)
+    __ga_figures()
+    if err is None:
+        __ga_play_ns = ns
+    return __ga_play_reply(err is None, out.getvalue(), err)
+
+def __ga_play_call(src):
+    """Runs a few statements in the Play namespace and gives back the last expression's value as JSON."""
+    ns = __ga_play_ns
+    if ns is None:
+        return __ga_play_reply(False, "", {"type": "NotLoaded", "message": "The program isn't loaded.", "line": None})
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        try:
+            tree = ast.parse(src)
+            last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
+            exec(compile(tree, "<play>", "exec"), ns)
+            value = eval(compile(ast.Expression(last.value), "<play>", "eval"), ns) if last else None
+            text = __ga_json(value)
+        except BaseException as e:
+            return __ga_play_reply(False, out.getvalue(), __ga_err(e))
+    return json.dumps({"ok": True, "stdout": out.getvalue(), "error": None, "value": json.loads(text)})
+
 def __ga_trivial(code):
     """True when code only prints fixed values, so printing the answer IS the task."""
     def fixed(n):
@@ -344,6 +403,9 @@ export type RunResult = {
   /** Set by the client when the run was stopped (infinite loop, too slow). */
   timedOut?: boolean
 }
+
+/** What a Play panel call gives back: the value of its last expression, as JSON, and anything printed. */
+export type PlayReply<T = unknown> = { ok: boolean; stdout: string; error: RunError | null; value: T | null }
 
 /** Normalizes printed output for comparison: trims trailing spaces on each line and trailing blank lines. */
 export function normalizeOutput(s: string): string {

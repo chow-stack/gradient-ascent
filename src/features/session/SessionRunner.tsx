@@ -321,6 +321,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         return
       }
       const t = (e.target instanceof HTMLElement ? e.target : document.body) as HTMLElement
+      // A project's game handles its own keys (Wordle's Enter submits a guess).
+      if (t.closest('[data-own-keys]')) return
       const inEditor = !!t.closest('.monaco-editor')
       const inField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || inEditor
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -468,7 +470,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             </p>
           )}
           <div
-            key={shake}
+            // A new key replays the shake. Projects don't shake, and remounting would lose a game in progress.
+            key={fullHeight ? 'project' : shake}
             className={
               fullHeight
                 ? 'flex min-h-0 flex-1 flex-col'

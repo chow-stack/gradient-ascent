@@ -1,0 +1,151 @@
+id: p5-project-life
+track: ml
+unit: 5
+order: 14
+kind: project
+title: 'Project: Game of Life'
+summary: Run Conway's Game of Life on a whole grid at once with NumPy, then draw on it, drop in gliders and watch it evolve.
+
+cards:
+  - type: project
+    id: life
+    play: life
+    brief: >-
+      The Game of Life is a grid of cells, each alive (1) or dead (0). Every step, all the cells update at once by counting their 8 neighbours. A live
+      cell with 2 or 3 live neighbours survives, a dead cell with exactly 3 comes alive, and every other cell is dead next step. From those rules come
+      gliders that walk across the grid and patterns that build others.
+
+
+      You'll do every step on the whole array at once, with no loops over cells. The new tool is `np.roll(grid, 1, axis=0)`, which shifts every row down
+      by one and wraps the bottom row round to the top. Shift the grid the 8 ways, add the copies up, and each cell holds its neighbour count.
+    starter: |
+      import numpy as np
+
+      # Your functions go here. Try them on this small glider first:
+      glider = np.array([
+          [0, 1, 0, 0, 0],
+          [0, 0, 1, 0, 0],
+          [1, 1, 1, 0, 0],
+          [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0],
+      ])
+    solution: |
+      import numpy as np
+
+      glider = np.array([
+          [0, 1, 0, 0, 0],
+          [0, 0, 1, 0, 0],
+          [1, 1, 1, 0, 0],
+          [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0],
+      ])
+
+
+      def neighbours(grid):
+          total = np.zeros_like(grid)
+          for dr in [-1, 0, 1]:
+              for dc in [-1, 0, 1]:
+                  if dr != 0 or dc != 0:
+                      total = total + np.roll(np.roll(grid, dr, axis=0), dc, axis=1)
+          return total
+
+
+      def step(grid):
+          n = neighbours(grid)
+          alive = (n == 3) | ((grid == 1) & (n == 2))
+          return alive.astype(int)
+
+
+      def random_world(rows, cols, chance, seed):
+          rng = np.random.default_rng(seed)
+          return (rng.random((rows, cols)) < chance).astype(int)
+
+
+      def stamp(grid, pattern, r, c):
+          out = grid.copy()
+          rows, cols = pattern.shape
+          out[r:r + rows, c:c + cols] = pattern
+          return out
+    milestones:
+      - title: Count the neighbours
+        goal: >-
+          Write `neighbours(grid)`. It gives back an array the same shape as `grid`, where each cell holds how many of its 8 neighbours are alive. The edges
+          wrap round, so a cell on the left edge has neighbours on the right edge.
+        tests:
+          - {
+              call: 'neighbours(np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]]))',
+              expect: '[[1, 2, 2, 1], [1, 1, 1, 1], [1, 2, 2, 1], [0, 0, 0, 0]]',
+            }
+          - {
+              call: 'neighbours(np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]]))',
+              expect: '[[0, 1, 1], [1, 1, 1], [1, 1, 1]]',
+            }
+          - { call: 'neighbours(glider).sum()', expect: '40', hidden: true }
+        hints:
+          - '`np.roll(np.roll(grid, dr, axis=0), dc, axis=1)` shifts the grid `dr` rows and `dc` columns.'
+          - Loop over `dr` and `dc` from -1 to 1, skipping the one where both are 0, and add up the 8 shifted grids. Looping over 8 shifts is fine; looping over cells isn't.
+      - title: One step
+        goal: >-
+          Write `step(grid)`, which gives back the next generation as 0s and 1s. Use masks on the whole grid, with no loops. Then open the Play tab, draw a
+          few cells and press Play.
+        tests:
+          - {
+              call: 'step(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]))',
+              expect: '[[0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0]]',
+            }
+          - {
+              call: 'step(np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]]))',
+              expect: '[[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]]',
+            }
+          - {
+              call: 'step(step(step(step(glider)))).tolist() == np.roll(np.roll(glider, 1, axis=0), 1, axis=1).tolist()',
+              expect: 'True',
+              hidden: true,
+            }
+        requires: ['name:neighbours']
+        forbids: ['loop']
+        scope: step
+        hints:
+          - 'Two masks: `n == 3` and `(grid == 1) & (n == 2)`. A cell is alive next step if either is true.'
+          - 'Combine them with `|`, then `.astype(int)` turns True and False into 1 and 0.'
+      - title: A random world
+        goal: >-
+          Write `random_world(rows, cols, chance, seed)`. Make a generator with `np.random.default_rng(seed)`, and give back a grid where each cell is alive
+          with probability `chance`. Then try Random in the Play tab.
+        tests:
+          - { call: 'random_world(2, 3, 1.0, 0)', expect: '[[1, 1, 1], [1, 1, 1]]' }
+          - { call: 'random_world(4, 6, 0.0, 5).sum()', expect: '0' }
+          - {
+              call: 'random_world(5, 5, 0.3, 7).tolist() == (np.random.default_rng(7).random((5, 5)) < 0.3).astype(int).tolist()',
+              expect: 'True',
+              hidden: true,
+            }
+        requires: ['name:default_rng']
+        scope: random_world
+        hints:
+          - '`rng.random((rows, cols))` gives a grid of numbers between 0 and 1.'
+          - A cell is alive when its number is below `chance`. Turn the mask into 0s and 1s.
+      - title: Stamp a pattern
+        goal: >-
+          Write `stamp(grid, pattern, r, c)`. It gives back a copy of `grid` with `pattern` pasted in, its top-left corner at row `r` and column `c`. The
+          original grid must not change. Then drop a glider gun in from the Play tab.
+        tests:
+          - {
+              call: 'stamp(np.zeros((3, 4), int), np.ones((2, 2), int), 1, 2)',
+              expect: '[[0, 0, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]',
+            }
+          - { call: 'stamp(np.zeros((2, 2), int), np.array([[1]]), 0, 0)', expect: '[[1, 0], [0, 0]]' }
+          - {
+              call: '(lambda g: (stamp(g, np.ones((2, 2), int), 0, 0), g.sum())[1])(np.zeros((3, 3), int))',
+              expect: '0',
+              hidden: true,
+            }
+        requires: ['name:copy']
+        scope: stamp
+        hints:
+          - Slicing a grid gives a view, so writing into it changes the original. Start from `grid.copy()`.
+          - '`rows, cols = pattern.shape`, then assign to the slice `out[r:r + rows, c:c + cols]`.'
+    extras:
+      - 'Give `step` its own rules. HighLife is born with 3 or 6 neighbours and survives with 2 or 3. `np.isin(n, [3, 6])` helps.'
+      - Run 200 steps from a random world and plot how many cells are alive each step with `plt.plot`.
+      - Find a pattern that never changes, one that repeats, and one that moves.

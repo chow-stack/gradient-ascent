@@ -97,7 +97,7 @@ Next lesson, extra reviews (due soonest first), or practice on any passed lesson
 | Write a function                                  | Write              | Hidden tests + reruns     | Core skill                |
 | Explain in plain English                          | Explain            | AI rubric (or self-grade) | Ends each concept         |
 | Code autopsy                                      | Read my code       | AI-generated Qs           | Phase 5                   |
-| Project (brief + milestone checklist)             | Make               | Tests per milestone       | Saved as you type         |
+| Project (brief + milestones + Play tab)           | Make               | Tests per milestone       | Playable, saved as typed  |
 
 ---
 
@@ -297,6 +297,19 @@ npm run setup:python   # download the Python packages (runs after npm install)
 From doing Unit 1, lessons 1–3. Research: `reports/Teaching Python and lesson design.md` (git-ignored, local only). Word,
 card and lesson counts below are judgement: no study tests whole-lesson formats or topic order for self-paced beginners.
 
+### Built (2026-11-08)
+
+- **Projects you can play.** From testing: the projects felt static, because a program could only print one fixed
+  transcript. Now each has a Play tab where the learner's own code runs a real game. The app loads the program once into a
+  Python namespace that stays alive and calls its functions as you click (`playLoad` / `playCall` in `runner/python.ts`).
+  It plays with whatever's written so far, and Restart loads newer code. Milestones grade behaviour, not exact output, and
+  "Make it yours" ideas appear once they all pass. `content:check` proves each solution can drive its game.
+- **New projects:** Rock, paper, scissors (U1), Hangman with a bot (U2), Wordle with a solver bot (U3), Blackjack (U4) and
+  Game of Life (U5). The doodle recogniser stays as Unit 5's second project, with a drawing pad that guesses your doodle
+  and learns new ones.
+- **Fixes found while testing:** Check no longer remounts a project (it lost the game in progress), and keys inside the
+  Play tab no longer trigger the session's Enter shortcut.
+
 ### Built (2026-11-07)
 
 - **Project split screen.** A project fills the screen with no page scrolling: brief and milestones on the left, the
@@ -416,6 +429,7 @@ Different numbers alone aren't enough, because you can memorize the method.
 | 2026-11-05 | Projects are lessons of write cards, with reference code in each starter                                             | Works today with no carryover engine; projects stay out of review                                                                         |
 | 2026-11-06 | Rewrite one unit at a time, with older lessons standing in as a temporary unit                                       | The app keeps working, and feedback on Unit 1 can shape the next two before they're written                                               |
 | 2026-11-06 | Applied track parked, not built (CURRICULUM.md §4)                                                                   | Would split effort two days after moving to one path, and there are no users to test it with yet. The split point after Unit 3 stays open |
+| 2026-11-08 | Projects are games the learner's code drives, in a Play tab; milestones grade behaviour, not printed text            | Printed transcripts felt static. Studies favour real, shareable programs and choice; the milestones keep the scaffolding                  |
 
 ## 12. Sources
 

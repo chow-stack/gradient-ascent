@@ -1,0 +1,118 @@
+id: p2-project-hangman
+track: ml
+unit: 2
+order: 13
+kind: project
+title: 'Project: Hangman, and a bot that plays it'
+summary: Write the rules of Hangman and play it in the Play tab. Then write a bot that guesses letters by itself, and see how well it does.
+
+cards:
+  - type: project
+    id: hangman
+    play: hangman
+    brief: >-
+      Build Hangman. In the Play tab, the game picks a secret word and you guess letters. Your functions are the rules: what the word looks like so far,
+      how many lives are gone, and when the game is over. Then you'll write a bot that picks letters by itself, and watch it play.
+
+
+      There are no lists yet, so the letters guessed so far are one string, like `"tea"`.
+    starter: |
+      lives = 6
+      common = "etaoinshrdlucmfwypvbgkjqxz"
+
+      # Your functions go here.
+    solution: |
+      lives = 6
+      common = "etaoinshrdlucmfwypvbgkjqxz"
+
+
+      def masked(word, guessed):
+          shown = ""
+          for c in word:
+              if c in guessed:
+                  shown = shown + c
+              else:
+                  shown = shown + "_"
+          return shown
+
+
+      def misses(word, guessed):
+          count = 0
+          for c in guessed:
+              if c not in word:
+                  count = count + 1
+          return count
+
+
+      def status(word, guessed):
+          if "_" not in masked(word, guessed):
+              return "won"
+          if misses(word, guessed) >= lives:
+              return "lost"
+          return "playing"
+
+
+      def next_guess(guessed):
+          for c in common:
+              if c not in guessed:
+                  return c
+          return ""
+    milestones:
+      - title: Show the word
+        goal: >-
+          Write `masked(word, guessed)`. It gives back the word with every letter that hasn't been guessed yet replaced by `_`. So `masked("goat", "ta")` is
+          `"__at"`.
+        tests:
+          - { call: 'masked("goat", "ta")', expect: "'__at'" }
+          - { call: 'masked("hill", "")', expect: "'____'" }
+          - { call: 'masked("hill", "hil")', expect: "'hill'", hidden: true }
+          - { call: 'masked("banana", "an")', expect: "'_anana'", hidden: true }
+        requires: ['for']
+        scope: masked
+        hints:
+          - Start with an empty string, and go through the word one letter at a time.
+          - '`if c in guessed:` add the letter, `else:` add `"_"`. Return the string after the loop.'
+      - title: Count the misses
+        goal: Write `misses(word, guessed)`, the number of guessed letters that aren't in the word.
+        tests:
+          - { call: 'misses("goat", "tax")', expect: '1' }
+          - { call: 'misses("goat", "")', expect: '0' }
+          - { call: 'misses("hill", "xyzh")', expect: '3', hidden: true }
+        hints:
+          - This time, loop over `guessed`, not the word.
+          - Keep a count that starts at 0, and add 1 for each letter that's `not in word`.
+      - title: Game over?
+        goal: >-
+          Write `status(word, guessed)`. It gives back `"won"` once every letter is showing, `"lost"` once the misses reach `lives`, and `"playing"`
+          otherwise. Use your other two functions.
+        tests:
+          - { call: 'status("goat", "goat")', expect: "'won'" }
+          - { call: 'status("goat", "ga")', expect: "'playing'" }
+          - { call: 'status("goat", "xyzqwe")', expect: "'lost'" }
+          - { call: 'status("goat", "xyzq")', expect: "'playing'", hidden: true }
+        vary:
+          - { lives: '3' }
+        requires: ['name:masked', 'name:misses']
+        scope: status
+        hints:
+          - '`"_" in masked(word, guessed)` tells you if any letter is still hidden.'
+          - Compare `misses(word, guessed)` with `lives`, not with 6, so the game still works if someone changes `lives`.
+      - title: A bot that plays
+        goal: >-
+          Write `next_guess(guessed)`. It gives back the first letter in `common` that hasn't been guessed. `common` lists the letters from most to least
+          used in English, so the bot guesses like a sensible person. Then press "Let your bot play" in the Play tab.
+        tests:
+          - { call: 'next_guess("")', expect: "'e'" }
+          - { call: 'next_guess("et")', expect: "'a'" }
+          - { call: 'next_guess("etaoinshrdlucmfwypvbgkjqx")', expect: "'z'", hidden: true }
+        vary:
+          - { common: '"zyx"' }
+        requires: ['return']
+        scope: next_guess
+        hints:
+          - Loop over `common`. The first letter that's `not in guessed` is the answer.
+          - '`return` it straight away, from inside the loop. That ends the function.'
+    extras:
+      - Watch your bot play ten words. How many does it win? Try changing `lives` or the order of `common` and see if it does better.
+      - Make `next_guess` save the vowels for later, or try them first.
+      - Print a running commentary from inside `status`. It shows up under the game.

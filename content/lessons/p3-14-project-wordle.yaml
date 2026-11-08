@@ -1,0 +1,135 @@
+id: p3-project-wordle
+track: ml
+unit: 3
+order: 14
+kind: project
+title: 'Project: Wordle, and a bot that solves it'
+summary: Write the scoring for Wordle and play it. Then teach the computer to solve it by narrowing down the words and counting letters.
+
+cards:
+  - type: project
+    id: wordle
+    play: wordle
+    brief: >-
+      Build Wordle. You guess a five-letter word, and each letter turns green if it's in the right place, yellow if it's in the word somewhere else, and
+      grey if it isn't in the word. Your `score` function does the colouring, as a string like `"GY--G"`.
+
+
+      Then you'll teach the computer to play. After each guess it keeps only the words that would have scored the same, and picks its next guess by
+      counting letters. That simple strategy usually wins in three or four guesses.
+    starter: |
+      words = ["crane", "slate", "cider", "sheep", "steep", "those"]
+
+      # Your functions go here. Try them on the words above, then play in the Play tab.
+    solution: |
+      words = ["crane", "slate", "cider", "sheep", "steep", "those"]
+
+
+      def score(guess, answer):
+          left = {}
+          for i in range(5):
+              if guess[i] != answer[i]:
+                  left[answer[i]] = left.get(answer[i], 0) + 1
+          out = ""
+          for i in range(5):
+              if guess[i] == answer[i]:
+                  out = out + "G"
+              elif left.get(guess[i], 0) > 0:
+                  out = out + "Y"
+                  left[guess[i]] = left[guess[i]] - 1
+              else:
+                  out = out + "-"
+          return out
+
+
+      def remaining(words, guess, pattern):
+          keep = []
+          for w in words:
+              if score(guess, w) == pattern:
+                  keep.append(w)
+          return keep
+
+
+      def letters(word):
+          out = []
+          for c in word:
+              if c not in out:
+                  out.append(c)
+          return out
+
+
+      def pick(words):
+          counts = {}
+          for w in words:
+              for c in letters(w):
+                  counts[c] = counts.get(c, 0) + 1
+          best = words[0]
+          best_total = -1
+          for w in words:
+              total = 0
+              for c in letters(w):
+                  total = total + counts[c]
+              if total > best_total:
+                  best = w
+                  best_total = total
+          return best
+    milestones:
+      - title: Colour a guess
+        goal: >-
+          Write `score(guess, answer)`. It gives back five characters, one per letter of the guess: `"G"` for the right letter in the right place, `"Y"` for
+          a letter that's in the answer somewhere else, and `"-"` for a letter that isn't in it. Don't worry about repeated letters yet.
+        tests:
+          - { call: 'score("crane", "cider")', expect: "'GY--Y'" }
+          - { call: 'score("light", "night")', expect: "'-GGGG'" }
+          - { call: 'score("about", "above")', expect: "'GGG--'", hidden: true }
+          - { call: 'score("slate", "least")', expect: "'YYGYY'", hidden: true }
+        hints:
+          - Loop over the positions with `for i in range(5)`, so you can compare `guess[i]` with `answer[i]`.
+          - 'Three cases, in order: the same letter at `i` is green, `guess[i] in answer` is yellow, and anything else is grey. Add a character to a string each time.'
+      - title: Repeated letters
+        goal: >-
+          Guess `"geese"` when the answer is `"those"`. Only the last `e` is green, and the answer has no other `e` left over, so the others are grey:
+          `"---GG"`. A letter can only be yellow as many times as the answer has it spare. Make `score` handle that.
+        tests:
+          - { call: 'score("geese", "those")', expect: "'---GG'" }
+          - { call: 'score("eerie", "there")', expect: "'Y-Y-G'" }
+          - { call: 'score("allow", "label")', expect: "'YYY--'", hidden: true }
+          - { call: 'score("speed", "abide")', expect: "'--Y-Y'", hidden: true }
+        hints:
+          - "Go through the word twice. The first loop counts the answer's letters that aren't green, in a dictionary: those are the spares."
+          - In the second loop, a letter is yellow only if it has a spare left. When you use one, take 1 off its count.
+          - '`left[answer[i]] = left.get(answer[i], 0) + 1` counts a spare. `left.get(guess[i], 0) > 0` checks for one.'
+      - title: Keep the ones that fit
+        goal: >-
+          Write `remaining(words, guess, pattern)`. It gives back a list of the words that could still be the answer: the ones that would have given this
+          pattern for this guess.
+        tests:
+          - { call: 'remaining(words, "crane", "GY--Y")', expect: "['cider']" }
+          - { call: 'remaining(words, "sheep", "G-GGG")', expect: "['steep']" }
+          - {
+              call: 'remaining(["abcde", "abcdf", "fghij"], "abcdz", "GGGG-")',
+              expect: "['abcde', 'abcdf']",
+              hidden: true,
+            }
+        requires: ['name:score']
+        scope: remaining
+        hints:
+          - If `w` were the answer, the guess would have scored `score(guess, w)`.
+          - Keep `w` when that equals `pattern`. Build a new list with `.append`.
+      - title: Choose a guess
+        goal: >-
+          Write `pick(words)`. For each letter, count how many of the words contain it. A word's total is the counts of its different letters added up. Give
+          back the word with the biggest total, and the first one on a tie. Then try "Let your bot solve it" in the Play tab.
+        tests:
+          - { call: pick(words), expect: "'slate'" }
+          - { call: 'pick(["abcde", "fghij", "abfgh"])', expect: "'abfgh'" }
+          - { call: 'pick(["moose", "geese"])', expect: "'moose'", hidden: true }
+          - { call: 'pick(["ab", "ba"])', expect: "'ab'", hidden: true }
+        hints:
+          - 'Count each letter once per word, so "geese" adds only one to `e`. A helper that lists a word''s different letters makes this easier.'
+          - "Two loops over the words: one to fill the counts dictionary, one to add up each word's total and keep the best."
+          - To keep the first word on a tie, only replace the best when a total is bigger, not equal.
+    extras:
+      - Your bot only guesses words that could still be the answer. Sometimes a word that can't be right tells you more. Try letting `pick` choose from every word.
+      - Make `pick` count letters by position, so an `s` at the start scores more than an `s` in the middle.
+      - Print how many words are left after each guess from inside `remaining`, and watch the list shrink.
