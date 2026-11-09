@@ -1,7 +1,7 @@
 import { dayKey, type DayKey } from '../../lib/dates'
 import { shuffled } from '../../lib/random'
 import { db, type DailyResult, type GradientDB, type MasteryRow } from '../../lib/db'
-import { getItem, lessons } from '../content/content'
+import { getItem, getLesson, lessons } from '../content/content'
 import {
   cardVariants,
   isCheckpoint,
@@ -12,7 +12,9 @@ import {
   type Lesson,
 } from '../content/schema'
 import type { ItemSource } from '../progress/xp'
-import { selectDaily } from './daily'
+import { dailyItemIds } from './daily'
+import { prepareFreshTasks } from '../fresh/fresh'
+import { isFreshId } from '../fresh/topics'
 import { loadResume, type Resume } from './resume'
 
 /**
@@ -33,6 +35,8 @@ export type SessionItem = {
   source: ItemSource
   /** Which version of the card this is (0 is the card itself). */
   version?: number
+  /** A Daily 5 coding task: its title. */
+  task?: { title: string }
 }
 
 export type DailyPlan = { day: DayKey; itemIds: string[]; results: Record<string, DailyResult> }
@@ -121,7 +125,8 @@ async function dailyPlan(now: Date, database: GradientDB): Promise<SessionPlan> 
   const day = dayKey(now)
   let row = await database.dailies.get(day)
   if (!row) {
-    const itemIds = await selectDaily(now, database)
+    const tasks = await prepareFreshTasks(now, database)
+    const itemIds = await dailyItemIds(now, database, tasks)
     if (itemIds.length === 0) return { kind: 'daily', items: [] }
     row = { day, itemIds, results: {} }
     await database.dailies.put(row)
@@ -130,10 +135,18 @@ async function dailyPlan(now: Date, database: GradientDB): Promise<SessionPlan> 
   const items: SessionItem[] = []
   for (const id of itemIds) {
     if (results[id]) continue
-    const item = await reviewItem(id, 'daily', database)
+    const item = isFreshId(id) ? await taskItem(id, database) : await reviewItem(id, 'daily', database)
     if (item) items.push(item)
   }
   return { kind: 'daily', items, daily: { day, itemIds, results } }
+}
+
+/** A coding task from today's set. */
+async function taskItem(id: string, database: GradientDB): Promise<SessionItem | null> {
+  const row = await database.fresh.get(id)
+  const lesson = row && getLesson(row.lessonId)
+  if (!row || !lesson) return null
+  return { key: `daily:${id}`, itemId: id, lesson, card: row.card, source: 'fresh', task: { title: row.title } }
 }
 
 function lessonItems(lesson: Lesson): SessionItem[] {

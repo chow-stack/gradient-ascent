@@ -111,6 +111,7 @@ const SOURCE_LABEL: Record<string, string> = {
   practice: 'practice',
   checkpoint: 'checkpoint',
   project: 'project',
+  fresh: 'AI coding task',
 }
 
 const shortDate = (at: number) => new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })

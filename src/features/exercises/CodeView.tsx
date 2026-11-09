@@ -1,16 +1,20 @@
-import { RotateCcw } from 'lucide-react'
+import { ChevronDown, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
+import { CodeBlock } from '../../components/CodeBlock'
 import { CodeEditor } from '../../components/editor'
 import type { Card } from '../content/schema'
 import type { RunResult } from '../runner/harness'
 import { runPython } from '../runner/python'
-import { Prompt, RunButton, RunOutput } from './shared'
+import { Prompt, Prose, RunButton, RunOutput } from './shared'
 import { locked, type ViewProps } from './types'
 
 type CodeCard = Extract<Card, { type: 'fix' | 'write' }>
 
-/** Fix-the-bug and write-a-function: a real editor, a Run button, and tests on Check. */
-export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: ViewProps<CodeCard>) {
+/**
+ * Fix-the-bug and write-a-function: a real editor, a Run button, and tests on Check. A Daily 5 coding task is a
+ * write card with a title and a longer brief, and offers its model solution once it's solved.
+ */
+export function CodeView({ card, answer, setAnswer, phase, result, task, onSubmit }: ViewProps<CodeCard>) {
   const code = answer.type === 'code' ? answer.code : ''
   const [scratch, setScratch] = useState<RunResult | null>(null)
   const [running, setRunning] = useState(false)
@@ -22,6 +26,7 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
   }
   const shown = result ?? scratch
   const visibleTests = card.tests?.filter((t) => !t.hidden) ?? []
+  const hiddenCount = (card.tests?.length ?? 0) - visibleTests.length
   const original = card.type === 'fix' ? card.code : card.starter
   // Points at the bug only until the code changes, because after that the line may have moved.
   const markLine = card.type === 'fix' && code === card.code ? (card.highlightLine ?? null) : null
@@ -35,7 +40,14 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
 
   return (
     <div className="flex flex-col gap-5">
-      <Prompt tag={card.type === 'fix' ? 'Fix the bug' : 'Write the code'} text={card.prompt} />
+      {task ? (
+        <div className="flex flex-col gap-3">
+          <Prompt tag="Coding task" text={task.title} />
+          <Prose text={card.prompt} className="text-[17px]" />
+        </div>
+      ) : (
+        <Prompt tag={card.type === 'fix' ? 'Fix the bug' : 'Write the code'} text={card.prompt} />
+      )}
       {visibleTests.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <h3 className="text-small font-semibold text-muted">Should work like this</h3>
@@ -48,6 +60,9 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
               </li>
             ))}
           </ul>
+          {task && hiddenCount > 0 && (
+            <p className="text-caption text-faint">Check also runs {hiddenCount} hidden tests, including edge cases.</p>
+          )}
         </div>
       )}
       {card.expectOutput && (
@@ -88,6 +103,16 @@ export function CodeView({ card, answer, setAnswer, phase, result, onSubmit }: V
         </span>
       </div>
       {shown && <RunOutput result={shown} expectOutput={card.expectOutput} />}
+      {task && card.type === 'write' && phase === 'correct' && (
+        <details className="ga-ai-model">
+          <summary>
+            <ChevronDown size={16} aria-hidden /> Compare with a model solution
+          </summary>
+          <div className="pt-3">
+            <CodeBlock code={card.solution} />
+          </div>
+        </details>
+      )}
     </div>
   )
 }

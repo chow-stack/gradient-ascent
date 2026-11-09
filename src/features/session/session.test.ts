@@ -9,9 +9,12 @@ import {
   loadProgress,
   recordAttempt,
   recordDailyResult,
+  resetMastery,
+  resetTodaysDaily,
 } from '../progress/progress'
 import { dayKey } from '../../lib/dates'
 import { buildSession, nextLesson } from './plan'
+import { freshId, pickTopics } from '../fresh/topics'
 
 const dbs: GradientDB[] = []
 const freshDb = () => {
@@ -94,6 +97,11 @@ describe('daily loop', () => {
     const p = await loadProgress(day8, db)
     expect(p.mastery.get('p1-program')?.status).toBe('mastered')
     expect(p.daily.done).toBe(true)
+
+    // Resetting mastery keeps the lesson passed, with its passed date.
+    expect(await resetMastery(db)).toBeGreaterThan(0)
+    const row = await db.mastery.get('p1-program')
+    expect(row).toEqual({ lessonId: 'p1-program', status: 'passed', passedOn: dayKey(day1) })
   })
 
   it('a missed review comes back sooner than a correct one', async () => {
@@ -195,6 +203,32 @@ describe('daily 5', () => {
     expect((await loadProgress(day8, db)).daily.results.filter(Boolean)).toHaveLength(1)
   })
 
+  it('keeps each problem as shown, with the last checked answer, for the review', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    const { items, daily } = await buildSession('daily', {}, day8, db)
+    const [a, b] = items
+    await recordDailyResult(daily!.day, a.itemId, 'missed', db, { card: a.card, answer: { type: 'code', code: 'x' } })
+    await recordDailyResult(daily!.day, b.itemId, 'clean', db, { card: b.card })
+    const row = await db.dailies.get(daily!.day)
+    expect(row?.review?.[a.itemId]).toEqual({ card: a.card, answer: { type: 'code', code: 'x' } })
+    expect(row?.review?.[b.itemId]?.card).toEqual(b.card)
+    expect(row?.results).toEqual({ [a.itemId]: 'missed', [b.itemId]: 'clean' })
+  })
+
+  it('after a reset, the set is 5 random problems even when everything due was just answered', async () => {
+    const db = freshDb()
+    await fillPool(db)
+    const first = await playAll(db, 'daily', day8)
+    expect(first.items.length).toBeGreaterThan(0)
+    await resetTodaysDaily(day8, db)
+    expect(await db.dailies.get(dayKey(day8))).toBeUndefined()
+    const again = await buildSession('daily', {}, day8, db)
+    expect(again.daily?.results).toEqual({})
+    expect(again.items).toHaveLength(5)
+    expect(again.items.filter((i) => i.card.type === 'write' || i.card.type === 'fix').length).toBeLessThanOrEqual(2)
+  })
+
   it('the last answer finishes the set, even if the finish screen is never reached', async () => {
     const db = freshDb()
     await fillPool(db)
@@ -213,6 +247,113 @@ describe('daily 5', () => {
     expect((await loadProgress(day8, db)).streak.todayDone).toBe(false)
     expect(await completeDaily(plan.daily!.day, db)).toBeGreaterThan(0)
     expect(await completeDaily(plan.daily!.day, db)).toBe(0)
+  })
+})
+
+describe('daily 5 with coding tasks', () => {
+  const task = (db: GradientDB, slot: number, lessonId: string) =>
+    db.fresh.put({
+      id: freshId(dayKey(day8), slot),
+      day: dayKey(day8),
+      slot,
+      lessonId,
+      title: `Task ${slot}`,
+      card: {
+        type: 'write',
+        id: `fresh-${slot}`,
+        prompt: 'Write `double(n)`, which gives back twice `n`.',
+        starter: 'def double(n):\n    # Your code here\n',
+        solution: 'def double(n):\n    return n * 2\n',
+        tests: [{ call: 'double(2)', expect: '4' }],
+        hints: [],
+        variants: [],
+      },
+      level: 'medium',
+      createdAt: day8.getTime(),
+    })
+
+  async function setUp() {
+    const db = freshDb()
+    const unit1 = lessons.filter((l) => l.unit === 1 && l.kind === 'lesson').slice(0, 5)
+    for (const l of unit1) {
+      for (const card of l.cards)
+        await recordAttempt(
+          {
+            itemId: `${l.id}/${card.id}`,
+            lessonId: l.id,
+            type: card.type,
+            source: 'lesson',
+            outcome: ok,
+            durationMs: 1,
+          },
+          day1,
+          db,
+        )
+      await completeLesson(l.id, day1, db)
+    }
+    await task(db, 0, unit1[2].id)
+    await task(db, 1, unit1[3].id)
+    return { db, unit1 }
+  }
+
+  it('after a reset, is 3 random cards with no code, then the 2 tasks', async () => {
+    const { db } = await setUp()
+    await playAll(db, 'daily', day8)
+    await resetTodaysDaily(day8, db)
+    await task(db, 0, lessons.find((l) => l.unit === 1 && l.kind === 'lesson')!.id)
+    await task(db, 1, lessons.filter((l) => l.unit === 1 && l.kind === 'lesson')[1].id)
+    const plan = await buildSession('daily', {}, day8, db)
+    expect(plan.items.map((i) => i.source)).toEqual(['review', 'review', 'review', 'fresh', 'fresh'])
+    expect(plan.items.slice(0, 3).every((i) => i.card.type !== 'write' && i.card.type !== 'fix')).toBe(true)
+  })
+
+  it('is 3 review cards with no code, then the 2 tasks', async () => {
+    const { db } = await setUp()
+    const plan = await buildSession('daily', {}, day8, db)
+    expect(plan.items).toHaveLength(5)
+    expect(
+      plan.items.slice(0, 3).every((i) => i.source === 'review' && i.card.type !== 'write' && i.card.type !== 'fix'),
+    ).toBe(true)
+    expect(plan.items.slice(3).map((i) => [i.source, i.task?.title])).toEqual([
+      ['fresh', 'Task 0'],
+      ['fresh', 'Task 1'],
+    ])
+    expect((await loadProgress(day8, db)).daily).toMatchObject({ total: 5, tasks: 2 })
+  })
+
+  it("a task moves its lesson's topic schedule, not a review card, and the set finishes", async () => {
+    const { db, unit1 } = await setUp()
+    const { daily, items } = await buildSession('daily', {}, day8, db)
+    const fresh = items.filter((i) => i.source === 'fresh')
+    const reviewsBefore = await db.reviews.count()
+    await recordAttempt(
+      {
+        itemId: fresh[0].itemId,
+        lessonId: fresh[0].lesson.id,
+        type: 'write',
+        source: 'fresh',
+        outcome: ok,
+        durationMs: 1,
+      },
+      day8,
+      db,
+    )
+    expect(await db.reviews.count()).toBe(reviewsBefore)
+    expect((await db.topics.get(unit1[2].id))!.due).toBeGreaterThan(day8.getTime())
+    expect((await db.fresh.get(fresh[0].itemId))!.result).toBe('clean')
+
+    for (const id of daily!.itemIds) await recordDailyResult(daily!.day, id, 'clean', db)
+    expect((await loadProgress(day8, db)).daily.done).toBe(true)
+  })
+
+  it('topics are picked most-due first, from different units when possible', async () => {
+    const { db, unit1 } = await setUp()
+    const mastery = new Map((await db.mastery.toArray()).map((m) => [m.lessonId, m]))
+    const all = await pickTopics(day8, mastery, 2, new Set(), db)
+    expect(all).toHaveLength(2)
+    expect(all.every((l) => unit1.includes(l))).toBe(true)
+    const skipping = await pickTopics(day8, mastery, 5, new Set([all[0].id]), db)
+    expect(skipping.map((l) => l.id)).not.toContain(all[0].id)
   })
 })
 

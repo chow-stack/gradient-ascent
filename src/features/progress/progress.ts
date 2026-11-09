@@ -1,11 +1,20 @@
 import { liveQuery } from 'dexie'
 import { useEffect, useState } from 'react'
 import { dayKey, endOfDay, startOfTomorrow, type DayKey } from '../../lib/dates'
-import { db, type DailyResult, type DayRow, type GradientDB, type MasteryRow } from '../../lib/db'
+import {
+  db,
+  type DailyResult,
+  type DailyReviewEntry,
+  type DayRow,
+  type GradientDB,
+  type MasteryRow,
+} from '../../lib/db'
 import { getItem } from '../content/content'
 import { CHECKPOINT_PASS, REVIEWABLE, type CardType } from '../content/schema'
 import { schedule, type FsrsCard } from '../review/fsrs'
-import { selectDaily } from '../session/daily'
+import { dailyItemIds, selectDaily } from '../session/daily'
+import { allowRetry, freshTasksFor } from '../fresh/fresh'
+import { isFreshId, recordFreshOutcome } from '../fresh/topics'
 import { computeStreak, type StreakInfo } from './streak'
 import {
   CHECKPOINT_PASS_BONUS,
@@ -79,6 +88,8 @@ export async function recordAttempt(a: AttemptInput, now = new Date(), database:
         await database.mastery.put({ ...m, status: 'mastered', masteredOn: day })
     }
   })
+  // A coding task moves its lesson's topic schedule instead of a card's.
+  if (a.source === 'fresh') await recordFreshOutcome(a.itemId, a.lessonId, a.outcome, now, database)
   return xp
 }
 
@@ -134,12 +145,19 @@ export function dailyResult(o: Outcome): DailyResult {
  * Save how one Daily 5 problem went, so leaving and coming back resumes the set.
  * The last answer finishes the set, even if the finish screen is never reached.
  */
-export async function recordDailyResult(day: DayKey, itemId: string, result: DailyResult, database: GradientDB = db) {
+export async function recordDailyResult(
+  day: DayKey,
+  itemId: string,
+  result: DailyResult,
+  database: GradientDB = db,
+  entry?: DailyReviewEntry,
+) {
   const row = await database.dailies.get(day)
   if (!row) return
   const results = { ...row.results, [itemId]: result }
-  await database.dailies.update(day, { results })
-  if (row.itemIds.every((id) => results[id] || !getItem(id))) await completeDaily(day, database)
+  const review = entry ? { ...row.review, [itemId]: entry } : row.review
+  await database.dailies.update(day, { results, review })
+  if (row.itemIds.every((id) => results[id] || (!getItem(id) && !isFreshId(id)))) await completeDaily(day, database)
 }
 
 /** Today's Daily 5 is finished: the day counts for the streak. Returns the bonus XP (0 if already finished). */
@@ -150,6 +168,32 @@ export async function completeDaily(day: DayKey, database: GradientDB = db): Pro
   await addToDay(database, day, { xp: DAILY_COMPLETE_BONUS })
   await markDayDone(database, day)
   return DAILY_COMPLETE_BONUS
+}
+
+/**
+ * Clears today's Daily 5 and its coding tasks. The next set is 3 cards picked at random from passed lessons and 2 new
+ * coding tasks (see dailyItemIds). XP and the streak already earned stay.
+ */
+export async function resetTodaysDaily(now = new Date(), database: GradientDB = db): Promise<void> {
+  const day = dayKey(now)
+  await database.transaction('rw', database.dailies, database.fresh, database.days, async () => {
+    await database.dailies.delete(day)
+    await database.fresh.where('day').equals(day).delete()
+    const row: DayRow = (await database.days.get(day)) ?? { day, xp: 0, coreDone: false, items: 0, ms: 0 }
+    await database.days.put({ ...row, dailyReset: true })
+  })
+  allowRetry(day)
+}
+
+/** Every mastered lesson goes back to passed, to be mastered again by a correct review on a later day. Returns how many. */
+export async function resetMastery(database: GradientDB = db): Promise<number> {
+  return database.transaction('rw', database.mastery, async () => {
+    const mastered = (await database.mastery.toArray()).filter((m) => m.status === 'mastered')
+    await database.mastery.bulkPut(
+      mastered.map((m) => ({ lessonId: m.lessonId, status: 'passed' as const, passedOn: m.passedOn })),
+    )
+    return mastered.length
+  })
 }
 
 /** On a day with nothing to review, finishing a lesson counts the day instead. */
@@ -164,6 +208,8 @@ export async function countDayIfNothingToReview(now = new Date(), database: Grad
 export type DailySnapshot = {
   /** Problems in today's set (0 = nothing to review today). */
   total: number
+  /** How many of them are coding tasks. */
+  tasks: number
   /** One entry per problem, in order; null = not answered yet. */
   results: (DailyResult | null)[]
   done: boolean
@@ -182,21 +228,22 @@ export type ProgressSnapshot = {
 }
 
 export async function loadProgress(now = new Date(), database: GradientDB = db): Promise<ProgressSnapshot> {
-  const [days, dueCount, reviewCount, mastery, dailyRow, candidates] = await Promise.all([
+  const [days, dueCount, reviewCount, mastery, dailyRow, tasks] = await Promise.all([
     database.days.toArray(),
     database.reviews.where('due').belowOrEqual(endOfDay(now)).count(),
     database.reviews.count(),
     database.mastery.toArray(),
     database.dailies.get(dayKey(now)),
-    selectDaily(now, database),
+    freshTasksFor(dayKey(now), database),
   ])
-  const itemIds = dailyRow?.itemIds ?? candidates
+  const itemIds = dailyRow?.itemIds ?? (await dailyItemIds(now, database, tasks))
   const today = dayKey(now)
   const doneDays = new Set(days.filter((d) => d.coreDone).map((d) => d.day))
   return {
     streak: computeStreak(doneDays, today),
     daily: {
       total: itemIds.length,
+      tasks: itemIds.filter(isFreshId).length,
       results: itemIds.map((id) => dailyRow?.results[id] ?? null),
       done: !!dailyRow?.completedAt,
     },

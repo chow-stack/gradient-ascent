@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router'
+import { DailyReviewPage } from '../pages/DailyReviewPage'
 import { DebugPage } from '../pages/DebugPage'
 import { HomePage } from '../pages/HomePage'
 import { PathPage } from '../pages/PathPage'
@@ -21,6 +22,7 @@ export function App() {
       </Route>
       {/* Sessions are full-screen: no sidebar, nothing to distract. */}
       <Route path="session" element={<SessionPage />} />
+      <Route path="daily" element={<DailyReviewPage />} />
     </Routes>
   )
 }

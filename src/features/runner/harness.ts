@@ -292,6 +292,35 @@ def __ga_play_call(src):
             return __ga_play_reply(False, out.getvalue(), __ga_err(e))
     return json.dumps({"ok": True, "stdout": out.getvalue(), "error": None, "value": json.loads(text)})
 
+def __ga_vocab(codes_json):
+    """For each piece of code, the Python it uses: node types, built-ins called, methods called and imports.
+    None for code that doesn't parse. Used to keep AI-written tasks to what the learner has been taught."""
+    out = []
+    for code in json.loads(codes_json):
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            out.append(None)
+            continue
+        found = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.expr_context, ast.Module, ast.Expression)):
+                continue
+            found.add("node:" + type(node).__name__)
+            if isinstance(node, ast.Call):
+                f = node.func
+                if isinstance(f, ast.Name) and hasattr(builtins, f.id):
+                    found.add("call:" + f.id)
+                elif isinstance(f, ast.Attribute):
+                    found.add("method:" + f.attr)
+            elif isinstance(node, ast.Import):
+                for a in node.names:
+                    found.add("import:" + a.name.split(".")[0])
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                found.add("import:" + node.module.split(".")[0])
+        out.append(sorted(found))
+    return json.dumps(out)
+
 def __ga_trivial(code):
     """True when code only prints fixed values, so printing the answer IS the task."""
     def fixed(n):

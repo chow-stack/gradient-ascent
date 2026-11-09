@@ -1,5 +1,6 @@
 import { Dexie, type EntityTable } from 'dexie'
-import type { CardType } from '../features/content/schema'
+import type { Card, CardType } from '../features/content/schema'
+import type { Answer } from '../features/exercises/grading'
 import type { ItemSource } from '../features/progress/xp'
 import type { DayKey } from './dates'
 
@@ -39,7 +40,15 @@ export type MasteryStatus = 'passed' | 'mastered'
 /** A lesson is `passed` when its ladder is done, `mastered` after a correct review on a later day. */
 export type MasteryRow = { lessonId: string; status: MasteryStatus; passedOn: DayKey; masteredOn?: DayKey }
 
-export type DayRow = { day: DayKey; xp: number; coreDone: boolean; items: number; ms: number }
+export type DayRow = {
+  day: DayKey
+  xp: number
+  coreDone: boolean
+  items: number
+  ms: number
+  /** The Daily 5 was reset from Settings today: its next set is picked at random from passed lessons. */
+  dailyReset?: boolean
+}
 
 /** How one Daily 5 problem went: right first try, right with help, or missed. */
 export type DailyResult = 'clean' | 'assisted' | 'missed'
@@ -49,8 +58,13 @@ export type DailyRow = {
   day: DayKey
   itemIds: string[]
   results: Record<string, DailyResult>
+  /** What each problem looked like and what the learner last checked, for reviewing the set afterwards. */
+  review?: Record<string, DailyReviewEntry>
   completedAt?: number
 }
+
+/** One answered Daily 5 problem: the version of the card shown, and the learner's last checked answer (none if they never checked one). */
+export type DailyReviewEntry = { card: Card; answer?: Answer; title?: string }
 
 /**
  * A time the learner said the AI graded an explanation wrongly, with both grades. Kept so the AI's
@@ -98,6 +112,30 @@ export type FeedbackRow = {
   /** Set by "Mark done" once the feedback has been handed over. */
   done?: boolean
 }
+/** Spaced-repetition state for one lesson as a topic of the Daily 5's coding tasks (FSRS card, stored as-is). */
+export type TopicRow = { lessonId: string; due: number; card: unknown }
+
+/** How a coding task was pitched relative to medium, from how recent ones went. */
+export type TaskLevel = 'easier' | 'medium' | 'harder'
+
+/**
+ * A coding task written by the AI for one day's Daily 5, already checked in real Python. The card is a plain
+ * write card, so it's graded like one.
+ */
+export type FreshTaskRow = {
+  /** "fresh:<day>:<slot>" */
+  id: string
+  day: DayKey
+  slot: number
+  /** The lesson it's built around. */
+  lessonId: string
+  title: string
+  card: Card
+  level: TaskLevel
+  createdAt: number
+  result?: DailyResult
+}
+
 export type FlagReason = 'confusing' | 'wrong' | 'easy' | 'hard' | 'boring'
 export type LessonRating = 'easy' | 'right' | 'hard'
 
@@ -109,6 +147,8 @@ export class GradientDB extends Dexie {
   dailies!: EntityTable<DailyRow, 'day'>
   disputes!: EntityTable<DisputeRow, 'id'>
   feedback!: EntityTable<FeedbackRow, 'id'>
+  topics!: EntityTable<TopicRow, 'lessonId'>
+  fresh!: EntityTable<FreshTaskRow, 'id'>
 
   constructor(name = 'gradient-ascent') {
     super(name)
@@ -121,6 +161,7 @@ export class GradientDB extends Dexie {
     this.version(2).stores({ dailies: 'day' })
     this.version(3).stores({ disputes: '++id, itemId' })
     this.version(4).stores({ feedback: '++id, lessonId' })
+    this.version(5).stores({ topics: 'lessonId, due', fresh: 'id, day' })
   }
 }
 
@@ -128,9 +169,9 @@ export const db = new GradientDB()
 
 // ---------- Backup ----------
 
-const TABLES = ['attempts', 'reviews', 'mastery', 'days', 'dailies', 'disputes', 'feedback'] as const
+const TABLES = ['attempts', 'reviews', 'mastery', 'days', 'dailies', 'disputes', 'feedback', 'topics', 'fresh'] as const
 /** Tables added after the first backups, which older files won't have. */
-const OPTIONAL: readonly string[] = ['dailies', 'disputes', 'feedback']
+const OPTIONAL: readonly string[] = ['dailies', 'disputes', 'feedback', 'topics', 'fresh']
 export type Backup = {
   app: 'gradient-ascent'
   version: 1
@@ -169,7 +210,7 @@ export async function importBackup(raw: unknown, database: GradientDB = db): Pro
         const rows = OPTIONAL.includes(t) ? (b.tables![t] ?? []) : b.tables![t]
         if (!Array.isArray(rows)) throw new Error(`Backup is missing "${t}".`)
         await database.table(t).clear()
-        await database.table(t).bulkAdd(rows.map((r) => (t === 'reviews' ? reviveDates(r) : r)))
+        await database.table(t).bulkAdd(rows.map((r) => (t === 'reviews' || t === 'topics' ? reviveDates(r) : r)))
       }
     },
   )

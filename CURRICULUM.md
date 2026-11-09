@@ -28,16 +28,22 @@ is compressed until there's evidence from them.
 
 ### Two daily loops
 
-- **Daily 5:** up to 5 problems from everything already learned, chosen by FSRS. It's the same set all day, takes
-  about 5 minutes, and finishing it counts the day for the streak.
+- **Daily 5:** 3 quick review cards chosen by FSRS, then 2 new coding tasks written by the AI from what's been
+  learned. It's the same set all day, and finishing it counts the day for the streak. Without an AI key, or before
+  functions are taught, it's 5 review problems instead.
 - **Lessons:** new material, as many as you want. On a day with nothing to review, finishing a lesson counts the day.
 
 Rules for the Daily 5:
 
 1. A problem enters the pool the day after you first see it, not when the unit ends.
 2. The pool grows; the daily count doesn't. Overdue problems wait their turn.
-3. At most 2 code-writing problems a day, placed last.
+3. At most 2 code-writing problems a day, placed last. With coding tasks, the review cards have no code at all.
 4. Cards with `variants` come back with different numbers or code, so answers can't be memorised.
+5. Coding tasks (`src/features/fresh/`): each passed lesson with code exercises is a topic with its own FSRS schedule,
+   and the 2 most due topics, from different units when possible, each get a task. Gemini writes a medium task for the
+   topic: one function, 3 visible and 5 hidden tests, 2 hints. Before it's used, the reference solution must pass
+   every test in real Python and use only Python found in the passed lessons' code; otherwise the problem goes back
+   to the AI, up to 3 tries. Tasks are pitched a notch easier or harder from how the last few went.
 
 If reviews keep piling up or checkpoints start failing, that's the signal to do fewer new lessons.
 

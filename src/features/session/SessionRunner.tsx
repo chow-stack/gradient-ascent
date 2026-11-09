@@ -84,6 +84,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const dispute = useRef<number | undefined>(undefined)
   const aiRequest = useRef(0)
   const tries = useRef(0)
+  // The last answer checked on this card, for the Daily 5 review (after "show answer" the fields hold the solution).
+  const lastChecked = useRef<Answer | undefined>(undefined)
   const startedAt = useRef(0)
   const sessionStart = useRef(0)
   useEffect(() => {
@@ -207,7 +209,10 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       if (daily) {
         const r = dailyResult(outcome)
         setDailyResults((prev) => ({ ...prev, [it.itemId]: r }))
-        saving.current = saving.current.then(() => recordDailyResult(daily.day, it.itemId, r)).catch(console.error)
+        const entry = { card: it.card, answer: lastChecked.current, title: it.task?.title }
+        saving.current = saving.current
+          .then(() => recordDailyResult(daily.day, it.itemId, r, undefined, entry))
+          .catch(console.error)
       }
       // Missed lesson items come back once at the end (they don't touch the review schedule again).
       const missed = !outcome.correct || outcome.gaveUp
@@ -300,6 +305,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       dispute.current = undefined
       aiRequest.current += 1
       tries.current = 0
+      lastChecked.current = undefined
       startedAt.current = Date.now()
       window.scrollTo({ top: 0 })
     },
@@ -360,6 +366,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     async (latest?: Answer) => {
       const current = latest ?? answer
       if (phase !== 'answering' || !canCheck(current)) return
+      lastChecked.current = current
       if (card.type === 'explain' && current.type === 'explain') {
         tries.current += 1
         return void askAi(current.text)
@@ -536,7 +543,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   }, [primary, phase, summary, dailyXp, reading, flagging, debug, idx, goTo])
 
   if (summary) return <SessionDone summary={summary} />
-  if (dailyXp !== null && tiles) return <DailyDone results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
+  if (dailyXp !== null && tiles && daily)
+    return <DailyDone day={daily.day} results={tiles.map((r) => r ?? 'missed')} xp={dailyXp} />
 
   const mood: AdamMood =
     phase === 'correct'
@@ -714,6 +722,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
               ai={ai}
               selfGrading={selfGrading}
               onRetryAi={answer.type === 'explain' ? () => void askAi(answer.text) : undefined}
+              task={item.task}
               onSubmit={primary}
             />
           </div>

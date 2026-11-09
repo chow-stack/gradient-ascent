@@ -13,12 +13,13 @@ import { GEMINI_MODEL, getGeminiKey, setGeminiKey, testGeminiKey } from '../feat
 import { dayKey } from '../lib/dates'
 import { exportBackup, importBackup, resetProgress, type FeedbackRow } from '../lib/db'
 import { setDebug, useDebug } from '../lib/debug'
+import { prepareFreshTasks } from '../features/fresh/fresh'
+import { resetMastery, resetTodaysDaily } from '../features/progress/progress'
 
 /** Backup and reset. All progress lives in this browser only, so backups matter. */
 export function SettingsPage() {
   const file = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const [confirmReset, setConfirmReset] = useState(false)
 
   const download = async () => {
     const backup = await exportBackup()
@@ -85,33 +86,109 @@ export function SettingsPage() {
         )}
       </Card>
 
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-h3">Start over</h2>
-        <p className="text-small text-muted">Deletes all attempts, reviews, streak and XP. This can’t be undone.</p>
-        <div className="flex flex-wrap gap-3">
-          {confirmReset ? (
-            <>
-              <button
-                type="button"
-                className="ga-btn ga-btn--danger"
-                onClick={() => {
-                  void resetProgress().then(() => setMessage({ ok: true, text: 'Progress reset.' }))
-                  setConfirmReset(false)
-                }}
-              >
-                Yes, delete everything
-              </button>
-              <button type="button" className="ga-btn ga-btn--ghost" onClick={() => setConfirmReset(false)}>
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button type="button" className="ga-btn ga-btn--secondary" onClick={() => setConfirmReset(true)}>
-              <RotateCcw size={16} aria-hidden /> Reset progress
-            </button>
-          )}
+      <Card className="flex flex-col gap-1">
+        <h2 className="text-h3">Reset</h2>
+        <div className="flex flex-col divide-y divide-border">
+          <ResetRow
+            title="Today’s Daily 5"
+            detail="Replaces today’s set with 3 cards from random passed lessons and 2 new coding tasks. XP and streak stay."
+            button="Reset Daily 5"
+            confirm="Reset today’s set"
+            run={async () => {
+              await resetTodaysDaily()
+              // Start writing the new coding tasks now, so they're ready when the set is opened.
+              void prepareFreshTasks()
+              return 'Today’s Daily 5 is reset: 3 random cards and 2 new coding tasks.'
+            }}
+          />
+          <ResetRow
+            title="Mastered lessons"
+            detail="Mastered lessons go back to passed, and are mastered again by getting a review right."
+            button="Reset mastery"
+            confirm="Reset mastery"
+            run={async () => {
+              const n = await resetMastery()
+              return n ? `${n} lesson${n === 1 ? '' : 's'} back to passed.` : 'No lessons were mastered yet.'
+            }}
+          />
+          <ResetRow
+            title="All progress"
+            detail="Deletes all attempts, reviews, streak and XP. This can’t be undone."
+            button="Reset progress"
+            confirm="Yes, delete everything"
+            run={async () => {
+              await resetProgress()
+              return 'Progress reset.'
+            }}
+          />
         </div>
       </Card>
+    </div>
+  )
+}
+
+/** One reset: a button that asks once more, then says what it did. */
+function ResetRow({
+  title,
+  detail,
+  button,
+  confirm,
+  run,
+}: {
+  title: string
+  detail: string
+  button: string
+  confirm: string
+  run: () => Promise<string>
+}) {
+  const [asking, setAsking] = useState(false)
+  const [done, setDone] = useState<string | null>(null)
+  return (
+    <div className="flex flex-col gap-3 py-4 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="min-w-0">
+        <h3 className="font-semibold">{title}</h3>
+        <p className="mt-0.5 text-small text-muted">{detail}</p>
+        {done && (
+          <p role="status" className="mt-1.5 text-small text-success">
+            {done}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-none flex-wrap gap-2">
+        {asking ? (
+          <>
+            <button
+              type="button"
+              className="ga-btn ga-btn--danger ga-btn--sm"
+              onClick={() => {
+                setAsking(false)
+                void run()
+                  .then(setDone)
+                  .catch((e) => {
+                    console.error(e)
+                    setDone(null)
+                  })
+              }}
+            >
+              {confirm}
+            </button>
+            <button type="button" className="ga-btn ga-btn--ghost ga-btn--sm" onClick={() => setAsking(false)}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="ga-btn ga-btn--secondary ga-btn--sm"
+            onClick={() => {
+              setDone(null)
+              setAsking(true)
+            }}
+          >
+            <RotateCcw size={14} aria-hidden /> {button}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -282,7 +359,7 @@ function DebugCard() {
   )
 }
 
-/** The learner's own Gemini key, so the AI can grade "explain the code" answers. */
+/** The learner's own Gemini key, so the AI can grade "explain the code" answers and write the Daily 5's coding tasks. */
 function GeminiCard() {
   const [saved, setSaved] = useState(getGeminiKey)
   const [draft, setDraft] = useState('')
@@ -304,10 +381,11 @@ function GeminiCard() {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-h3">AI checking</h2>
+        <h2 className="text-h3">AI</h2>
         <p className="max-w-[68ch] text-small text-muted">
-          Grades your “explain the code” answers and shows which key points you hit. It uses Google’s Gemini (
-          <code className="font-mono">{GEMINI_MODEL}</code>) with your own free key. Without a key, you grade yourself.
+          Grades your “explain the code” answers, and writes 2 new coding tasks for each Daily 5 from what you’ve
+          learned. It uses Google’s Gemini (<code className="font-mono">{GEMINI_MODEL}</code>) with your own free key.
+          Without a key, you grade yourself and the Daily 5 is all review.
         </p>
       </div>
       {saved ? (

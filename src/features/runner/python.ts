@@ -97,6 +97,14 @@ export function playCall<T = unknown>(src: string, timeoutMs = DEFAULT_TIMEOUT_M
   return request<PlayReply<T>>({ kind: 'play-call', src }, timeoutMs, playStopped as () => PlayReply<T>)
 }
 
+/**
+ * The Python each piece of code uses (see __ga_vocab in harness.ts): one sorted list per piece, or null where the
+ * code doesn't parse. Null for every piece if Python stopped.
+ */
+export function pythonVocab(codes: string[], timeoutMs = 20_000) {
+  return request<(string[] | null)[]>({ kind: 'vocab', codes }, timeoutMs, () => codes.map(() => null))
+}
+
 function playStopped(): PlayReply {
   return { ok: false, stdout: '', value: null, error: stopped().error }
 }

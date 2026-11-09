@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { Adam } from '../components/Adam'
 import { needsPython } from '../features/exercises/grading'
+import { useWritingTasks } from '../features/fresh/fresh'
+import { WritingTasks } from '../features/fresh/WritingTasks'
 import { warmUpPython } from '../features/runner/python'
 import { buildSession, type SessionKind, type SessionPlan } from '../features/session/plan'
 import { SessionRunner } from '../features/session/SessionRunner'
@@ -21,6 +23,7 @@ export function SessionPage() {
   const lessonId = params.get('lesson') ?? undefined
   const cardId = params.get('card') ?? undefined
   const [plan, setPlan] = useState<{ key: string; plan: SessionPlan } | null>(null)
+  const writingTasks = useWritingTasks()
   // location.key changes on every navigation, so "Practice again" restarts even with the same URL.
   const key = `${kind}:${lessonId ?? ''}:${cardId ?? ''}:${location.key}`
 
@@ -35,9 +38,17 @@ export function SessionPage() {
   }, [kind, lessonId, cardId, key])
 
   if (!plan || plan.key !== key) {
+    if (kind === 'daily' && writingTasks)
+      return (
+        <div className="grid min-h-dvh place-items-center py-10">
+          <WritingTasks state={writingTasks} />
+        </div>
+      )
     return (
       <div className="grid min-h-dvh place-items-center">
-        <Adam mood="think" size={96} title="Loading your session" />
+        <div className="flex flex-col items-center gap-4">
+          <Adam mood="think" size={96} title="Loading your session" />
+        </div>
       </div>
     )
   }

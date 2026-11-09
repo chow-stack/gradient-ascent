@@ -26,6 +26,8 @@ export type ViewProps<C> = {
   onRetryAi?: () => void
   /** Shuffled choices and lines keep one order for this key, so coming back to a question doesn't reorder it. */
   orderKey?: string
+  /** A Daily 5 coding task: its title, shown as the heading above the card's prompt. */
+  task?: { title: string }
   /** Check/continue. An editor passes its latest answer, which may be newer than `answer`. */
   onSubmit: (latest?: Answer) => void
 }

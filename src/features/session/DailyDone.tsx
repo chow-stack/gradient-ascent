@@ -1,9 +1,11 @@
-import { ArrowRight, Flame, Home, Star } from 'lucide-react'
+import { ArrowRight, Flame, Home, ListChecks, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { useNextDayCountdown } from '../../lib/dates'
+import { startOfTomorrow, useNextDayCountdown, type DayKey } from '../../lib/dates'
+import { prepareFreshTasks } from '../fresh/fresh'
 import type { DailyResult } from '../../lib/db'
 import { useProgress } from '../progress/progress'
+import { DailyReview } from './DailyReview'
 import { DailySteps } from './DailyTiles'
 import { nextLesson } from './plan'
 
@@ -11,9 +13,11 @@ const STEP_MS = 240
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** The finish: tiles flip over one by one while Adam climbs them to the top. */
-export function DailyDone({ results, xp }: { results: DailyResult[]; xp: number }) {
+export function DailyDone({ day, results, xp }: { day: DayKey; results: DailyResult[]; xp: number }) {
   const progress = useProgress()
   const countdown = useNextDayCountdown()
+  // Tomorrow's coding tasks, written now so they're ready first thing.
+  useEffect(() => void prepareFreshTasks(new Date(startOfTomorrow())), [])
   const last = results.length - 1
   const [at, setAt] = useState(() => (prefersReducedMotion() ? last : 0))
   useEffect(() => {
@@ -22,17 +26,35 @@ export function DailyDone({ results, xp }: { results: DailyResult[]; xp: number 
     return () => clearTimeout(t)
   }, [at, last])
 
+  // Reviewing the answers, and whether the finish has played (it doesn't replay on coming back).
+  const [reviewing, setReviewing] = useState(false)
+  const [replay, setReplay] = useState(true)
+  const openReview = () => {
+    setReplay(false)
+    setReviewing(true)
+  }
   const clean = results.filter((r) => r === 'clean').length
   const sweep = clean === results.length
   const upNext = progress ? nextLesson(progress.mastery) : undefined
   const streak = progress?.streak.current
 
+  if (reviewing) return <DailyReview day={day} onBack={() => setReviewing(false)} />
+
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-[440px] flex-col items-center text-center">
-        <DailySteps results={results} at={at} mood={at >= last ? 'happy' : 'idle'} flip wave={sweep} stepMs={STEP_MS} />
+        <DailySteps
+          results={results}
+          at={at}
+          mood={at >= last ? 'happy' : 'idle'}
+          flip={replay}
+          wave={sweep && replay}
+          stepMs={STEP_MS}
+        />
         <div
-          className="ga-settle mt-8 flex w-full flex-col items-center"
+          className={
+            replay ? 'ga-settle mt-8 flex w-full flex-col items-center' : 'mt-8 flex w-full flex-col items-center'
+          }
           style={{ animationDelay: `${results.length * STEP_MS + 80}ms` }}
         >
           <h1 className="text-display">{sweep ? 'Clean sweep' : `Daily ${results.length} done`}</h1>
@@ -60,6 +82,9 @@ export function DailyDone({ results, xp }: { results: DailyResult[]; xp: number 
               <Home size={16} aria-hidden /> Today
             </Link>
           </div>
+          <button type="button" className="ga-btn ga-btn--ghost mt-3" onClick={openReview}>
+            <ListChecks size={16} aria-hidden /> Review answers
+          </button>
         </div>
       </div>
     </div>

@@ -15,8 +15,9 @@ code, and explain it in plain English. All code runs as real Python in your brow
 
 ## Features
 
-- **Daily 5:** one fixed set a day, tracked as tiles. It's what counts for your streak, so a busy day takes about five
-  minutes. Cards can come back with new values, so answers can't just be memorised.
+- **Daily 5:** one fixed set a day, tracked as tiles, and what counts for your streak: 3 quick review cards, then 2 new
+  coding tasks the AI writes from what you've learned and checks in real Python first. Cards can come back with new
+  values, so answers can't just be memorised.
 - **Unlimited lessons:** on your own schedule, with a checkpoint and a project ending each unit.
 - **Eight exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
   fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, explain-in-your-own-words (graded by AI

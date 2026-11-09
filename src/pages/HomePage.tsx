@@ -1,9 +1,11 @@
-import { ArrowRight, Check, Layers, Play, Snowflake } from 'lucide-react'
+import { ArrowRight, Check, Layers, ListChecks, Play, Snowflake } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { Card } from '../components/ui/Card'
 import { ProgressBar } from '../components/ui/ProgressBar'
 import { lessons, tracks } from '../features/content/content'
 import { useProgress, type ProgressSnapshot } from '../features/progress/progress'
+import { prepareFreshTasks } from '../features/fresh/fresh'
 import { DailySteps } from '../features/session/DailyTiles'
 import { nextLesson } from '../features/session/plan'
 import { loadResume } from '../features/session/resume'
@@ -12,6 +14,8 @@ import { addDays, dayKey, useNextDayCountdown, weekStart } from '../lib/dates'
 /** Today: the Daily 5, the next lesson, and the week. */
 export function HomePage() {
   const p = useProgress()
+  // Write today's coding tasks in the background, so the Daily 5 is ready when it's opened.
+  useEffect(() => void prepareFreshTasks(), [])
   if (!p) return <div className="min-h-[60vh]" aria-busy="true" />
   const dailyPending = p.daily.total > 0 && !p.daily.done
 
@@ -30,7 +34,7 @@ export function HomePage() {
 }
 
 function DailyCard({ p }: { p: ProgressSnapshot }) {
-  const { total, results, done } = p.daily
+  const { total, tasks, results, done } = p.daily
   const countdown = useNextDayCountdown()
   const answered = results.filter(Boolean).length
   const shown = total > 0 ? results : Array<null>(5).fill(null)
@@ -41,14 +45,25 @@ function DailyCard({ p }: { p: ProgressSnapshot }) {
       <div className="flex min-w-0 flex-col items-start gap-1">
         <h1 className="text-h1">Daily {total || 5}</h1>
         {done ? (
-          <p className="text-muted tabular-nums">Done · Next in {countdown}</p>
+          <>
+            <p className="text-muted tabular-nums">Done · Next in {countdown}</p>
+            <Link to="/daily" className="ga-btn ga-btn--secondary mt-4">
+              <ListChecks size={16} aria-hidden /> Review answers
+            </Link>
+          </>
         ) : total === 0 ? (
           <p className="text-muted">
             {p.reviewCount === 0 ? 'Starts after your first lesson.' : 'Nothing to review today.'}
           </p>
         ) : (
           <>
-            <p className="text-muted tabular-nums">{started ? `${answered} of ${total} done` : 'About 5 min'}</p>
+            <p className="text-muted tabular-nums">
+              {started
+                ? `${answered} of ${total} done`
+                : tasks
+                  ? `${total - tasks} review${total - tasks === 1 ? '' : 's'} · ${tasks} coding task${tasks === 1 ? '' : 's'}`
+                  : 'About 5 min'}
+            </p>
             <Link to="/session?kind=daily" className="ga-btn ga-btn--primary mt-4">
               <Play size={16} aria-hidden /> {started ? 'Continue' : 'Start'}
             </Link>

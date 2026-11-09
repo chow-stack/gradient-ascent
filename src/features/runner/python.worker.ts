@@ -6,6 +6,7 @@ type RunRequest =
   | { id: number; kind?: 'run'; code: string; tests: TestCase[]; opts?: RunOptions }
   | { id: number; kind: 'play-load'; code: string; values?: Record<string, string> }
   | { id: number; kind: 'play-call'; src: string }
+  | { id: number; kind: 'vocab'; codes: string[] }
 
 let pyodide: Promise<PyodideAPI> | null = null
 
@@ -29,6 +30,12 @@ self.onmessage = async (e: MessageEvent<RunRequest>) => {
   const { id } = req
   try {
     const py = await pyodide!
+    if (req.kind === 'vocab') {
+      self.postMessage({ type: 'started', id })
+      const vocab = py.globals.get('__ga_vocab') as (codes: string) => string
+      self.postMessage({ type: 'result', id, result: JSON.parse(vocab(JSON.stringify(req.codes))) })
+      return
+    }
     if (req.kind === 'play-call') {
       self.postMessage({ type: 'started', id })
       const call = py.globals.get('__ga_play_call') as (src: string) => string

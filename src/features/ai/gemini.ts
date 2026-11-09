@@ -139,14 +139,14 @@ export function parseExplainCheck(raw: string, keyPointCount: number, answer: st
 }
 
 /** Sends one request and returns the model's text, turning every failure into a readable message. */
-async function generate(key: string, body: object): Promise<string> {
+export async function generate(key: string, body: object, timeoutMs = TIMEOUT_MS): Promise<string> {
   let res: Response
   try {
     res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     })
   } catch (e) {
     throw new GeminiError(

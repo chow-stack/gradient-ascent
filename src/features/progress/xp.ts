@@ -1,6 +1,7 @@
 import type { CardType } from '../content/schema'
 
-export type ItemSource = 'lesson' | 'checkpoint' | 'project' | 'review' | 'practice' | 'retry'
+/** fresh: a Daily 5 coding task the AI wrote for today. */
+export type ItemSource = 'lesson' | 'checkpoint' | 'project' | 'review' | 'practice' | 'retry' | 'fresh'
 
 /** Harder rungs of the ladder are worth more (BUILD_PLAN P10: gamify the habit, not the grind). */
 const BASE: Record<CardType, number> = {
@@ -21,6 +22,8 @@ const SOURCE_FACTOR: Record<ItemSource, number> = {
   review: 0.7,
   practice: 0.3,
   retry: 0.3,
+  // Written from scratch, and bigger than a lesson's write cards.
+  fresh: 2,
 }
 
 export const LESSON_COMPLETE_BONUS = 20
