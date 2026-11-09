@@ -2,6 +2,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { cpSync, createReadStream, existsSync, mkdirSync } from 'node:fs'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { join, resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 
@@ -27,7 +28,11 @@ function pyodideAssets(): Plugin {
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir)
     },
+    configurePreviewServer(server) {
+      server.middlewares.use(pythonWorkerCsp)
+    },
     configureServer(server) {
+      server.middlewares.use(pythonWorkerCsp)
       server.middlewares.use('/pyodide', (req, res, next) => {
         const name = (req.url ?? '').split('?')[0].replace(/^\//, '')
         const isPackage = /^[\w.-]+\.whl$/.test(name)
@@ -43,6 +48,19 @@ function pyodideAssets(): Plugin {
       if (existsSync(packages)) cpSync(packages, join(outDir, 'pyodide'), { recursive: true })
     },
   }
+}
+
+/**
+ * A strict CSP on the Python worker's script, which a worker keeps for life: it can load and fetch only from this
+ * site, so Python can't send anything anywhere even through JavaScript. See lockDown() in python.worker.ts.
+ * Static hosts other than `vite preview` should send the same header for assets/python.worker-*.js.
+ */
+export const PYTHON_WORKER_CSP =
+  "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'none'"
+
+function pythonWorkerCsp(req: IncomingMessage, res: ServerResponse, next: () => void) {
+  if ((req.url ?? '').includes('python.worker')) res.setHeader('Content-Security-Policy', PYTHON_WORKER_CSP)
+  next()
 }
 
 // https://vite.dev/config/

@@ -8,6 +8,43 @@ type RunRequest =
   | { id: number; kind: 'play-call'; src: string }
   | { id: number; kind: 'vocab'; codes: string[] }
 
+/**
+ * Python can reach this worker's JavaScript (`import js`), and code the AI writes runs here unseen. So before
+ * Python starts, the worker loses everything that could leave it: fetch only reaches Pyodide's own files, and
+ * storage, sockets and other workers are gone. The CSP header on this script (vite.config.ts) backs it up.
+ */
+function lockDown() {
+  const realFetch = self.fetch.bind(self)
+  const allowed = new URL('/pyodide/', self.location.origin).href
+  const fetchPyodideOnly = (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input), self.location.href)
+    if (!url.href.startsWith(allowed)) return Promise.reject(new TypeError('The Python runner has no network.'))
+    return realFetch(input, init)
+  }
+  // Browsers keep some of these on the global's prototypes too, so each copy along the chain is replaced.
+  const replace = (name: string, value: unknown) => {
+    for (let o: object | null = self; o; o = Object.getPrototypeOf(o))
+      if (o === self || Object.hasOwn(o, name))
+        Object.defineProperty(o, name, { value, writable: false, configurable: false })
+  }
+  replace('fetch', fetchPyodideOnly)
+  const gone = [
+    'XMLHttpRequest',
+    'WebSocket',
+    'WebTransport',
+    'EventSource',
+    'indexedDB',
+    'caches',
+    'BroadcastChannel',
+    'Worker',
+    'SharedWorker',
+    'importScripts',
+  ]
+  for (const name of gone) replace(name, undefined)
+}
+
+lockDown()
+
 let pyodide: Promise<PyodideAPI> | null = null
 
 async function boot(): Promise<PyodideAPI> {

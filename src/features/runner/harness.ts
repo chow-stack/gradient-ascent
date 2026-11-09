@@ -44,6 +44,23 @@ def __ga_figures():
 def __ga_no_input(*_args, **_kwargs):
     raise RuntimeError("input() isn't available here. Use a variable instead.")
 
+# Modules that reach out of Python into the browser. Exercises never need them, and code from the AI runs here
+# too, so they're refused. This is a courtesy, not the wall: python.worker.ts also locks the worker down.
+_GA_BLOCKED = {"js", "pyodide", "pyodide_js", "_pyodide", "_pyodide_core", "micropip", "pyodide_http"}
+_ga_real_import = builtins.__import__
+
+def __ga_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if level == 0 and name.split(".")[0] in _GA_BLOCKED:
+        raise ImportError(f"{name} isn't available here.")
+    return _ga_real_import(name, globals, locals, fromlist, level)
+
+def __ga_namespace():
+    """A fresh namespace for code to run in: no input(), and no imports that reach the browser."""
+    b = dict(vars(builtins))
+    b["__import__"] = __ga_import
+    b["input"] = __ga_no_input
+    return {"__name__": "__main__", "__builtins__": b, "input": __ga_no_input}
+
 def __ga_err(e):
     line = None
     tb = e.__traceback__
@@ -133,7 +150,7 @@ def __ga_with(code, values):
 
 def __ga_exec(code, calls):
     """Runs code in a fresh namespace, then evaluates each test call. Returns (stdout, error, values)."""
-    ns = {"__name__": "__main__", "input": __ga_no_input}
+    ns = __ga_namespace()
     out = io.StringIO()
     err = None
     values = []
@@ -188,7 +205,7 @@ def __ga_cases(code, solution, vary, calls, output=True):
 def __ga_run(code, tests_json, opts_json="{}"):
     tests = json.loads(tests_json)
     opts = json.loads(opts_json)
-    ns = {"__name__": "__main__", "input": __ga_no_input}
+    ns = __ga_namespace()
     out = io.StringIO()
     result = {"ok": True, "stdout": "", "error": None, "tests": [], "figures": [], "cases": [], "rules": []}
     with contextlib.redirect_stdout(out):
@@ -202,7 +219,7 @@ def __ga_run(code, tests_json, opts_json="{}"):
             for t in tests:
                 row = {"call": t["call"], "expect": t["expect"], "hidden": t.get("hidden", False)}
                 try:
-                    expected = eval(t["expect"], {})
+                    expected = eval(t["expect"], __ga_namespace())
                     got = eval(compile(t["call"], "main.py", "eval"), ns)
                     row["got"] = repr(got)
                     row["passed"] = bool(__ga_same(got, expected))
@@ -261,7 +278,7 @@ def __ga_play_load(code, values_json="{}"):
         if src is None:
             names = " and ".join(f"{k} = ..." for k in values)
             return __ga_play_reply(False, "", {"type": "Missing", "message": f"Keep {names} at the top of your code.", "line": None})
-    ns = {"__name__": "__main__", "input": __ga_no_input}
+    ns = __ga_namespace()
     ns["__ga_has"] = lambda *names: [n for n in names if callable(ns.get(n))]
     out = io.StringIO()
     err = None

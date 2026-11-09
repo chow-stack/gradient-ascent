@@ -8,16 +8,17 @@ separate, and you can do as many as you like. Each one teaches one new idea thro
 explanations, mixed with exercises: predict the output, order the lines, fill in the blank, fix the bug, write the
 code, and explain it in plain English. All code runs as real Python in your browser, and all progress stays on your machine.
 
-> **Status:** Phase 2 of 5. Units 1 to 6 are written for true beginners: Programs and values, Functions and repetition, Collections and libraries, Python for ML code, NumPy, shapes and plots, and Calculus and gradient descent. First models, judged honestly, come next. See the
-> [roadmap](#roadmap).
+> **Status:** Phase 3 of 5. Units 1 to 7 are written for true beginners: Programs and values, Functions and
+> repetition, Collections and libraries, Python for ML code, NumPy, shapes and plots, Calculus and gradient descent,
+> and First models, judged honestly. A hand-built micrograd comes next. See the [roadmap](#roadmap).
 
 ---
 
 ## Features
 
 - **Daily 5:** one fixed set a day, tracked as tiles, and what counts for your streak: 3 quick review cards, then 2 new
-  coding tasks the AI writes from what you've learned and checks in real Python first. Cards can come back with new
-  values, so answers can't just be memorised.
+  coding tasks the AI writes from what you've learned and checks in real Python first. Without an AI key (or
+  offline), all five are review cards. Cards can come back with new values, so answers can't just be memorised.
 - **Unlimited lessons:** on your own schedule, with a checkpoint and a project ending each unit.
 - **Eight exercise types:** worked examples (predict, then run), multiple choice, Parsons problems,
   fill-in-the-blank, fix-the-bug, write-a-function with visible and hidden tests, explain-in-your-own-words (graded by AI
@@ -25,7 +26,8 @@ code, and explain it in plain English. All code runs as real Python in your brow
 - **Checks you can't fool:** code is rerun with other values and checked for the idea the card is about, so printing the
   expected answer doesn't pass.
 - **Real Python in the browser:** [Pyodide](https://pyodide.org) runs in a Web Worker, so the UI never freezes.
-  Infinite loops are stopped by a timeout, and errors point to the line that caused them.
+  Infinite loops are stopped by a timeout, and errors point to the line that caused them. The worker is locked down,
+  so code (yours or the AI's) can't reach the network or your saved progress.
 - **A real editor:** [Monaco](https://microsoft.github.io/monaco-editor/), the editor from VS Code, with
   autocomplete turned off on purpose so you do the thinking.
 - **Spaced repetition:** every exercise you've seen is scheduled with
@@ -35,7 +37,7 @@ code, and explain it in plain English. All code runs as real Python in your brow
 - **Habit-friendly gamification:** streaks with two automatic freezes a week, and XP weighted toward new and hard
   work rather than easy repeats. There are no leaderboards and no guilt.
 - **Local-first and private:** progress is stored in IndexedDB, with JSON backup and restore. There are no
-  accounts, no tracking and no server.
+  accounts, no tracking and no server. The optional AI features talk to Google directly (see [Privacy](#privacy)).
 - **Keyboard-first:** <kbd>1</kbd>–<kbd>4</kbd> picks a choice, <kbd>Enter</kbd> checks and continues, and
   <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd> checks from inside the editor.
 - **Adam the mountain goat:** an animated mascot who reacts to your answers. He's named after the Adam optimizer,
@@ -153,9 +155,9 @@ src/
 
 - [x] **Phase 1:** plan, design system ("Summit"), project setup
 - [x] **Phase 2:** lessons, Daily 5, spaced repetition, streaks, self-hosted NumPy
-- [ ] **Phase 3:** Units 1–6, plots and the calculus refresh are done; first models judged honestly are next
-- [ ] **Phase 4:** a hand-built micrograd and MLP, with diagnosing training curves (Units 6–7)
-- [ ] **Phase 5:** trees, probability, makemore, attention and a tiny GPT (Units 8–11)
+- [ ] **Phase 3:** Python, NumPy, calculus and first models (Units 1–7, all built), plus AI-written Daily 5 tasks
+- [ ] **Phase 4:** a hand-built micrograd and MLP, with diagnosing training curves (Units 8–9)
+- [ ] **Phase 5:** trees, probability, makemore, attention and a tiny GPT (Units 10–13)
 
 The full path is in [CURRICULUM.md](CURRICULUM.md).
 Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The visual system is in
@@ -164,10 +166,21 @@ Details, data model and decisions are in [BUILD_PLAN.md](BUILD_PLAN.md). The vis
 ## Privacy
 
 Everything runs in your browser. Progress lives in IndexedDB on your machine, so clearing site data erases it;
-use **Settings → Download backup** now and then. The one exception is optional: if you paste a Google Gemini key in
-**Settings → AI checking**, it stays in this browser and is left out of backups, and your "explain the code" answers go
-to Google to be graded.
+use **Settings → Download backup** now and then.
+
+The one exception is optional. If you paste a Google Gemini key in **Settings → AI**, the key stays in this
+browser and is left out of backups, and the app sends two things straight to Google (never to anyone else):
+
+- your **"explain the code" answers**, with the question, so they can be graded
+- for the **Daily 5 coding tasks**, the titles and summaries of the lessons you've passed, the Python you've been
+  taught, the titles of your recent tasks, and whether those felt easy or hard. Your own code and answers aren't sent.
+
+Without a key, nothing leaves your machine.
 
 ## License
 
 [MIT](LICENSE). Use it, fork it, learn from it.
+
+Bundled third-party software keeps its own license: [Pyodide](https://github.com/pyodide/pyodide) (MPL-2.0),
+[Monaco](https://github.com/microsoft/monaco-editor) (MIT), NumPy and matplotlib (BSD-style and PSF-based), and the Onest
+and JetBrains Mono fonts (SIL Open Font License).
