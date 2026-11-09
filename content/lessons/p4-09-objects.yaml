@@ -12,9 +12,11 @@ cards:
     title: The same rules, one level up
     body: >-
       A model is an object that holds layers, which are objects that hold neurons, which hold weights. Training changes those weights, so you need to know exactly what's shared and what isn't.
-
-
-      By the end of this lesson you'll be able to tell when two names refer to one object, keep data separate for each object, build objects out of other objects, and make a truly independent copy.
+    points:
+      - 'Tell when two names refer to one object'
+      - 'Keep data separate for each object'
+      - 'Build objects out of other objects'
+      - 'Make a truly independent copy'
 
   - type: learn
     id: names
@@ -519,7 +521,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `b = a` makes a second name for an object, and calling the class makes a new one. A variable in the class body is shared by every object, so per-object data goes on `self`. Avoid `[]` as a default. Objects can hold objects, and each class only needs to know the level below. `copy.deepcopy` copies all the way down.
-
-
       Next: teaching your objects to work with `+`, `==` and `print`.
+    points:
+      - '`b = a` makes a second name. Calling the class makes a new object'
+      - 'A variable in the class body is shared by every object, so per-object data goes on `self`'
+      - 'Avoid `[]` as a default'
+      - '`copy.deepcopy` copies all the way down'

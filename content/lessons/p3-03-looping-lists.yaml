@@ -12,9 +12,11 @@ cards:
     title: Doing something to every item
     body: >-
       Lists and loops belong together. Nearly every data task reads each item in turn, and either works something out or builds a new list.
-
-
-      By the end of this lesson you'll be able to go through a list, make a new list from an old one, and change items in place. You'll also see why changing the loop variable doesn't change the list, and why you shouldn't remove items while looping.
+    points:
+      - 'Go through every item in a list'
+      - 'Build a new list from an old one'
+      - 'Change the items in a list in place'
+      - 'See why removing items while looping goes wrong'
 
   - type: learn
     id: for-items
@@ -385,7 +387,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `for x in items:` gives you each item. To make a new list, use an empty list, a loop and `append`. Assigning to the loop variable doesn't change the list, so use `range(len(items))` and assign to a position. Don't remove items from a list while looping over it, and build a new list instead.
-
-
       Next: the four patterns that solve most list problems.
+    points:
+      - '`for x in items:` gives you each item'
+      - 'New list: start empty, loop, `append`'
+      - "Assigning to the loop variable doesn't change the list. Use `range(len(items))` and assign to a position"
+      - "Don't remove items while looping. Build a new list instead"

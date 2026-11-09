@@ -11,15 +11,15 @@ cards:
     label: The goal
     title: More than one knob
     body: >-
-      A real loss depends on many numbers at once. A line has a weight `w` and a bias `b`, and a neural network has millions of weights. To train it, you
-      need to know how the loss changes as each one changes.
+      A real loss depends on many numbers at once. A line has a weight `w` and a bias `b`, and a neural network has millions of weights. To train it, you need to know how the loss changes as each one changes.
 
 
-      The idea is simple: nudge one input, hold the others still, and measure. That's a partial derivative. Put one for every input into an array and you
-      have the gradient, the arrow that says which way is uphill.
-
-
-      By the end you'll work out gradients by hand and with code, and know why the gradient points the way it does.
+      The idea is simple: nudge one input, hold the others still, and measure. That's a partial derivative. Put one for every input into an array and you have the gradient, the arrow that says which way is uphill.
+    points:
+      - 'Find a partial derivative: nudge one input, hold the rest'
+      - 'Collect partials into a gradient'
+      - 'See why the gradient points uphill'
+      - 'Compute a gradient for any function in code'
 
   - type: learn
     id: partial
@@ -320,9 +320,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A partial derivative is the slope with respect to one input while the others stay fixed. The gradient collects one partial per input into an array.
-      It points uphill, the way the function rises fastest, so minus the gradient points downhill. `numeric_grad` finds a gradient by nudging one copied
-      entry at a time.
-
-
       Next: walk downhill, one small step at a time. That's gradient descent.
+    points:
+      - 'A partial is the slope for one input while the others stay fixed'
+      - 'The gradient is one partial per input, in an array'
+      - 'It points uphill, so minus the gradient points downhill'
+      - '`numeric_grad` nudges one copied entry at a time'

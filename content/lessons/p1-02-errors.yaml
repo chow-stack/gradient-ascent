@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Errors are normal
     body: >-
-      Everyone who writes code sees errors all day, including the people who built the systems you use. An error doesn't
-      mean you've failed. It's Python telling you exactly where it got stuck.
-
-
-      By the end of this lesson you'll be able to name the three ways code goes wrong, read an error message, and follow
-      a simple routine to fix it. This one skill will save you more time than anything else in this course.
+      Everyone who writes code sees errors all day, including the people who built the systems you use. An error doesn't mean you've failed. It's Python telling you exactly where it got stuck.
+    points:
+      - 'Name the three ways code goes wrong'
+      - 'Read an error message, from the bottom up'
+      - 'Follow a simple routine to get unstuck'
 
   - type: learn
     id: crash
@@ -56,7 +55,7 @@ cards:
     why: >-
       Python runs one line at a time, so everything before the problem has already happened. Nothing after it runs.
     variants:
-      - prompt: 'An error ends with `NameError: name ''totl'' is not defined`. What is the most likely cause?'
+      - prompt: "An error ends with `NameError: name 'totl' is not defined`. What is the most likely cause?"
         choices:
           - A typo, or a name Python hasn't seen yet
           - A number was divided by zero
@@ -241,9 +240,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Code goes wrong in three ways: it won't start (`SyntaxError`, `IndentationError`), it crashes partway (`NameError`,
-      `TypeError`), or it runs and gives the wrong answer. Read errors from the bottom, go to the line, change one thing,
-      and run again. When there's no message, print the pieces.
-
-
-      You'll see these errors again, on purpose, throughout the course.
+      You'll see these errors again, on purpose, throughout the course. Next: numbers, and the maths Python can do with them.
+    points:
+      - "Won't start: `SyntaxError`, `IndentationError`"
+      - 'Crashes partway: `NameError`, `TypeError`'
+      - 'Runs, but gives the wrong answer: no message at all'
+      - 'Read the error from the bottom, go to the line, change one thing, run again'
+      - 'No message? Print the pieces'

@@ -11,16 +11,14 @@ cards:
     label: The goal
     title: A score that's too good
     body: >-
-      Leakage is when a model gets information during training that it won't have when it's used for real. Usually that's information about the
-      validation or test data, or about the answer itself.
+      Leakage is when a model gets information during training that it won't have when it's used for real. Usually that's information about the validation or test data, or about the answer itself.
 
 
-      It's the most dangerous mistake in this unit, because nothing looks wrong. The loss falls, the validation score is excellent, and you're pleased.
-      Then the model meets real data and does far worse, because the edge it had was never real.
-
-
-      By the end you'll know the four common leaks and the habit that catches most of them: ask whether each piece of information would really exist
-      at prediction time.
+      It's the most dangerous mistake in this unit, because nothing looks wrong. The loss falls, the validation score is excellent, and you're pleased. Then the model meets real data and does far worse, because the edge it had was never real.
+    points:
+      - 'Spot the four common kinds of leakage'
+      - 'Standardise with training numbers only'
+      - 'Ask whether each piece of information would exist at prediction time'
 
   - type: learn
     id: standardise
@@ -273,9 +271,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Leakage gives the model information it won't have for real, and shows up as a score that's too good. Standardise with training statistics only.
-      Drop features recorded after the outcome. Remove duplicates or split by group before splitting. When predicting the future, split by time. Ask of
-      every feature: would I know this at prediction time?
-
-
-      That's the unit. A checkpoint, and then a project: a spam filter of your own, judged honestly.
+      That's the unit. Next: the checkpoint test, then a project: a spam filter of your own, judged honestly.
+    points:
+      - "Leakage shows up as a score that's too good"
+      - 'Standardise with training statistics only'
+      - 'Drop features recorded after the outcome'
+      - 'Remove duplicates or split by group. When predicting the future, split by time'

@@ -11,13 +11,11 @@ cards:
     label: The goal
     title: Remembering values
     body: >-
-      So far, each line has forgotten everything as soon as it's finished. Real programs need to remember things: a score,
-      a name, the current guess of a model.
-
-
-      By the end of this lesson you'll be able to store a value under a name, use it later, and trace a program by
-      following its variables line by line. Tracing is the most useful skill for reading code, and every later lesson
-      relies on it.
+      So far, each line has forgotten everything as soon as it's finished. Real programs need to remember things: a score, a name, the current guess of a model.
+    points:
+      - 'Store a value under a name with `=`'
+      - 'Choose good names, and avoid the errors bad ones cause'
+      - 'Trace a program line by line'
 
   - type: learn
     id: assign
@@ -328,8 +326,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `name = value` works out the right side, then stores the result under the name on the left. Names are case-sensitive,
-      and must exist before they're used. To trace a program, go line by line and keep a table of what each variable holds.
-
-
       Next: what happens when a variable changes, including the most common wrong belief beginners have about `=`.
+    points:
+      - '`name = value` works out the right side, then stores it under the name'
+      - "Names are case-sensitive, and must exist before they're used"
+      - 'To trace, go line by line and keep a table of what each variable holds'

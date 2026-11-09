@@ -11,16 +11,14 @@ cards:
     label: The goal
     title: Slopes through a pipeline
     body: >-
-      A model is a pipeline. The weights make a prediction, the prediction goes into an error, and the error gets squared and averaged into a loss. To train
-      it, you need the slope of the loss with respect to a weight, right at the start of the pipeline.
+      A model is a pipeline. The weights make a prediction, the prediction goes into an error, and the error gets squared and averaged into a loss. To train it, you need the slope of the loss with respect to a weight, right at the start of the pipeline.
 
 
-      The chain rule handles exactly this: the slope of a function inside a function. It's the one rule backpropagation is made of. When you build micrograd
-      in Unit 8, every `_backward` you write will be one use of it.
-
-
-      By the end of this lesson you'll be able to differentiate things like `(3 * x + 1) ** 2` and `np.exp(2 * x)`, and the error of one prediction, `(w *
-      x - y) ** 2`.
+      The chain rule handles exactly this: the slope of a function inside a function. It's the one rule backpropagation is made of. When you build micrograd in Unit 8, every `_backward` you write will be one use of it.
+    points:
+      - 'Differentiate a function inside a function'
+      - 'Follow a chain of any length'
+      - "Find the slope of one prediction's error"
 
   - type: learn
     id: chain
@@ -322,9 +320,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      For a function inside a function, the slope is the outside's slope, worked out at the inside's value, times the inside's slope. Longer chains
-      multiply every local slope along the way, which is what backpropagation does, walking backwards. The slope of a squared error `(w * x - y) ** 2` is `2
-      * (w * x - y) * x`.
-
-
       Next: functions of more than one input, like a loss that depends on a weight and a bias at once.
+    points:
+      - "Outside's slope, at the inside's value, times the inside's slope"
+      - "Longer chains multiply every local slope. That's backpropagation"
+      - 'The slope of `(w * x - y) ** 2` is `2 * (w * x - y) * x`'

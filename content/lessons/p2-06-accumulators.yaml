@@ -12,9 +12,10 @@ cards:
     title: The pattern behind most loops
     body: >-
       Most loops exist to produce one answer from many steps: a total, a count, the largest value so far. In machine learning, average loss is exactly this: add up the error on each example, then divide.
-
-
-      By the end of this lesson you'll know the accumulator pattern, which appears in nearly every program, and the two mistakes that break it.
+    points:
+      - 'Build up a total, a count or a string with an accumulator'
+      - 'Spot the two classic mistakes that break it'
+      - 'Keep two accumulators in one loop'
 
   - type: learn
     id: pattern
@@ -397,7 +398,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An accumulator is set up before the loop, updated inside it, and used after it. Start at 0 for adding and counting, at 1 for multiplying, and at `""` for text. Resetting inside the loop, and returning inside it, are the two classic bugs.
-
-
       Next: what to do when a loop never stops, or stops one step too soon.
+    points:
+      - 'Set it up before the loop, update it inside, and use it after'
+      - 'Start at 0 for adding and counting, 1 for multiplying, and `""` for text'
+      - 'The classic bugs: resetting it inside the loop, and returning inside the loop'

@@ -12,9 +12,11 @@ cards:
     title: Rows and columns
     body: >-
       Images, spreadsheets and the matrices at the heart of machine learning all have rows and columns. Going through a grid means going through the rows and, for each row, going through its columns: a loop inside a loop.
-
-
-      By the end of this lesson you'll be able to trace nested loops, work out how many times the inner line runs, and print grids. You'll also see why these loops can be slow, which is the reason NumPy exists.
+    points:
+      - 'Trace a loop inside a loop'
+      - 'Work out how many times the inner line runs'
+      - 'Print grids'
+      - 'See why nested loops get slow'
 
   - type: learn
     id: nesting
@@ -122,7 +124,7 @@ cards:
           for col in range(3):
               print("*", end="")
           print()
-    choices: ["***\n***", "**\n**\n**", "******", "*\n*\n*\n*\n*\n*"]
+    choices: ["***\n***", "**\n**\n**", '******', "*\n*\n*\n*\n*\n*"]
     answer: "***\n***"
     why: >-
       Each row prints 3 stars on the same line, and then the empty `print()` ends the line. That happens twice.
@@ -141,7 +143,7 @@ cards:
               for col in range(2):
                   print(row + col, end=" ")
               print()
-        choices: ["0 1\n1 2", "0 0\n1 1", "0 1 1 2", "1 2\n2 3"]
+        choices: ["0 1\n1 2", "0 0\n1 1", '0 1 1 2', "1 2\n2 3"]
         answer: "0 1\n1 2"
         why: >-
           Row 0 gives 0 + 0 and 0 + 1. Row 1 gives 1 + 0 and 1 + 1.
@@ -377,7 +379,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      The inner loop runs in full for each outer pass, so the counts multiply. Give each loop its own variable. `print(x, end="")` stays on the line. Put an accumulator at the level where it should reset. `break` only leaves the inner loop, and `return` leaves everything.
-
-
       Next: when a crash happens deep inside these calls, how to find out what went wrong.
+    points:
+      - 'The inner loop runs in full for each outer pass, so the counts multiply'
+      - 'Give each loop its own variable'
+      - '`print(x, end="")` stays on the same line'
+      - 'Put an accumulator at the level where it should reset'
+      - '`break` leaves only the inner loop. `return` leaves everything'

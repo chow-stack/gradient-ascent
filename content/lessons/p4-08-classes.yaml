@@ -12,9 +12,10 @@ cards:
     title: A new kind of value
     body: >-
       In the first lesson of this unit, a neuron was a list like `[0.5, -1, 1]`, and a separate function did the work. You had to remember that `n[2]` was the bias, and nothing stopped you passing the wrong list. Classes fix that, and every PyTorch model you'll ever write is one.
-
-
-      By the end of this lesson you'll be able to write a class, create objects from it, and explain what `self` means. It's the biggest new idea in this unit, so take it slowly.
+    points:
+      - 'Write a class and make objects from it'
+      - 'Set up an object with `__init__`'
+      - 'Explain what `self` means'
 
   - type: learn
     id: objects
@@ -465,7 +466,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A class describes a kind of value, and an object is one of them. `__init__` runs when an object is made, and sets up its attributes. A method is a function in a class, with `self` first, and `self` is the object before the dot. Reach attributes through `self`. Ask what it remembers, and what it can do.
-
-
       Next: what happens when objects share data.
+    points:
+      - 'A class describes a kind of value. An object is one of them'
+      - '`__init__` runs when an object is made, and sets up its attributes'
+      - 'A method is a function in a class, with `self` first'
+      - '`self` is the object before the dot'

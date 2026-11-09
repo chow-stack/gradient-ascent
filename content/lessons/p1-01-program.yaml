@@ -11,12 +11,14 @@ cards:
     label: The goal
     title: Your first program
     body: >-
-      Machine learning can look like magic from the outside. Underneath, it's a very long list of very simple
-      instructions, and you can learn to read and write them.
+      Machine learning can look like magic from the outside. Underneath, it's a very long list of very simple instructions, and you can learn to read and write them.
 
 
-      This lesson starts at the beginning. By the end you'll know what a program is, what happens when it runs, and
-      you'll have written one yourself. You don't need any programming experience.
+      This lesson starts at the beginning. You don't need any programming experience.
+    points:
+      - 'Learn what a program is, and how Python runs it'
+      - 'Show text and numbers with `print()`'
+      - 'Write notes for humans with `#`'
 
   - type: learn
     id: instructions
@@ -50,7 +52,7 @@ cards:
     code: |
       print("one")
       print("two")
-    choices: ["one\ntwo", "two\none", "one two", "print(\"two\")"]
+    choices: ["one\ntwo", "two\none", 'one two', 'print("two")']
     answer: "one\ntwo"
     why: >-
       Python runs the lines from top to bottom, and each `print` starts a new line of output. The word `print` itself
@@ -61,7 +63,7 @@ cards:
           print("left")
           print("right")
           print("left")
-        choices: ["left\nright\nleft", "left\nright", "right\nleft\nleft", "left right left"]
+        choices: ["left\nright\nleft", "left\nright", "right\nleft\nleft", 'left right left']
         answer: "left\nright\nleft"
         why: >-
           Every line runs, in order, even when it repeats an earlier one.
@@ -244,9 +246,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A program is a list of instructions that Python runs from top to bottom, one at a time. `print()` shows values as
-      output. Text needs quotes and is shown exactly, while numbers can be calculated. A `#` starts a note that Python
-      ignores.
-
-
       Next: what happens when something goes wrong, and how to read what Python tells you.
+    points:
+      - 'A program is a list of instructions, run top to bottom, one at a time'
+      - '`print()` shows a value as output'
+      - 'Text needs quotes and is shown exactly. Numbers can be calculated'
+      - '`#` starts a note that Python ignores'

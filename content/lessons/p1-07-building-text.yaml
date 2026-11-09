@@ -11,12 +11,12 @@ cards:
     label: The goal
     title: Saying what you found
     body: >-
-      A calculation is only useful if you can report it. When a model trains, it prints lines like `epoch 3, loss 0.214`, and
-      you read them to see whether it's working.
-
-
-      By the end of this lesson you'll be able to fill any value into text, convert between text and numbers, and use a few
-      string tools. You'll also learn one rule about strings that causes a very common bug.
+      A calculation is only useful if you can report it. When a model trains, it prints lines like `epoch 3, loss 0.214`, and you read them to see whether it's working.
+    points:
+      - 'Fill values into text with f-strings'
+      - 'Convert between text and numbers'
+      - 'Use string tools like `.upper()`'
+      - 'Avoid a very common string bug'
 
   - type: learn
     id: building
@@ -224,7 +224,7 @@ cards:
           `.upper()` makes a new string and leaves the original alone. Store the copy, or print it directly.
         hints:
           - Does `.upper()` change `animal`, or give back something new?
-        vary: [{ animal: '''yak''' }, { animal: '''summit''' }]
+        vary: [{ animal: "'yak'" }, { animal: "'summit'" }]
       - prompt: This should print `10`, the sum of two numbers that arrived as text. Fix it.
         code: |
           a = "4"
@@ -266,7 +266,7 @@ cards:
 
   - type: write
     id: capitalize
-    vary: [{ word: '''yak''' }, { word: '''summit''' }]
+    vary: [{ word: "'yak'" }, { word: "'summit'" }]
     prompt: >-
       Make a variable `title` that holds `word` with only its first letter in uppercase. For `"goat"`, that's `"Goat"`.
     starter: |
@@ -318,8 +318,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An f-string fills values into text. `int()`, `float()` and `str()` convert between types, which you need for numbers that
-      arrive as text. String tools like `.upper()` hand back a new string, so store the result if you want to keep it.
-
-
       Next: `print` and `len` are functions, and it's time to look at how functions work.
+    points:
+      - 'An f-string fills values into text: `f"Hi {name}"`'
+      - '`int()`, `float()` and `str()` convert between types'
+      - 'Numbers that arrive as text need converting before maths'
+      - 'String tools hand back a new string, so store the result'

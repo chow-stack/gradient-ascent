@@ -11,14 +11,15 @@ cards:
     label: The goal
     title: The same loop, a new model
     body: >-
-      You have a prediction, `sigmoid(X @ w + b)`, and a loss, the cross-entropy. Training needs one more thing: the gradient of the loss for every
-      weight. Then it's Unit 6's loop, unchanged.
+      You have a prediction, `sigmoid(X @ w + b)`, and a loss, the cross-entropy. Training needs one more thing: the gradient of the loss for every weight. Then it's Unit 6's loop, unchanged.
 
 
       The gradient turns out to be one of the neatest results in machine learning. Its formula looks almost exactly like the one for fitting a line.
-
-
-      By the end you'll have trained a classifier from scratch, measured its accuracy, and seen why the loss keeps falling after every answer is right.
+    points:
+      - 'Find the gradient of the cross-entropy'
+      - 'Train a classifier from scratch'
+      - 'Measure its accuracy'
+      - 'See why the loss keeps falling after every answer is right'
 
   - type: learn
     id: p-minus-y
@@ -383,9 +384,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      For the cross-entropy of a sigmoid, the slope for the score is just `p - y`. So the gradient is `X.T @ (p - y) / n` for the weights and
-      `np.mean(p - y)` for `b`: error times input, averaged, just like the line. Accuracy is `np.mean((p >= 0.5) == y)`. The loss can keep falling
-      after accuracy stops changing, because it also rewards confidence.
-
-
       That's a trained classifier. Next: finding out whether it's any good.
+    points:
+      - 'For a sigmoid with cross-entropy, the slope for the score is `p - y`'
+      - 'Gradient: `X.T @ (p - y) / n` for the weights, `np.mean(p - y)` for `b`'
+      - 'Accuracy is `np.mean((p >= 0.5) == y)`'
+      - 'The loss rewards confidence, so it can keep falling after accuracy stops'

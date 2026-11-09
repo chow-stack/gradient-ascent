@@ -12,9 +12,11 @@ cards:
     title: Fewer indexes, fewer bugs
     body: >-
       A neuron multiplies each input by its matching weight. So you often need two lists side by side, which so far has meant a loop over positions, with `[i]` everywhere.
-
-
-      By the end of this lesson you'll be able to loop over two lists together, get positions when you need them, and write a dot product, the calculation at the heart of every neural network. You'll also know about a silent bug that `zip` can hide.
+    points:
+      - 'Loop over two lists together with `zip`'
+      - 'Get positions with `enumerate`'
+      - 'Write a dot product, the heart of every neural network'
+      - 'Know the silent bug `zip` can hide'
 
   - type: learn
     id: zip
@@ -131,7 +133,7 @@ cards:
     code: |
       for a, b in enumerate(["x", "y"]):
           print(a, b)
-    choices: ["0 x\n1 y", "x 0\ny 1", "1 x\n2 y", "x y"]
+    choices: ["0 x\n1 y", "x 0\ny 1", "1 x\n2 y", 'x y']
     answer: "0 x\n1 y"
     why: >-
       `enumerate` gives the position first, whatever you call the names.
@@ -393,7 +395,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `zip(a, b)` walks lists together, and stops at the shorter one without telling you. `enumerate` gives the position first, and then the item. `zip(text, text[1:])` gives each item with the next one. A dot product multiplies matching pairs and adds them up.
-
-
       Next: a shorter way of writing the loops that build lists.
+    points:
+      - '`zip(a, b)` walks lists together, and stops at the shorter one without telling you'
+      - '`enumerate` gives the position, then the item'
+      - '`zip(text, text[1:])` pairs each item with the next'
+      - 'A dot product multiplies matching pairs and adds them up'

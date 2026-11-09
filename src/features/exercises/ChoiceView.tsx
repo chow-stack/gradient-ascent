@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { CodeBlock } from '../../components/CodeBlock'
-import { shuffled } from '../../lib/random'
+import { shuffled, shuffledFor } from '../../lib/random'
 import { inline } from './inline'
 import type { Card } from '../content/schema'
 import { Prompt } from './shared'
@@ -12,9 +12,12 @@ const looksLikeCode = (s: string) => !s.includes(' ') || /[()[\]{}=%+*'"\d]/.tes
 /** A choice written as one piece of code in backticks, like `` `2 * x` ``. */
 const wrapped = (s: string) => /^`[^`]+`$/.test(s)
 
-export function ChoiceView({ card, answer, setAnswer, phase }: ViewProps<ChoiceCard>) {
-  // Shuffled once per mount, so reviews don't reward remembering the position.
-  const choices = useMemo(() => shuffled(card.choices), [card])
+export function ChoiceView({ card, answer, setAnswer, phase, orderKey }: ViewProps<ChoiceCard>) {
+  // Shuffled once per mount (or once per checkpoint question), so reviews don't reward remembering the position.
+  const choices = useMemo(
+    () => (orderKey ? shuffledFor(orderKey, card.choices) : shuffled(card.choices)),
+    [card, orderKey],
+  )
   const selected = answer.type === 'choice' ? answer.choice : null
   const done = locked(phase) && phase !== 'checking'
   const code = card.kind === 'predict' || card.choices.every(looksLikeCode)

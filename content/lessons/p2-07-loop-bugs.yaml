@@ -12,9 +12,11 @@ cards:
     title: The bugs that loops bring
     body: >-
       Loops add a new kind of bug. A program can now run forever, or give an answer that's nearly right. Both happen to everyone, and both have simple causes once you know where to look.
-
-
-      By the end of this lesson you'll be able to recognise an infinite loop and an off-by-one error, test a loop on the cases most likely to break it, and leave a loop early with `break`.
+    points:
+      - 'Recognise a loop that never ends'
+      - 'Find and fix off-by-one errors'
+      - 'Leave a loop early with `break`'
+      - 'Find a bug by printing'
 
   - type: learn
     id: infinite
@@ -45,11 +47,11 @@ cards:
     kind: concept
     prompt: Which of these loops never ends?
     choices:
-      - "n = 5, then `while n > 0:` with `n = n + 1` inside"
-      - "n = 5, then `while n > 0:` with `n = n - 1` inside"
-      - "n = 0, then `while n > 0:` with `n = n + 1` inside"
-      - "n = 0, then `while n < 5:` with `n = n + 1` inside"
-    answer: "n = 5, then `while n > 0:` with `n = n + 1` inside"
+      - 'n = 5, then `while n > 0:` with `n = n + 1` inside'
+      - 'n = 5, then `while n > 0:` with `n = n - 1` inside'
+      - 'n = 0, then `while n > 0:` with `n = n + 1` inside'
+      - 'n = 0, then `while n < 5:` with `n = n + 1` inside'
+    answer: 'n = 5, then `while n > 0:` with `n = n + 1` inside'
     why: >-
       `n` starts positive and only gets bigger, so `n > 0` stays true. In the third one, the condition is false from the start, so the block never runs.
     variants:
@@ -356,7 +358,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An infinite loop has a condition that can never become false, so ask what changes on each pass. An off-by-one comes from the boundaries, so test the smallest inputs. `break` leaves a loop early. A `print` inside the block shows you what really happened.
-
-
       Next: when you know how many times to repeat, there's a much tidier kind of loop.
+    points:
+      - 'A loop that never ends: ask what changes on each pass'
+      - 'Off by one: test the smallest inputs and the boundaries'
+      - '`break` leaves a loop early'
+      - 'A `print` inside the loop shows what really happened'

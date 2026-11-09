@@ -12,9 +12,11 @@ cards:
     title: Many values, one name
     body: >-
       So far, each variable has held one value. Real programs work with collections: every word in a document, every score in a class, the loss after each training step. You can't make a separate variable for each of those.
-
-
-      By the end of this lesson you'll be able to create a list, read any item from it, and change an item. The good news is that you already know most of this, because lists work a lot like strings.
+    points:
+      - 'Make a list and read any item from it'
+      - "Change an item, which strings can't do"
+      - 'Pass lists to functions like `sum` and `max`'
+      - 'Swap two items'
 
   - type: learn
     id: basics
@@ -267,7 +269,7 @@ cards:
           To ask about the whole list, use the list itself, with no index.
         hints:
           - You want to look through all the items, not one of them.
-        vary: [{ animals: '[''yak'']' }]
+        vary: [{ animals: "['yak']" }]
 
   - type: learn
     id: worked
@@ -357,7 +359,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A list keeps values in order, and it's read just like a string, with indexes, slices, `len` and `in`. Unlike strings, lists are mutable, so you can assign to an index. `sum`, `max` and `min` take a list directly.
-
-
       Next: lists can grow and shrink, with tools that work differently from the string tools you know.
+    points:
+      - 'A list keeps values in order'
+      - 'Read it like a string: indexes, slices, `len` and `in`'
+      - 'Lists can change, so you can assign to an index'
+      - '`sum`, `max` and `min` take a list directly'

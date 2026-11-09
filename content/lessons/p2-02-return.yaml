@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Functions that answer
     body: >-
-      The functions you've written so far only show text on the screen. Your program can't use that text for anything. A function that measures a model's error has
-      to give the number back, so that other code can act on it.
-
-
-      By the end of this lesson you'll be able to write functions that return results, and you'll know the difference between `return` and `print`. That difference
-      is one of the most common sources of confusion for new programmers, so we'll go through it slowly.
+      The functions you've written so far only show text on the screen. Your program can't use that text for anything. A function that measures a model's error has to give the number back, so that other code can act on it.
+    points:
+      - 'Hand a result back with `return`'
+      - 'Tell `return` and `print` apart'
+      - 'Build bigger functions from small ones'
 
   - type: learn
     id: returning
@@ -318,20 +317,21 @@ cards:
 
   - type: write
     id: average
-    prompt: Write a function `average(a, b)` that returns the mean of two numbers. It should return the value, not print it.
+    prompt: >-
+      Write a function `average(a, b, c)` that gives back the mean of three numbers, rounded to 1 decimal place. So `average(1, 2, 4)` gives back `2.3`. It should return the value, not print it.
     starter: |
-      def average(a, b):
-          # Your code here
+      # Write average here
     solution: |
-      def average(a, b):
-          return (a + b) / 2
+      def average(a, b, c):
+          return round((a + b + c) / 3, 1)
     tests:
-      - { call: 'average(2, 4)', expect: '3.0' }
-      - { call: 'average(1, 2)', expect: '1.5' }
+      - { call: 'average(1, 2, 4)', expect: '2.3' }
+      - { call: 'average(2, 4, 6)', expect: '4.0' }
+      - { call: 'average(1, 1, 2)', expect: '1.3', hidden: true }
     why: >-
-      The parentheses matter. Without them, Python divides `b` by 2 first.
+      Add first, inside parentheses, then divide by 3. `round(x, 1)` keeps one decimal place.
     hints:
-      - Add them, then divide by 2. Which needs to happen first?
+      - Without parentheses, Python divides `c` by 3 before adding. Then `round` takes the number and how many decimal places to keep.
     variants:
       - prompt: Write a function `initials(first, last)` that returns the first letter of each name joined together, so `initials("Ada", "Byron")` gives back `"AB"`.
         starter: |
@@ -367,8 +367,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `return` hands a value back and ends the function straight away. `print` only shows a value to a person. A function with no `return` gives back `None`, so `NoneType` in an error usually
-      means that some function forgot to return.
-
-
       Next: functions that decide what to return.
+    points:
+      - '`return` hands a value back and ends the function straight away'
+      - '`print` only shows a value to a person'
+      - 'A function with no `return` gives back `None`'
+      - '`NoneType` in an error usually means a missing `return`'

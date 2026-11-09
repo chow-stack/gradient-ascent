@@ -12,9 +12,10 @@ cards:
     title: A surprise worth knowing early
     body: >-
       Something about lists catches almost everybody out, and it's the cause of some very confusing bugs in real ML code, where a dataset quietly changes because something else touched it.
-
-
-      By the end of this lesson you'll be able to tell when two names refer to the same list, make a real copy, and predict whether a function will change the list you pass it. Python for ML code, the next unit, goes further into this.
+    points:
+      - 'Tell when two names refer to the same list'
+      - 'Make a real copy'
+      - 'Predict whether a function will change the list you pass it'
 
   - type: learn
     id: alias
@@ -429,7 +430,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Assignment never copies, so `b = a` gives one list two names. Methods and index assignments change the list for everyone. A plain `b = ...` only moves that one name. `.copy()` and `[:]` make a separate list. A function's parameter is another name for what you passed in.
-
-
       Next: what happens when the items in a list are lists themselves.
+    points:
+      - 'Assignment never copies: `b = a` gives one list two names'
+      - 'Methods and index assignments change the list for everyone'
+      - 'A plain `b = ...` only moves that one name'
+      - '`.copy()` and `[:]` make a separate list'
+      - 'A parameter is another name for what you passed in'

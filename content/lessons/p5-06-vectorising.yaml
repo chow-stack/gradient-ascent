@@ -12,9 +12,11 @@ cards:
     title: Loops into lines
     body: >-
       In Unit 3 you learned the loop patterns: sum, map, filter, find the best. Each one has a NumPy form, and you've already met a few. This lesson pulls them together, so that you can look at any loop over numbers and rewrite it.
-
-
-      By the end of this lesson you'll be able to use NumPy's summary functions, apply maths functions to whole arrays, rewrite a loop as a single expression, and recognise the loops that have to stay.
+    points:
+      - "Use NumPy's summary functions"
+      - 'Apply maths functions to whole arrays'
+      - 'Rewrite a loop as one expression'
+      - 'Spot the loops that have to stay'
 
   - type: learn
     id: summaries
@@ -427,7 +429,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Summaries replace accumulators, and `argmax` gives the position of the highest. `np.sqrt`, `np.exp` and `np.log` apply to every item, and bad maths gives `nan` rather than a crash. Map loops become arithmetic, filter loops become masks, and neighbours become slices. A loop stays only if each step depends on the last one.
-
-
       Next: doing these summaries on one direction of a grid.
+    points:
+      - 'Summaries replace accumulators. `argmax` gives the position of the highest'
+      - '`np.sqrt`, `np.exp` and `np.log` apply to every item. Bad maths gives `nan`, not a crash'
+      - 'Map loops become arithmetic, filter loops become masks, neighbours become slices'
+      - 'A loop stays only if each step depends on the last'

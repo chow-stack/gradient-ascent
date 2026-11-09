@@ -12,9 +12,11 @@ cards:
     title: Lists that change size
     body: >-
       Usually you don't know a list's contents in advance. You start empty and add to it as you go, like recording the loss after each training step.
-
-
-      By the end of this lesson you'll be able to add and remove items and sort a list. You'll also learn the rule that makes list methods different from string methods, because mixing the two up causes a very common bug.
+    points:
+      - 'Add items with `append`'
+      - 'Remove items with `pop` and `remove`'
+      - 'Sort a list'
+      - 'Avoid the bug of storing what a list method gives back'
 
   - type: learn
     id: append
@@ -392,7 +394,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `append` adds to the end, `pop` removes and gives back, `remove` deletes by value, and `sort` orders the list. Most of these change the list in place and give back `None`, so don't assign the result. `sorted` is the one that gives you a new list.
-
-
       Next: going through a list, item by item.
+    points:
+      - '`append` adds to the end, and `pop` removes and gives back'
+      - '`remove` deletes by value, and `sort` puts the list in order'
+      - "These change the list in place and give back `None`, so don't assign the result"
+      - '`sorted` is the one that gives you a new list'

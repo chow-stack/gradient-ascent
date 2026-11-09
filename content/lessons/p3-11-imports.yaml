@@ -12,9 +12,11 @@ cards:
     title: You don't have to write everything
     body: >-
       Python comes with a large library of ready-made tools, and thousands more are available to install. Machine learning work is mostly about putting these together. NumPy and PyTorch are libraries, and you use them the same way as the small ones here.
-
-
-      By the end of this lesson you'll be able to import a module, use its functions, generate random numbers and make those random numbers repeatable. That last one matters a lot when you're training models.
+    points:
+      - 'Import a module and use its functions'
+      - 'Make random numbers'
+      - 'Make random numbers repeatable'
+      - 'Split data for training'
 
   - type: learn
     id: import
@@ -366,7 +368,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `import math` loads a module, and `math.sqrt` reaches inside it. `from math import sqrt` brings in one name, and `import numpy as np` gives a nickname. `random.randint` includes both ends. `shuffle` works in place. `random.seed` makes random numbers repeatable.
-
-
       Next: one last surprise about numbers, and then the checkpoint.
+    points:
+      - '`import math` loads a module, and `math.sqrt` reaches inside'
+      - '`from math import sqrt` brings in one name. `import numpy as np` gives a nickname'
+      - '`random.randint` includes both ends. `shuffle` works in place'
+      - '`random.seed` makes random numbers repeatable'

@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: A score you can trust
     body: >-
-      You've trained a classifier and measured its accuracy. On what? So far, on the same examples it learned from. That's like marking a test using the
-      questions you studied with the answers beside them.
+      You've trained a classifier and measured its accuracy. On what? So far, on the same examples it learned from. That's like marking a test using the questions you studied with the answers beside them.
 
 
-      What you want to know is how it does on examples it has never seen, the emails that arrive tomorrow. The only way to find out is to hide some
-      data from training and score the model on that.
-
-
-      By the end you'll split data properly, know what each part is for, and spot the ways a split quietly goes wrong.
+      What you want to know is how it does on examples it has never seen, the emails that arrive tomorrow. The only way to find out is to hide some data from training and score the model on that.
+    points:
+      - 'See why training accuracy flatters a model'
+      - 'Split data properly: shuffle once, then slice'
+      - 'Know what train, validation and test are each for'
 
   - type: learn
     id: memorise
@@ -316,8 +315,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Training accuracy flatters: a model can fit noise perfectly. Hold data back and score on that. Shuffle the positions once with `permutation` and
-      use them for both `X` and `y`. Train on one part, make choices on validation, and report on test once at the end.
-
-
       Next: a score on validation still needs something to compare with.
+    points:
+      - 'A model can fit noise perfectly, so hold data back and score on that'
+      - 'Shuffle positions once with `permutation`, and use them for both `X` and `y`'
+      - 'Train on one part, choose on validation, report on test once at the end'

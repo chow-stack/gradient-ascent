@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Watch both losses
     body: >-
-      In Unit 6 you watched the training loss fall and took that as progress. It isn't always. A model can keep getting better at its training data
-      while getting worse at everything else.
+      In Unit 6 you watched the training loss fall and took that as progress. It isn't always. A model can keep getting better at its training data while getting worse at everything else.
 
 
-      The fix is cheap: every so often, compute the loss on validation too, and plot both. The two curves together, called learning curves, show what's
-      going on far better than either alone.
-
-
-      By the end you'll read the three shapes the curves make, and keep the weights from the moment validation was best.
+      The fix is cheap: every so often, compute the loss on validation too, and plot both. The two curves together, called learning curves, show what's going on far better than either alone.
+    points:
+      - 'Plot training and validation loss together'
+      - 'Read the three shapes they make'
+      - 'Keep the weights from the best validation step'
 
   - type: learn
     id: overfit
@@ -367,9 +366,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Plot training and validation loss together. A widening gap with validation rising is overfitting: the model is memorising. Both high and flat is
-      underfitting: it can't find the pattern. Early stopping keeps the weights from the best validation step, saved with `.copy()` so in-place updates
-      can't change them, and patience decides when to give up waiting.
-
-
       Next: the sneakiest way to fool yourself, when information leaks from validation into training.
+    points:
+      - 'Validation rising while training falls: overfitting'
+      - 'Both high and flat: underfitting'
+      - 'Early stopping keeps the best weights, saved with `.copy()`'
+      - 'Patience decides when to give up waiting'

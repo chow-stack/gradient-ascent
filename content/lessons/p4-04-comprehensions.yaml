@@ -12,9 +12,10 @@ cards:
     title: A loop in one line
     body: >-
       You've written the same loop many times now: start an empty list, go through some items, and append something. Python has a short form of it, called a comprehension, and ML code uses it constantly. You can't read a real training script without knowing it.
-
-
-      By the end of this lesson you'll be able to read and write comprehensions, filter with them, and tell when a plain loop would be clearer.
+    points:
+      - 'Read and write list comprehensions'
+      - 'Filter and choose values in them'
+      - 'Tell when a plain loop would be clearer'
 
   - type: learn
     id: shape
@@ -351,7 +352,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `[expr for x in items]` builds a new list, and leaves the original alone. An `if` at the end filters. `a if c else b` at the front chooses a value for every item. A comprehension inside a comprehension makes a safe grid. Use a plain loop if one gets hard to read.
-
-
       Next: more shapes that this form can build, including the vocabulary of a language model.
+    points:
+      - '`[expr for x in items]` builds a new list and leaves the old one alone'
+      - 'An `if` at the end filters'
+      - '`a if c else b` at the front chooses a value for every item'
+      - 'A comprehension inside a comprehension makes a safe grid'
+      - 'If it gets hard to read, use a plain loop'

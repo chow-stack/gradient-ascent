@@ -12,9 +12,10 @@ cards:
     title: The first lines of every model
     body: >-
       Every PyTorch model starts with `class Net(nn.Module):`, followed by `super().__init__()`. It's copied so often that a lot of people never find out what it means, and then they're baffled when they forget it.
-
-
-      By the end of this lesson you'll be able to create a class from an existing one, replace some of its methods, and explain why that `super()` line is there.
+    points:
+      - 'Make a class from an existing one'
+      - 'Replace some of its methods'
+      - 'Explain why `super().__init__()` is there'
 
   - type: learn
     id: inherit
@@ -395,7 +396,7 @@ cards:
         hints:
           - Compare the two method names.
         requires: ['def', 'return', 'class']
-      - prompt: '`Child(5).size` should give back `5`, but it gives a `TypeError`, because the parent''s `__init__` needs an argument. Fix it.'
+      - prompt: "`Child(5).size` should give back `5`, but it gives a `TypeError`, because the parent's `__init__` needs an argument. Fix it."
         code: |
           class Base:
               def __init__(self, size):
@@ -530,7 +531,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `class Child(Parent):` starts with everything the parent has. A method with the same name replaces the parent's. A child's `__init__` replaces the parent's too, so call `super().__init__()` first. `self` is always the actual object, so a parent's method can call a child's `forward`.
-
-
       Next: one more lesson, on making errors work for you.
+    points:
+      - '`class Child(Parent):` starts with everything the parent has'
+      - "A method with the same name replaces the parent's"
+      - "A child's `__init__` replaces the parent's too, so call `super().__init__()` first"
+      - "`self` is always the actual object, so a parent's method can call a child's `forward`"

@@ -12,9 +12,11 @@ cards:
     title: Comparing vectors
     body: >-
       A vector can stand for a word, a song, or a person's taste. Embeddings turn things into vectors, so that things with similar meanings end up pointing the same way. So you need a way of asking how alike two vectors are.
-
-
-      By the end of this lesson you'll be able to work out a dot product, a vector's length, and cosine similarity, and use them to find the closest match. You wrote `dot` by hand in your `Vec` project, and now it gets a meaning.
+    points:
+      - 'Work out a dot product'
+      - "Find a vector's length and normalise it"
+      - 'Measure how alike two vectors are with cosine similarity'
+      - 'Find the closest match'
 
   - type: learn
     id: dot
@@ -249,7 +251,16 @@ cards:
           import numpy as np
           a = np.array([4.0, 0.0])
           print(a / ____)
-        answers: [['np.linalg.norm(a)', 'np.sqrt(a @ a)', 'np.sqrt((a * a).sum())', 'np.sqrt((a**2).sum())', 'np.sqrt((a ** 2).sum())']]
+        answers:
+          [
+            [
+              'np.linalg.norm(a)',
+              'np.sqrt(a @ a)',
+              'np.sqrt((a * a).sum())',
+              'np.sqrt((a**2).sum())',
+              'np.sqrt((a ** 2).sum())',
+            ],
+          ]
         expectOutput: '[1. 0.]'
         why: >-
           Dividing by its length gives a length of 1.
@@ -418,7 +429,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `a @ b` multiplies matching items and adds them, giving one number. It's large when vectors agree, and it's what a neuron computes. `np.linalg.norm` gives the length, and dividing by it normalises. Cosine similarity is the dot product over both lengths, from -1 to 1, and it ignores size.
-
-
       Next: what happens when you use `@` on whole grids, the operation at the heart of neural networks.
+    points:
+      - '`a @ b` multiplies matching items and adds them up'
+      - "It's large when vectors agree, and it's what a neuron computes"
+      - '`np.linalg.norm` gives the length. Dividing by it normalises'
+      - 'Cosine similarity runs from -1 to 1, and ignores size'

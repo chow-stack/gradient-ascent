@@ -99,7 +99,7 @@ export const checkpointNeeded = (total: number) => Math.ceil(total * CHECKPOINT_
 
 /**
  * Score a finished checkpoint. Passing marks it passed (which unlocks the next unit) and gives a bonus.
- * Failing changes nothing here: its cards are already in review, and it can be retaken tomorrow.
+ * Failing changes nothing here: its cards are already in review, and it can be retaken straight away.
  */
 export async function completeCheckpoint(
   lessonId: string,
@@ -118,18 +118,6 @@ export async function completeCheckpoint(
     bonus = CHECKPOINT_PASS_BONUS
   }
   return { passed, correct, total, needed, bonus }
-}
-
-/** Checkpoints tried today and not passed: they can be retaken tomorrow. */
-export async function checkpointsToRetake(now = new Date(), database: GradientDB = db): Promise<Set<string>> {
-  const tried = await database.attempts
-    .where('day')
-    .equals(dayKey(now))
-    .filter((a) => a.source === 'checkpoint')
-    .toArray()
-  const ids = new Set(tried.map((a) => a.lessonId))
-  for (const id of ids) if (await database.mastery.get(id)) ids.delete(id)
-  return ids
 }
 
 const markDayDone = async (database: GradientDB, day: DayKey) => {
@@ -191,17 +179,14 @@ export type ProgressSnapshot = {
   dueCount: number
   reviewCount: number
   mastery: Map<string, MasteryRow>
-  /** Checkpoints failed today; they unlock again tomorrow. */
-  retakeTomorrow: Set<string>
 }
 
 export async function loadProgress(now = new Date(), database: GradientDB = db): Promise<ProgressSnapshot> {
-  const [days, dueCount, reviewCount, mastery, retakeTomorrow, dailyRow, candidates] = await Promise.all([
+  const [days, dueCount, reviewCount, mastery, dailyRow, candidates] = await Promise.all([
     database.days.toArray(),
     database.reviews.where('due').belowOrEqual(endOfDay(now)).count(),
     database.reviews.count(),
     database.mastery.toArray(),
-    checkpointsToRetake(now, database),
     database.dailies.get(dayKey(now)),
     selectDaily(now, database),
   ])
@@ -221,7 +206,6 @@ export async function loadProgress(now = new Date(), database: GradientDB = db):
     dueCount,
     reviewCount,
     mastery: new Map(mastery.map((m) => [m.lessonId, m])),
-    retakeTomorrow,
   }
 }
 

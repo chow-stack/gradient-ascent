@@ -46,7 +46,6 @@ export function PathPage() {
                 {unitLessons.map((lesson, i) => {
                   const status = lessonStatus(lesson, p.mastery)
                   const special = isCheckpoint(lesson) ? 'checkpoint' : isProject(lesson) ? 'project' : undefined
-                  const retakeLater = status === 'next' && p.retakeTomorrow.has(lesson.id)
                   return (
                     <li
                       key={lesson.id}
@@ -59,10 +58,8 @@ export function PathPage() {
                         <h3 className="font-semibold">{lesson.title}</h3>
                         <p className="truncate text-small text-muted">{lesson.summary}</p>
                       </div>
-                      <span className="hidden text-caption text-faint sm:inline">
-                        {retakeLater ? 'Retake tomorrow' : STATUS_LABEL[status]}
-                      </span>
-                      {status === 'next' && !retakeLater && (
+                      <span className="hidden text-caption text-faint sm:inline">{STATUS_LABEL[status]}</span>
+                      {status === 'next' && (
                         <Link to="/session?kind=lesson" className="ga-btn ga-btn--primary ga-btn--sm">
                           <Play size={14} aria-hidden /> Start
                         </Link>

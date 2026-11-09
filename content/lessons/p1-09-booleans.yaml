@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Questions with two answers
     body: >-
-      Everything a program decides comes down to a question with a yes or no answer. Is the loss still falling? Has this word been seen
-      before? Is the guess above 0.5?
-
-
-      By the end of this lesson you'll be able to ask these questions in Python, and combine them. In the next lesson you'll use them to
-      make your programs choose what to do.
+      Everything a program decides comes down to a question with a yes or no answer. Is the loss still falling? Has this word been seen before? Is the guess above 0.5?
+    points:
+      - 'Compare values to get `True` or `False`'
+      - 'Combine questions with `and`, `or` and `not`'
+      - 'Turn a rule written in words into a condition'
 
   - type: learn
     id: comparisons
@@ -229,7 +228,7 @@ cards:
           Capitals matter when comparing text, so convert to one case first.
         hints:
           - Which string tool can change `word` to lowercase?
-        vary: [{ word: '''yak''' }]
+        vary: [{ word: "'yak'" }]
 
   - type: learn
     id: worked
@@ -308,8 +307,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Comparisons give `True` or `False`. `=` stores and `==` asks. `and` needs both sides, `or` needs at least one, and `not` flips the answer. Each
-      side has to be a complete question.
-
-
       Next: using these answers to choose which code runs.
+    points:
+      - 'Comparisons give `True` or `False`'
+      - '`=` stores, and `==` asks'
+      - '`and` needs both sides, `or` needs at least one, and `not` flips the answer'
+      - 'Each side has to be a complete question'

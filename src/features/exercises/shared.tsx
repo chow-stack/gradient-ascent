@@ -10,9 +10,16 @@ export function Prose({ text, className }: { text: string; className?: string })
       {text
         .trim()
         .split(/\n\s*\n/)
-        .map((para, i) => (
-          <p key={i}>{inline(para)}</p>
-        ))}
+        .map((para, i) => {
+          // A paragraph whose lines all start with "- " or "1. " is a list.
+          const lines = para.trim().split('\n')
+          const ordered = lines.every((l) => /^\d+\.\s/.test(l.trim()))
+          if (ordered || lines.every((l) => /^-\s/.test(l.trim()))) {
+            const items = lines.map((l, j) => <li key={j}>{inline(l.trim().replace(/^(\d+\.|-)\s+/, ''))}</li>)
+            return ordered ? <ol key={i}>{items}</ol> : <ul key={i}>{items}</ul>
+          }
+          return <p key={i}>{inline(para)}</p>
+        })}
     </div>
   )
 }

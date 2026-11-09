@@ -36,6 +36,22 @@
     font-family: var(--font-mono);
   }
 
+  /* JetBrains Mono joins >=, != and -> into one symbol, which hides what was typed. Show the real characters. */
+  code,
+  pre,
+  kbd,
+  input,
+  textarea,
+  .font-mono,
+  .ga-code,
+  .ga-choice,
+  .ga-play-tile {
+    font-variant-ligatures: none;
+    font-feature-settings:
+      'calt' 0,
+      'liga' 0;
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--color-sky) 35%, transparent);
   }

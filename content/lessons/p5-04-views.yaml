@@ -12,9 +12,10 @@ cards:
     title: One rule that's different
     body: >-
       In Unit 3 you learned that a slice of a list is a new list. It's safe to change. With NumPy, that isn't true, and it's the most dangerous difference between the two.
-
-
-      By the end of this lesson you'll be able to tell when two arrays share memory, make a real copy when you need one, and tell an in-place change from one that makes a new array. That last skill matters a lot once you're training models.
+    points:
+      - 'Tell when two arrays share memory'
+      - 'Make a real copy when you need one'
+      - 'Tell an in-place change from one that makes a new array'
 
   - type: learn
     id: views
@@ -300,7 +301,7 @@ cards:
     hints:
       - Does a slice of an array make a new one?
     variants:
-      - prompt: '`train_step(w, g)` should change the caller''s weights, so this shows `[0.5]`. But they never change. Fix it.'
+      - prompt: "`train_step(w, g)` should change the caller's weights, so this shows `[0.5]`. But they never change. Fix it."
         code: |
           import numpy as np
 
@@ -425,7 +426,11 @@ cards:
               w -= lr * grad
         tests:
           - { call: 'nudge(np.array([1.0]), np.array([1.0]), 0.5)', expect: 'None' }
-          - { call: '(lambda w: (nudge(w, np.array([2.0]), 0.5), w)[1])(np.array([1.0]))', expect: '[0.0]', hidden: true }
+          - {
+              call: '(lambda w: (nudge(w, np.array([2.0]), 0.5), w)[1])(np.array([1.0]))',
+              expect: '[0.0]',
+              hidden: true,
+            }
         hints:
           - Which operator changes an array in place?
 
@@ -447,7 +452,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A NumPy slice is a view that shares memory, unlike a list slice. `.copy()` makes a separate array. `a = a + 1` makes a new array, and `a += 1` changes the array in place, which is what a weight update needs. To save weights, take a copy.
-
-
       Next: picking items with conditions.
+    points:
+      - 'A NumPy slice is a view that shares memory, unlike a list slice'
+      - '`.copy()` makes a separate array'
+      - '`a = a + 1` makes a new array. `a += 1` changes it in place'
+      - 'To save weights, take a copy'

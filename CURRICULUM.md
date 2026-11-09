@@ -62,6 +62,9 @@ Each lesson is about 15 minutes and about 10–16 cards. It teaches properly, in
   - Fix, using a target mistake as the bug.
   - Explain early, on the example, not only at the end.
 - **Ending:** an unaided write, one question from an earlier lesson, then a short recap.
+- **Goal and recap cards** keep the body short and put the substance in `points`, one line each. Goal: the body says
+  why the lesson matters, and `points` lists what you'll do, starting with a verb. Recap: `points` lists the key facts,
+  and the body is only the `Next:` line.
 - **Practice of a new idea stays together in its first lesson.** Mixing belongs in the Daily 5 and reviews.
 
 Default order: goal → idea with labelled example → quick check → explain → next idea → check → next idea → blank → fix →
@@ -78,9 +81,14 @@ Two other shapes to try when they fit, neither tested yet:
 
 A checkpoint ends every unit before the project:
 
-- 10–12 cards drawn from the whole unit, mixed together, mostly predict, fix and write.
+- 10–12 cards drawn from the whole unit, mixed together, mostly predict, fix and write. The app adds 4 more from the
+  unit's lessons, in a version not seen there, and shuffles them.
+- It runs as a test: no hints and no feedback per question. The learner moves freely with Back, Next and the question
+  bar, and can change any answer until they submit the whole checkpoint. Blank questions count as wrong (the app warns
+  first). The results screen lists what was right and wrong without the answers.
 - Pass at 80% or more to unlock what follows.
-- Missed cards go into review either way. You can retake the checkpoint the next day.
+- Missed cards go into review either way. A failed checkpoint can be retaken straight away, and each retake moves its own
+  questions on to their next version.
 
 ### Projects
 

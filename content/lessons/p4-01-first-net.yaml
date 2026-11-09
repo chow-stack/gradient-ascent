@@ -12,9 +12,10 @@ cards:
     title: Why you've been learning this
     body: >-
       You now know enough Python to read most programs. This unit teaches the parts that machine learning code relies on most, like classes that act like functions. Before that, it's worth seeing what all this code is for.
-
-
-      By the end of this lesson you'll have trained a real neural network in your browser, and you'll know what a neuron calculates and why a network needs more than one.
+    points:
+      - 'Train a real neural network in your browser'
+      - 'Learn what one neuron calculates'
+      - 'See why a network needs more than one'
 
   - type: learn
     id: neuron
@@ -195,7 +196,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A neuron is a weighted sum plus a bias, and training nudges those numbers. One neuron draws one straight line, and layers combine lines into curves. Loss measures how wrong a model is, and test loss is the one to trust.
-
-
       Next: tidier ways of holding data together, starting with tuples.
+    points:
+      - 'A neuron is a weighted sum plus a bias'
+      - 'Training nudges those numbers'
+      - 'One neuron draws one straight line. Layers combine lines into curves'
+      - 'Loss measures how wrong a model is. Test loss is the one to trust'

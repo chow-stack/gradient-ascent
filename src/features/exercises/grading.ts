@@ -134,11 +134,10 @@ export async function grade(card: Card, answer: Answer): Promise<GradeResult> {
     // Each milestone is checked on its own, so the checklist shows how far the program has got.
     const runs: RunResult[] = []
     const milestones: MilestoneResult[] = []
-    for (const m of card.milestones) {
-      const run = await runPython(answer.code, m.tests, milestoneOptions(card.solution, m), PROJECT_TIMEOUT_MS)
-      const passed = runPassed(run, m.expectOutput)
+    for (let i = 0; i < card.milestones.length; i++) {
+      const { run, result } = await gradeMilestone(card, answer.code, i)
       runs.push(run)
-      milestones.push({ passed, message: passed ? undefined : describeRun(run, m.expectOutput) })
+      milestones.push(result)
       if (run.timedOut) break // the rest would time out too
     }
     while (milestones.length < card.milestones.length) milestones.push({ passed: false })
@@ -154,6 +153,18 @@ export async function grade(card: Card, answer: Answer): Promise<GradeResult> {
   }
 
   throw new Error(`Can't grade a ${card.type} card with a ${answer.type} answer`)
+}
+
+/** Check a project against one milestone only, for "Check this step". */
+export async function gradeMilestone(
+  card: Extract<Card, { type: 'project' }>,
+  code: string,
+  i: number,
+): Promise<{ run: RunResult; result: MilestoneResult }> {
+  const m = card.milestones[i]
+  const run = await runPython(code, m.tests, milestoneOptions(card.solution, m), PROJECT_TIMEOUT_MS)
+  const passed = runPassed(run, m.expectOutput)
+  return { run, result: { passed, message: passed ? undefined : describeRun(run, m.expectOutput) } }
 }
 
 /** The reference answer, for "Show answer". */

@@ -12,9 +12,11 @@ cards:
     title: Many dot products at once
     body: >-
       A 2D array of numbers is also called a matrix. Multiplying matrices has a reputation for being mysterious, but you already know everything it does. It's just a lot of dot products, arranged in a table.
-
-
-      By the end of this lesson you'll be able to work out a small product by hand, predict its shape, flip a matrix with a transpose, and write one layer of a neural network as a single line.
+    points:
+      - 'Multiply two matrices, by hand and with `@`'
+      - 'Predict the shape of the result'
+      - 'Flip a matrix with `.T`'
+      - 'Write a whole network layer in one line'
 
   - type: learn
     id: table
@@ -316,8 +318,16 @@ cards:
     highlightLine: 4
     tests:
       - { call: 'predict(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 1.0]))', expect: '[3.0, 7.0]' }
-      - { call: 'predict(np.array([[2.0, 3.0], [4.0, 5.0]]), np.array([1.0, 1.0]))', expect: '[5.0, 9.0]', hidden: true }
-      - { call: 'predict(np.array([[2.0, 4.0], [6.0, 8.0]]), np.array([1.0, 1.0]))', expect: '[6.0, 14.0]', hidden: true }
+      - {
+          call: 'predict(np.array([[2.0, 3.0], [4.0, 5.0]]), np.array([1.0, 1.0]))',
+          expect: '[5.0, 9.0]',
+          hidden: true,
+        }
+      - {
+          call: 'predict(np.array([[2.0, 4.0], [6.0, 8.0]]), np.array([1.0, 1.0]))',
+          expect: '[6.0, 14.0]',
+          hidden: true,
+        }
     why: >-
       `*` works item by item, and broadcasts. `@` does dot products.
     hints:
@@ -449,7 +459,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Each cell of `A @ B` is a row of `A` dotted with a column of `B`. The inner numbers of the shapes must match and vanish, and the outer numbers remain. `*` is different, as it works on matching cells. `.T` swaps rows and columns. `X @ W + b` is one layer of a neural network, on a whole batch.
-
-
       Next: where the starting numbers come from, with randomness.
+    points:
+      - 'Each cell of `A @ B` is a row of `A` dotted with a column of `B`'
+      - 'Inner sizes must match and vanish. Outer sizes remain'
+      - '`*` is different: it multiplies matching cells'
+      - '`X @ W + b` is one layer, on a whole batch'

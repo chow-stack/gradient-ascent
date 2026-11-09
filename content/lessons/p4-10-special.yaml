@@ -12,9 +12,10 @@ cards:
     title: Objects that act like numbers
     body: >-
       In PyTorch, you can write `loss = (a * b + c) ** 2`, where each letter is an object holding a lot of data. It reads like ordinary maths because the classes teach Python what `*` and `+` mean. The core of micrograd is a class that does this.
-
-
-      By the end of this lesson you'll be able to make your objects print readably, work with `+`, and compare with `==`.
+    points:
+      - 'Make your objects print readably'
+      - 'Make them work with `+`'
+      - 'Decide what `==` means for them'
 
   - type: learn
     id: repr
@@ -333,7 +334,7 @@ cards:
           `__repr__` has to give back a string, and printing gives back `None`.
         hints:
           - Should this `print` or `return`?
-      - prompt: '`P(1) == P(1)` should be `True`, but it''s `False`. Add an `__eq__` method that compares `x`.'
+      - prompt: "`P(1) == P(1)` should be `True`, but it's `False`. Add an `__eq__` method that compares `x`."
         code: |
           class P:
               def __init__(self, x):
@@ -468,7 +469,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Special methods are hooks that Python calls for you. `__repr__` gives back a string for showing an object. `a + b` runs `a.__add__(b)`, and it should make a new object. Without `__eq__`, `==` asks whether they're the same object.
-
-
       Next: what happens when a plain number is on one side of your operator.
+    points:
+      - 'Special methods are hooks that Python calls for you'
+      - '`__repr__` gives back a string for showing an object'
+      - '`a + b` runs `a.__add__(b)`, which should make a new object'
+      - "Without `__eq__`, `==` asks whether they're the same object"

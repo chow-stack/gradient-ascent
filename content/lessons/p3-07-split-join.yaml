@@ -12,9 +12,11 @@ cards:
     title: Raw text becomes data
     body: >-
       Data usually starts out as text. A language model begins by splitting text into pieces, and a CSV file is lines of text with commas in them.
-
-
-      By the end of this lesson you'll be able to split text into a list, clean each piece, convert pieces to numbers and join a list back into a string. These few tools handle a surprising amount of real data cleaning.
+    points:
+      - 'Split text into a list'
+      - 'Clean each piece, and turn it into a number'
+      - 'Join a list back into a string'
+      - 'Read a line of CSV'
 
   - type: learn
     id: split
@@ -207,7 +209,7 @@ cards:
 
   - type: fix
     id: fix-join
-    vary: [{ words: '[''b'', ''a'']' }, { words: '[''a'', ''b'', ''yak'']' }]
+    vary: [{ words: "['b', 'a']" }, { words: "['a', 'b', 'yak']" }]
     prompt: This gives an `AttributeError`. Fix it so it shows `a b`.
     code: |
       words = ["a", "b"]
@@ -354,7 +356,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `text.split()` breaks at spaces and `text.split(",")` at each comma, and the pieces are always strings. `strip` cleans the ends. `sep.join(items)` joins a list of strings, with the separator first.
-
-
       Next: lists find things by position. A dictionary finds them by name.
+    points:
+      - '`text.split()` breaks at spaces, and `text.split(",")` at commas'
+      - 'The pieces are always strings'
+      - '`strip` cleans the ends'
+      - '`sep.join(items)` joins a list of strings, separator first'

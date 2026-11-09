@@ -12,9 +12,10 @@ cards:
     title: A few shapes, used everywhere
     body: >-
       Experienced programmers don't work out every loop from nothing. They recognise the shape of the problem. A small number of shapes covers most list tasks, and you've already seen pieces of them.
-
-
-      By the end of this lesson you'll know the four main ones: count, sum, find and best. You'll also know the classic bug in the last one, and when a built-in like `max` can do the job for you.
+    points:
+      - 'Use the four loop patterns: count, sum, find and best so far'
+      - 'Spot the classic bug in best so far'
+      - 'Know when a built-in like `max` does the job for you'
 
   - type: learn
     id: count-sum
@@ -442,7 +443,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Count adds 1 for each match, and sum adds the item. Find stops at the first match, and only says no after the loop. Best so far starts from a real item, never from 0, and `>` or `>=` decides who wins a tie.
-
-
       Next: a surprise that catches almost everyone who works with lists.
+    points:
+      - 'Count adds 1 for each match. Sum adds the item'
+      - 'Find stops at the first match, and only says no after the loop'
+      - 'Best so far starts from a real item, never from 0'
+      - '`>` or `>=` decides who wins a tie'

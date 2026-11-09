@@ -24,6 +24,8 @@ export type ViewProps<C> = {
   ai?: AiState
   selfGrading?: boolean
   onRetryAi?: () => void
+  /** Shuffled choices and lines keep one order for this key, so coming back to a question doesn't reorder it. */
+  orderKey?: string
   /** Check/continue. An editor passes its latest answer, which may be newer than `answer`. */
   onSubmit: (latest?: Answer) => void
 }

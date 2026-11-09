@@ -11,13 +11,15 @@ cards:
     label: The goal
     title: Exact slopes, without nudging
     body: >-
-      Nudging works on anything, but it's approximate and needs two calls per slope. A model with a million weights would need two million calls for every
-      step of training. Instead, ML code uses exact derivatives, worked out by rules.
+      Nudging works on anything, but it's approximate and needs two calls per slope. A model with a million weights would need two million calls for every step of training. Instead, ML code uses exact derivatives, worked out by rules.
 
 
-      You only need a handful of rules, and the functions in ML are built from a few pieces: powers, sums, `exp` and `log`. By the end of this lesson you'll
-      write derivatives for each one as Python functions, and check them with the nudge from last lesson. That habit, checking a rule with a nudge, is how
-      real ML code is tested.
+      You only need a handful of rules, and the functions in ML are built from a few pieces: powers, sums, `exp` and `log`.
+    points:
+      - 'Use the power rule'
+      - 'Differentiate `exp` and `log`'
+      - 'Write derivatives as Python functions, and check them with a nudge'
+      - 'Find the bottom of a curve'
 
   - type: learn
     id: power
@@ -359,8 +361,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Power rule: `x ** n` gives `n * x ** (n - 1)`. Constants in front stay, constants on their own vanish, and sums go term by term. `exp` is its own
-      derivative, and `log` gives `1 / x`. Check any rule with a nudge. At the bottom of a valley the slope is 0, and its sign says which way is downhill.
-
-
       Next: the chain rule, for functions inside functions. It's the rule that backpropagation is built on.
+    points:
+      - '`x ** n` gives `n * x ** (n - 1)`'
+      - 'Constants in front stay. Constants on their own vanish. Sums go term by term'
+      - '`exp` is its own derivative. `log` gives `1 / x`'
+      - 'At the bottom of a valley the slope is 0. Its sign says which way is downhill'

@@ -12,9 +12,11 @@ cards:
     title: The first thing to check
     body: >-
       Ask anyone who trains models what goes wrong most, and they'll say shapes. An array's shape tells you how its numbers are arranged, and reading it is the first step in debugging nearly any model.
-
-
-      By the end of this lesson you'll be able to read a shape, create arrays of any shape, and rearrange one with `reshape`. You'll also know the difference between shapes `(3,)` and `(3, 1)`, which trips up nearly everyone.
+    points:
+      - "Read an array's shape"
+      - 'Make arrays of any shape'
+      - 'Rearrange one with `reshape`'
+      - 'Tell `(3,)` from `(3, 1)`'
 
   - type: learn
     id: shape
@@ -195,7 +197,7 @@ cards:
       - code: |
           import numpy as np
           print(np.arange(4).reshape(2, 2))
-        choices: ["[[0 1]\n [2 3]]", "[[0 2]\n [1 3]]", '[0 1 2 3]', "[[0 1 2 3]]"]
+        choices: ["[[0 1]\n [2 3]]", "[[0 2]\n [1 3]]", '[0 1 2 3]', '[[0 1 2 3]]']
         answer: "[[0 1]\n [2 3]]"
         why: >-
           It fills row by row.
@@ -211,7 +213,7 @@ cards:
           import numpy as np
           a = np.array([[1, 2], [3, 4]])
           print(a.reshape(-1))
-        choices: ['[1 2 3 4]', '[1 3 2 4]', "[[1 2 3 4]]", '-1']
+        choices: ['[1 2 3 4]', '[1 3 2 4]', '[[1 2 3 4]]', '-1']
         answer: '[1 2 3 4]'
         why: >-
           `-1` on its own flattens it, reading row by row.
@@ -409,7 +411,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `.shape` is a tuple, with rows first. `.ndim` counts the axes, and `.size` counts the items. `np.zeros((2, 3))` takes a tuple. `reshape` rearranges the items, and has to keep the total the same, and `-1` works out one size for you. `(3,)` and `(3, 1)` are different. When in doubt, print the shape.
-
-
       Next: reaching into an array to get rows, columns and cells.
+    points:
+      - '`.shape` is a tuple, rows first. `.ndim` counts axes, `.size` counts items'
+      - '`np.zeros((2, 3))` takes a tuple'
+      - '`reshape` keeps the total the same, and `-1` works out one size for you'
+      - '`(3,)` and `(3, 1)` are different. When in doubt, print the shape'

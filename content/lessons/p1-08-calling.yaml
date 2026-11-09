@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Tools someone already built
     body: >-
-      You've been using functions since your first line of code: `print`, `len`, `int`. A function is a named piece of code that
-      does a job. Most of machine learning code is calling functions, so it's worth getting this exactly right.
-
-
-      By the end of this lesson you'll be able to call any function, use what it gives back, and read a line with several calls
-      inside each other. Soon after that, you'll write your own.
+      You've been using functions since your first line of code: `print`, `len`, `int`. A function is a named piece of code that does a job. Most of machine learning code is calling functions, so it's worth getting this exactly right.
+    points:
+      - 'Call a function and use what it gives back'
+      - 'Read calls nested inside each other'
+      - "See why showing a value isn't the same as returning it"
 
   - type: learn
     id: anatomy
@@ -177,7 +176,7 @@ cards:
       a = len("hello")
       b = print("hi")
       print(a, b)
-    choices: ["hi\n5 None", "5 hi", "hi\n5 hi", "Error"]
+    choices: ["hi\n5 None", '5 hi', "hi\n5 hi", 'Error']
     answer: "hi\n5 None"
     why: >-
       `len` gives back 5. `print("hi")` shows `hi` straight away and gives back `None`, so that's what `b` holds.
@@ -248,7 +247,7 @@ cards:
           Without parentheses, `len` is only the function's name. Calling it needs parentheses and an argument.
         hints:
           - What makes a function actually run?
-        vary: [{ word: '''yak''' }, { word: '''summit''' }]
+        vary: [{ word: "'yak'" }, { word: "'summit'" }]
       - prompt: This should show `11`, but it crashes with a `TypeError`. Fix it.
         code: |
           total = print(5 + 5)
@@ -314,8 +313,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Parentheses call a function. Arguments go in, and a return value comes out, which you can use like any other value. Nested calls
-      run from the inside out. `print` shows a value but returns `None`, so it's no use for keeping results.
-
-
       Next: questions with yes or no answers, which let programs make decisions.
+    points:
+      - 'Parentheses call a function'
+      - 'Arguments go in, and a return value comes out'
+      - 'Nested calls run from the inside out'
+      - '`print` shows a value, but returns `None`'

@@ -12,9 +12,11 @@ cards:
     title: Answering questions about a dict
     body: >-
       Once you've counted things, you'll want answers: which word is most common, what's the total, which items appear more than once? All of those need you to go through the dict.
-
-
-      By the end of this lesson you'll be able to loop over keys, values and pairs, find the key with the largest value, and avoid the error you get from changing a dict during a loop.
+    points:
+      - 'Loop over keys, values and pairs'
+      - 'Find the key with the largest value'
+      - 'Avoid the error from changing a dict while looping'
+      - 'Turn counts into probabilities'
 
   - type: learn
     id: three-ways
@@ -387,7 +389,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `for k in d` gives keys, `.values()` gives values, and `.items()` gives both. `max(d)` compares keys, so use a best-so-far loop to find the top count. You can change values during a loop, but not add or remove keys, so build a new dict instead.
-
-
       Next: you've been using what's built into Python. Now for what comes with it.
+    points:
+      - '`for k in d` gives keys, `.values()` gives values, `.items()` gives both'
+      - '`max(d)` compares keys, so use best so far to find the top count'
+      - 'You can change values during a loop, but not add or remove keys'

@@ -114,7 +114,7 @@ cards:
 
   - type: fix
     id: fix-lost-value
-    vary: [{ text: '''yak''' }, { text: '''summit''' }]
+    vary: [{ text: "'yak'" }, { text: "'summit'" }]
     prompt: This should print `HELLO`. Fix it.
     code: |
       text = "hello"

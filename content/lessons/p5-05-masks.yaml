@@ -12,9 +12,11 @@ cards:
     title: Filtering with no loop
     body: >-
       Your filter loop from Unit 3 has a NumPy form, and it's one of the most useful things in the library. It lets you ask questions like "how many predictions were right?" in a single line.
-
-
-      By the end of this lesson you'll be able to filter an array by a condition, count matches, work out a model's accuracy, and pick out many specific items at once.
+    points:
+      - 'Filter an array by a condition'
+      - "Count matches, and work out a model's accuracy"
+      - 'Pick out many items by position at once'
+      - 'Clean a column of data'
 
   - type: learn
     id: masks
@@ -433,7 +435,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A comparison gives a mask, and `a[mask]` keeps the true items. Use `&`, `|` and `~`, with parentheses. `.sum()` counts matches, and `.mean()` gives the fraction, so `(preds == labels).mean()` is accuracy. `np.where` chooses values. An array of positions picks items in any order, and it gives a copy.
-
-
       Next: replacing whole loops with array operations.
+    points:
+      - 'A comparison gives a mask, and `a[mask]` keeps the true items'
+      - 'Combine masks with `&`, `|` and `~`, in parentheses'
+      - '`.sum()` counts matches, and `.mean()` gives the fraction'
+      - '`(preds == labels).mean()` is accuracy'
+      - '`np.where` chooses values'

@@ -12,9 +12,11 @@ cards:
     title: Computers round
     body: >-
       Everything in machine learning is calculated with decimals, and decimals in a computer are only approximate. It's easy to lose hours to this if you don't know about it.
-
-
-      By the end of this lesson you'll understand why `0.1 + 0.2` doesn't equal `0.3`, you'll be able to compare decimals safely, and you'll be able to display them neatly. This also finishes the Python basics.
+    points:
+      - "See why `0.1 + 0.2` isn't `0.3`"
+      - 'Compare decimals safely'
+      - 'Show decimals neatly'
+      - 'Write a stopping rule for a loop over floats'
 
   - type: learn
     id: why
@@ -340,7 +342,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Floats are approximate, and whole numbers are exact. Don't compare calculated floats with `==`, and use a tolerance instead. Use `<` rather than `!=` in loops over floats. `f"{x:.2f}"` shows a value neatly, without changing it.
-
-
-      That's the end of this unit, and of the Python basics. Next comes the checkpoint, and then a project that counts the words in a text.
+      That's the end of this unit, and of the Python basics. Next: the checkpoint test, then a project that counts the words in a text.
+    points:
+      - 'Floats are approximate. Whole numbers are exact'
+      - "Don't compare calculated floats with `==`. Use a tolerance"
+      - 'In loops over floats, use `<`, not `!=`'
+      - '`f"{x:.2f}"` shows a value neatly, without changing it'

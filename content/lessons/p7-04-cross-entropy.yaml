@@ -11,15 +11,15 @@ cards:
     label: The goal
     title: Scoring a probability
     body: >-
-      To train the neuron, you need a loss: one number for how wrong its probabilities are. The MSE worked for a line, but for probabilities there's a
-      better choice, the cross-entropy.
+      To train the neuron, you need a loss: one number for how wrong its probabilities are. The MSE worked for a line, but for probabilities there's a better choice, the cross-entropy.
 
 
-      It's worth learning well. It's the loss for almost every classifier, and it's the loss you'll use to train makemore and the GPT at the end of this
-      path. There, the "classes" are the next letter or word.
-
-
-      By the end you'll compute it by hand and in NumPy, and know why it's built the way it is.
+      It's worth learning well. It's the loss for almost every classifier, and it's the loss you'll use to train makemore and the GPT at the end of this path. There, the "classes" are the next letter or word.
+    points:
+      - 'Score a probability with cross-entropy'
+      - 'Handle both classes in one formula'
+      - 'See why it beats the squared error here'
+      - 'Never take the log of 0'
 
   - type: learn
     id: surprise
@@ -367,9 +367,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Cross-entropy scores a probability by `-log` of what the model gave the truth: 0 when it's sure and right, huge when it's sure and wrong. The binary
-      form, `-(y * log(p) + (1 - y) * log(1 - p))`, covers both labels, and you take the mean. Clip `p` first so the log never sees 0. Before
-      training, expect about 0.693.
-
-
       Next: its gradient, and training the neuron.
+    points:
+      - 'Cross-entropy is `-log` of what the model gave the truth'
+      - '0 when sure and right. Huge when sure and wrong'
+      - 'Binary form: `-(y * log(p) + (1 - y) * log(1 - p))`, then the mean'
+      - 'Clip `p` first. Before training, expect about 0.693'

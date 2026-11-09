@@ -12,9 +12,10 @@ cards:
     title: Reaching into a grid
     body: >-
       Data arrives as big tables, and you constantly need parts of them: this column is the label, those rows are a batch, that part is the training set. NumPy has a compact way of saying all of this.
-
-
-      By the end of this lesson you'll be able to get any cell, row, column or block from an array, predict the shape you'll get back, and assign to a whole section at once.
+    points:
+      - 'Get any cell, row, column or block from an array'
+      - "Predict the shape you'll get back"
+      - 'Assign to a whole section at once'
 
   - type: learn
     id: cells
@@ -395,7 +396,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `a[r, c]` gets a cell, and `a[r]` gets a row. `a[:, c]` gets a column, where the colon means all. A single number removes an axis, and a slice keeps it. You can assign to any section, and a single number spreads across it.
-
-
       Next: a surprise about slices, which is different from what you learned with lists.
+    points:
+      - '`a[r, c]` gets a cell, and `a[r]` gets a row'
+      - '`a[:, c]` gets a column. The colon means all'
+      - 'A single number removes an axis. A slice keeps it'
+      - 'Assigning a single number spreads it across a section'

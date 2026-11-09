@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Text is data too
     body: >-
-      Programs spend a lot of time on text: cleaning up a name, reading part of a file name, or printing a result that
-      people can understand. In machine learning, a language model starts by turning text into pieces it can count.
-
-
-      By the end of this lesson you'll be able to pull any piece out of a string. It all rests on one simple idea about
-      how Python stores text, and that same idea comes back with lists and NumPy arrays.
+      Programs spend a lot of time on text: cleaning up a name, reading part of a file name, or printing a result that people can understand. In machine learning, a language model starts by turning text into pieces it can count.
+    points:
+      - 'See how quotes turn words into text'
+      - 'Read any character by its position'
+      - 'Take a piece of text with a slice'
 
   - type: learn
     id: quotes
@@ -248,7 +247,7 @@ cards:
 
   - type: fix
     id: past-end
-    vary: [{ word: '''summit''' }, { word: '''Ridge''' }]
+    vary: [{ word: "'summit'" }, { word: "'Ridge'" }]
     prompt: This should print the last letter, `t`, but it crashes with an `IndexError`. Fix it.
     code: |
       word = "goat"
@@ -276,11 +275,11 @@ cards:
           The stop index is left out, so to get three characters you stop at 3.
         hints:
           - Which index does a slice stop just before?
-        vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
+        vary: [{ word: "'yak'" }, { word: "'Ridge'" }]
 
   - type: write
     id: domain
-    vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
+    vary: [{ word: "'yak'" }, { word: "'Ridge'" }]
     prompt: Make `ending` hold the last three letters of `word`. Use a slice, so that it would work for any word.
     starter: |
       word = "summit"
@@ -304,7 +303,7 @@ cards:
           - { call: middle, expect: "'ummi'" }
         hints:
           - Start at index 1. A negative stop counts from the end, and it's left out too.
-        vary: [{ word: '''yak''' }, { word: '''Ridge''' }]
+        vary: [{ word: "'yak'" }, { word: "'Ridge'" }]
 
   - type: choice
     id: remember-assignment
@@ -327,9 +326,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Quotes make text, and without them Python looks up a variable. Read one character with `word[i]`, starting from 0, or
-      from the end with a negative index. Take a piece with `word[a:b]`, which stops just before `b`. `len()` gives the
-      length, which is never a valid index.
-
-
       Next: building new text from your values.
+    points:
+      - 'Quotes make text. Without them, Python looks up a variable'
+      - '`word[i]` reads one character, counting from 0'
+      - 'A negative index counts from the end'
+      - '`word[a:b]` stops just before `b`'
+      - '`len()` gives the length, which is never a valid index'

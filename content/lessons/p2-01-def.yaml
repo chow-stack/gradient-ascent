@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Your own tools
     body: >-
-      So far you've used functions other people wrote, like `len` and `round`. Now you'll write your own. A training program is mostly
-      small functions with clear names: one loads the data, one measures the error, one updates the model.
-
-
-      By the end of this lesson you'll be able to define a function, give it inputs and call it. You'll also know why a function you've
-      defined can sit there and do nothing at all.
+      So far you've used functions other people wrote, like `len` and `round`. Now you'll write your own. A training program is mostly small functions with clear names: one loads the data, one measures the error, one updates the model.
+    points:
+      - 'Define a function with `def`'
+      - 'Give it inputs with parameters'
+      - 'Call it, and see why a defined function can do nothing at all'
 
   - type: learn
     id: defining
@@ -166,8 +165,8 @@ cards:
       Nothing appears because the function is never called. `def` only stores it, and the last line only names it, since it has no parentheses. Writing `cheer()`
       would run the body.
     keyPoints:
-      - Defining a function does not run its body
-      - The last line has no parentheses, so it never calls the function
+      - The function is never called, because the last line has no parentheses
+      - Writing `cheer()` would call it and show the message
 
   - type: blank
     id: fill-def
@@ -370,8 +369,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `def` stores a function, and the body only runs when you call it with parentheses. Parameters are variables that get their values from the arguments in the call,
-      matched by position. Define a function before the line that calls it.
-
-
       Next: so far these functions can only show things. They can't hand a result back to your program. That's what `return` is for.
+    points:
+      - '`def` stores a function. The body only runs when you call it'
+      - 'A call needs parentheses: `cheer()`'
+      - 'Parameters get their values from the arguments, matched by position'
+      - 'Define a function before the line that calls it'

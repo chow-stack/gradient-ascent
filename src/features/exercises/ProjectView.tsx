@@ -1,11 +1,11 @@
-import { Check, ChevronDown, Circle, FileText, Flag, Lightbulb, Sparkles, X } from 'lucide-react'
+import { Check, ChevronDown, Circle, FileText, Flag, Lightbulb, LoaderCircle, Sparkles, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { CodeEditor } from '../../components/editor'
 import type { Card } from '../content/schema'
 import type { RunResult } from '../runner/harness'
 import { runPython } from '../runner/python'
 import { saveDraft } from './drafts'
-import type { MilestoneResult } from './grading'
+import { gradeMilestone, type MilestoneResult } from './grading'
 import { inline } from './inline'
 import { PlayPanel } from './play/PlayPanel'
 import { Prose, RunButton, RunOutput } from './shared'
@@ -64,7 +64,12 @@ export function ProjectView({
     setLastResult(result)
     setScratch(null)
   }
-  if (milestones && milestones !== ticks) setTicks(milestones)
+  // A full check replaces the ticks; "Check this step" changes them in between.
+  const [lastMilestones, setLastMilestones] = useState(milestones)
+  if (milestones !== lastMilestones) {
+    setLastMilestones(milestones)
+    if (milestones) setTicks(milestones)
+  }
   const shown = result ?? scratch
 
   // Keep the learner's own code, not a revealed solution.
@@ -77,6 +82,24 @@ export function ProjectView({
   const hintCount = next >= 0 ? (hintsShown[next] ?? 0) : 0
   const moreHints = !locked(phase) && next >= 0 && hintCount < card.milestones[next].hints.length
   const showHint = () => setHintsShown((h) => ({ ...h, [next]: hintCount + 1 }))
+  const [stepChecking, setStepChecking] = useState(false)
+
+  /** Check only the milestone being worked on, without the final check. */
+  const checkStep = async () => {
+    if (next < 0 || stepChecking) return
+    const i = next
+    setStepChecking(true)
+    const { run, result: r } = await gradeMilestone(card, code, i)
+    setStepChecking(false)
+    setTicks((t) => {
+      const all = card.milestones.map((_, j) => t?.[j] ?? { passed: false })
+      all[i] = r
+      return all
+    })
+    setScratch(run)
+    if (!wide && !r.passed) setTab('output')
+  }
+  const step = { onCheckStep: locked(phase) ? undefined : () => void checkStep(), stepChecking }
 
   const run = async () => {
     setRunning(true)
@@ -103,6 +126,7 @@ export function ProjectView({
       hintCount={hintCount}
       moreHints={moreHints}
       onHint={showHint}
+      {...step}
     />
   )
 
@@ -125,7 +149,7 @@ export function ProjectView({
     <RunOutput result={shown} />
   ) : (
     <div className="grid h-full min-h-24 place-items-center rounded-md border border-dashed border-border p-4 text-center text-small text-faint">
-      Press Run to see what your program prints, or Check to test the milestones.
+      Press Run to see what your program prints, or Check this step to test the milestone you’re on.
     </div>
   )
 
@@ -194,6 +218,7 @@ export function ProjectView({
                 hintCount={hintCount}
                 moreHints={moreHints}
                 onHint={showHint}
+                {...step}
               />
               <div className="min-h-0 flex-1">{editor}</div>
               <Toolbar running={running} onRun={run} />
@@ -276,10 +301,13 @@ type MilestoneProps = {
   hintCount: number
   moreHints: boolean
   onHint: () => void
+  /** Check just the current milestone. */
+  onCheckStep?: () => void
+  stepChecking?: boolean
 }
 
 /** The checklist. The current milestone is open; the rest show their title and open when clicked. */
-function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint }: MilestoneProps) {
+function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint, ...step }: MilestoneProps) {
   const [opened, setOpened] = useState<Set<number>>(new Set())
   const toggle = (i: number) =>
     setOpened((s) => {
@@ -324,7 +352,9 @@ function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint }: M
                   </button>
                 )}
                 {open && <p className="ga-prose mt-0.5 text-small text-muted">{inline(m.goal)}</p>}
-                {current && <CurrentDetails m={m} t={t} hintCount={hintCount} moreHints={moreHints} onHint={onHint} />}
+                {current && (
+                  <CurrentDetails m={m} t={t} hintCount={hintCount} moreHints={moreHints} onHint={onHint} {...step} />
+                )}
               </div>
             </li>
           )
@@ -355,12 +385,16 @@ function CurrentDetails({
   hintCount,
   moreHints,
   onHint,
+  onCheckStep,
+  stepChecking,
 }: {
   m: ProjectCard['milestones'][number]
   t?: MilestoneResult
   hintCount: number
   moreHints: boolean
   onHint: () => void
+  onCheckStep?: () => void
+  stepChecking?: boolean
 }) {
   return (
     <>
@@ -375,17 +409,34 @@ function CurrentDetails({
           ))}
         </div>
       )}
-      {moreHints && (
-        <button type="button" className="ga-btn ga-btn--ghost ga-btn--sm mt-1.5 -ml-2" onClick={onHint}>
-          <Lightbulb size={14} aria-hidden /> Stuck? Show me the next step
-        </button>
-      )}
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        {onCheckStep && (
+          <button
+            type="button"
+            className="ga-btn ga-btn--secondary ga-btn--sm"
+            disabled={stepChecking}
+            onClick={onCheckStep}
+          >
+            {stepChecking ? (
+              <LoaderCircle size={14} className="animate-spin" aria-hidden />
+            ) : (
+              <Check size={14} aria-hidden />
+            )}
+            Check this step
+          </button>
+        )}
+        {moreHints && (
+          <button type="button" className="ga-btn ga-btn--ghost ga-btn--sm" onClick={onHint}>
+            <Lightbulb size={14} aria-hidden /> Stuck? Show me the next step
+          </button>
+        )}
+      </div>
     </>
   )
 }
 
 /** On narrow screens: the current milestone, pinned above the editor, opening to its goal and hints. */
-function MilestoneStrip({ card, ticks, next, done, hintCount, moreHints, onHint }: MilestoneProps) {
+function MilestoneStrip({ card, ticks, next, done, hintCount, moreHints, onHint, ...step }: MilestoneProps) {
   const [open, setOpen] = useState(false)
   if (next < 0)
     return (
@@ -415,7 +466,14 @@ function MilestoneStrip({ card, ticks, next, done, hintCount, moreHints, onHint 
       {open && (
         <div className="pt-1.5">
           <p className="ga-prose text-small text-muted">{inline(m.goal)}</p>
-          <CurrentDetails m={m} t={ticks?.[next]} hintCount={hintCount} moreHints={moreHints} onHint={onHint} />
+          <CurrentDetails
+            m={m}
+            t={ticks?.[next]}
+            hintCount={hintCount}
+            moreHints={moreHints}
+            onHint={onHint}
+            {...step}
+          />
         </div>
       )}
     </div>
@@ -478,7 +536,7 @@ function Toolbar({
       <RunButton onRun={onRun} running={running} />
       <span className="text-caption text-faint">Saved as you type.</span>
       <span className="ml-auto hidden text-caption text-faint sm:inline">
-        <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> to check milestones
+        <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> to check every milestone
       </span>
     </div>
   )

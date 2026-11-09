@@ -12,9 +12,10 @@ cards:
     title: Which direction?
     body: >-
       `a.sum()` adds up everything. But you'll usually want one number per row, or one per column: the average of each measurement, or the prediction for each example. The `axis` argument chooses, and it confuses nearly everyone at first.
-
-
-      By the end of this lesson you'll have a simple rule that always works, you'll be able to predict the shape of any summary, and you'll have used `argmax` to get one prediction per example.
+    points:
+      - 'Summarise along an axis'
+      - 'Predict the shape of any summary'
+      - 'Get one prediction per example with `argmax`'
 
   - type: learn
     id: axis
@@ -433,7 +434,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      The axis you name vanishes, so cross it out of the shape. `axis=0` gives one per column, and `axis=1` gives one per row. `scores.argmax(axis=1)` gives one prediction per example. `keepdims=True` keeps the axis with size 1, so that the result stays lined up with the original.
-
-
       Next: the rule behind that line-up, called broadcasting.
+    points:
+      - 'The axis you name vanishes, so cross it out of the shape'
+      - '`axis=0` gives one per column. `axis=1` gives one per row'
+      - '`scores.argmax(axis=1)` gives one prediction per example'
+      - '`keepdims=True` keeps the result lined up with the original'

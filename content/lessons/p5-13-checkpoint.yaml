@@ -204,16 +204,27 @@ cards:
       def row_probs(c):
           return c / c.sum(axis=1, keepdims=True)
     tests:
-      - { call: 'row_probs(np.array([[1.0, 3.0], [1.0, 1.0], [2.0, 0.0]]))', expect: '[[0.25, 0.75], [0.5, 0.5], [1.0, 0.0]]' }
-      - { call: 'row_probs(np.array([[2.0, 4.0], [2.0, 2.0], [3.0, 1.0]]))', expect: '[[0.333333333, 0.666666667], [0.5, 0.5], [0.75, 0.25]]', hidden: true }
-      - { call: 'row_probs(np.array([[2.0, 0.0], [1.0, 1.0], [1.0, 3.0]]))', expect: '[[1.0, 0.0], [0.5, 0.5], [0.25, 0.75]]', hidden: true }
+      - {
+          call: 'row_probs(np.array([[1.0, 3.0], [1.0, 1.0], [2.0, 0.0]]))',
+          expect: '[[0.25, 0.75], [0.5, 0.5], [1.0, 0.0]]',
+        }
+      - {
+          call: 'row_probs(np.array([[2.0, 4.0], [2.0, 2.0], [3.0, 1.0]]))',
+          expect: '[[0.333333333, 0.666666667], [0.5, 0.5], [0.75, 0.25]]',
+          hidden: true,
+        }
+      - {
+          call: 'row_probs(np.array([[2.0, 0.0], [1.0, 1.0], [1.0, 3.0]]))',
+          expect: '[[1.0, 0.0], [0.5, 0.5], [0.25, 0.75]]',
+          hidden: true,
+        }
     why: >-
       `keepdims` gives `(3, 1)`, which lines up with `(3, 2)`.
 
   - type: fix
     id: fix-update
     requires: ['def', 'op:-', 'name:array']
-    prompt: '`step(w, g)` should update the caller''s weights, so this should show `[0.5]`. But they stay the same. Fix it.'
+    prompt: "`step(w, g)` should update the caller's weights, so this should show `[0.5]`. But they stay the same. Fix it."
     code: |
       import numpy as np
 
@@ -252,7 +263,10 @@ cards:
           U = X / np.linalg.norm(X, axis=1, keepdims=True)
           return U @ U.T
     tests:
-      - { call: 'cosine_matrix(np.array([[1.0, 0.0], [2.0, 0.0], [0.0, 3.0]]))', expect: '[[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]]' }
+      - {
+          call: 'cosine_matrix(np.array([[1.0, 0.0], [2.0, 0.0], [0.0, 3.0]]))',
+          expect: '[[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]]',
+        }
       - { call: 'cosine_matrix(np.ones((4, 2))).shape', expect: '(4, 4)' }
     why: >-
       Once the rows are unit length, a table of dot products is a table of cosine similarities.

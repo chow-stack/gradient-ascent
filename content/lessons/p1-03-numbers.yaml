@@ -11,12 +11,12 @@ cards:
     label: The goal
     title: Computers calculate
     body: >-
-      Machine learning is, at its heart, a huge pile of arithmetic. A model's guess is a calculation, and so is every
-      small correction it makes to improve.
-
-
-      By the end of this lesson you'll know the two kinds of number Python uses, every arithmetic operator you'll need,
-      and the order Python works them out in. You'll also know the two division results that catch out almost everyone.
+      Machine learning is, at its heart, a huge pile of arithmetic. A model's guess is a calculation, and so is every small correction it makes to improve.
+    points:
+      - 'Tell an `int` from a `float`'
+      - 'Use every arithmetic operator: `+ - * / // % **`'
+      - 'Know the order Python works a calculation out in'
+      - 'Avoid the two division results that catch everyone out'
 
   - type: learn
     id: int-float
@@ -286,8 +286,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An `int` is whole, and a `float` has a decimal point. `/` always gives a float, `//` counts whole times, `%` gives the
-      remainder, and `**` is power. Python follows the order of operations from maths, and parentheses go first.
-
-
       Next: giving values names so that you can use them again.
+    points:
+      - 'An `int` is whole. A `float` has a decimal point'
+      - '`/` always gives a float'
+      - '`//` counts whole times, `%` gives the remainder, `**` is power'
+      - 'The order of operations from maths applies, and parentheses go first'

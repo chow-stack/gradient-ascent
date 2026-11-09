@@ -12,9 +12,11 @@ cards:
     title: Tables in Python
     body: >-
       A spreadsheet has rows and columns. So does a grayscale image, and so does the matrix at the core of a neural network. In plain Python, you store this as a list of lists, and when you get to NumPy, you'll think in the same way.
-
-
-      By the end of this lesson you'll be able to read and change any cell in a grid, go through it with nested loops, and add up its rows and columns.
+    points:
+      - 'Read and change any cell in a grid'
+      - 'Go through a grid with nested loops'
+      - 'Add up rows and columns'
+      - 'Multiply a matrix by a vector'
 
   - type: learn
     id: indexing
@@ -403,7 +405,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A grid is a list of rows, and `grid[r][c]` picks a cell, row first. `len(grid)` counts rows, and `len(grid[0])` counts columns. Use nested loops to go through it, and put accumulators at the level where they should reset. Build each row separately, not with `* 2`.
-
-
       Next: turning raw text into lists you can work with.
+    points:
+      - 'A grid is a list of rows. `grid[r][c]` picks a cell, row first'
+      - '`len(grid)` counts rows, and `len(grid[0])` counts columns'
+      - 'Put accumulators at the level where they should reset'
+      - 'Build each row separately, not with `* 2`'

@@ -12,9 +12,10 @@ cards:
     title: Errors now have a trail
     body: >-
       Now that functions call other functions, a crash can happen deep in a chain of calls. Python tells you the whole chain, in a message called a traceback. Real machine learning errors can be dozens of lines long, and people who can't read them get stuck for hours.
-
-
-      By the end of this lesson you'll be able to read a traceback from the bottom up, say which function crashed and who called it, and find the actual bug, which is often not on the line that crashed.
+    points:
+      - 'Read a traceback from the bottom up'
+      - 'Say which function crashed, and who called it'
+      - "Find the real bug, which often isn't on the line that crashed"
 
   - type: learn
     id: reading
@@ -353,7 +354,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Read a traceback from the bottom. The last line says what went wrong, and the step above says where. Going up the steps shows who called it. The line that crashed is often fine, so ask where its values came from. `NoneType` nearly always means a missing `return`.
-
-
-      That's the whole unit. The checkpoint is next, with no hints, and then a project that gives you a first look at how models learn.
+      That's the whole unit. Next: the checkpoint test, then a project that gives you a first look at how models learn.
+    points:
+      - 'The last line says what went wrong, and the step above says where'
+      - 'Going up the steps shows who called it'
+      - 'The line that crashed is often fine: ask where its values came from'
+      - '`NoneType` nearly always means a missing `return`'

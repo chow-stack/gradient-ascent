@@ -12,9 +12,10 @@ cards:
     title: Functions are things too
     body: >-
       So far, functions have been something you call. But a function is also a value, just like a number or a list. You can give it another name, put it in a list and pass it to another function. Training code does this all the time, for example by passing in the loss function to use.
-
-
-      By the end of this lesson you'll be able to pass functions around, write small ones with `lambda`, and sort by anything using `key=`.
+    points:
+      - 'Pass functions around as values'
+      - 'Write small functions with `lambda`'
+      - 'Sort by anything with `key=`'
 
   - type: learn
     id: passing
@@ -351,7 +352,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A function's name without parentheses is the function itself, and with them it's a call. You can store functions and pass them along. `lambda x: x * 2` is a small function with no name. `key=` tells `sorted`, `min` and `max` what to compare, and you get back the original items.
-
-
       Next: functions that make functions, and remember things.
+    points:
+      - "A function's name without parentheses is the function. With them, it's a call"
+      - 'You can store functions and pass them along'
+      - '`lambda x: x * 2` is a small function with no name'
+      - '`key=` tells `sorted`, `min` and `max` what to compare'

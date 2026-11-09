@@ -12,9 +12,10 @@ cards:
     title: Each call gets its own room
     body: >-
       If every function shared every variable, a big program would be impossible to reason about. Changing a name in one place could break something a thousand lines away. Python avoids this by keeping a function's variables to itself.
-
-
-      By the end of this lesson you'll be able to say which variable a name refers to, explain why a function can't simply change a variable outside it, and give parameters default values. Those defaults are all over machine learning libraries.
+    points:
+      - 'Tell which variable a name refers to'
+      - "See why a function can't change a variable outside it"
+      - 'Give parameters default values'
 
   - type: learn
     id: local
@@ -88,14 +89,12 @@ cards:
   - type: learn
     id: passing-in
     title: Passing a value in, and getting one out
-    body: >-
-      When you call `f(n)`, the parameter gets the value that `n` holds. If the function then assigns something new to its parameter, that only changes the local name. The variable outside still holds the old value.
+    body: |-
+      When you call `bump(score)`, the parameter starts out holding the same value as `score`. But it's a separate, local name.
 
+      So if the function assigns something new to its parameter, only the local name changes. The `score` outside keeps its old value. This surprises a lot of people. To change `score`, have the function return the new value, and store it yourself: `score = bump(score)`.
 
-      This often surprises people who expect `increase(score)` to change `score`. To change a variable outside, have the function return the new value, and assign it yourself: `score = increase(score)`. You've seen this pattern with `.upper()` and with `abs`.
-
-
-      A function can read a variable from outside, but relying on that makes it hard to follow. And if it assigns to that name anywhere in its body, Python treats the name as local throughout the function. Using it before that assignment gives an `UnboundLocalError`. Run this example to see one. The fix is the same: pass the value in, and return the result.
+      There's one more trap, shown below. If a function assigns to a name anywhere in its body, Python treats that name as local for the whole function. So `count = count + 1` tries to read a local `count` that has no value yet, and you get an `UnboundLocalError`. The fix is the same: pass the value in, and return the result.
     deeper: >-
       There is a `global` statement that lets a function assign to an outside variable. You'll see it occasionally, but it's best avoided: a function that changes things outside itself is much harder to test, because its result depends on what ran before. Later on, lists will add a twist: a function can change a list passed to it, and you'll see why.
     code: |
@@ -287,14 +286,17 @@ cards:
     id: worked
     label: Worked example
     title: Tracing two calls
-    body: >-
-      When a program has several functions, trace it the way Python runs it. When a call happens, make a new box for it, and write its parameters inside. When it returns, cross the box out and carry the answer back to the line that called it.
+    body: |-
+      With several functions, trace the program the way Python runs it. Each call gets a new box holding its own parameters. When the call returns, cross its box out and carry the answer back to the line that called it.
 
+      Here's the trace for the code below. There are three different `n`s:
 
-      Below, both functions have an `n`, and there's also an `n` outside. Follow the value: the outside `n` is 2. `outer(2)` gets a box with its own `n`, also 2. That box calls `inner(3)`, which gets another box where `n` is 3 and which gives back 30. Back in the `outer` box, `n` is still 2, so the result is 32.
+      1. Outside, `n` is 2. Then `outer(2)` is called.
+      2. `outer` gets a box. Its own `n` is 2. It calls `inner(n + 1)`, which is `inner(3)`.
+      3. `inner` gets another box, where `n` is 3. It gives back `3 * 10`, which is 30.
+      4. Back in the `outer` box, `n` is still 2. It gives back `30 + 2`, which is 32.
 
-
-      At the end, the outside `n` is still 2. No call ever changed it, however many functions used the same name.
+      At the end, the outside `n` is still 2. No call changed it, even though every function used the same name.
     code: |
       def inner(n):
           return n * 10
@@ -362,7 +364,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Variables in a function, including parameters, are local to that call, and they're separate from any outside variable with the same name. To change something outside, return the new value and store it. Defaults, like `lr=0.5`, make an argument optional.
-
-
       Next: you can name a job now, so it's time to repeat one.
+    points:
+      - 'Variables in a function, parameters too, are local to that call'
+      - "They're separate from outside variables with the same name"
+      - 'To change something outside, return the new value and store it'
+      - 'Defaults, like `lr=0.5`, make an argument optional'

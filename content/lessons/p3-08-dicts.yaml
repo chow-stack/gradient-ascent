@@ -12,9 +12,11 @@ cards:
     title: Finding things by name
     body: >-
       With a list, you find an item by its position. But often you want to look something up by what it is: a word's count, a student's score, a setting's value. Searching a list every time would be slow and clumsy.
-
-
-      By the end of this lesson you'll be able to create a dictionary, look things up, add and change entries, and deal with a key that isn't there. Language models use dictionaries right from the start, to turn every character into a number.
+    points:
+      - 'Make a dictionary and look things up in it'
+      - 'Add and change entries'
+      - "Deal with a key that isn't there"
+      - 'Turn characters into numbers, as language models do'
 
   - type: learn
     id: basics
@@ -379,7 +381,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A dict maps unique keys to values. `d[k]` reads, and `d[k] = v` adds or replaces. `in` checks the keys. A missing key gives a `KeyError` unless you use `.get(k, default)`. Keys must match exactly, including their type.
-
-
       Next: the most useful dict pattern of all, and the first step towards a language model.
+    points:
+      - 'A dict maps unique keys to values'
+      - '`d[k]` reads, and `d[k] = v` adds or replaces'
+      - '`in` checks the keys'
+      - 'A missing key gives a `KeyError`, unless you use `.get(k, default)`'
+      - 'Keys must match exactly, type included'

@@ -12,9 +12,10 @@ cards:
     title: Maths on whole lists
     body: >-
       You built a `Vec` class so that lists could do maths. NumPy is the professional version of that idea, and almost every ML library is built on it. PyTorch's tensors copy its design so closely that much of what you learn here carries straight over.
-
-
-      By the end of this lesson you'll be able to make an array, do arithmetic on it without a loop, and explain how an array differs from a list.
+    points:
+      - 'Make a NumPy array'
+      - 'Do arithmetic on every item without a loop'
+      - 'Explain how an array differs from a list'
 
   - type: learn
     id: first
@@ -401,7 +402,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `np.array` makes an array, and arithmetic applies to every item with no loop. Lists repeat and join, and arrays calculate. Arrays hold one type, and integer arrays silently cut off decimals. Replacing a loop with array operations is called vectorising, and it's much faster.
-
-
       Next: arrays with rows and columns, and the idea you'll use most, their shape.
+    points:
+      - '`np.array` makes an array, and arithmetic applies to every item'
+      - 'Lists repeat and join. Arrays calculate'
+      - 'Arrays hold one type, and integer arrays silently cut off decimals'
+      - "Replacing a loop with array operations is vectorising, and it's much faster"

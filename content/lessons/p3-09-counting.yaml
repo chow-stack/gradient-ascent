@@ -12,9 +12,11 @@ cards:
     title: How often does each thing appear?
     body: >-
       "How many of each?" is one of the most common questions in data work. It's also how the first language model in this course will work: count which letter tends to follow which, and use those counts to generate new text.
-
-
-      By the end of this lesson you'll be able to count anything with a dict, explain why the usual mistake crashes, and group items by a key.
+    points:
+      - 'Count anything with a dict'
+      - 'Explain why the usual counting mistake crashes'
+      - 'Group items by a key'
+      - 'Build a tiny language model'
 
   - type: learn
     id: pattern
@@ -291,8 +293,8 @@ cards:
         highlightLine: 3
         tests:
           - { call: 'count_clean("Go go")', expect: "{'go': 2}" }
-          - { call: 'count_clean(''yak'')', expect: '{''yak'': 1}', hidden: true }
-          - { call: 'count_clean(''summit'')', expect: '{''summit'': 1}', hidden: true }
+          - { call: "count_clean('yak')", expect: "{'yak': 1}", hidden: true }
+          - { call: "count_clean('summit')", expect: "{'summit': 1}", hidden: true }
         why: >-
           Clean the text before counting, or the two forms get separate keys.
         hints:
@@ -389,7 +391,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `counts[x] = counts.get(x, 0) + 1` counts anything, starting from an empty dict made before the loop. `counts[x] += 1` crashes on a new key. Clean the data first, or similar items get separate keys. For grouping, use lists as the values.
-
-
       Next: going through a dict, and finding the most common item.
+    points:
+      - '`counts[x] = counts.get(x, 0) + 1` counts anything'
+      - 'Make the empty dict before the loop'
+      - '`counts[x] += 1` crashes on a new key'
+      - 'Clean the data first, or similar items get separate keys'
+      - 'For grouping, use lists as the values'

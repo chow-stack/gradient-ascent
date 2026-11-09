@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Many features, one score
     body: >-
-      Real examples have many features. An email has a count for every word you track, whether it has a link, how many capital letters. A model needs
-      one score for each email, built from all of them.
+      Real examples have many features. An email has a count for every word you track, whether it has a link, how many capital letters. A model needs one score for each email, built from all of them.
 
 
-      Each feature gets its own weight. Multiply each feature by its weight, add them up, add `b`, and pass the total through the sigmoid. That's a
-      neuron, the same thing you met in Unit 4's first look at a network. Logistic regression is one neuron on its own.
-
-
-      By the end you'll score a whole dataset in one line and see the one shape of boundary a single neuron can draw.
+      Each feature gets its own weight. Multiply each feature by its weight, add them up, add `b`, and pass the total through the sigmoid. That's a neuron, the same thing you met in Unit 4's first look at a network. Logistic regression is one neuron on its own.
+    points:
+      - 'Score a whole dataset in one line'
+      - 'Classify with the right threshold'
+      - 'See the one shape of boundary a single neuron can draw'
 
   - type: learn
     id: matmul
@@ -322,9 +321,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      With examples in the rows of `X`, `X @ w + b` gives every score at once, and `sigmoid` turns them into probabilities. That's one neuron, and on
-      its own it's logistic regression. Classify with `z >= 0` or `p >= 0.5`, not `z >= 0.5`. The boundary is always straight, so one neuron can't
-      wrap around a curved region.
-
-
       Next: a loss for probabilities, so the model can learn its weights.
+    points:
+      - '`X @ w + b` gives every score at once, and `sigmoid` makes them probabilities'
+      - 'One neuron on its own is logistic regression'
+      - 'Classify with `z >= 0` or `p >= 0.5`, not `z >= 0.5`'
+      - 'The boundary is always straight'

@@ -11,15 +11,17 @@ cards:
     label: The goal
     title: Questions with two answers
     body: >-
-      Unit 6's line predicted a number: a price, a temperature, a score. Many questions have two answers instead. Is this email spam? Will this
-      student pass? Is this transaction fraud? Predicting a class like this is called classification.
+      Unit 6's line predicted a number: a price, a temperature, a score. Many questions have two answers instead. Is this email spam? Will this student pass? Is this transaction fraud? Predicting a class like this is called classification.
 
 
-      A good classifier doesn't just say yes or no. It says how sure it is: "spam, 97%". In this unit you'll build one, logistic regression, from the
-      same training loop you already know. It's one neuron, the building block of every network in Units 8 and 9.
+      A good classifier doesn't just say yes or no. It says how sure it is: "spam, 97%". In this unit you'll build one, logistic regression, from the same training loop you already know. It's one neuron, the building block of every network in Units 8 and 9.
 
 
       Then comes the half that matters just as much: judging it honestly, so a model that looks good really is good.
+    points:
+      - "See why a line can't give a probability"
+      - 'Squash any score to between 0 and 1 with the sigmoid'
+      - 'Turn a probability into a class with a threshold'
 
   - type: learn
     id: line
@@ -366,9 +368,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Classification predicts a class rather than a number. A line's output can be any number, so it can't be a probability. Instead, a model makes a
-      score `z`, and `sigmoid(z) = 1 / (1 + np.exp(-z))` squashes it to between 0 and 1. A score of 0 gives 0.5. Compare the probability with a
-      threshold to get a class, but keep the probability too.
-
-
       Next: what the score itself means, and where the model draws the line between its two classes.
+    points:
+      - 'Classification predicts a class, not a number'
+      - '`sigmoid(z) = 1 / (1 + np.exp(-z))` squashes a score to between 0 and 1'
+      - 'A score of 0 gives 0.5'
+      - 'Compare the probability with a threshold to get a class, but keep the probability too'

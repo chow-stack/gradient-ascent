@@ -12,9 +12,10 @@ cards:
     title: Functions that carry data with them
     body: >-
       In the micrograd unit, every number stores a small function that says how to send its gradient back. That function needs to remember which numbers it came from, long after they were added together. The tool for that is a closure.
-
-
-      By the end of this lesson you'll be able to write a function that builds and gives back another function, explain how it remembers things, and avoid the classic closure bug in loops.
+    points:
+      - 'Write a function that builds and gives back another function'
+      - 'Explain how it remembers things'
+      - 'Avoid the classic closure bug in loops'
 
   - type: learn
     id: inner
@@ -430,7 +431,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An inner function can use the outer function's variables, even after the outer one has finished. Give it back without parentheses. Each call of the outer function makes new variables. Assigning needs `nonlocal`. A closure sees the current value, so functions made in a loop share the loop variable, unless you use a default.
-
-
       Next: classes, the way nearly all ML code holds data and behaviour together.
+    points:
+      - "An inner function can use the outer one's variables, even after it has finished"
+      - 'Each call of the outer function makes new variables'
+      - 'Assigning to a remembered variable needs `nonlocal`'
+      - 'Functions made in a loop share the loop variable, unless you use a default'

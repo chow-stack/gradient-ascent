@@ -12,9 +12,10 @@ cards:
     title: The worst bug makes no noise
     body: >-
       So far, an error has been something that happens to you. But most machine learning bugs don't crash at all. The code runs, the numbers look plausible, and the model trains badly. You can lose days to that.
-
-
-      By the end of this lesson you'll be able to raise your own errors, catch the ones you expect, and use `assert` to turn a silent bug into a loud one. These are your main defence.
+    points:
+      - 'Raise your own errors'
+      - 'Catch the errors you expect'
+      - 'Use `assert` to turn a silent bug into a loud one'
 
   - type: learn
     id: raise
@@ -480,7 +481,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `raise` stops the program with a clear message, which beats a made-up answer. `try` and `except` handle an error you expect, so name the specific one, and never use a bare `except`. `assert` checks what must be true, and turns silent bugs into loud ones.
-
-
-      That's everything you need to read real ML code. Next comes the checkpoint, and then you'll build a vector class.
+      That's everything you need to read real ML code. Next: the checkpoint test, then you'll build a vector class.
+    points:
+      - '`raise` stops the program with a clear message, which beats a made-up answer'
+      - '`try` and `except` handle an error you expect. Name it, and never use a bare `except`'
+      - '`assert` checks what must be true'

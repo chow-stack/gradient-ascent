@@ -1,4 +1,4 @@
-import { BookOpen, Bug, Check, Flag as FlagIcon, Lightbulb, Star, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, Bug, Check, Flag as FlagIcon, Lightbulb, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Adam, type AdamMood } from '../../components/Adam'
@@ -7,11 +7,12 @@ import { debugPanelOpen, saveDebugPanelOpen, WIDE } from '../../lib/debug'
 import { checkExplanation, GeminiError, getGeminiKey } from '../ai/gemini'
 import { SegmentedProgress } from '../../components/ui/ProgressBar'
 import { ExerciseView } from '../exercises/ExerciseView'
-import { cardVariants } from '../content/schema'
+import { cardLabel, cardVariants } from '../content/schema'
 import { cardSnapshot, describeAnswer, outcomeLabel, removeFeedback, saveFeedback } from '../feedback/feedback'
 import { FlagDialog, type Flag } from '../feedback/FlagDialog'
 import { loadDraft } from '../exercises/drafts'
 import { canCheck, grade, initialAnswer, solutionFor, type Answer, type GradeResult } from '../exercises/grading'
+import { QuestionNav } from './QuestionNav'
 import { inline } from '../exercises/inline'
 import { type AiState, type Phase } from '../exercises/types'
 import {
@@ -28,6 +29,7 @@ import { DebugPanel } from './DebugPanel'
 import { DailyTileRow } from './DailyTiles'
 import { NotesDialog } from './LessonNotes'
 import type { SessionItem, SessionPlan } from './plan'
+import { clearResume, saveResume } from './resume'
 import { SessionDone, type SessionSummary } from './SessionDone'
 
 const PRAISE = ['Nice — that’s right.', 'Correct.', 'Yes! Exactly.', 'Nailed it.']
@@ -35,22 +37,34 @@ const PRAISE = ['Nice — that’s right.', 'Correct.', 'Yes! Exactly.', 'Nailed
 /** Plays a session: one card at a time, check → feedback → continue, saving every result. */
 export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const navigate = useNavigate()
-  const [queue, setQueue] = useState<SessionItem[]>(plan.items)
+  const resume = plan.resume
+  // A resumed lesson brings back the items that were already queued for one more try.
+  const [startQueue] = useState(() => withRetries(plan.items, resume?.retried ?? []))
+  const [queue, setQueue] = useState<SessionItem[]>(startQueue)
   // Refs mirror state that event handlers must read synchronously (retries, totals for the summary).
-  const queueRef = useRef(plan.items)
-  const totals = useRef({ xp: 0, correct: 0, graded: 0 })
+  const queueRef = useRef(startQueue)
+  const totals = useRef(resume?.totals ?? { xp: 0, correct: 0, graded: 0 })
   // Checkpoint score: right without hints or "show answer" (warm-up reviews don't count).
-  const checkpoint = useRef({ correct: 0, total: 0 })
+  const checkpoint = useRef(resume?.checkpoint ?? { correct: 0, total: 0 })
+  // Each test question's result, for the results screen.
+  const results = useRef(resume?.results ?? [])
   // Debug sessions open any lesson at any card, can jump around, and save nothing.
   const debug = plan.kind === 'debug'
-  const [idx, setIdx] = useState(plan.startAt ?? 0)
+  const [idx, setIdx] = useState(resume ? Math.min(resume.idx, startQueue.length - 1) : (plan.startAt ?? 0))
   const [panelOpen, setPanelOpen] = useState(() => debug && debugPanelOpen())
   const showPanel = (open: boolean) => {
     setPanelOpen(open)
     if (window.matchMedia(WIDE).matches) saveDebugPanelOpen(open)
   }
   const item = queue[Math.min(idx, queue.length - 1)]
-  const [answer, setAnswer] = useState<Answer>(() => startAnswer(item, debug))
+  // A checkpoint keeps every answer until it's submitted, so the learner can go back and change them.
+  const [testAnswers, setTestAnswers] = useState<Record<string, Answer>>(resume?.answers ?? {})
+  const answersRef = useRef(testAnswers)
+  const [answer, setAnswer] = useState<Answer>(() => resume?.answers?.[item.key] ?? startAnswer(item, debug))
+  // Submitting with blank questions asks first.
+  const [confirmSubmit, setConfirmSubmit] = useState(false)
+  // Time spent on each checkpoint question, across visits.
+  const spent = useRef<Record<string, number>>({})
   const [phase, setPhase] = useState<Phase>('answering')
   const [result, setResult] = useState<GradeResult | undefined>()
   const [hintsUsed, setHintsUsed] = useState(0)
@@ -77,8 +91,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     sessionStart.current = Date.now()
   }, [])
   const saving = useRef<Promise<unknown>>(Promise.resolve())
-  const retried = useRef(new Set<string>())
-  const [xp, setXp] = useState(0)
+  const retried = useRef(new Set<string>(resume?.retried ?? []))
+  const [xp, setXp] = useState(resume?.totals.xp ?? 0)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const daily = plan.daily
   const [dailyResults, setDailyResults] = useState<Record<string, DailyResult>>(daily?.results ?? {})
@@ -89,7 +103,11 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const card = item.card
   const fullHeight = card.type === 'project'
   const isLearn = card.type === 'learn'
-  const hints = 'hints' in card ? card.hints : []
+  // Learn cards with code use two columns on wide screens (see .ga-split).
+  const split = isLearn && !!card.code
+  // A checkpoint: no hints and no right answers until it's submitted, and the learner can move between questions.
+  const test = item.source === 'checkpoint'
+  const hints = 'hints' in card && !test ? card.hints : []
   const [reading, setReading] = useState(false)
   const notes = rereadable(item)
   // Flags on cards in this session, by item key, so reopening one edits it.
@@ -137,19 +155,37 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     if (id !== undefined) void removeFeedback(id).catch(console.error)
   }
 
+  /** Keep the lesson's place, so leaving and coming back picks up at the card after `at`. */
+  const resumeAt = useRef(0)
+  const persist = useCallback(() => {
+    if (plan.kind !== 'lesson' || !plan.lessonId) return
+    saveResume(plan.lessonId, {
+      items: plan.items.map((i) => ({ itemId: i.itemId, version: i.version ?? 0 })),
+      idx: resumeAt.current,
+      retried: [...retried.current],
+      totals: totals.current,
+      checkpoint: checkpoint.current,
+      results: results.current,
+      answers: answersRef.current,
+    })
+  }, [plan])
+
   /** Save the outcome of the current item (runs in order, in the background). */
   const resolve = useCallback(
     (outcome: Outcome) => {
       if (debug) return
       const it = item
+      resumeAt.current = idx + 1
       const durationMs = Date.now() - startedAt.current
       if (it.card.type !== 'learn') {
         totals.current.graded += 1
         if (outcome.correct) totals.current.correct += 1
       }
       if (it.source === 'checkpoint') {
+        const right = outcome.correct && !outcome.gaveUp && outcome.hintsUsed === 0
         checkpoint.current.total += 1
-        if (outcome.correct && !outcome.gaveUp && outcome.hintsUsed === 0) checkpoint.current.correct += 1
+        if (right) checkpoint.current.correct += 1
+        results.current = [...results.current, { key: it.key, correct: right }]
       }
       saving.current = saving.current
         .then(() =>
@@ -165,6 +201,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         .then((gained) => {
           totals.current.xp += gained
           setXp(totals.current.xp)
+          persist()
         })
         .catch(console.error)
       if (daily) {
@@ -179,13 +216,15 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         queueRef.current = [...queueRef.current, { ...it, key: `${it.key}:retry`, source: 'retry' }]
         setQueue(queueRef.current)
       }
+      persist()
     },
-    [item, daily, debug],
+    [item, idx, daily, debug, persist],
   )
 
   const finish = useCallback(async () => {
     if (debug) return void navigate('/debug')
     await saving.current
+    if (plan.kind === 'lesson' && plan.lessonId) clearResume(plan.lessonId)
     if (plan.daily) {
       setDailyXp(totals.current.xp + DAILY_COMPLETE_BONUS)
       return
@@ -196,7 +235,12 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       plan.items.some((i) => i.source === 'lesson' || i.source === 'project')
     const checkpointDone = !!plan.lessonId && plan.items.some((i) => i.source === 'checkpoint')
     const cp = checkpointDone
-      ? await completeCheckpoint(plan.lessonId!, checkpoint.current.correct, checkpoint.current.total)
+      ? await completeCheckpoint(
+          plan.lessonId!,
+          checkpoint.current.correct,
+          // Every question counts, answered or not.
+          Math.max(checkpoint.current.total, plan.items.filter((i) => i.source === 'checkpoint').length),
+        )
       : undefined
     const bonus = lessonDone ? await completeLesson(plan.lessonId!) : (cp?.bonus ?? 0)
     if (plan.kind === 'lesson') await countDayIfNothingToReview()
@@ -205,6 +249,13 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       lessonId: plan.lessonId,
       lessonTitle: plan.items.find((i) => i.source !== 'review' && i.source !== 'practice')?.lesson.title,
       checkpoint: cp,
+      questions: cp
+        ? results.current.flatMap((r) => {
+            const it = plan.items.find((i) => i.key === r.key)
+            const code = it && 'code' in it.card ? it.card.code?.split('\n').find((l) => l.trim()) : undefined
+            return it ? [{ label: cardLabel(it.card), code, correct: r.correct }] : []
+          })
+        : undefined,
       xp: totals.current.xp + bonus,
       bonus,
       correct: totals.current.correct,
@@ -212,6 +263,14 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)),
     })
   }, [plan, debug, navigate])
+
+  // Left after the last answer but before the finish screen: finish now.
+  const resumedPastEnd = useRef(!!resume && resume.idx >= startQueue.length)
+  useEffect(() => {
+    if (!resumedPastEnd.current) return
+    resumedPastEnd.current = false
+    void finish()
+  }, [finish])
 
   /** Show item i fresh. In debug mode, `version` picks one of the card's variants (0 is the card itself). */
   const goTo = useCallback(
@@ -224,8 +283,15 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         queueRef.current = queueRef.current.map((q, k) => (k === i ? target : q))
         setQueue(queueRef.current)
       }
+      const leaving = queueRef.current[idx]
+      if (leaving) spent.current[leaving.key] = (spent.current[leaving.key] ?? 0) + Date.now() - startedAt.current
+      if (target.source === 'checkpoint') {
+        resumeAt.current = i
+        persist()
+      }
       setIdx(i)
-      setAnswer(startAnswer(target, debug))
+      setConfirmSubmit(false)
+      setAnswer(answersRef.current[target.key] ?? startAnswer(target, debug))
       setPhase('answering')
       setResult(undefined)
       setHintsUsed(0)
@@ -237,7 +303,7 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       startedAt.current = Date.now()
       window.scrollTo({ top: 0 })
     },
-    [debug],
+    [debug, idx, persist],
   )
 
   const next = useCallback(() => {
@@ -314,6 +380,72 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
     [phase, answer, card, hintsUsed, resolve, askAi],
   )
 
+  /** An answer typed or picked. In a checkpoint it's kept (and saved) for when the learner comes back to it. */
+  const updateAnswer = useCallback(
+    (a: Answer) => {
+      setAnswer(a)
+      if (!test) return
+      answersRef.current = { ...answersRef.current, [item.key]: a }
+      setTestAnswers(answersRef.current)
+      persist()
+    },
+    [test, item.key, persist],
+  )
+
+  /** Grade every checkpoint answer at once, save them, and show the results. Blank questions count as wrong. */
+  const submitTest = useCallback(
+    async (force = false) => {
+      if (phase !== 'answering') return
+      const items = queueRef.current
+      const blank = items.findIndex((it) => !isAnswered(it, answersRef.current[it.key]))
+      if (blank >= 0 && !force) return setConfirmSubmit(true)
+      setConfirmSubmit(false)
+      setPhase('checking')
+      spent.current[item.key] = (spent.current[item.key] ?? 0) + Date.now() - startedAt.current
+      checkpoint.current = { correct: 0, total: 0 }
+      results.current = []
+      for (const it of items) {
+        const a = answersRef.current[it.key]
+        const answered = isAnswered(it, a)
+        const right = answered ? (await grade(it.card, a!)).correct : false
+        checkpoint.current.total += 1
+        totals.current.graded += 1
+        if (right) {
+          checkpoint.current.correct += 1
+          totals.current.correct += 1
+        }
+        results.current.push({ key: it.key, correct: right })
+        if (debug) continue
+        const outcome = { correct: right, firstTry: true, hintsUsed: 0, gaveUp: !answered }
+        saving.current = saving.current
+          .then(() =>
+            recordAttempt({
+              itemId: it.itemId,
+              lessonId: it.lesson.id,
+              type: it.card.type,
+              source: it.source,
+              outcome,
+              durationMs: spent.current[it.key] ?? 0,
+            }),
+          )
+          .then((gained) => void (totals.current.xp += gained))
+          .catch(console.error)
+      }
+      void finish()
+    },
+    [phase, item.key, debug, finish],
+  )
+
+  /** A checkpoint's main button: on to the next question, or submit from the last. */
+  const testNext = useCallback(
+    (latest?: Answer) => {
+      if (latest) updateAnswer(latest)
+      if (idx + 1 < queueRef.current.length) goTo(idx + 1)
+      else void submitTest()
+    },
+    [idx, goTo, submitTest, updateAnswer],
+  )
+
   const tryAgain = () => {
     setPhase('answering')
     setResult(undefined)
@@ -357,13 +489,14 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   /** Enter does whatever the main button says. */
   const primary = useCallback(
     (latest?: Answer) => {
+      if (test) return phase === 'answering' ? testNext(latest) : undefined
       if (isLearn) return next()
       if (phase === 'answering') return void check(latest)
       if (phase === 'correct' || (phase === 'wrong' && card.type === 'choice')) return next()
       if (phase === 'revealed' && !(card.type === 'explain' && selfGrading)) return next()
       if (phase === 'wrong') return tryAgain()
     },
-    [isLearn, phase, card.type, selfGrading, next, check],
+    [test, testNext, isLearn, phase, card.type, selfGrading, next, check],
   )
 
   useEffect(() => {
@@ -456,6 +589,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
         <div className="min-w-0 flex-1">
           {tiles ? (
             <DailyTileRow results={tiles} />
+          ) : test ? (
+            <div className="flex items-center gap-4">
+              <span className="flex-none text-small font-semibold">Checkpoint</span>
+              <QuestionNav
+                answered={queue.map((it) => isAnswered(it, testAnswers[it.key]))}
+                current={idx}
+                disabled={phase !== 'answering'}
+                onGo={goTo}
+              />
+            </div>
           ) : (
             <SegmentedProgress
               total={queue.length}
@@ -487,11 +630,14 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             <BookOpen size={16} aria-hidden /> <span className="hidden sm:inline">Reread</span>
           </button>
         )}
-        <span className="ga-chip text-xp" title="XP this session">
-          <Star size={16} aria-hidden />
-          <span className="sr-only">XP this session: </span>
-          {xp}
-        </span>
+        {/* XP would give away which test answers were right. */}
+        {!test && (
+          <span className="ga-chip text-xp" title="XP this session">
+            <Star size={16} aria-hidden />
+            <span className="sr-only">XP this session: </span>
+            {xp}
+          </span>
+        )}
       </header>
 
       {debug && panelOpen && (
@@ -528,17 +674,22 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
           className={
             fullHeight
               ? 'flex min-h-0 w-full max-w-[1400px] flex-1 flex-col gap-3'
-              : 'flex w-full max-w-[760px] flex-col gap-5'
+              : `flex w-full flex-col gap-5 ${split ? 'max-w-[760px] lg:max-w-[1200px]' : 'max-w-[760px]'}`
           }
         >
-          {item.source !== 'lesson' && !daily && (
+          {test ? (
             <p className="text-caption text-faint">
-              {item.source === 'checkpoint'
-                ? `Checkpoint · no hints, 80% to pass`
-                : item.source === 'project'
+              Question {idx + 1} of {queue.length}
+            </p>
+          ) : (
+            item.source !== 'lesson' &&
+            !daily && (
+              <p className="text-caption text-faint">
+                {item.source === 'project'
                   ? item.lesson.title
                   : `${item.source === 'review' ? 'Review' : item.source === 'retry' ? 'One more try' : 'Practice'} · ${item.lesson.title}`}
-            </p>
+              </p>
+            )
           )}
           <div
             // Never remount on a wrong answer: that reshuffled the choices and lost a game in progress.
@@ -554,7 +705,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             <ExerciseView
               card={card}
               answer={answer}
-              setAnswer={setAnswer}
+              setAnswer={updateAnswer}
+              orderKey={test ? item.key : undefined}
               phase={phase}
               result={result?.run}
               milestones={result?.milestones}
@@ -580,27 +732,76 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
 
       {/* Feedback footer */}
       <footer className="ga-footer sticky bottom-0" data-state={footerState} aria-live="polite">
-        <div className={`mx-auto flex w-full items-center gap-4 ${fullHeight ? 'max-w-[1400px]' : 'max-w-[920px]'}`}>
+        <div
+          className={`mx-auto flex w-full items-center gap-4 ${fullHeight ? 'max-w-[1400px]' : split ? 'max-w-[920px] lg:max-w-[1200px]' : 'max-w-[920px]'}`}
+        >
           <div className="hidden flex-none sm:block">
             <Adam mood={mood} size={56} />
           </div>
-          <div key={`${item.key}-${phase}`} className="ga-feedback-in min-w-0 flex-1">
-            <FooterText
-              phase={phase}
-              learnHint={
-                isLearn ? (card.code ? 'Read it, run it, then continue.' : 'Read it, then continue.') : undefined
-              }
-              type={card.type}
-              praise={praise}
-              why={why}
-              miss={miss}
-              message={result?.message}
-              verdict={ai.status === 'done' ? ai.check.verdict : undefined}
-              selfGrading={selfGrading}
-            />
+          <div key={`${item.key}-${phase}-${confirmSubmit}`} className="ga-feedback-in min-w-0 flex-1">
+            {test ? (
+              <TestFooterText
+                checking={phase === 'checking'}
+                blank={confirmSubmit ? queue.filter((it) => !isAnswered(it, testAnswers[it.key])).length : 0}
+              />
+            ) : (
+              <FooterText
+                phase={phase}
+                learnHint={
+                  isLearn ? (card.code ? 'Read it, run it, then continue.' : 'Read it, then continue.') : undefined
+                }
+                type={card.type}
+                praise={praise}
+                why={why}
+                miss={miss}
+                message={result?.message}
+                verdict={ai.status === 'done' ? ai.check.verdict : undefined}
+                selfGrading={selfGrading}
+              />
+            )}
           </div>
           <div className="flex flex-none flex-wrap items-center justify-end gap-2">
-            {isLearn ? (
+            {test ? (
+              confirmSubmit ? (
+                <>
+                  <button
+                    type="button"
+                    className="ga-btn ga-btn--ghost"
+                    onClick={() => goTo(queue.findIndex((it) => !isAnswered(it, testAnswers[it.key])))}
+                  >
+                    Go to first blank
+                  </button>
+                  <button
+                    type="button"
+                    autoFocus
+                    className="ga-btn ga-btn--primary"
+                    onClick={() => void submitTest(true)}
+                  >
+                    Submit anyway <span className="ga-kbd">↵</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="ga-btn ga-btn--ghost"
+                    disabled={idx === 0 || phase !== 'answering'}
+                    onClick={() => goTo(idx - 1)}
+                  >
+                    <ArrowLeft size={16} aria-hidden /> Back
+                  </button>
+                  <button
+                    type="button"
+                    className="ga-btn ga-btn--primary"
+                    disabled={phase !== 'answering'}
+                    onClick={() => testNext()}
+                  >
+                    {phase === 'checking' ? 'Grading…' : idx + 1 >= queue.length ? 'Submit checkpoint' : 'Next'}
+                    <span className="ga-kbd">↵</span>
+                  </button>
+                </>
+              )
+            ) : isLearn ? (
               <button type="button" className="ga-btn ga-btn--primary" onClick={next}>
                 Continue <span className="ga-kbd">↵</span>
               </button>
@@ -715,6 +916,15 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   )
 }
 
+/** The items, followed by one more try at each of the `retried` ones, as a resumed lesson had them. */
+function withRetries(items: SessionItem[], retried: string[]): SessionItem[] {
+  const extra = retried.flatMap((key) => {
+    const it = items.find((i) => i.key === key)
+    return it ? [{ ...it, key: `${key}:retry`, source: 'retry' as const }] : []
+  })
+  return [...items, ...extra]
+}
+
 /** A project picks up from the learner's saved draft. Practising a project, or debugging it, starts it fresh. */
 function startAnswer(item: SessionItem, debug = false): Answer {
   const draft = item.card.type === 'project' && item.source === 'project' && !debug ? loadDraft(item.itemId) : null
@@ -821,6 +1031,31 @@ function FooterText({
         </>
       )
   }
+}
+
+/** Whether a checkpoint question has been touched. A half-done answer still gets graded; an untouched one is blank. */
+function isAnswered(item: SessionItem, a: Answer | undefined): boolean {
+  if (!a) return false
+  const start = initialAnswer(item.card)
+  if (a.type === 'blank') return a.values.some((v) => v.trim())
+  if (a.type === 'code') return a.code.trim() !== '' && start.type === 'code' && a.code !== start.code
+  return canCheck(a) && JSON.stringify(a) !== JSON.stringify(start)
+}
+
+function TestFooterText({ checking, blank }: { checking: boolean; blank: number }) {
+  if (checking) return <p className="ga-footer-body text-muted">Grading your answers…</p>
+  if (blank)
+    return (
+      <>
+        <p className="ga-footer-title">{blank === 1 ? '1 question is' : `${blank} questions are`} still blank.</p>
+        <p className="ga-footer-body mt-0.5 text-muted">Blank questions count as wrong.</p>
+      </>
+    )
+  return (
+    <p className="ga-footer-body hidden text-muted sm:block">
+      Change any answer until you submit. Results come at the end.
+    </p>
+  )
 }
 
 /** Which version of its card a debug item shows (0 is the card itself). */

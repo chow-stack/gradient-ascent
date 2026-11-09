@@ -12,9 +12,11 @@ cards:
     title: Different answers for different inputs
     body: >-
       Most useful functions don't always do the same thing. A function might label a score as a pass or a fail, or stop an update if a number is too big. That means putting `if` and `return` together.
-
-
-      By the end of this lesson you'll be able to write functions that choose their answer, and you'll be able to spot the bug where some inputs give back `None`.
+    points:
+      - 'Write functions that choose their answer'
+      - 'Make sure every path gives an answer'
+      - 'Return `True` or `False` directly'
+      - 'Guard against bad input'
 
   - type: learn
     id: if-return
@@ -321,8 +323,7 @@ cards:
     prompt: >-
       Write `clamp(x, low, high)`. It gives back `low` if `x` is below it, `high` if `x` is above it, and `x` otherwise. Machine learning code uses this to stop numbers getting too large.
     starter: |
-      def clamp(x, low, high):
-          # Your code here
+      # Write clamp here
     solution: |
       def clamp(x, low, high):
           if x < low:
@@ -335,10 +336,12 @@ cards:
       - { call: 'clamp(-3, 0, 10)', expect: '0' }
       - { call: 'clamp(99, 0, 10)', expect: '10' }
       - { call: 'clamp(0, 0, 10)', expect: '0', hidden: true }
+      - { call: 'clamp(10, 0, 10)', expect: '10', hidden: true }
+      - { call: 'clamp(-0.5, -1, 1)', expect: '-0.5', hidden: true }
     why: >-
       Deal with each out-of-range case and leave. What's left is the ordinary case.
     hints:
-      - You need three `return` lines, and two `if`s.
+      - Handle the two out-of-range cases first, each with its own `return`. Whatever gets past them is already in range.
     variants:
       - prompt: Write `is_multiple(n, d)`, which gives back `True` if `n` divides by `d` with no remainder. If `d` is 0, it should give back `False`.
         starter: |
@@ -376,7 +379,8 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A function can have several `return` lines, and the first one reached ends the call, so you often don't need an `else`. Check that every path gives an answer, or some inputs will give back `None`. A yes or no function can return its comparison directly.
-
-
       Next: why a variable inside a function isn't the same as one outside it.
+    points:
+      - "The first `return` reached ends the call, so you often don't need `else`"
+      - 'Check every path, or some inputs give back `None`'
+      - 'A yes-or-no function can return its comparison: `return age >= 18`'

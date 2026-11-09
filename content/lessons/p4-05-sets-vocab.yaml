@@ -12,9 +12,11 @@ cards:
     title: From text to numbers
     body: >-
       Neural networks only work with numbers. So every language model starts the same way: find the distinct characters in the text, and give each one a number. It takes about three lines, and those lines contain three new ideas.
-
-
-      By the end of this lesson you'll be able to remove repeats with a set, build a dict with a comprehension, get a total without building a list, and write those lines yourself.
+    points:
+      - 'Remove repeats with a set'
+      - 'Build a dict with a comprehension'
+      - 'Get a total without building a list'
+      - 'Encode and decode text'
 
   - type: learn
     id: sets
@@ -365,7 +367,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A set keeps one of each, with no order, so use `sorted` when order matters. `{}` is an empty dict, and `set()` is an empty set. `{k: v for ...}` builds a dict. `sum(x for ...)` adds without building a list, and `any` and `all` check conditions. `sorted(set(text))` is how a vocabulary starts.
-
-
       Next: functions as values, which you can pass around like numbers.
+    points:
+      - 'A set keeps one of each, with no order. Use `sorted` when order matters'
+      - '`{}` is an empty dict. `set()` is an empty set'
+      - '`{k: v for ...}` builds a dict'
+      - '`sum(x for ...)` adds without a list. `any` and `all` check conditions'
+      - '`sorted(set(text))` is how a vocabulary starts'

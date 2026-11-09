@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Trust, but check
     body: >-
-      Gradient bugs are sneaky. A wrong gradient doesn't crash. Often the loss still goes down, just slower, or to the wrong place, and you'd never know
-      by watching it.
+      Gradient bugs are sneaky. A wrong gradient doesn't crash. Often the loss still goes down, just slower, or to the wrong place, and you'd never know by watching it.
 
 
-      Professionals check every hand-written gradient against nudges before training with it. It takes a few lines and catches a dropped `* x` or a
-      missing 2 every time.
-
-
-      By the end you'll have a better nudge, a fair way to compare two numbers, and a checker you'll use again in Unit 8 when you build backpropagation.
+      Professionals check every hand-written gradient against nudges before training with it. It takes a few lines and catches a dropped `* x` or a missing 2 every time.
+    points:
+      - 'Nudge both ways for a more accurate slope'
+      - 'Compare two numbers fairly with relative error'
+      - 'Build a gradient checker that catches planted bugs'
 
   - type: learn
     id: central
@@ -295,9 +294,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      The central difference, `(f(x + h) - f(x - h)) / (2 * h)`, is a much more accurate nudge. The relative error compares two numbers by their size:
-      below `1e-5` the gradient is right, above `1e-3` it has a bug. Check each partial from an ordinary point, never trust a falling loss alone, and a
-      dropped factor has nowhere to hide.
-
-
       Next: the checkpoint, and then you'll build a line-fitter you can watch learn.
+    points:
+      - 'The central difference `(f(x + h) - f(x - h)) / (2 * h)` is much more accurate'
+      - "Relative error below `1e-5` is right. Above `1e-3`, there's a bug"
+      - 'Check each partial from an ordinary point'
+      - 'Never trust a falling loss alone'

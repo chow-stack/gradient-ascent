@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Reading the score
     body: >-
-      A trained model might say `z = 0.8 * hours - 4`. What does the 0.8 mean? It isn't "each hour adds 0.8 to the chance of passing". Probabilities
-      can't grow forever like that.
+      A trained model might say `z = 0.8 * hours - 4`. What does the 0.8 mean? It isn't "each hour adds 0.8 to the chance of passing". Probabilities can't grow forever like that.
 
 
-      The score has a meaning of its own, the log-odds, and once you know it you can read any weight in a classifier. It also tells you exactly where
-      the model draws the line between its two classes.
-
-
-      By the end you'll turn probabilities into log-odds and back, say what a weight does, and find a model's decision boundary.
+      The score has a meaning of its own, the log-odds, and once you know it you can read any weight in a classifier. It also tells you exactly where the model draws the line between its two classes.
+    points:
+      - 'Turn probabilities into log-odds and back'
+      - 'Say what one weight does'
+      - "Find a model's decision boundary"
 
   - type: learn
     id: odds
@@ -349,9 +348,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      The odds are `p / (1 - p)`, and the log-odds is their log, which can be any number. A model's score is a log-odds, and the sigmoid turns it back
-      into a probability. Each unit of a feature adds its weight to the log-odds, which multiplies the odds by `np.exp(w)`, but doesn't add a fixed
-      amount to the probability. The decision boundary is where the score is 0: `x = -b / w` for one feature.
-
-
       Next: many features at once, with the matrix product from Unit 5. That's one neuron.
+    points:
+      - 'The odds are `p / (1 - p)`. The log-odds can be any number'
+      - "A model's score is a log-odds. The sigmoid turns it back into a probability"
+      - 'Each unit of a feature adds its weight to the log-odds'
+      - 'The boundary is where the score is 0: `x = -b / w` for one feature'

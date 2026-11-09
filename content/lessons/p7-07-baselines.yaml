@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Is 95% good?
     body: >-
-      Your fraud detector scores 95% on validation. Is that good? You can't tell from the number alone. If 95% of transactions are honest, a "model"
-      that always says honest also scores 95%, and it never catches any fraud.
+      Your fraud detector scores 95% on validation. Is that good? You can't tell from the number alone. If 95% of transactions are honest, a "model" that always says honest also scores 95%, and it never catches any fraud.
 
 
-      A baseline is the simplest prediction that needs no learning. Score it on the same validation data first. Your model is only worth something to
-      the extent it beats it.
-
-
-      By the end you'll build the standard baselines, and judge whether a model's win over one is real or just noise.
+      A baseline is the simplest prediction that needs no learning. Score it on the same validation data first. Your model is only worth something to the extent it beats it.
+    points:
+      - 'Build the standard baselines'
+      - 'See why accuracy can mislead on imbalanced data'
+      - 'Judge whether a win is real or just noise'
 
   - type: learn
     id: majority
@@ -305,9 +304,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A score means nothing without a baseline. For classes, always predict the training majority. For numbers, predict the training mean. Work the
-      baseline out from training labels and score it on validation, like any model. On imbalanced data, the baseline's accuracy is high, so a big number
-      can still be a bad model. And on small validation sets, a gap of a few points may be noise.
-
-
       Next: when accuracy isn't enough, which mistakes is the model making?
+    points:
+      - 'A score means nothing without a baseline'
+      - 'Classes: predict the training majority. Numbers: predict the training mean'
+      - 'Score the baseline on validation, like any model'
+      - 'On small validation sets, a gap of a few points may be noise'

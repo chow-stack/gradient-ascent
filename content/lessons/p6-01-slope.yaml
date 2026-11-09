@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Which way should a weight move?
     body: >-
-      Training a model means changing its weights so its error goes down. With millions of weights, you can't try every option. You need each weight to
-      tell you which way to move, and how much it matters. That's what a slope does.
+      Training a model means changing its weights so its error goes down. With millions of weights, you can't try every option. You need each weight to tell you which way to move, and how much it matters. That's what a slope does.
 
 
-      This unit refreshes the calculus that training needs, in code: slopes, the chain rule, gradients, and gradient descent, which is how almost every
-      model learns. It ends with a project where your code fits a line to points you place yourself.
-
-
-      By the end of this lesson you'll be able to estimate the slope of any Python function at any point, using nothing but the function itself.
+      This unit refreshes the calculus that training needs, in code: slopes, the chain rule, gradients, and gradient descent, which is how almost every model learns. It ends with a project where your code fits a line to points you place yourself.
+    points:
+      - 'Say what a slope means'
+      - 'Estimate the slope of any Python function by nudging'
+      - 'Choose a good size for the nudge'
 
   - type: learn
     id: line-slope
@@ -368,9 +367,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A slope is how fast the output changes as the input goes up: positive means rising, negative falling, 0 flat. For a curve, the slope depends on
-      where you are, and the slope at one point is the derivative. You can estimate it by nudging: `(f(x + h) - f(x)) / h` with a small `h`, but not so
-      small that rounding takes over.
-
-
       Next: rules that give the exact derivative of common functions, so you don't have to nudge every time.
+    points:
+      - 'Slope is how fast the output changes: positive rising, negative falling, 0 flat'
+      - "On a curve, the slope depends on where you are. That's the derivative"
+      - 'Estimate it with `(f(x + h) - f(x)) / h` and a small `h`'
+      - 'Too small an `h`, and rounding takes over'

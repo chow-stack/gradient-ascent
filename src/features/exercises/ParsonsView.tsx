@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Card } from '../content/schema'
-import { shuffled } from '../../lib/random'
+import { shuffled, shuffledFor } from '../../lib/random'
 import { Prompt, RunOutput } from './shared'
 import { locked, type ViewProps } from './types'
 
@@ -10,8 +10,11 @@ type ParsonsCard = Extract<Card, { type: 'parsons' }>
  * Parsons problem: put shuffled lines in order. Indentation is given (fixed-indent Parsons),
  * so the focus is on order and logic. Click a line to add it; click a placed line to send it back.
  */
-export function ParsonsView({ card, answer, setAnswer, phase, result }: ViewProps<ParsonsCard>) {
-  const pool = useMemo(() => shuffled([...card.code.replace(/\n$/, '').split('\n'), ...card.distractors]), [card])
+export function ParsonsView({ card, answer, setAnswer, phase, result, orderKey }: ViewProps<ParsonsCard>) {
+  const pool = useMemo(() => {
+    const lines = [...card.code.replace(/\n$/, '').split('\n'), ...card.distractors]
+    return orderKey ? shuffledFor(orderKey, lines) : shuffled(lines)
+  }, [card, orderKey])
   const [picked, setPicked] = useState<number[]>([])
   const isLocked = locked(phase)
 

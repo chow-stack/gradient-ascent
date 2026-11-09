@@ -12,9 +12,11 @@ cards:
     title: Controlled chance
     body: >-
       Machine learning uses random numbers everywhere: to set the starting weights, to shuffle the data, and to pick batches. But you also need to be able to repeat a run exactly, or you can't tell whether a change helped or you just got lucky.
-
-
-      By the end of this lesson you'll be able to make random arrays of any shape, repeat them with a seed, shuffle data safely, join arrays together and cut a dataset into mini-batches.
+    points:
+      - 'Make random arrays of any shape'
+      - 'Repeat them with a seed'
+      - 'Shuffle data safely'
+      - 'Join arrays, and cut data into mini-batches'
 
   - type: learn
     id: rng
@@ -427,8 +429,16 @@ cards:
     tests:
       - { call: 'shuffled_split(np.zeros((10, 2)), np.zeros(10), 3, 0)[0].shape', expect: '(7, 2)' }
       - { call: 'shuffled_split(np.zeros((10, 2)), np.zeros(10), 3, 0)[3].shape', expect: '(3,)' }
-      - { call: '(lambda r: (r[0][:, 0] == r[1]).all() and (r[2][:, 0] == r[3]).all())(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))', expect: 'True', hidden: true }
-      - { call: '(lambda r: r[1].tolist() != list(range(0, 14, 2)))(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))', expect: 'True', hidden: true }
+      - {
+          call: '(lambda r: (r[0][:, 0] == r[1]).all() and (r[2][:, 0] == r[3]).all())(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))',
+          expect: 'True',
+          hidden: true,
+        }
+      - {
+          call: '(lambda r: r[1].tolist() != list(range(0, 14, 2)))(shuffled_split(np.arange(20).reshape(10, 2), np.arange(0, 20, 2), 3, 0))',
+          expect: 'True',
+          hidden: true,
+        }
     why: >-
       One order for both keeps the pairs together, and a fixed seed makes the split repeatable.
     hints:
@@ -470,7 +480,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `default_rng(seed)` makes repeatable random numbers. `integers`, `random` and `normal` take a shape, and `permutation` gives a shuffled order. Use one order for both inputs and labels. `concatenate` extends an axis, and `stack` adds one. A mini-batch is a slice of a shuffled order.
-
-
       Next: seeing your numbers, with plots.
+    points:
+      - '`default_rng(seed)` makes repeatable random numbers'
+      - '`permutation` gives a shuffled order. Use one order for inputs and labels'
+      - '`concatenate` extends an axis. `stack` adds one'
+      - 'A mini-batch is a slice of a shuffled order'

@@ -11,13 +11,11 @@ cards:
     label: The goal
     title: Values change
     body: >-
-      A model's score changes as it trains. A program counts things as it goes. Variables are useful because you can
-      change what they hold.
-
-
-      By the end of this lesson you'll be able to update a variable using its own value, and you'll understand the most
-      common wrong belief beginners have about `=`. People who are good at maths are especially likely to hold it, so
-      don't skip this.
+      A model's score changes as it trains. A program counts things as it goes. Variables are useful because you can change what they hold.
+    points:
+      - 'Update a variable using its own value'
+      - "See why variables don't stay linked"
+      - 'Unlearn the most common wrong belief about `=`'
 
   - type: learn
     id: reassign
@@ -339,9 +337,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Assigning replaces the old value. `x = x + 1` reads the current value, adds 1 and stores it back, and `x += 1` is the
-      shorthand. An assignment runs once and isn't a lasting rule, so variables don't stay linked: to update a result, calculate
-      it again. A result that isn't stored is lost.
-
-
       Next: text, in much more detail.
+    points:
+      - 'Assigning replaces the old value'
+      - '`x = x + 1`, or `x += 1`, reads the value, adds 1 and stores it back'
+      - "An assignment runs once. It isn't a lasting rule"
+      - "To update a result, calculate it again. A result that isn't stored is lost"

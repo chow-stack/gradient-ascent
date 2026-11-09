@@ -12,10 +12,10 @@ cards:
     title: More than two options
     body: >-
       Real decisions often have more than two outcomes. A grade might be A, B, C or F. A model's guess might be sorted into low, medium or high confidence.
-
-
-      By the end of this lesson you'll be able to choose between any number of options, and you'll know why the order of your conditions can quietly change the
-      answer. This is the last lesson before the checkpoint, so it also pulls the unit together.
+    points:
+      - 'Choose between many options with `elif`'
+      - 'Decide between one chain and separate `if`s'
+      - 'Get the order and the boundaries of conditions right'
 
   - type: learn
     id: elif-chain
@@ -368,8 +368,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      An `if`, `elif`, `else` chain runs at most one block: the first whose condition is true. Order matters, so put the strictest condition first. Separate `if`s are
-      independent, and more than one can run. Watch the boundaries, like `>` versus `>=`.
-
-
-      That's the whole unit. The checkpoint is next, and it mixes everything together with no hints.
+      That's the whole unit. Next: the checkpoint test, which mixes everything together with no hints.
+    points:
+      - "An `if`, `elif`, `else` chain runs at most one block: the first one that's true"
+      - 'Order matters, so put the strictest condition first'
+      - 'Separate `if`s are independent, so more than one can run'
+      - 'Watch the boundaries, like `>` versus `>=`'

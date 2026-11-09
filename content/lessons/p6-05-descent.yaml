@@ -11,14 +11,14 @@ cards:
     label: The goal
     title: Learning is walking downhill
     body: >-
-      Training a model means finding weights that make the loss small. You can't try every possible weight, but you can do something much smarter: stand
-      where you are, ask the gradient which way is uphill, and take a small step the other way. Repeat.
+      Training a model means finding weights that make the loss small. You can't try every possible weight, but you can do something much smarter: stand where you are, ask the gradient which way is uphill, and take a small step the other way. Repeat.
 
 
       That loop is gradient descent. It trains almost every model in machine learning, from a straight line to the largest neural networks.
-
-
-      By the end you'll write it yourself, and know how to choose the step size so it gets to the bottom without overshooting.
+    points:
+      - 'Write gradient descent yourself'
+      - "Choose a learning rate that doesn't creep or overshoot"
+      - 'Read a loss curve to check it'
 
   - type: learn
     id: step
@@ -353,9 +353,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Gradient descent repeats one step, `w = w - lr * grad(w)`, which moves every weight a little against its partial. The learning rate sets the step size:
-      too small creeps, too big zigzags or diverges. A loss curve, saved as you go, shows which one you've got. Adding the gradient instead climbs, which is
-      gradient ascent.
-
-
       Next: put it to work, fitting a line to real data.
+    points:
+      - 'One step, repeated: `w = w - lr * grad(w)`'
+      - 'Too small a learning rate creeps. Too big zigzags or diverges'
+      - "A loss curve shows which one you've got"
+      - 'Adding the gradient climbs instead: gradient ascent'

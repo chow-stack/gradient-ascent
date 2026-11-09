@@ -12,9 +12,10 @@ cards:
     title: Doing something many times
     body: >-
       Computers are good at doing a simple thing many times. Training a model is exactly this: make a guess, measure the error, adjust a little, and repeat thousands of times. Nobody writes thousands of lines for that. They write a loop.
-
-
-      By the end of this lesson you'll be able to write a `while` loop, trace one by hand, and say exactly when it stops.
+    points:
+      - 'Repeat code with a `while` loop'
+      - 'Say exactly when a loop stops'
+      - 'Trace a loop by hand'
 
   - type: learn
     id: while-loop
@@ -356,7 +357,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `while` runs its block as long as its condition is true, going back to ask again after each pass. The condition is only checked at the top. If it's false at the start, the block never runs. Set up a variable before the loop, and change it inside.
-
-
       Next: using a loop to build up a result, which is the job most loops have.
+    points:
+      - '`while` repeats its block as long as its condition is true'
+      - 'The condition is only checked at the top of each pass'
+      - "If it's false at the start, the block never runs"
+      - 'Set a variable up before the loop, and change it inside'

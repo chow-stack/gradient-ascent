@@ -25,9 +25,10 @@ async function passLessons(db: GradientDB) {
   for (const l of unit1.filter((l) => l.kind === 'lesson')) await completeLesson(l.id, day1, db)
 }
 
-/** Answer the checkpoint, getting `right` cards correct, and score it. */
-async function takeCheckpoint(db: GradientDB, right: number, now: Date) {
+/** Answer the checkpoint, getting `right(total)` questions correct, and score it. */
+async function takeCheckpoint(db: GradientDB, rightOf: (total: number) => number, now: Date) {
   const plan = await buildSession('lesson', {}, now, db)
+  const right = rightOf(plan.items.length)
   for (const [i, it] of plan.items.entries())
     await recordAttempt(
       {
@@ -56,35 +57,36 @@ describe('unit checkpoint', () => {
     const p = await loadProgress(day1, db)
     expect(nextLesson(p.mastery)?.id).toBe(checkpoint.id)
     const plan = await buildSession('lesson', {}, day1, db)
-    expect(plan.items.length).toBe(checkpoint.cards.length)
+    // Its own questions, plus a few from the unit's lessons.
+    expect(plan.items.length).toBe(checkpoint.cards.length + 4)
+    expect(plan.items.filter((i) => i.lesson.id === checkpoint.id)).toHaveLength(checkpoint.cards.length)
     expect(plan.items.every((i) => i.source === 'checkpoint')).toBe(true)
   })
 
   it('passing at 80% marks it passed and gives a bonus', async () => {
     const db = freshDb()
     await passLessons(db)
-    const r = await takeCheckpoint(db, checkpointNeeded(checkpoint.cards.length), day1)
+    const r = await takeCheckpoint(db, checkpointNeeded, day1)
     expect(r).toMatchObject({ passed: true })
     expect(r.bonus).toBeGreaterThan(0)
     const p = await loadProgress(day1, db)
     expect(p.mastery.get(checkpoint.id)?.status).toBe('passed')
-    expect(p.retakeTomorrow.size).toBe(0)
   })
 
-  it('failing puts its cards in review and locks it until tomorrow', async () => {
+  it('failing puts its cards in review, and it can be retaken straight away in new versions', async () => {
     const db = freshDb()
     await passLessons(db)
-    const r = await takeCheckpoint(db, checkpointNeeded(checkpoint.cards.length) - 1, day1)
+    const r = await takeCheckpoint(db, (total) => checkpointNeeded(total) - 1, day1)
     expect(r.passed).toBe(false)
     const p = await loadProgress(day1, db)
     expect(p.mastery.has(checkpoint.id)).toBe(false)
-    expect(p.retakeTomorrow.has(checkpoint.id)).toBe(true)
-    expect(nextLesson(p.mastery, p.retakeTomorrow)).toBeUndefined()
-    expect((await buildSession('lesson', {}, day1, db)).items).toHaveLength(0)
     expect(await db.reviews.where('lessonId').equals(checkpoint.id).count()).toBeGreaterThan(0)
 
-    const retake = await buildSession('lesson', {}, day2, db)
+    const retake = await buildSession('lesson', {}, day1, db)
     expect(retake.lessonId).toBe(checkpoint.id)
+    const own = retake.items.filter((i) => i.lesson.id === checkpoint.id)
+    const withVariants = checkpoint.cards.filter((c) => 'variants' in c && c.variants.length > 0)
+    expect(own.filter((i) => i.version === 1)).toHaveLength(withVariants.length)
     const daily = await buildSession('daily', {}, day2, db)
     expect(daily.items.some((i) => i.source === 'review' && i.lesson.id === checkpoint.id)).toBe(true)
   })

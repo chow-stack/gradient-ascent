@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Your first trained model
     body: >-
-      This is where it all comes together. You'll take some data points, guess a line, measure how wrong the line is across all of them, and use the
-      gradient to improve it, step after step, until it fits.
+      This is where it all comes together. You'll take some data points, guess a line, measure how wrong the line is across all of them, and use the gradient to improve it, step after step, until it fits.
 
 
-      This is linear regression, trained with gradient descent. It's a real machine learning model, and the loop you write here is the same loop that
-      trains a neural network. The only difference later is a fancier prediction.
-
-
-      By the end you'll compute the loss and its gradient for a whole dataset in a couple of NumPy lines.
+      This is linear regression, trained with gradient descent. It's a real machine learning model, and the loop you write here is the same loop that trains a neural network. The only difference later is a fancier prediction.
+    points:
+      - 'Measure how wrong a line is with the MSE'
+      - "Work out the MSE's gradient in NumPy"
+      - 'Train a line by gradient descent'
 
   - type: learn
     id: mse
@@ -378,9 +377,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A line predicts `w * x + b` for every point at once. The MSE averages the squared errors into one number. Its gradient is `np.mean(2 * err * x)` for
-      `w` and `np.mean(2 * err)` for `b`, with `err = pred - y`. Stepping both against it, again and again, is linear regression trained by gradient
-      descent.
-
-
       Next: how to know your gradient is right before you trust it.
+    points:
+      - 'A line predicts `w * x + b` for every point at once'
+      - 'The MSE averages the squared errors into one number'
+      - 'With `err = pred - y`, the gradient is `np.mean(2 * err * x)` for `w` and `np.mean(2 * err)` for `b`'
+      - 'Stepping against it, again and again, is linear regression'

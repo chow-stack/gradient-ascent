@@ -6,6 +6,7 @@ import { lessons, tracks } from '../features/content/content'
 import { useProgress, type ProgressSnapshot } from '../features/progress/progress'
 import { DailySteps } from '../features/session/DailyTiles'
 import { nextLesson } from '../features/session/plan'
+import { loadResume } from '../features/session/resume'
 import { addDays, dayKey, useNextDayCountdown, weekStart } from '../lib/dates'
 
 /** Today: the Daily 5, the next lesson, and the week. */
@@ -66,9 +67,7 @@ function DailyCard({ p }: { p: ProgressSnapshot }) {
 }
 
 function LessonCard({ p, primary }: { p: ProgressSnapshot; primary: boolean }) {
-  const upNext = nextLesson(p.mastery, p.retakeTomorrow)
-  const waiting = nextLesson(p.mastery)
-  const lesson = upNext ?? waiting
+  const lesson = nextLesson(p.mastery)
   if (!lesson)
     return (
       <Card className="flex items-center gap-3">
@@ -98,13 +97,10 @@ function LessonCard({ p, primary }: { p: ProgressSnapshot; primary: boolean }) {
           </span>
         </div>
       </div>
-      {upNext ? (
-        <Link to="/session?kind=lesson" className={primary ? 'ga-btn ga-btn--primary' : 'ga-btn ga-btn--secondary'}>
-          {passed === 0 && lesson.unit === 1 ? 'Start' : 'Next lesson'} <ArrowRight size={16} aria-hidden />
-        </Link>
-      ) : (
-        <span className="text-small text-muted">Retake tomorrow</span>
-      )}
+      <Link to="/session?kind=lesson" className={primary ? 'ga-btn ga-btn--primary' : 'ga-btn ga-btn--secondary'}>
+        {loadResume(lesson.id) ? 'Continue' : passed === 0 && lesson.unit === 1 ? 'Start' : 'Next lesson'}{' '}
+        <ArrowRight size={16} aria-hidden />
+      </Link>
     </Card>
   )
 }

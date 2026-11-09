@@ -12,9 +12,11 @@ cards:
     title: Reading text one piece at a time
     body: >-
       A language model starts by breaking text into pieces and counting them. Before anything like that, you need to be able to go through text yourself.
-
-
-      By the end of this lesson you'll be able to loop over the characters in a string, count and transform them, and search for something. You'll also learn about a bug in searching that catches almost everyone: returning an answer too early.
+    points:
+      - 'Loop over the characters in a string'
+      - 'Loop over positions when you need them'
+      - 'Search text without returning too early'
+      - 'Clean up text'
 
   - type: learn
     id: for-chars
@@ -278,7 +280,7 @@ cards:
           On the last character, `word[i + 1]` is past the end, so the loop has to stop one position early.
         hints:
           - What is `i + 1` on the last pass?
-        vary: [{ word: '''summit''' }, { matches: '-1' }, { matches: '2' }]
+        vary: [{ word: "'summit'" }, { matches: '-1' }, { matches: '2' }]
       - prompt: '`reverse("abc")` should give back `"cba"`, but it gives back `"abc"`. Fix it.'
         code: |
           def reverse(text):
@@ -389,7 +391,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `for ch in text:` goes through the characters, and `range(len(text))` goes through the positions. `in` also asks whether something's in a string. In a search, return `True` as soon as you find a match, and `False` only after the loop.
-
-
       Next: what happens when you put one loop inside another.
+    points:
+      - '`for ch in text:` goes through the characters'
+      - '`range(len(text))` goes through the positions'
+      - "`in` asks whether something's in a string"
+      - 'In a search, return `True` on a match, and `False` only after the loop'

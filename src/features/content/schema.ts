@@ -41,6 +41,11 @@ const learn = z.object({
   title: z.string(),
   /** Short paragraphs. `inline code` is supported. About 100–150 words: what it does, why, and the mistake people make. */
   body: z.string(),
+  /**
+   * A short list under the body. On the goal card: what the lesson covers, as things you'll do. On the recap: the
+   * key points to remember. One line each.
+   */
+  points: z.array(z.string()).default([]),
   /** Optional extra depth, collapsed until the learner opens it. */
   deeper: z.string().optional(),
   code: z.string().optional(),

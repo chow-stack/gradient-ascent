@@ -10,12 +10,14 @@ cards:
   - type: project
     id: rps
     play: rps
-    brief: >-
-      Build rock, paper, scissors. In the Play tab you pick a move, the computer picks one at random, and your program decides who won. Each round runs your
-      whole program with `player` and `computer` set at the top. Your score carries into the next round, so the program can play a whole match.
+    brief: |-
+      You're writing the brain of a rock, paper, scissors game. The game itself is in the Play tab.
 
+      How it works: each round, the game puts your move in `player` and the computer's random move in `computer`, then runs your whole program. It reads the variables your program sets, like `result` and `wins`, and passes the score on to the next round.
 
-      Print anything you like. It shows up under the game.
+      Build it one milestone at a time, top to bottom. Under the milestone you're on, press “Check this step” to test just that part. When all four pass, press “Check” at the bottom to finish.
+
+      To try your code by hand, change `player` and `computer` at the top and press Run. Anything you print shows up under the game.
     starter: |
       player = "rock"
       computer = "scissors"
@@ -71,7 +73,7 @@ cards:
     milestones:
       - title: Who won?
         goal: >-
-          Set `result` to `"win"`, `"lose"` or `"draw"`, from your side. Rock beats scissors, scissors beats paper, and paper beats rock.
+          Make a variable called `result` that is `"win"`, `"lose"` or `"draw"`, from your side (`player`). Rock beats scissors, scissors beats paper, and paper beats rock. The check tries every pair of moves.
         tests:
           - { call: result, expect: "'win'" }
         vary:

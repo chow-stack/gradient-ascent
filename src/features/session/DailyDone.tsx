@@ -24,7 +24,7 @@ export function DailyDone({ results, xp }: { results: DailyResult[]; xp: number 
 
   const clean = results.filter((r) => r === 'clean').length
   const sweep = clean === results.length
-  const upNext = progress ? nextLesson(progress.mastery, progress.retakeTomorrow) : undefined
+  const upNext = progress ? nextLesson(progress.mastery) : undefined
   const streak = progress?.streak.current
 
   return (

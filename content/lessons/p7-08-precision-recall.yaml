@@ -11,15 +11,14 @@ cards:
     label: The goal
     title: Which mistakes?
     body: >-
-      A spam filter can go wrong in two ways. It can let spam into your inbox, or it can send a real email, maybe a job offer, to the spam folder. These
-      cost very different amounts, but accuracy counts them the same.
+      A spam filter can go wrong in two ways. It can let spam into your inbox, or it can send a real email, maybe a job offer, to the spam folder. These cost very different amounts, but accuracy counts them the same.
 
 
-      Precision and recall split the mistakes apart. Your stats class may know recall as sensitivity, and precision as positive predictive value. Here,
-      you'll build them from four counts with NumPy masks.
-
-
-      By the end you'll compute both, know which one a problem cares about, and move the threshold to trade one against the other.
+      Precision and recall split the mistakes apart. Your stats class may know recall as sensitivity, and precision as positive predictive value. Here, you'll build them from four counts with NumPy masks.
+    points:
+      - 'Count true and false positives and negatives'
+      - 'Compute precision and recall'
+      - 'Move the threshold to trade one for the other'
 
   - type: learn
     id: counts
@@ -349,9 +348,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Masks count true positives, false positives, false negatives and true negatives. Precision, `tp / (tp + fp)`, judges the flags. Recall,
-      `tp / (tp + fn)`, judges the catch. Raising the threshold usually raises precision and lowers recall. Choose it for the job, on validation, and
-      guard against dividing by 0 when nothing is flagged.
-
-
       Next: watching training and validation loss together, to see a model start memorising.
+    points:
+      - 'Precision, `tp / (tp + fp)`, judges the flags'
+      - 'Recall, `tp / (tp + fn)`, judges the catch'
+      - 'Raising the threshold usually raises precision and lowers recall'
+      - 'Pick the threshold on validation, and guard against dividing by 0'

@@ -14,7 +14,11 @@ cards:
       A column of numbers hides almost everything. One plot can show you a broken dataset or a model that has stopped learning, in a second. People who train models look at plots all day.
 
 
-      `matplotlib` is the standard plotting library. By the end of this lesson you'll be able to draw the four kinds of plot you'll use most, label them so they make sense, and read a loss curve to work out what your model is doing. Any code here that draws a plot will show it below the output when you run it.
+      `matplotlib` is the standard plotting library.
+    points:
+      - 'Draw line plots, scatter plots, histograms and images'
+      - 'Label a plot so it makes sense'
+      - 'Read a loss curve'
 
   - type: learn
     id: lines
@@ -63,7 +67,7 @@ cards:
       - prompt: Why does `plt.plot(np.linspace(0, 1, 5), np.zeros(4))` crash?
         choices:
           - '`x` has 5 points and `y` has 4'
-          - '`y` can''t be all zeros'
+          - "`y` can't be all zeros"
           - You have to call `plt.xlabel` first
         answer: '`x` has 5 points and `y` has 4'
         why: >-
@@ -479,7 +483,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `plt.plot` draws lines, `plt.scatter` draws dots, `plt.hist` shows the spread and `plt.imshow` shows a grid. Label everything. A healthy loss curve falls and then levels off. Climbing means the learning rate is too high, flat means a bug, and a rising test loss means overfitting.
-
-
       Next: a checkpoint on this whole unit, and then a project that uses it.
+    points:
+      - '`plt.plot` draws lines, `plt.scatter` dots, `plt.hist` the spread, `plt.imshow` a grid'
+      - 'Label everything'
+      - 'A healthy loss curve falls, then levels off'
+      - 'Climbing: learning rate too high. Flat: a bug. Rising test loss: overfitting'

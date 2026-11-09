@@ -12,9 +12,10 @@ cards:
     title: What model(x) really is
     body: >-
       In PyTorch, you run a model by writing `model(x)`, as if it were a function. You read training data with `dataset[i]` and `len(dataset)`, as if it were a list. Neither is magic. They're objects with a few special methods.
-
-
-      By the end of this lesson you'll be able to make an object callable, make it work with `len` and indexing, and write a small dataset class. After this, a PyTorch model will look familiar the first time you see it.
+    points:
+      - 'Make an object callable, like `model(x)`'
+      - 'Make it work with `len` and indexing'
+      - 'Write a small dataset class'
 
   - type: learn
     id: call
@@ -307,7 +308,7 @@ cards:
 
   - type: fix
     id: fix-call
-    prompt: '`Linear(2)(3)` should give back `6`, but it gives a `TypeError`, because the object isn''t callable. Fix it.'
+    prompt: "`Linear(2)(3)` should give back `6`, but it gives a `TypeError`, because the object isn't callable. Fix it."
     code: |
       class Linear:
           def __init__(self, w):
@@ -498,7 +499,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `obj(x)` runs `__call__`, which is what `model(x)` does. `len(obj)` runs `__len__`, and `obj[i]` runs `__getitem__`, which together make a dataset. A `for` loop can use `__getitem__`, and stops at an `IndexError`. A callable object is a function with named data.
-
-
       Next: building on an existing class, as every PyTorch model does.
+    points:
+      - '`obj(x)` runs `__call__`'
+      - '`len(obj)` runs `__len__`, and `obj[i]` runs `__getitem__`'
+      - 'A `for` loop can use `__getitem__`, and stops at an `IndexError`'
+      - 'A callable object is a function with named data'

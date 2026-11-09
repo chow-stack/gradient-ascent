@@ -11,12 +11,11 @@ cards:
     label: The goal
     title: Programs that choose
     body: >-
-      So far your programs have done the same thing every time, running every line from top to bottom. The next step is to let the data decide.
-      Models, games and spam filters all work this way.
-
-
-      By the end of this lesson you'll be able to make a block of code run only when a condition is true, and you'll know why spaces at the start of
-      a line matter in Python.
+      So far your programs have done the same thing every time, running every line from top to bottom. The next step is to let the data decide. Models, games and spam filters all work this way.
+    points:
+      - 'Run code only when a condition is true, with `if`'
+      - 'Choose between two paths with `else`'
+      - 'Learn why indentation matters in Python'
 
   - type: learn
     id: if-block
@@ -341,8 +340,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `if condition:` runs its indented block when the condition is true, and it's checked once. `else:` runs when it's false, with no condition of its own.
-      Indentation decides what belongs to the block. Lines after the block always run.
-
-
       Next: choosing between more than two options.
+    points:
+      - '`if condition:` runs its indented block when the condition is true'
+      - "`else:` runs when it's false, and has no condition of its own"
+      - 'Indentation decides what belongs to the block'
+      - 'Lines after the block always run'

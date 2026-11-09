@@ -12,9 +12,10 @@ cards:
     title: When one side is a plain number
     body: >-
       Real calculations mix your objects with ordinary numbers: `2 * x`, `x + 1`, or `sum(values)`. As your classes stand, all of those crash, and each for a different reason.
-
-
-      By the end of this lesson you'll be able to make operators accept plain numbers, make them work with the number on the left, and use `sum` on your objects. These are the exact lines in micrograd's `Value`.
+    points:
+      - 'Make operators accept plain numbers'
+      - 'Make them work with the number on the left'
+      - 'Use `sum` on your own objects'
 
   - type: learn
     id: isinstance
@@ -462,7 +463,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      `isinstance(x, C)` checks a type, and lets you wrap plain numbers. With a number on the left, Python tries `__rmul__` or `__radd__` on the right-hand object. `sum` starts from 0, so it needs `__radd__`. Order matters for `__rsub__`.
-
-
       Next: objects you can call like functions and index like lists, as you do with PyTorch's models and datasets.
+    points:
+      - '`isinstance(x, C)` checks a type, so you can wrap plain numbers'
+      - 'With a number on the left, Python tries `__radd__` or `__rmul__` on the right-hand object'
+      - '`sum` starts from 0, so it needs `__radd__`'
+      - 'Order matters for `__rsub__`'

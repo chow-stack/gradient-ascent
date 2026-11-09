@@ -12,9 +12,11 @@ cards:
     title: Values that belong together
     body: >-
       A point has an x and a y. A training example has an input and a label. A table of data has a number of rows and a number of columns. Machine learning code is full of small groups of values like these, and it passes them around constantly.
-
-
-      By the end of this lesson you'll be able to make a tuple, pull one apart into separate names, and give back several values from a function.
+    points:
+      - 'Make a tuple'
+      - 'Unpack it into separate names'
+      - 'Give back several values from a function'
+      - 'Use tuples as dict keys'
 
   - type: learn
     id: what
@@ -110,7 +112,7 @@ cards:
       - { line: 2, label: 'One name for each item' }
       - { line: 7, label: 'The right side is worked out first' }
       - { line: 11, label: 'Unpacks each item as you loop' }
-      - { line: 14, label: "Three items, two names: an error" }
+      - { line: 14, label: 'Three items, two names: an error' }
     predict: What will `print(a, b)` show?
 
   - type: choice
@@ -229,7 +231,7 @@ cards:
 
   - type: fix
     id: fix-tuple
-    prompt: '`first_last([1, 2, 3])` should give back `(1, 3)`, but it crashes with a `TypeError`, because tuples can''t be changed. Fix it.'
+    prompt: "`first_last([1, 2, 3])` should give back `(1, 3)`, but it crashes with a `TypeError`, because tuples can't be changed. Fix it."
     code: |
       def first_last(items):
           result = (0, 0)
@@ -370,7 +372,10 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      A tuple is a group of values that can't change, and the comma makes it. `x, y = point` unpacks one, with a name for each item. `return a, b` gives back a tuple. `a, b = b, a` swaps, because the right side is worked out first. Tuples can be dict keys.
-
-
       Next: walking through two lists at once.
+    points:
+      - "A tuple is a group of values that can't change. The comma makes it"
+      - '`x, y = point` unpacks it, one name per item'
+      - '`return a, b` gives back a tuple'
+      - '`a, b = b, a` swaps, because the right side is worked out first'
+      - 'Tuples can be dict keys'

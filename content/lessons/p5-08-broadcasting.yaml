@@ -14,7 +14,11 @@ cards:
       You've been doing this already. `a * 2` works, and `X - X.mean(axis=0)` works, even though the shapes don't match. NumPy stretches the smaller one to fit, which is called broadcasting.
 
 
-      It's a very short rule, and well worth learning exactly, because when it goes wrong, it often goes wrong silently. By the end of this lesson you'll be able to predict the result of combining any two shapes, and spot the trap that has wasted many days of people's time.
+      It's a very short rule, and well worth learning exactly, because when it goes wrong, it often goes wrong silently.
+    points:
+      - 'Predict what happens when you combine two shapes'
+      - 'Spot the silent broadcasting trap'
+      - 'Add an axis on purpose with `None`'
 
   - type: learn
     id: rule
@@ -243,7 +247,8 @@ cards:
           import numpy as np
           a = np.zeros((3, 2))
           print((a + np.zeros(____)).shape)
-        answers: [['2', '(2,)', '1', '(1,)', '(3, 2)', '(3,2)', '(3, 1)', '(3,1)', '(1, 2)', '(1,2)', '(1, 1)', '(1,1)']]
+        answers:
+          [['2', '(2,)', '1', '(1,)', '(3, 2)', '(3,2)', '(3, 1)', '(3,1)', '(1, 2)', '(1,2)', '(1, 1)', '(1,1)']]
         expectOutput: (3, 2)
         why: >-
           Shapes line up on the right, so a vector needs to match the columns.
@@ -259,7 +264,7 @@ cards:
 
   - type: fix
     id: fix-trap
-    prompt: '`mse(preds, y)` gets `preds` of shape `(n, 1)` and `y` of shape `(n,)`. For perfect predictions it should give `0.0`, but it doesn''t, because the shapes broadcast into a grid. Fix it.'
+    prompt: "`mse(preds, y)` gets `preds` of shape `(n, 1)` and `y` of shape `(n,)`. For perfect predictions it should give `0.0`, but it doesn't, because the shapes broadcast into a grid. Fix it."
     code: |
       import numpy as np
 
@@ -279,7 +284,7 @@ cards:
     hints:
       - What shape would make the subtraction line up item by item?
     variants:
-      - prompt: '`centre_rows(a)` should subtract each row''s own mean from that row. It crashes with a `ValueError`, on a shape like `(3, 2)`. Fix it.'
+      - prompt: "`centre_rows(a)` should subtract each row's own mean from that row. It crashes with a `ValueError`, on a shape like `(3, 2)`. Fix it."
         code: |
           import numpy as np
 
@@ -292,9 +297,20 @@ cards:
               return a - a.mean(axis=1, keepdims=True)
         highlightLine: 4
         tests:
-          - { call: 'centre_rows(np.array([[1.0, 3.0], [2.0, 2.0], [0.0, 4.0]]))', expect: '[[-1.0, 1.0], [0.0, 0.0], [-2.0, 2.0]]' }
-          - { call: 'centre_rows(np.array([[2.0, 6.0], [4.0, 4.0], [0.0, 8.0]]))', expect: '[[-2.0, 2.0], [0.0, 0.0], [-4.0, 4.0]]', hidden: true }
-          - { call: 'centre_rows(np.array([[0.0, 4.0], [2.0, 2.0], [1.0, 3.0]]))', expect: '[[-2.0, 2.0], [0.0, 0.0], [-1.0, 1.0]]', hidden: true }
+          - {
+              call: 'centre_rows(np.array([[1.0, 3.0], [2.0, 2.0], [0.0, 4.0]]))',
+              expect: '[[-1.0, 1.0], [0.0, 0.0], [-2.0, 2.0]]',
+            }
+          - {
+              call: 'centre_rows(np.array([[2.0, 6.0], [4.0, 4.0], [0.0, 8.0]]))',
+              expect: '[[-2.0, 2.0], [0.0, 0.0], [-4.0, 4.0]]',
+              hidden: true,
+            }
+          - {
+              call: 'centre_rows(np.array([[0.0, 4.0], [2.0, 2.0], [1.0, 3.0]]))',
+              expect: '[[-2.0, 2.0], [0.0, 0.0], [-1.0, 1.0]]',
+              hidden: true,
+            }
         hints:
           - Keep the axis, so that it lines up.
       - prompt: This should add each row's bias, so it should show `[[11. 11.]` and `[21. 21.]` and `[31. 31.]]`, but it gives a `ValueError`. Fix the line that makes `bias`.
@@ -421,7 +437,9 @@ cards:
     label: Recap
     title: What you know now
     body: >-
-      Line the shapes up on the right. Each pair has to be equal, or one of them must be 1, and missing numbers count as 1. `(3, 2)` and `(3,)` fail, and `(3,)` and `(3, 1)` silently make a grid, which is the bug to look out for. `None` adds an axis, which turns the trap into a tool. When in doubt, print the shapes.
-
-
       Next: the dot product, which measures how alike two vectors are.
+    points:
+      - 'Line the shapes up on the right'
+      - 'Each pair must be equal, or one must be 1. Missing numbers count as 1'
+      - '`(3,)` and `(3, 1)` silently make a grid: the bug to watch for'
+      - '`None` adds an axis, which turns the trap into a tool'
