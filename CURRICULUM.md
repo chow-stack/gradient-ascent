@@ -108,10 +108,21 @@ A checkpoint ends every unit before the project:
 Each unit ends with a project: a real, playable program that uses only that unit's ideas. You write the brain; the app
 draws the board.
 
+- **Stand-ins, so it plays from the first minute.** The functions and classes the game calls start as stand-ins in the
+  starter, each with a comment saying what's wrong with it (Hangman shows the whole word, every Wordle letter is grey,
+  every blackjack card is `??`). Each milestone replaces one, and the board gets better. The brief says how the game
+  and the code fit together: what the Play tab calls, when, and what it does with the answer. Milestones say in plain
+  English what each part is for, with a table of calls and what they give back (or a short sample of the result),
+  never the code. How much is given shrinks unit by unit: stand-ins for everything in Units 1–4, a given helper and
+  driver in Life, given feature code in Spam, and only the data in the Doodle recogniser, the open one.
 - **A Play tab.** Each project is a game or tool whose logic is the learner's code: rock, paper, scissors, Hangman,
-  Wordle, blackjack, the Game of Life, a doodle recogniser. The app loads the program once and calls its functions as you
-  click, so it plays with whatever's written so far, and Restart loads the latest code. Unit 1 has no functions yet, so
-  each round reruns the whole program with the move set at the top and the score carried over.
+  Wordle, blackjack, the Game of Life, a doodle recogniser, the line fit, the spam filter. The app draws the board, loads
+  the program once and calls its functions as you click, so it plays with whatever's written so far. Shortly after the
+  code changes (and once it's valid Python), the board reloads it as a fresh game; Restart does it straight away. Unit 1
+  has no functions yet, so each rock, paper, scissors round reruns the whole program with the moves set at the top and
+  the score carried over.
+- **Stages.** A long milestone list can be split into named stages (Spam: "Build the model", then "Judge it
+  honestly").
 - **One brief, one editor, a milestone checklist.** The brief is short: what you're building and how to play it. There's
   no step-by-step code: you plan and write the whole program yourself.
 - **Behaviour is graded, not exact text.** Milestones test values and functions, with `vary` reruns. What a program
@@ -201,7 +212,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Making decisions with if | `if`, `else`, indentation, default-then-update                           | `if` repeats like a loop; `else` with a condition; indentation is only style        |
 | 11  | Many choices with elif   | `elif`, first match wins, chain vs separate `if`s, boundaries            | Every matching branch runs; order doesn't matter; `>` vs `>=`                       |
 
-**Checkpoint:** built (12 cards). **Project · Rock, paper, scissors** _(built)_: the brain of the game. `result` with `if`/`elif` and `or`, the score in `wins` and `losses` (carried into the next round by the Play tab), a `reason` sentence, and a `winner` for a first-to-three match. Checked with every pair of moves.
+**Checkpoint:** built (12 cards). **Project · Rock, paper, scissors** _(built)_: the brain of the game, starting from stand-ins so every round is a draw. `result` with `if`/`elif` and `or`, a `reason` sentence, the score in `wins` and `losses` (carried into the next round by the Play tab), and a `winner` for a first-to-three match. Checked with every pair of moves.
 
 ### Unit 2 · Functions and repetition _(built)_
 
@@ -219,7 +230,7 @@ error lesson moving from introduction to consolidation.
 | 10  | Loops inside loops     | Nested loops, grids, `end=`, every pair                      | Inner loop runs once; a shared variable; an accumulator at the wrong level; `break` scope  |
 | 11  | Reading a traceback    | Tracebacks through calls, finding the cause                  | Reading from the top; assuming the crash line is the bug                                   |
 
-**Checkpoint:** built (12 cards). **Project · Hangman, and a bot that plays it** _(built)_: `masked`, `misses` and `status` run the game in the Play tab, with the guesses kept as one string (no lists yet). Then `next_guess` walks a string of letters in order of how common they are, and the bot plays by itself.
+**Checkpoint:** built (12 cards). **Project · Hangman, and a bot that plays it** _(built)_: `masked`, `misses` and `status` start as stand-ins (the board shows the whole word and never ends), and each milestone replaces one. Then `next_guess` is a bot that plays on the board. The guesses are one string (no lists yet).
 
 ### Unit 3 · Collections and libraries _(built)_
 
@@ -238,7 +249,7 @@ error lesson moving from introduction to consolidation.
 | 11  | Using libraries                 | `import`, `math`, `random`, seeds, `as`, `from`                   | Missing import or prefix; `randint` excludes the end; `shuffle` gives back a list          |
 | 12  | Numbers that don't quite add up | Float precision, tolerance, formatting decimals                   | `==` on floats; `while x != 1.0`; rounding in the middle of a calculation                  |
 
-**Checkpoint:** built (12 cards). **Project · Wordle, and a bot that solves it** _(built)_: `score` colours a guess, then handles repeated letters with a dictionary of spare letters. `remaining` keeps the words that would have scored the same, and `pick` chooses the word whose different letters are most common. The bot averages three guesses on the app's 484 words.
+**Checkpoint:** built (12 cards). **Project · Wordle, and a bot that solves it** _(built)_: `score` starts as a stand-in (every letter grey), then colours a guess, then handles repeated letters with a dictionary of spare letters. `remaining` keeps the words that would have scored the same, and `pick` chooses the word whose different letters are most common. The bot averages three guesses on the app's 484 words.
 
 ### Unit 4 · Python for ML code _(built)_
 
@@ -261,7 +272,7 @@ Rewritten in the current format. Each topic had to earn its place: micrograd, Py
 | 13  | Building on a class                       | Inheritance, overriding, `super().__init__()`, `forward`                          | A child's `__init__` runs the parent's automatically; `self` in a parent's method is the parent        |
 | 14  | Raising and catching errors               | `raise`, `try`, `except`, `assert`, debugging silent bugs                         | Giving back a made-up 0; bare `except:` is a good default; no crash means no bug                       |
 
-**Checkpoint:** built (13 cards). **Project · Blackjack** _(built)_: `Card` with `__repr__` and `value`, `Deck` with `__len__`, `deal`, `shuffle` and a `ValueError` when empty, `Hand` with aces that drop to 1, then `dealer_turn` and `outcome`. The Play tab deals real hands with these classes.
+**Checkpoint:** built (13 cards). **Project · Blackjack** _(built)_: the classes start as stand-ins (every card is `??` and worth 0) so the table deals from the start. `Card` with `__repr__` and `value`, `Deck` with 52 cards, `shuffle` and a `ValueError` when empty, `Hand` with aces that drop to 1, `__repr__` and `__len__`, then `dealer_turn` and `outcome`. The Play tab deals real hands with these classes.
 
 Moved out on purpose: recursion and DFS are taught in micrograd (U8), where they're needed. Custom decorators, generator functions, packaging and the `if __name__` check wait until local projects need them.
 
@@ -284,7 +295,7 @@ Written in the current format. Each lesson's code runs in real NumPy, and plots 
 | 11  | Randomness and batches    | `default_rng`, seeds, `normal`, `permutation`, `choice`, `concatenate`, `stack`, batches  | Shuffling inputs and labels separately; recreating the generator; `integers` includes its end       |
 | 12  | Plots                     | `plot`, `scatter`, `hist`, `imshow`, labels, reading a loss curve                         | Different lengths; `arange` takes a count; flat loss means finished; a mean shows the whole picture |
 
-**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Game of Life** _(built)_: `neighbours` adds up 8 shifted copies made with `np.roll`, `step` applies the rules with masks and no loops, `random_world` uses a seeded generator, and `stamp` pastes a pattern into a copy. The Play tab animates it, with gliders and a glider gun. **Project · Doodle recogniser** _(built)_: nearest neighbours on 5×5 doodles with no loops in the maths. Flatten, distances, one prediction, all predictions at once by broadcasting, then accuracy and why one doodle fools it. In the Play tab you draw a doodle, it names it and shows the closest one it knows, and you can teach it new shapes.
+**Checkpoint:** built (15 cards), including rewriting two loops. **Project · Game of Life** _(built)_: `neighbours` adds up 8 shifted copies made with `np.roll`, `step` applies the rules with masks and no loops, `random_world` uses a seeded generator, and `stamp` pastes a pattern into a copy. A given `show` and a three-step driver print a glider from the start (with `neighbours` and `step` as stand-ins, it doesn't move until they're written). The Play tab animates it, with gliders and a glider gun. **Project · Doodle recogniser** _(built)_: nearest neighbours on 5×5 doodles with no loops in the maths. Flatten, distances, one prediction, all predictions at once by broadcasting, then accuracy and why one doodle fools it. In the Play tab you draw a doodle, it names it and shows the closest one it knows, and you can teach it new shapes.
 
 **Exit test:** predict shapes and vectorise loops. It's the checkpoint.
 
@@ -304,7 +315,7 @@ lessons isn't built: the app has no way to skip lessons yet.
 | 7   | Checking gradients                | Central difference, relative error, a planted bug, checking at ordinary points                | A falling loss proves the gradient; `/ 2 * h`; checking at the bottom, where everything is 0            |
 
 **Checkpoint:** built (12 cards), including writing a whole training loop. **Project · Fit a line** _(built)_: `predict`,
-`loss`, `gradients`, `step` and a `check` against central differences, from scratch. The Play tab plots the data and the
+`loss`, `gradients`, `step`, a `train` loop the learner writes and runs at the bottom, and a `check` against central differences, from scratch. The Play tab plots the data and the
 line beside the loss valley for every `w` and `b`, with the path gradient descent takes. Click to add points, pick where
 to start, and try learning rates from creeping to diverging.
 
@@ -329,7 +340,7 @@ makes it quick.
 | 9   | Learning curves               | Training and validation loss together, overfitting, underfitting, early stopping                | A falling training loss means it's improving; a gap means underfitting; `best = w` without a copy         |
 | 10  | Leakage                       | Standardising with training statistics, features from the future, duplicates, splitting by time | Standardising before splitting; a feature recorded after the outcome; duplicates on both sides            |
 
-**Checkpoint:** built (12 cards). **Project · Spam filter** _(built)_: `sigmoid` and `predict`, the cross-entropy
+**Checkpoint:** built (12 cards). **Project · Spam filter** _(built)_: in two stages. The word features are given code in the editor (`words`, `features`), which the Play tab calls. `sigmoid` and `predict`, the cross-entropy
 `loss`, a gradient `step`, `split` into training and validation, `dedupe` so copies of one message can't land on both
 sides, `accuracy` and the majority `baseline`, then `precision_recall`. In the Play tab you train it on 174 messages and
 watch both loss curves, type any message to see its probability and the words that pushed it, and drag the threshold to

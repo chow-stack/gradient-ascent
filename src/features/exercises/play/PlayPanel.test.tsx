@@ -5,9 +5,14 @@ import { PlayPanel } from './PlayPanel'
 
 const playLoad = vi.fn<(code: string, values?: Record<string, string>) => Promise<PlayReply>>()
 const playCall = vi.fn<(src: string) => Promise<PlayReply>>()
+// The syntax check before picking up new code: "valid" unless the code has a lone colon line.
+const runPython = vi.fn(async (_code: string, tests: { call: string }[]) => ({
+  tests: [{ passed: !tests[0].call.includes('\\nbroken:') }],
+}))
 vi.mock('../../runner/python', () => ({
   playLoad: (code: string, values?: Record<string, string>) => playLoad(code, values),
   playCall: (src: string) => playCall(src),
+  runPython: (code: string, tests: { call: string }[]) => runPython(code, tests),
 }))
 
 const ok = (value: unknown = null, stdout = ''): PlayReply => ({ ok: true, stdout, error: null, value })
@@ -72,7 +77,7 @@ describe('PlayPanel', () => {
     const { rerender } = render(<PlayPanel kind="blackjack" code="v = 1" />)
     await screen.findByText('Running your code.')
     rerender(<PlayPanel kind="blackjack" code="v = 2" />)
-    expect(screen.getByText('Your code changed since this loaded.')).toBeInTheDocument()
+    expect(screen.getByText('Your code changed. Picking it up…')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
     await waitFor(() => expect(playLoad).toHaveBeenLastCalledWith('v = 2', undefined))
     expect(await screen.findByText('Running your code.')).toBeInTheDocument()
@@ -93,5 +98,18 @@ describe('PlayPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Paper/ }))
     await waitFor(() => expect(playLoad).toHaveBeenCalledTimes(2))
     expect(playLoad.mock.calls[1][1]).toMatchObject({ player: '"paper"', wins: '1', losses: '0' })
+  })
+
+  it('picks up changed code by itself once typing pauses, as a fresh game', async () => {
+    playLoad.mockResolvedValue(ok())
+    playCall.mockResolvedValue(ok([]))
+    const { rerender } = render(<PlayPanel kind="hangman" code="v = 1" />)
+    await waitFor(() => expect(playLoad).toHaveBeenCalledTimes(1))
+    rerender(<PlayPanel kind="hangman" code="v = 1\nbroken:" />)
+    await new Promise((r) => setTimeout(r, 1500))
+    expect(playLoad).toHaveBeenCalledTimes(1)
+    rerender(<PlayPanel kind="hangman" code="v = 2" />)
+    await waitFor(() => expect(playLoad).toHaveBeenLastCalledWith('v = 2', undefined), { timeout: 3000 })
+    expect(await screen.findByText('Running your code.')).toBeInTheDocument()
   })
 })

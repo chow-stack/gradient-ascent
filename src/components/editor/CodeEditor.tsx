@@ -16,6 +16,8 @@ export type CodeEditorProps = {
   maxLines?: number
   /** Fill the parent's height instead of growing with the code. The parent must have a height. */
   fill?: boolean
+  /** Draw its own border (default). Off when it sits inside a box that already has one. */
+  frame?: boolean
 }
 
 const LINE_HEIGHT = 23
@@ -32,6 +34,7 @@ export default function CodeEditor({
   minLines = 6,
   maxLines = 22,
   fill = false,
+  frame = true,
 }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null)
   const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -76,20 +79,26 @@ export default function CodeEditor({
     editor.current = ed
     decorations.current = ed.createDecorationsCollection()
 
+    // Grow with what's on screen: a long line's scrollbar takes room too.
     const fit = () => {
       if (fill) return
-      const lines = Math.min(maxLines, Math.max(minLines, ed.getModel()!.getLineCount()))
-      host.current!.style.height = `${lines * LINE_HEIGHT + 24}px`
-      ed.layout()
+      const pad = 24
+      const height = Math.min(
+        maxLines * LINE_HEIGHT + pad,
+        Math.max(minLines * LINE_HEIGHT + pad, ed.getContentHeight()),
+      )
+      if (host.current!.style.height !== `${height}px`) {
+        host.current!.style.height = `${height}px`
+        ed.layout()
+      }
     }
     fit()
-    const sub = ed.onDidChangeModelContent(() => {
-      fit()
-      cb.current.onChange?.(ed.getValue())
-    })
+    const sized = ed.onDidContentSizeChange(fit)
+    const sub = ed.onDidChangeModelContent(() => cb.current.onChange?.(ed.getValue()))
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => cb.current.onSubmit?.(ed.getValue()))
     return () => {
       sub.dispose()
+      sized.dispose()
       ed.dispose()
     }
     // The editor is created once; value/readOnly updates are synced below.
@@ -117,5 +126,10 @@ export default function CodeEditor({
     // `value` is here because replacing the editor's text clears its decorations.
   }, [errorLine, markLine, value])
 
-  return <div ref={host} className={fill ? 'ga-editor h-full' : 'ga-editor'} />
+  return (
+    <div
+      ref={host}
+      className={['ga-editor', fill && 'h-full', !frame && 'ga-editor--bare'].filter(Boolean).join(' ')}
+    />
+  )
 }

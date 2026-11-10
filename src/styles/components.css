@@ -719,6 +719,11 @@
   .ga-editor:focus-within {
     border-color: color-mix(in oklab, var(--color-sky) 55%, transparent);
   }
+  .ga-editor--bare,
+  .ga-editor--bare:focus-within {
+    border: 0;
+    border-radius: 0;
+  }
   .ga-editor .ga-editor-mark-line {
     background: color-mix(in oklab, var(--color-sky) 14%, transparent);
   }
@@ -1198,6 +1203,18 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
 }
+/* A heading that starts a stage of a long milestone list. */
+.ga-milestone-stage {
+  padding: 6px 2px 0;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+.ga-milestone-stage:first-child {
+  padding-top: 0;
+}
 .ga-milestone[data-state='next'] {
   border-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
 }
@@ -1213,6 +1230,40 @@
   font-size: 13.5px;
   line-height: 1.5;
   overflow-x: auto;
+}
+
+.ga-milestone-examples {
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.ga-milestone-examples th {
+  padding: 0 14px 2px 0;
+  color: var(--color-faint);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+.ga-milestone-examples td {
+  padding: 3px 14px 3px 0;
+  color: var(--color-code-text);
+  vertical-align: top;
+}
+.ga-milestone-examples td + td {
+  color: var(--color-syn-str);
+}
+.ga-milestone-shows {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 /* ───────────── Debug mode ───────────── */
@@ -1401,9 +1452,86 @@
     animation: none;
   }
 }
-.ga-project-pane {
+/*
+ * Projects scroll as one page. Beside the program, the brief and milestones stick in the space between the top bar
+ * and the footer (--ga-top and --ga-bottom, measured by SessionRunner), and only scroll on their own if they don't
+ * fit there. The program grows with the code, and the output flows under it.
+ */
+.ga-project-wide {
+  display: grid;
+  grid-template-columns: minmax(340px, 38%) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.ga-project-side {
+  position: sticky;
+  top: calc(var(--ga-top, 64px) + 12px);
+  display: flex;
+  height: calc(100dvh - var(--ga-top, 64px) - var(--ga-bottom, 80px) - 24px);
+  min-height: 320px;
+  flex-direction: column;
+  gap: 12px;
+}
+.ga-project-side > .ga-project-pane {
+  /* Positioned, so absolutely placed things inside (screen-reader labels) are clipped here and can't stretch the page. */
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.ga-project-side > .ga-project-pane:hover {
   scrollbar-color: var(--color-progress-track) transparent;
+}
+.ga-project-play-narrow {
+  height: calc(100dvh - var(--ga-top, 64px) - var(--ga-bottom, 80px) - 96px);
+  min-height: 360px;
+}
+.ga-project-tabs--sticky {
+  position: sticky;
+  top: calc(var(--ga-top, 64px) + 8px);
+  z-index: 5;
+}
+.ga-project-program {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-code-bg);
+}
+.ga-project-program:focus-within {
+  border-color: color-mix(in oklab, var(--color-sky) 45%, transparent);
+}
+.ga-project-program > .ga-editor {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+.ga-project-editor-bar {
+  position: sticky;
+  /* Level with the brief beside it; the shadow covers the gap above so code doesn't show through it. */
+  top: calc(var(--ga-top, 64px) + 12px);
+  box-shadow: 0 -13px 0 0 var(--color-bg);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 16px;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-code-chrome);
+}
+.ga-project-output .ga-output pre {
+  max-height: none;
+}
+.ga-project-output {
+  scroll-margin-bottom: calc(var(--ga-bottom, 80px) + 16px);
+}
+.ga-project-output-empty {
+  padding: 14px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-faint);
+  font-size: 14px;
+  text-align: center;
 }
 .ga-project-brief-toggle {
   display: flex;
@@ -1415,30 +1543,6 @@
 }
 .ga-project-brief-toggle[aria-expanded='true'] svg:last-child {
   transform: rotate(180deg);
-}
-.ga-split-handle {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 10px;
-  margin-top: -5px;
-  cursor: row-resize;
-  touch-action: none;
-}
-.ga-split-handle::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 3px;
-  width: 44px;
-  height: 4px;
-  margin-left: -22px;
-  border-radius: 999px;
-  background: var(--color-border-strong);
-  transition: background-color 120ms ease;
-}
-.ga-split-handle:hover::after,
-.ga-split-handle:focus-visible::after {
-  background: var(--color-sky);
 }
 .ga-project-tabs {
   display: flex;

@@ -292,6 +292,12 @@ function checkCard(card: Card, at: string) {
         const first = card.milestones[0]
         const starter = run(card.starter, first.tests, milestoneOptions(card.solution, first))
         expect(!runPassed(starter, first.expectOutput), at, 'the starter code already passes milestone 1')
+        card.milestones.forEach((m, i) => {
+          if (!m.examples.length) return
+          const shown = m.examples.map((e) => ({ call: e.call, expect: e.gives }))
+          const r = run(card.solution, shown)
+          expect(runPassed(r), `${at} milestone ${i + 1}`, `an example is wrong: ${describe(r)}`)
+        })
         if (card.play) {
           const problem = playSmoke(card.play, card.solution)
           expect(problem === null, at, `the solution can't drive the ${card.play} game: ${problem}`)

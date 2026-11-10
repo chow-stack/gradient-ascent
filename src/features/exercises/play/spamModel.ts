@@ -5,7 +5,8 @@ export const SPAM_TRAIN_FRAC = 0.75
 
 /**
  * The spam filter's side of the Play panel, in Python. It runs beside the learner's program and calls its functions:
- * the app turns messages into word features (from the training part only), and the learner's code does the rest.
+ * the app picks the vocabulary (from the training part only) and turns messages into features with the program's
+ * own given words() and features(), and the learner's code does the rest.
  * Every reply is plain JSON. Kept apart from the component so content:check can run it against each solution.
  */
 export const SPAM_PY = String.raw`import re as _re
@@ -13,8 +14,25 @@ import numpy as _np
 
 _sp_raw = ${JSON.stringify(MESSAGES)}
 
+# The program's own words() and features() (given in the starter, so the learner can read them) when it has
+# them, and the same code here when it doesn't.
 def _sp_words(text):
+    f = globals().get("words")
+    if callable(f):
+        return [str(w) for w in f(text)]
     return _re.findall(r"[a-z0-9']+", text.lower())
+
+def _sp_features(texts, vocab):
+    f = globals().get("features")
+    if callable(f):
+        return _np.asarray(f(texts, vocab), dtype=float).reshape(len(texts), len(vocab))
+    X = _np.zeros((len(texts), len(vocab)))
+    column = {w: j for j, w in enumerate(vocab)}
+    for i, t in enumerate(texts):
+        for w in _sp_words(t):
+            if w in column:
+                X[i, column[w]] = 1.0
+    return X
 
 def _sp_f(v):
     try:
@@ -38,11 +56,7 @@ def _sp_prepare(seed, use_split, use_dedupe, use_baseline):
         tr, va = list(range(n)), []
     vocab = sorted({w for i in tr for w in _sp_words(T[i])})
     _sp_pos = {w: j for j, w in enumerate(vocab)}
-    _sp_X = _np.zeros((n, len(vocab)))
-    for i, t in enumerate(T):
-        for w in _sp_words(t):
-            if w in _sp_pos:
-                _sp_X[i, _sp_pos[w]] = 1.0
+    _sp_X = _sp_features(T, vocab)
     _sp_T, _sp_y, _sp_tr, _sp_va = T, _np.array(L, dtype=float), tr, va
     _sp_w, _sp_b = _np.zeros(len(vocab)), 0.0
     seen = {T[i] for i in tr}
@@ -82,10 +96,7 @@ def _sp_train(steps, lr, use_loss, use_acc):
     return _sp_report(use_loss, use_acc)
 
 def _sp_score(text):
-    x = _np.zeros((1, len(_sp_pos)))
-    for w in _sp_words(text):
-        if w in _sp_pos:
-            x[0, _sp_pos[w]] = 1.0
+    x = _sp_features([text], sorted(_sp_pos, key=_sp_pos.get))
     pieces = []
     for piece in text.split():
         known = [_sp_pos[w] for w in _sp_words(piece) if w in _sp_pos]

@@ -4,15 +4,23 @@ unit: 2
 order: 13
 kind: project
 title: 'Project: Hangman, and a bot that plays it'
-summary: Write the rules of Hangman and play it in the Play tab. Then write a bot that guesses letters by itself, and see how well it does.
+summary: The game already runs in the Play tab, just badly. Fix its rules one function at a time, then write a bot that plays it.
 
 cards:
   - type: project
     id: hangman
     play: hangman
     brief: >-
-      Build Hangman. In the Play tab, the game picks a secret word and you guess letters. Your functions are the rules: what the word looks like so far,
-      how many lives are gone, and when the game is over. Then you'll write a bot that picks letters by itself, and watch it play.
+      Hangman: the game picks a secret word, and you guess it one letter at a time before you run out of lives. It
+      already runs: open the Play tab and press some letters. It plays badly, though: it shows you the secret word,
+      you never lose a life, and it never ends. That's because your three functions are stand-ins. Each milestone
+      fixes one of them, and you can play again after every one.
+
+
+      How it fits together: the Play tab picks the word and keeps track of the letters you've pressed. After every
+      letter it calls your functions with the word and those letters: `masked` for what to show, `misses` for how
+      many lives to take away (from `lives`), and `status` to know whether the game is over. Last, you'll write
+      `next_guess`, a bot that picks letters by itself, and watch it play.
 
 
       There are no lists yet, so the letters guessed so far are one string, like `"tea"`.
@@ -20,11 +28,25 @@ cards:
       lives = 6
       common = "etaoinshrdlucmfwypvbgkjqxz"
 
-      # Your functions go here.
+
+      # ---- Your functions: stand-ins for now, so the game runs ----
+
+      def masked(word, guessed):
+          return word  # stand-in: shows the whole word
+
+
+      def misses(word, guessed):
+          return 0  # stand-in: you never lose a life
+
+
+      def status(word, guessed):
+          return "playing"  # stand-in: the game never ends
     solution: |
       lives = 6
       common = "etaoinshrdlucmfwypvbgkjqxz"
 
+
+      # ---- Your functions ----
 
       def masked(word, guessed):
           shown = ""
@@ -58,10 +80,14 @@ cards:
                   return c
           return ""
     milestones:
-      - title: Show the word
+      - title: Hide the letters
         goal: >-
-          Write `masked(word, guessed)`. It gives back the word with every letter that hasn't been guessed yet replaced by `_`. So `masked("goat", "ta")` is
-          `"__at"`.
+          The game shows the whole secret word. Change `masked(word, guessed)` so it gives back the word with every
+          letter that hasn't been guessed yet replaced by `_`. Then play: the blanks fill in as you guess.
+        examples:
+          - { call: 'masked("goat", "ta")', gives: "'__at'" }
+          - { call: 'masked("hill", "")', gives: "'____'" }
+          - { call: 'masked("hill", "hil")', gives: "'hill'" }
         tests:
           - { call: 'masked("goat", "ta")', expect: "'__at'" }
           - { call: 'masked("hill", "")', expect: "'____'" }
@@ -72,19 +98,30 @@ cards:
         hints:
           - Start with an empty string, and go through the word one letter at a time.
           - '`if c in guessed:` add the letter, `else:` add `"_"`. Return the string after the loop.'
-      - title: Count the misses
-        goal: Write `misses(word, guessed)`, the number of guessed letters that aren't in the word.
+      - title: Count the wrong guesses
+        goal: >-
+          You never lose a life. Change `misses(word, guessed)` so it counts the guessed letters that aren't in the
+          word. The game takes that many hearts away.
+        examples:
+          - { call: 'misses("goat", "tax")', gives: '1' }
+          - { call: 'misses("goat", "")', gives: '0' }
+          - { call: 'misses("hill", "xyzh")', gives: '3' }
         tests:
           - { call: 'misses("goat", "tax")', expect: '1' }
           - { call: 'misses("goat", "")', expect: '0' }
           - { call: 'misses("hill", "xyzh")', expect: '3', hidden: true }
+        scope: misses
         hints:
           - This time, loop over `guessed`, not the word.
           - Keep a count that starts at 0, and add 1 for each letter that's `not in word`.
-      - title: Game over?
+      - title: End the game
         goal: >-
-          Write `status(word, guessed)`. It gives back `"won"` once every letter is showing, `"lost"` once the misses reach `lives`, and `"playing"`
-          otherwise. Use your other two functions.
+          The game never stops. Change `status(word, guessed)` so it gives back `"won"` once no letter is still
+          hidden, `"lost"` once the misses reach `lives`, and `"playing"` otherwise. Use your other two functions.
+        examples:
+          - { call: 'status("goat", "goat")', gives: "'won'" }
+          - { call: 'status("goat", "ga")', gives: "'playing'" }
+          - { call: 'status("goat", "xyzqwe")', gives: "'lost'" }
         tests:
           - { call: 'status("goat", "goat")', expect: "'won'" }
           - { call: 'status("goat", "ga")', expect: "'playing'" }
@@ -99,8 +136,13 @@ cards:
           - Compare `misses(word, guessed)` with `lives`, not with 6, so the game still works if someone changes `lives`.
       - title: A bot that plays
         goal: >-
-          Write `next_guess(guessed)`. It gives back the first letter in `common` that hasn't been guessed. `common` lists the letters from most to least
-          used in English, so the bot guesses like a sensible person. Then press "Let your bot play" in the Play tab.
+          Now teach the computer to play. Write a new function, `next_guess(guessed)`, under `status`. It gives back
+          the first letter in `common` that isn't in `guessed` yet. `common` lists the letters from most to least used
+          in English, so the bot guesses like a sensible person. Then press "Let your bot play" in the Play tab: it
+          asks `next_guess` for a letter, presses it, and repeats until the game ends.
+        examples:
+          - { call: 'next_guess("")', gives: "'e'" }
+          - { call: 'next_guess("et")', gives: "'a'" }
         tests:
           - { call: 'next_guess("")', expect: "'e'" }
           - { call: 'next_guess("et")', expect: "'a'" }

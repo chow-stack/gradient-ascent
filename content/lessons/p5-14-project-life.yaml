@@ -11,17 +11,35 @@ cards:
     id: life
     play: life
     brief: >-
-      The Game of Life is a grid of cells, each alive (1) or dead (0). Every step, all the cells update at once by counting their 8 neighbours. A live
-      cell with 2 or 3 live neighbours survives, a dead cell with exactly 3 comes alive, and every other cell is dead next step. From those rules come
-      gliders that walk across the grid and patterns that build others.
+      The Game of Life is a grid of cells, each alive (1) or dead (0). Every step, all the cells update at once by
+      counting their 8 neighbours. A live cell with 2 or 3 live neighbours survives, a dead cell with exactly 3 comes
+      alive, and every other cell is dead next step. From those rules come gliders that walk across the grid and
+      patterns that build others.
 
 
-      You'll do every step on the whole array at once, with no loops over cells. The new tool is `np.roll(grid, 1, axis=0)`, which shifts every row down
-      by one and wraps the bottom row round to the top. Shift the grid the 8 ways, add the copies up, and each cell holds its neighbour count.
+      The program in the editor already runs: press Run and it prints a small glider three times with `show`. The
+      glider doesn't move yet, because `neighbours` and `step` are stand-ins. Fix them and it walks. The Play tab runs
+      the same `step` on a big grid you can draw on, and later milestones add the Random and pattern buttons.
+
+
+      You'll do every step on the whole array at once, with no loops over cells. The new tool is
+      `np.roll(grid, 1, axis=0)`, which shifts every row down by one and wraps the bottom row round to the top. Shift
+      the grid the 8 ways, add the copies up, and each cell holds its neighbour count.
+    example: |
+      . # . . .
+      . . # . .
+      # # # . .
+      . . . . .
+      . . . . .
+
+      . . . . .
+      # . # . .
+      . # # . .
+      . # . . .
+      . . . . .
     starter: |
       import numpy as np
 
-      # Your functions go here. Try them on this small glider first:
       glider = np.array([
           [0, 1, 0, 0, 0],
           [0, 0, 1, 0, 0],
@@ -29,6 +47,32 @@ cards:
           [0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0],
       ])
+
+
+      # ---- Your functions: stand-ins for now, so the program runs ----
+
+      def neighbours(grid):
+          return np.zeros_like(grid)  # stand-in: no cell has any neighbours
+
+
+      def step(grid):
+          return grid  # stand-in: nothing ever changes
+
+
+      # ---- Given: prints a grid, # for alive and . for dead ----
+
+      def show(grid):
+          for row in grid:
+              print(" ".join(["#" if cell else "." for cell in row]))
+          print()
+
+
+      # ---- The program: watch the glider for three steps ----
+
+      world = glider
+      for _ in range(3):
+          show(world)
+          world = step(world)
     solution: |
       import numpy as np
 
@@ -40,6 +84,8 @@ cards:
           [0, 0, 0, 0, 0],
       ])
 
+
+      # ---- Your functions ----
 
       def neighbours(grid):
           total = np.zeros_like(grid)
@@ -66,11 +112,37 @@ cards:
           rows, cols = pattern.shape
           out[r:r + rows, c:c + cols] = pattern
           return out
+
+
+      # ---- Given: prints a grid, # for alive and . for dead ----
+
+      def show(grid):
+          for row in grid:
+              print(" ".join(["#" if cell else "." for cell in row]))
+          print()
+
+
+      # ---- The program: watch the glider for three steps ----
+
+      world = glider
+      for _ in range(3):
+          show(world)
+          world = step(world)
     milestones:
       - title: Count the neighbours
         goal: >-
-          Write `neighbours(grid)`. It gives back an array the same shape as `grid`, where each cell holds how many of its 8 neighbours are alive. The edges
-          wrap round, so a cell on the left edge has neighbours on the right edge.
+          Replace the stand-in `neighbours(grid)`. It gives back an array the same shape as `grid`, where each cell
+          holds how many of its 8 neighbours are alive. The edges wrap round, so a cell on the left edge has neighbours
+          on the right edge, and a cell on the top row has neighbours on the bottom row.
+        examples:
+          - {
+              call: 'neighbours(np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]]))',
+              gives: '[[0, 1, 1], [1, 1, 1], [1, 1, 1]]',
+            }
+          - {
+              call: 'neighbours(np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]]))[1]',
+              gives: '[1, 1, 1, 1]',
+            }
         tests:
           - {
               call: 'neighbours(np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]]))',
@@ -86,8 +158,18 @@ cards:
           - Loop over `dr` and `dc` from -1 to 1, skipping the one where both are 0, and add up the 8 shifted grids. Looping over 8 shifts is fine; looping over cells isn't.
       - title: One step
         goal: >-
-          Write `step(grid)`, which gives back the next generation as 0s and 1s. Use masks on the whole grid, with no loops. Then open the Play tab, draw a
-          few cells and press Play.
+          Replace the stand-in `step(grid)`. It gives back the next generation as 0s and 1s, using your `neighbours`
+          and the rules in the brief. Use masks on the whole grid, with no loops. Press Run and the glider walks down
+          and to the right. Then open the Play tab, draw a few cells and press Play.
+        examples:
+          - {
+              call: 'step(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]))',
+              gives: '[[0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0]]',
+            }
+          - {
+              call: 'step(np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]]))',
+              gives: '[[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]]',
+            }
         tests:
           - {
               call: 'step(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]))',
@@ -110,8 +192,12 @@ cards:
           - 'Combine them with `|`, then `.astype(int)` turns True and False into 1 and 0.'
       - title: A random world
         goal: >-
-          Write `random_world(rows, cols, chance, seed)`. Make a generator with `np.random.default_rng(seed)`, and give back a grid where each cell is alive
-          with probability `chance`. Then try Random in the Play tab.
+          The Play tab's Random button needs a new function, `random_world(rows, cols, chance, seed)`. It gives back a
+          grid of `rows` by `cols`, where each cell is alive (1) with probability `chance`. Make a generator with
+          `np.random.default_rng(seed)`, so the same seed always gives the same world. Then try Random.
+        examples:
+          - { call: 'random_world(2, 3, 1.0, 0)', gives: '[[1, 1, 1], [1, 1, 1]]' }
+          - { call: 'random_world(2, 3, 0.0, 0)', gives: '[[0, 0, 0], [0, 0, 0]]' }
         tests:
           - { call: 'random_world(2, 3, 1.0, 0)', expect: '[[1, 1, 1], [1, 1, 1]]' }
           - { call: 'random_world(4, 6, 0.0, 5).sum()', expect: '0' }
@@ -127,8 +213,14 @@ cards:
           - A cell is alive when its number is below `chance`. Turn the mask into 0s and 1s.
       - title: Stamp a pattern
         goal: >-
-          Write `stamp(grid, pattern, r, c)`. It gives back a copy of `grid` with `pattern` pasted in, its top-left corner at row `r` and column `c`. The
-          original grid must not change. Then drop a glider gun in from the Play tab.
+          The pattern buttons in the Play tab need `stamp(grid, pattern, r, c)`. It gives back a copy of `grid` with
+          `pattern` pasted in, its top-left corner at row `r` and column `c`. The original grid must not change. Then
+          drop a glider gun in from the Play tab.
+        examples:
+          - {
+              call: 'stamp(np.zeros((3, 4), int), np.ones((2, 2), int), 1, 2)',
+              gives: '[[0, 0, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]',
+            }
         tests:
           - {
               call: 'stamp(np.zeros((3, 4), int), np.ones((2, 2), int), 1, 2)',

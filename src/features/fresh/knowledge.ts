@@ -77,6 +77,9 @@ const FEATURES: [string, string[]][] = [
 
 /** Every piece of code in a card and its variants, with blanks filled in. */
 export function cardCode(card: Card): string[] {
+  // A project hands the learner code beyond what's been taught (input(), a list for random.choice in Unit 1), so
+  // it says nothing about what they know.
+  if (card.type === 'project') return []
   const out: string[] = []
   for (const c of [card, ...cardVariants(card)]) {
     if (c.type === 'blank')

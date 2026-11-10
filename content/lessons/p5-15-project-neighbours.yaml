@@ -11,15 +11,21 @@ cards:
     id: doodles
     play: doodle
     brief: >-
-      To recognise something new, find the most similar thing you've already seen and copy its label. It's called nearest neighbours, and it's
-      surprisingly strong. You'll use it to recognise 5 by 5 doodles of a cross, a plus and a square.
+      To recognise something new, find the most similar thing you've already seen and copy its label. It's called
+      nearest neighbours, and it's surprisingly strong. You'll use it to recognise 5 by 5 doodles of a cross, a plus
+      and a square.
 
 
-      An image is a grid of numbers, 1 for ink and 0 for paper. Flatten each grid into a row of 25 numbers, and "most similar" becomes "closest", measured
-      with the distance formula. You'll do it with no loops in the maths, so it would stay fast with thousands of images.
+      An image is a grid of numbers, 1 for ink and 0 for paper. Flatten each grid into a row of 25 numbers, and "most
+      similar" becomes "closest", measured with the distance formula. You'll do it with no loops in the maths, so it
+      would stay fast with thousands of images.
 
 
-      Once `predict` works, draw your own doodles in the Play tab. When it guesses wrong, teach it the right answer and draw again.
+      This project is more open than the others. The editor holds only the data: `doodle()` turns a picture drawn
+      with `#` and `.` into a grid, `train` and `labels` are the doodles it learns from, and `tests` and
+      `test_labels` are ones it hasn't seen. Every function is yours to write, and the last milestone asks you to
+      write the program that tests them. The Play tab calls your `flatten`, `distances` and `predict` as soon as they
+      exist: draw a doodle, and when it guesses wrong, teach it the right answer.
     starter: |
       import numpy as np
       import matplotlib.pyplot as plt
@@ -102,7 +108,12 @@ cards:
       plt.show()
     milestones:
       - title: Flatten
-        goal: Write `flatten(images)`. It takes a stack of grids, shape `(n, rows, cols)`, and gives back one row per image, shape `(n, rows * cols)`.
+        goal: >-
+          Write `flatten(images)`. It takes a stack of grids, shape `(n, rows, cols)`, and gives back one row per
+          image, shape `(n, rows * cols)`. The numbers keep their order, row by row.
+        examples:
+          - { call: 'flatten(np.arange(8).reshape(2, 2, 2))', gives: '[[0, 1, 2, 3], [4, 5, 6, 7]]' }
+          - { call: 'flatten(train).shape', gives: '(6, 25)' }
         tests:
           - { call: 'flatten(np.zeros((3, 5, 5))).shape', expect: '(3, 25)' }
           - { call: 'flatten(np.arange(8).reshape(2, 2, 2))', expect: '[[0, 1, 2, 3], [4, 5, 6, 7]]' }
@@ -116,6 +127,9 @@ cards:
         goal: >-
           Write `distances(X, x)`. `X` has one row per image and `x` is one image. Give back the distance from `x` to each row: subtract, square, add up along
           each row, and take the square root.
+        examples:
+          - { call: 'distances(np.array([[0.0, 0.0], [3.0, 4.0]]), np.array([0.0, 0.0]))', gives: '[0.0, 5.0]' }
+          - { call: 'distances(np.array([[1.0, 1.0], [1.0, 2.0]]), np.array([1.0, 1.0]))', gives: '[0.0, 1.0]' }
         tests:
           - { call: 'distances(np.array([[0.0, 0.0], [3.0, 4.0]]), np.array([0.0, 0.0]))', expect: '[0.0, 5.0]' }
           - {
@@ -131,7 +145,18 @@ cards:
           - Add up along each row with `axis=1`, so you get one number per image.
           - '`return np.sqrt(((X - x) ** 2).sum(axis=1))`'
       - title: Nearest neighbour
-        goal: Write `predict(X, labels, x)`, which gives back the label of the row of `X` closest to `x`.
+        goal: >-
+          Write `predict(X, labels, x)`, which gives back the label of the row of `X` closest to `x`. `labels[i]` is
+          the label of row `i`. Then draw a doodle in the Play tab.
+        examples:
+          - {
+              call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([4.0, 4.0]))",
+              gives: "'b'",
+            }
+          - {
+              call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([1.0, 2.0]))",
+              gives: "'a'",
+            }
         tests:
           - {
               call: "predict(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([4.0, 4.0]))",
@@ -152,6 +177,11 @@ cards:
         goal: >-
           Write `predict_all(X, labels, T)`, which predicts a label for every row of `T` with no loop. Make a table of distances with one row per test image
           and one column per training image, then take the closest in each row.
+        examples:
+          - {
+              call: "predict_all(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([[1.0, 0.0], [6.0, 5.0], [4.0, 5.0]]))",
+              gives: "['a', 'b', 'b']",
+            }
         tests:
           - {
               call: "predict_all(np.array([[0.0, 0.0], [5.0, 5.0]]), np.array(['a', 'b']), np.array([[1.0, 0.0], [6.0, 5.0], [4.0, 5.0]]))",
@@ -170,8 +200,10 @@ cards:
           - '`labels[gaps.argmin(axis=1)]` picks the closest training label for each row.'
       - title: Test it, and catch the mistake
         goal: >-
-          Run `predict_all` on the test doodles and set `accuracy` to the share it gets right, as a whole percentage. Print a line for each doodle if you
-          like. Then draw the one it got wrong with `plt.imshow`. Why did it get that one wrong?
+          Now the program that uses your functions. At the bottom, run `predict_all` on the test doodles (flatten both
+          sets first), and set a variable `accuracy` to the share it gets right, as a whole percentage, like `67`. Print
+          a line for each doodle if you like. Then draw the one it got wrong with `plt.imshow` and `plt.show()`. Why
+          did it get that one wrong?
         tests:
           - {
               call: 'predict_all(flatten(train), labels, flatten(tests)).tolist()',

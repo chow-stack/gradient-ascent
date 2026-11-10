@@ -161,8 +161,15 @@ const explain = z.object({
  */
 const milestone = z.object({
   title: z.string(),
-  /** What this milestone asks for, in a sentence or two. */
+  /** What this milestone asks for, in plain English: what it's for in the program, not how to write it. */
   goal: z.string(),
+  /**
+   * Calls and what they give back, shown as a small table under the goal. content:check runs each one against
+   * the solution, so the table can't drift from the tests.
+   */
+  examples: z.array(z.object({ call: z.string(), gives: z.string() })).default([]),
+  /** What the finished milestone should print or show, as a short sample, under the goal. */
+  shows: z.string().optional(),
   tests,
   expectOutput: z.string().optional(),
   vary,
@@ -170,6 +177,8 @@ const milestone = z.object({
   forbids: rules,
   /** Check requires/forbids only inside this function or class, since the whole program may need other things. */
   scope: z.string().optional(),
+  /** Starts a new group in the checklist, with this heading, so a long list reads as stages. */
+  stage: z.string().optional(),
   /** Shown one at a time with "Stuck? Show me the next step". The last one can be close to the code. */
   hints,
 })

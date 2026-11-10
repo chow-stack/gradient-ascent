@@ -11,30 +11,86 @@ cards:
     id: spam
     play: spam
     brief: >-
-      You'll build a spam filter: logistic regression on words, trained with your own gradient descent, then judged the honest way. Every part is yours
-      except turning messages into features. The Play tab gives each message one column per word it has seen, 1 if the message contains that word.
+      You'll build a spam filter: logistic regression on words, trained with your own gradient descent, then judged
+      the honest way. It comes in two stages. First build the model: probabilities, a loss, and a training step. Then
+      judge it: hold messages back, remove copies, and check it beats doing nothing.
 
 
-      Then play with it. Train on 174 messages and watch the training and validation losses side by side. Type any message to see how likely it is to
-      be spam, and which words pushed it which way. Drag the threshold and watch precision and recall trade places. One warning: the messages include
-      copies, the way spam is really sent, and until you deal with them your validation score is lying to you.
+      A model needs numbers, so the editor starts with the code that turns messages into them, given for you to read.
+      `words(text)` splits a message into its words, and `features(texts, vocab)` makes one row per message and one
+      column per word in `vocab`, 1 if the message has that word. The Play tab builds `vocab` from the training
+      messages and calls `features`, then trains your model with your `step`. Below that are four tiny made-up
+      messages, `X` and `y`, to try your functions on.
+
+
+      Then play with it. Train on 174 messages and watch the training and validation losses side by side. Type any
+      message to see how likely it is to be spam, and which words pushed it which way. Drag the threshold and watch
+      precision and recall trade places. One warning: the messages include copies, the way spam is really sent, and
+      until you deal with them your validation score is lying to you.
     starter: |
+      import re
       import numpy as np
 
-      # Try your functions on these. The Play tab brings 174 real-looking messages.
+
+      # ---- Given: turning messages into numbers ----
+
+      def words(text):
+          # The words in a message, in small letters: "Win £100 NOW!" gives ["win", "100", "now"].
+          return re.findall(r"[a-z0-9']+", text.lower())
+
+
+      def features(texts, vocab):
+          # One row per message, one column per word in vocab: 1.0 if the message has that word, else 0.0.
+          # features(["win cash now", "hi mum"], ["cash", "mum", "win"]) gives [[1, 0, 1], [0, 1, 0]].
+          column = {w: j for j, w in enumerate(vocab)}
+          X = np.zeros((len(texts), len(vocab)))
+          for i in range(len(texts)):
+              for w in words(texts[i]):
+                  if w in column:
+                      X[i, column[w]] = 1.0
+          return X
+
+
+      # ---- Tiny made-up data to try your functions on. The Play tab brings 174 real-looking messages ----
       X = np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
       y = np.array([1.0, 0.0, 1.0, 0.0])
       texts = ['win cash now', 'hi mum', 'win cash now', 'lunch at 1']
       labels = [1, 0, 1, 0]
+
+
+      # ---- Your functions go here ----
     solution: |
+      import re
       import numpy as np
 
-      # Try your functions on these. The Play tab brings 174 real messages.
+
+      # ---- Given: turning messages into numbers ----
+
+      def words(text):
+          # The words in a message, in small letters: "Win £100 NOW!" gives ["win", "100", "now"].
+          return re.findall(r"[a-z0-9']+", text.lower())
+
+
+      def features(texts, vocab):
+          # One row per message, one column per word in vocab: 1.0 if the message has that word, else 0.0.
+          # features(["win cash now", "hi mum"], ["cash", "mum", "win"]) gives [[1, 0, 1], [0, 1, 0]].
+          column = {w: j for j, w in enumerate(vocab)}
+          X = np.zeros((len(texts), len(vocab)))
+          for i in range(len(texts)):
+              for w in words(texts[i]):
+                  if w in column:
+                      X[i, column[w]] = 1.0
+          return X
+
+
+      # ---- Tiny made-up data to try your functions on. The Play tab brings 174 real-looking messages ----
       X = np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
       y = np.array([1.0, 0.0, 1.0, 0.0])
       texts = ['win cash now', 'hi mum', 'win cash now', 'lunch at 1']
       labels = [1, 0, 1, 0]
 
+
+      # ---- Your functions ----
 
       def sigmoid(z):
           return 1 / (1 + np.exp(-z))
@@ -89,9 +145,14 @@ cards:
           return precision, recall
     milestones:
       - title: Probabilities
+        stage: Build the model
         goal: >-
-          Write `sigmoid(z)` and `predict(X, w, b)`, the probability of spam for every row of `X`. Then open the Play tab and type a message. With
-          every weight at 0, everything is 50%.
+          Write `sigmoid(z)`, which squashes any number into a probability between 0 and 1. Then write
+          `predict(X, w, b)`, the probability of spam for every row of `X`: one weight in `w` per word, plus `b`, passed
+          through your `sigmoid`. Then open the Play tab and type a message. With every weight at 0, everything is 50%.
+        examples:
+          - { call: 'sigmoid(0.0)', gives: '0.5' }
+          - { call: 'predict(X, np.zeros(3), 0.0)', gives: '[0.5, 0.5, 0.5, 0.5]' }
         tests:
           - { call: 'sigmoid(0.0)', expect: '0.5' }
           - { call: 'predict(X, np.array([1.0, -1.0, 0.5]), -0.5).round(4)', expect: '[0.7311, 0.1824, 0.3775, 0.5]' }
@@ -108,8 +169,12 @@ cards:
           - '`predict` passes `X @ w + b` through your `sigmoid`.'
       - title: Cross-entropy
         goal: >-
-          Write `loss(p, y)`, the mean binary cross-entropy, clipping `p` to between `1e-7` and `1 - 1e-7` first. The Play tab then draws the
-          learning curve, starting at 0.693.
+          Write `loss(p, y)`, the mean binary cross-entropy of probabilities `p` against labels `y`. Clip `p` to between
+          `1e-7` and `1 - 1e-7` first, so `np.log` never sees 0. The Play tab then draws the learning curve, starting
+          at 0.693.
+        examples:
+          - { call: 'round(loss(np.array([0.5, 0.5]), np.array([0, 1])), 4)', gives: '0.6931' }
+          - { call: 'round(loss(np.array([0.9, 0.2, 0.6]), np.array([1, 0, 1])), 4)', gives: '0.2798' }
         tests:
           - { call: 'round(loss(np.array([0.9, 0.2, 0.6]), np.array([1, 0, 1])), 4)', expect: '0.2798' }
           - { call: 'round(loss(np.array([0.5, 0.5]), np.array([0, 1])), 4)', expect: '0.6931' }
@@ -122,8 +187,11 @@ cards:
           - 'Then `np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))`.'
       - title: One step downhill
         goal: >-
-          Write `step(X, y, w, b, lr)`, one step of gradient descent on your loss, giving back the new `(w, b)`. Then press Train in the Play tab, and
-          type a spammy message.
+          Write `step(X, y, w, b, lr)`, one step of gradient descent on your loss, giving back the new `(w, b)`. The
+          Play tab calls it over and over when you press Train. Then type a spammy message and see which words push it
+          towards spam.
+        examples:
+          - { call: 'step(X, y, np.zeros(3), 0.0, 1.0)', gives: '([0.25, 0.0, 0.0], 0.0)' }
         tests:
           - {
               call: 'step(np.array([[1.0, 2.0], [0.0, 1.0], [3.0, 0.0]]), np.array([1.0, 0.0, 0.0]), np.zeros(2), 0.0, 0.6)',
@@ -146,10 +214,13 @@ cards:
           - 'The error for each example is `predict(X, w, b) - y`.'
           - 'The partials are `X.T @ err / len(y)` for `w` and `np.mean(err)` for `b`.'
       - title: Hold some back
+        stage: Judge it honestly
         goal: >-
           Write `split(n, frac, seed)`, which shuffles the positions `0` to `n - 1` with `np.random.default_rng(seed).permutation(n)`, and gives back
           the first `int(n * frac)` for training and the rest for validation. The Play tab now trains on three quarters and draws the validation
           curve too.
+        examples:
+          - { call: 'split(10, 0.8, 0)', gives: '([4, 6, 2, 7, 3, 5, 9, 0], [8, 1])' }
         tests:
           - { call: 'split(10, 0.8, 0)', expect: '([4, 6, 2, 7, 3, 5, 9, 0], [8, 1])' }
           - { call: 'split(6, 0.5, 0)', expect: '([3, 2, 5], [4, 0, 1])' }
@@ -165,6 +236,8 @@ cards:
           The Play tab has started warning you: some validation messages are copies of training ones. Write `dedupe(texts, labels)`, which keeps only
           the first copy of each message, in order, and gives back the kept texts and their labels as two lists. Restart the Play tab and see what
           honest validation looks like.
+        examples:
+          - { call: "dedupe(['a', 'b', 'a', 'c'], [1, 0, 1, 0])", gives: "(['a', 'b', 'c'], [1, 0, 0])" }
         tests:
           - { call: 'dedupe(texts, labels)', expect: "(['win cash now', 'hi mum', 'lunch at 1'], [1, 0, 0])" }
           - { call: "dedupe(['a', 'b', 'a', 'a', 'c'], [1, 0, 1, 1, 0])", expect: "(['a', 'b', 'c'], [1, 0, 0])" }
@@ -178,6 +251,9 @@ cards:
         goal: >-
           Write `accuracy(p, y)`, the share of examples where `p >= 0.5` matches the label, and `baseline(y_train, y_val)`, the validation accuracy
           of always predicting the most common training class (call a tie 1). The Play tab says whether you beat it.
+        examples:
+          - { call: 'accuracy(np.array([0.9, 0.2, 0.7, 0.4]), np.array([1, 0, 0, 0]))', gives: '0.75' }
+          - { call: 'baseline(np.array([1, 0, 0]), np.array([0, 1, 0, 0]))', gives: '0.75' }
         tests:
           - { call: 'accuracy(np.array([0.9, 0.4, 0.6, 0.1]), y)', expect: '1.0' }
           - { call: 'accuracy(np.array([0.9, 0.2, 0.7, 0.4]), np.array([1, 0, 0, 0]))', expect: '0.75' }
@@ -192,6 +268,11 @@ cards:
         goal: >-
           Write `precision_recall(pred, y)` for classes and labels of 1s and 0s, giving back `(precision, recall)`, with 0.0 when a bottom would be
           0. Then drag the threshold in the Play tab, and find one you'd trust with your own inbox.
+        examples:
+          - {
+              call: 'precision_recall(np.array([1, 0, 0, 0]), np.array([1, 1, 1, 0]))',
+              gives: '(1.0, 0.3333333333333333)',
+            }
         tests:
           - {
               call: 'precision_recall(np.array([1, 1, 1, 0, 0, 0, 1, 0]), np.array([1, 0, 1, 1, 0, 0, 1, 0]))',

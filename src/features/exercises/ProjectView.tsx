@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Circle, FileText, Flag, Lightbulb, LoaderCircle, Sparkles, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CodeEditor } from '../../components/editor'
 import type { Card } from '../content/schema'
 import type { RunResult } from '../runner/harness'
@@ -13,12 +13,10 @@ import { locked, type ViewProps } from './types'
 
 type ProjectCard = Extract<Card, { type: 'project' }>
 
-/** Below this width (of the card area, not the window) the panels become tabs. */
-const SPLIT_MIN_WIDTH = 880
-/** The editor's share of the right-hand panel, in percent. */
-const SPLIT_DEFAULT = 64
-const SPLIT_MIN = 25
-const SPLIT_MAX = 85
+/** Below this width (of the card area, not the window) the brief, code, play and output become tabs. */
+const WIDE_MIN_WIDTH = 880
+/** The editor's starting height, in lines. It grows past this as the program does. */
+const EDITOR_LINES = 20
 
 type Tab = 'brief' | 'code' | 'play' | 'output'
 type Side = 'brief' | 'play'
@@ -55,10 +53,10 @@ export function ProjectView({
   const [side, setSide] = useState<Side>('brief')
   // The game stays mounted once opened, so switching tabs doesn't lose it.
   const [played, setPlayed] = useState(false)
-  const [split, setSplit] = useState(SPLIT_DEFAULT)
   const box = useRef<HTMLDivElement>(null)
   const width = useWidth(box)
-  const wide = width >= SPLIT_MIN_WIDTH
+  const wide = width >= WIDE_MIN_WIDTH
+  const outputRef = useRef<HTMLDivElement>(null)
 
   if (result !== lastResult) {
     setLastResult(result)
@@ -108,6 +106,11 @@ export function ProjectView({
     setTab('output')
   }
 
+  // Beside the brief, the output sits under the program: bring it into view when there's something new in it.
+  useEffect(() => {
+    if (wide && shown) outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [wide, shown])
+
   const openTab = (t: Tab | Side) => {
     if (t === 'play') setPlayed(true)
     if (wide && (t === 'brief' || t === 'play')) setSide(t)
@@ -132,7 +135,6 @@ export function ProjectView({
 
   const editor = (
     <CodeEditor
-      fill
       value={code}
       onChange={(v) => setAnswer({ type: 'code', code: v })}
       readOnly={locked(phase)}
@@ -142,22 +144,39 @@ export function ProjectView({
         onSubmit({ type: 'code', code: latest })
       }}
       ariaLabel="Your program"
+      minLines={EDITOR_LINES}
+      maxLines={Infinity}
+      frame={false}
     />
+  )
+
+  const program = (
+    <div className="ga-project-program">
+      <EditorBar running={running} onRun={run} />
+      {editor}
+    </div>
   )
 
   const output = shown ? (
     <RunOutput result={shown} />
   ) : (
-    <div className="grid h-full min-h-24 place-items-center rounded-md border border-dashed border-border p-4 text-center text-small text-faint">
+    <p className="ga-project-output-empty">
       Press Run to see what your program prints, or Check this step to test the milestone you’re on.
-    </div>
+    </p>
+  )
+
+  const briefAndMilestones = (
+    <>
+      <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
+      {milestoneList}
+    </>
   )
 
   return (
-    <div ref={box} className="flex min-h-0 flex-1 flex-col">
+    <div ref={box} className="flex flex-col">
       {width === 0 ? null : wide ? (
-        <div className="flex min-h-0 flex-1 gap-5">
-          <section className="flex w-[40%] max-w-[540px] min-w-[340px] flex-col gap-3" aria-label="Brief and play">
+        <div className="ga-project-wide">
+          <section className="ga-project-side" aria-label="Brief and play">
             {card.play && (
               <Tabs
                 tabs={[
@@ -168,29 +187,24 @@ export function ProjectView({
                 onPick={openTab}
               />
             )}
-            <div
-              className="ga-project-pane flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-2"
-              hidden={side !== 'brief'}
-            >
-              <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
-              {milestoneList}
+            <div className="ga-project-pane flex flex-col gap-5" hidden={side !== 'brief'}>
+              {briefAndMilestones}
             </div>
             {play && (
-              <div className="ga-project-pane flex min-h-0 flex-1 flex-col overflow-y-auto pr-2" hidden={!playShown}>
+              <div className="ga-project-pane flex flex-col" hidden={!playShown}>
                 {play}
               </div>
             )}
           </section>
-          <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label="Your program">
-            <div className="min-h-0" style={{ height: `${split}%` }}>
-              {editor}
+          <section className="flex min-w-0 flex-col gap-3" aria-label="Your program">
+            {program}
+            <div ref={outputRef} className="ga-project-output">
+              {output}
             </div>
-            <Toolbar running={running} onRun={run} split={split} onSplit={setSplit} box={box} />
-            <div className="ga-project-pane min-h-0 flex-1 overflow-y-auto">{output}</div>
           </section>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <Tabs
             tabs={[
               ['brief', `Brief · ${done}/${card.milestones.length}`],
@@ -201,15 +215,15 @@ export function ProjectView({
             current={tab}
             onPick={openTab}
             dot={scratch && tab !== 'output' ? 'output' : undefined}
+            sticky
           />
           {tab === 'brief' && (
-            <div className="ga-project-pane flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto" role="tabpanel">
-              <Brief card={card} open={briefOpen} onToggle={() => setBriefOpen((o) => !o)} />
-              {milestoneList}
+            <div className="flex flex-col gap-5" role="tabpanel">
+              {briefAndMilestones}
             </div>
           )}
           {tab === 'code' && (
-            <div className="flex min-h-0 flex-1 flex-col gap-2" role="tabpanel">
+            <div className="flex flex-col gap-3" role="tabpanel">
               <MilestoneStrip
                 card={card}
                 ticks={ticks}
@@ -220,21 +234,16 @@ export function ProjectView({
                 onHint={showHint}
                 {...step}
               />
-              <div className="min-h-0 flex-1">{editor}</div>
-              <Toolbar running={running} onRun={run} />
+              {program}
             </div>
           )}
           {play && (
-            <div
-              className="ga-project-pane flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
-              role="tabpanel"
-              hidden={!playShown}
-            >
+            <div className="ga-project-play-narrow flex flex-col" role="tabpanel" hidden={!playShown}>
               {play}
             </div>
           )}
           {tab === 'output' && (
-            <div className="ga-project-pane min-h-0 flex-1 overflow-y-auto" role="tabpanel">
+            <div className="ga-project-output" role="tabpanel">
               {output}
             </div>
           )}
@@ -249,14 +258,21 @@ function Tabs<T extends string>({
   current,
   onPick,
   dot,
+  sticky,
 }: {
   tabs: [T, string][]
   current: T
   onPick: (t: T) => void
   dot?: T
+  /** Stay under the top bar as the page scrolls (the narrow layout, where the tabs are the only way around). */
+  sticky?: boolean
 }) {
   return (
-    <div className="ga-project-tabs flex-none" role="tablist" aria-label="Project">
+    <div
+      className={`ga-project-tabs flex-none${sticky ? ' ga-project-tabs--sticky' : ''}`}
+      role="tablist"
+      aria-label="Project"
+    >
       {tabs.map(([t, label]) => (
         <button key={t} type="button" role="tab" aria-selected={current === t} onClick={() => onPick(t)}>
           {label}
@@ -333,30 +349,42 @@ function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint, ...
           const current = i === next
           const open = current || opened.has(i)
           return (
-            <li key={m.title} className="ga-milestone" data-state={t?.passed ? 'done' : current ? 'next' : 'todo'}>
-              <MilestoneIcon passed={t?.passed} failed={!!t && !t.passed && current} />
-              <div className="min-w-0 flex-1">
-                {current ? (
-                  <p className="font-semibold">
-                    {i + 1}. {m.title}
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full text-left font-semibold"
-                    aria-expanded={open}
-                    onClick={() => toggle(i)}
-                  >
-                    <span className="sr-only">{t?.passed ? 'Done: ' : ''}</span>
-                    {i + 1}. {m.title}
-                  </button>
-                )}
-                {open && <p className="ga-prose mt-0.5 text-small text-muted">{inline(m.goal)}</p>}
-                {current && (
-                  <CurrentDetails m={m} t={t} hintCount={hintCount} moreHints={moreHints} onHint={onHint} {...step} />
-                )}
-              </div>
-            </li>
+            <Fragment key={m.title}>
+              {m.stage && (
+                <li role="presentation" className="ga-milestone-stage">
+                  {m.stage}
+                </li>
+              )}
+              <li className="ga-milestone" data-state={t?.passed ? 'done' : current ? 'next' : 'todo'}>
+                <MilestoneIcon passed={t?.passed} failed={!!t && !t.passed && current} />
+                <div className="min-w-0 flex-1">
+                  {current ? (
+                    <p className="font-semibold">
+                      {i + 1}. {m.title}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-full text-left font-semibold"
+                      aria-expanded={open}
+                      onClick={() => toggle(i)}
+                    >
+                      <span className="sr-only">{t?.passed ? 'Done: ' : ''}</span>
+                      {i + 1}. {m.title}
+                    </button>
+                  )}
+                  {open && (
+                    <>
+                      <p className="ga-prose mt-0.5 text-small text-muted">{inline(m.goal)}</p>
+                      <MilestoneSpec m={m} />
+                    </>
+                  )}
+                  {current && (
+                    <CurrentDetails m={m} t={t} hintCount={hintCount} moreHints={moreHints} onHint={onHint} {...step} />
+                  )}
+                </div>
+              </li>
+            </Fragment>
           )
         })}
       </ol>
@@ -375,6 +403,33 @@ function Milestones({ card, ticks, next, done, hintCount, moreHints, onHint, ...
         </div>
       )}
     </section>
+  )
+}
+
+/** What a milestone should do, by example: calls and what they give back, or a short sample of what it shows. */
+function MilestoneSpec({ m }: { m: ProjectCard['milestones'][number] }) {
+  return (
+    <>
+      {m.examples.length > 0 && (
+        <table className="ga-milestone-examples">
+          <thead>
+            <tr>
+              <th scope="col">You call</th>
+              <th scope="col">It gives back</th>
+            </tr>
+          </thead>
+          <tbody>
+            {m.examples.map((e) => (
+              <tr key={e.call}>
+                <td>{e.call}</td>
+                <td>{e.gives}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {m.shows && <pre className="ga-milestone-shows">{m.shows.replace(/\n$/, '')}</pre>}
+    </>
   )
 }
 
@@ -466,6 +521,7 @@ function MilestoneStrip({ card, ticks, next, done, hintCount, moreHints, onHint,
       {open && (
         <div className="pt-1.5">
           <p className="ga-prose text-small text-muted">{inline(m.goal)}</p>
+          <MilestoneSpec m={m} />
           <CurrentDetails
             m={m}
             t={ticks?.[next]}
@@ -480,69 +536,19 @@ function MilestoneStrip({ card, ticks, next, done, hintCount, moreHints, onHint,
   )
 }
 
-/** Run, the save note, and (beside the card) a handle to drag the editor/output split. */
-function Toolbar({
-  running,
-  onRun,
-  split,
-  onSplit,
-  box,
-}: {
-  running: boolean
-  onRun: () => void
-  split?: number
-  onSplit?: (n: number) => void
-  box?: React.RefObject<HTMLDivElement | null>
-}) {
-  const drag = (e: PointerEvent<HTMLDivElement>) => {
-    if (!onSplit || !box?.current) return
-    const pane = e.currentTarget.parentElement!.parentElement!
-    const { top, height } = pane.getBoundingClientRect()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    const move = (ev: globalThis.PointerEvent) => onSplit(clamp(((ev.clientY - top) / height) * 100))
-    const up = () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-  }
-  const key = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!onSplit || split === undefined) return
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault()
-      onSplit(clamp(split + (e.key === 'ArrowUp' ? -5 : 5)))
-    }
-  }
-
+/** The bar on top of the editor: Run, the save note and the check shortcut. It sticks under the top bar. */
+function EditorBar({ running, onRun }: { running: boolean; onRun: () => void }) {
   return (
-    <div className="relative flex flex-none flex-wrap items-center gap-2 py-2.5">
-      {onSplit && (
-        <div
-          className="ga-split-handle"
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Resize the editor and output"
-          aria-valuenow={Math.round(split ?? SPLIT_DEFAULT)}
-          aria-valuemin={SPLIT_MIN}
-          aria-valuemax={SPLIT_MAX}
-          tabIndex={0}
-          onPointerDown={drag}
-          onKeyDown={key}
-          onDoubleClick={() => onSplit(SPLIT_DEFAULT)}
-          title="Drag to resize. Double-click to reset."
-        />
-      )}
-      <RunButton onRun={onRun} running={running} />
-      <span className="text-caption text-faint">Saved as you type.</span>
-      <span className="ml-auto hidden text-caption text-faint sm:inline">
-        <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> to check every milestone
+    <div className="ga-project-editor-bar">
+      <span className="text-caption font-semibold text-muted">main.py</span>
+      <span className="text-caption text-faint">Saved as you type</span>
+      <span className="ml-auto hidden text-caption text-faint lg:inline">
+        <span className="ga-kbd">⌘</span> <span className="ga-kbd">↵</span> checks every milestone
       </span>
+      <RunButton onRun={onRun} running={running} />
     </div>
   )
 }
-
-const clamp = (n: number) => Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, n))
 
 const firstSentence = (text: string) => text.trim().split(/(?<=[.!?])\s/)[0]
 

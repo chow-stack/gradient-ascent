@@ -103,7 +103,9 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
   const [praise] = useState(() => PRAISE[Math.floor(Math.random() * PRAISE.length)])
 
   const card = item.card
-  const fullHeight = card.type === 'project'
+  // A project is wide: brief and milestones on the left, the program on the right.
+  const project = card.type === 'project'
+  const { pageRef, headerRef, footerRef } = useBarHeights()
   const isLearn = card.type === 'learn'
   // Learn cards with code use two columns on wide screens (see .ga-split).
   const split = isLearn && !!card.code
@@ -578,14 +580,14 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
 
   return (
     <div
-      className={[
-        // A project fills the screen exactly, so its panels scroll instead of the page.
-        fullHeight ? 'flex h-dvh flex-col' : 'flex min-h-dvh flex-col',
-        debug && panelOpen ? 'lg:pl-[var(--ga-debug-w)]' : '',
-      ].join(' ')}
+      ref={pageRef}
+      className={['flex min-h-dvh flex-col', debug && panelOpen ? 'lg:pl-[var(--ga-debug-w)]' : ''].join(' ')}
     >
       {/* Top bar */}
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur sm:px-6">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur sm:px-6"
+      >
         <button
           type="button"
           aria-label="Exit session"
@@ -686,16 +688,16 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       {/* Card */}
       <main
         className={
-          fullHeight
-            ? 'flex min-h-0 flex-1 justify-center px-4 pt-4 pb-4 sm:px-6'
+          project
+            ? 'flex flex-1 justify-center px-4 pt-4 pb-6 sm:px-6'
             : 'flex flex-1 justify-center px-4 pt-8 pb-12 sm:px-8'
         }
       >
         <div
           key={item.key}
           className={
-            fullHeight
-              ? 'flex min-h-0 w-full max-w-[1400px] flex-1 flex-col gap-3'
+            project
+              ? 'flex w-full max-w-[1400px] flex-col gap-3'
               : `flex w-full flex-col gap-5 ${split ? 'max-w-[760px] lg:max-w-[1200px]' : 'max-w-[760px]'}`
           }
         >
@@ -717,8 +719,8 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             // Never remount on a wrong answer: that reshuffled the choices and lost a game in progress.
             ref={shakeRef}
             className={
-              fullHeight
-                ? 'flex min-h-0 flex-1 flex-col'
+              project
+                ? undefined
                 : phase === 'wrong' && card.type !== 'write' && card.type !== 'fix'
                   ? 'ga-shake'
                   : undefined
@@ -754,9 +756,9 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
       </main>
 
       {/* Feedback footer */}
-      <footer className="ga-footer sticky bottom-0" data-state={footerState} aria-live="polite">
+      <footer ref={footerRef} className="ga-footer sticky bottom-0" data-state={footerState} aria-live="polite">
         <div
-          className={`mx-auto flex w-full items-center gap-4 ${fullHeight ? 'max-w-[1400px]' : split ? 'max-w-[920px] lg:max-w-[1200px]' : 'max-w-[920px]'}`}
+          className={`mx-auto flex w-full items-center gap-4 ${project ? 'max-w-[1400px]' : split ? 'max-w-[920px] lg:max-w-[1200px]' : 'max-w-[920px]'}`}
         >
           <div className="hidden flex-none sm:block">
             <Adam mood={mood} size={56} />
@@ -1083,3 +1085,27 @@ function TestFooterText({ checking, blank }: { checking: boolean; blank: number 
 
 /** Which version of its card a debug item shows (0 is the card itself). */
 const debugVersion = (item: SessionItem) => Number(/:v(\d+)$/.exec(item.key)?.[1] ?? 0)
+
+/**
+ * Keeps --ga-top and --ga-bottom on the page set to the heights of the sticky top bar and footer, so content can
+ * stick in the space between them (a project's brief does). The footer grows when it shows feedback.
+ */
+function useBarHeights() {
+  const pageRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
+  const footerRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const page = pageRef.current
+    const bars = [headerRef.current, footerRef.current]
+    if (!page || bars.some((b) => !b)) return
+    const update = () => {
+      page.style.setProperty('--ga-top', `${headerRef.current!.offsetHeight}px`)
+      page.style.setProperty('--ga-bottom', `${footerRef.current!.offsetHeight}px`)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    bars.forEach((b) => ro.observe(b!))
+    return () => ro.disconnect()
+  }, [])
+  return { pageRef, headerRef, footerRef }
+}

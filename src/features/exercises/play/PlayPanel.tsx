@@ -2,7 +2,7 @@ import { RotateCcw } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { PlayKind } from '../../content/schema'
 import type { RunError } from '../../runner/harness'
-import { playCall, playLoad } from '../../runner/python'
+import { playCall, playLoad, runPython } from '../../runner/python'
 import { PLAY_NEEDS, py, type PlayApi } from './api'
 import { Blackjack } from './Blackjack'
 import { Doodle } from './Doodle'
@@ -26,8 +26,9 @@ type Loaded =
 
 /**
  * The Play panel: a game whose logic is the learner's own code. "You write the brain, the app draws the board."
- * The program is loaded once and the game calls its functions as the player clicks. Editing the code doesn't
- * disturb a game in progress; Restart loads the new version.
+ * The program is loaded once and the game calls its functions as the player clicks. Shortly after the code
+ * changes, it's loaded again as a fresh game, so a function just written is the one that plays; Restart does it
+ * straight away.
  */
 export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
   const rerun = kind === 'rps'
@@ -89,6 +90,19 @@ export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
   const api: PlayApi = { has, call, load: reload, code }
   const changed = !rerun && loaded.status !== 'loading' && loaded.code !== code
 
+  // Keep the game on the latest code: once typing pauses, load it again, as a fresh game. A half-typed line
+  // that isn't valid Python yet is skipped, so the board doesn't flash an error mid-word.
+  useEffect(() => {
+    if (!changed) return
+    const t = setTimeout(() => {
+      void (async () => {
+        const src = codeRef.current
+        if (await compiles(src)) await load()
+      })()
+    }, RELOAD_MS)
+    return () => clearTimeout(t)
+  }, [changed, code, load])
+
   let body: ReactNode
   if (rerun) body = <Rps api={api} />
   else if (loaded.status === 'loading') body = <p className="ga-play-empty">Loading your program…</p>
@@ -111,7 +125,7 @@ export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
       {!rerun && (
         <div className="flex items-center gap-2">
           <span className="text-caption text-faint">
-            {changed ? 'Your code changed since this loaded.' : 'Running your code.'}
+            {changed ? 'Your code changed. Picking it up…' : 'Running your code.'}
           </span>
           <button
             type="button"
@@ -135,6 +149,14 @@ export function PlayPanel({ kind, code }: { kind: PlayKind; code: string }) {
       )}
     </div>
   )
+}
+
+/** How long after the last keystroke the game picks up the new code. */
+const RELOAD_MS = 1200
+
+async function compiles(src: string) {
+  const r = await runPython('', [{ call: `compile(${py(src)}, "main.py", "exec") is not None`, expect: 'True' }])
+  return !!r.tests[0]?.passed
 }
 
 function trimLog(s: string) {

@@ -11,13 +11,19 @@ cards:
     id: fit
     play: fit
     brief: >-
-      You'll build the whole of linear regression yourself: a prediction, a loss, its gradient, a training step, and a gradient check to prove the
-      gradient is right. No libraries beyond NumPy.
+      You'll build the whole of linear regression yourself: a prediction, a loss, its gradient, a training step, the
+      training loop, and a gradient check to prove the gradient is right. No libraries beyond NumPy.
 
 
-      Then the Play tab hands your functions some data. Click to add points, press Train, and watch two things move at once: the line bending to fit the
-      points, and a dot rolling down the loss valley, a map of the loss for every `w` and `b`. Try the learning rates and see creeping, settling and
-      diverging for yourself.
+      The editor starts with only the data: four points on the line y = 2x + 1, so you know the answer your training
+      should find, `w = 2` and `b = 1`. Each milestone adds one function, and the last-but-one has you write the
+      loop that trains the line and print what it found.
+
+
+      The Play tab calls your functions with points you click in. Press Train, and watch two things move at once: the
+      line bending to fit the points, and a dot rolling down the loss valley, a map of the loss for every `w` and
+      `b`. It takes one `step` per frame, so you can watch the loop you wrote. Try the learning rates and see
+      creeping, settling and diverging for yourself.
     starter: |
       import numpy as np
 
@@ -49,6 +55,12 @@ cards:
           return w - lr * dw, b - lr * db
 
 
+      def train(w, b, x, y, lr, steps):
+          for _ in range(steps):
+              w, b = step(w, b, x, y, lr)
+          return w, b
+
+
       def check(w, b, x, y):
           h = 0.00001
           dw, db = gradients(w, b, x, y)
@@ -58,11 +70,18 @@ cards:
               abs(dw - nw) / max(abs(dw) + abs(nw), 1e-12),
               abs(db - nb) / max(abs(db) + abs(nb), 1e-12),
           )
+
+
+      w, b = train(0.0, 0.0, x, y, 0.05, 1000)
+      print("w =", round(w, 3), " b =", round(b, 3))
     milestones:
       - title: Predict
         goal: >-
-          Write `predict(w, b, x)`, the line's prediction `w * x + b`. It should work when `x` is one number or a whole array. Then open the Play tab: your
-          line appears through the points.
+          Write `predict(w, b, x)`, the line's prediction `w * x + b`. It should work when `x` is one number or a whole
+          array. Then open the Play tab: your line appears through the points.
+        examples:
+          - { call: 'predict(2.0, 1.0, 3.0)', gives: '7.0' }
+          - { call: 'predict(2.0, 1.0, np.array([0.0, 1.0]))', gives: '[1.0, 3.0]' }
         tests:
           - { call: 'predict(2.0, 1.0, 3.0)', expect: '7.0' }
           - { call: 'predict(2.0, 1.0, np.array([0.0, 1.0]))', expect: '[1.0, 3.0]' }
@@ -72,7 +91,11 @@ cards:
           - NumPy does `w * x + b` for every item of an array at once.
       - title: The loss
         goal: >-
-          Write `loss(w, b, x, y)`, the mean squared error of the line on the points. Use your `predict`. The Play tab then draws the loss valley.
+          Write `loss(w, b, x, y)`, the mean squared error of the line on the points: how far each prediction is from
+          its `y`, squared, then averaged. Use your `predict`. The Play tab then draws the loss valley.
+        examples:
+          - { call: 'loss(2.0, 1.0, x, y)', gives: '0.0' }
+          - { call: 'loss(0.0, 0.0, x, y)', gives: '21.0' }
         tests:
           - { call: 'loss(0.0, 0.0, x, y)', expect: '21.0' }
           - { call: 'loss(2.0, 1.0, x, y)', expect: '0.0' }
@@ -89,7 +112,11 @@ cards:
           - Square the errors, then take `np.mean`.
       - title: The gradient
         goal: >-
-          Write `gradients(w, b, x, y)`, which gives back the partial derivatives of the loss as a tuple `(dw, db)`.
+          Write `gradients(w, b, x, y)`, which gives back the partial derivatives of the loss as a tuple `(dw, db)`:
+          how much the loss changes as `w` changes, and as `b` changes. At the best line both are 0.
+        examples:
+          - { call: 'gradients(0.0, 0.0, x, y)', gives: '(-17.0, -8.0)' }
+          - { call: 'gradients(2.0, 1.0, x, y)', gives: '(0.0, 0.0)' }
         tests:
           - { call: 'gradients(0.0, 0.0, x, y)', expect: '(-17.0, -8.0)' }
           - { call: 'gradients(2.0, 1.0, x, y)', expect: '(0.0, 0.0)' }
@@ -109,8 +136,12 @@ cards:
           - Take the mean of each, and return them both.
       - title: One step downhill
         goal: >-
-          Write `step(w, b, x, y, lr)`, one step of gradient descent, giving back the new `(w, b)`. Use your `gradients`. Then press Train in the Play tab
-          and try each learning rate.
+          Write `step(w, b, x, y, lr)`, one step of gradient descent: move `w` and `b` against their gradients, each
+          by `lr` times its gradient, and give back the new `(w, b)`. Use your `gradients`. Then press Train in the
+          Play tab and try each learning rate.
+        examples:
+          - { call: 'step(0.0, 0.0, x, y, 0.1)', gives: '(1.7, 0.8)' }
+          - { call: 'step(2.0, 1.0, x, y, 0.1)', gives: '(2.0, 1.0)' }
         tests:
           - { call: 'step(0.0, 0.0, x, y, 0.1)', expect: '(1.7, 0.8)' }
           - { call: 'step(2.0, 1.0, x, y, 0.1)', expect: '(2.0, 1.0)' }
@@ -129,6 +160,36 @@ cards:
         hints:
           - '`dw, db = gradients(w, b, x, y)`'
           - Move each against its partial, scaled by `lr`.
+      - title: Train
+        goal: >-
+          One step isn't enough. Write `train(w, b, x, y, lr, steps)`, which starts at `w` and `b`, takes `steps`
+          steps of gradient descent with your `step`, and gives back the final `(w, b)`. Then, at the bottom of the
+          program, train from `0.0, 0.0` with a learning rate of `0.05` for 1000 steps, and print what it found. It
+          should be very close to `w = 2` and `b = 1`.
+        examples:
+          - { call: 'train(0.0, 0.0, x, y, 0.1, 1)', gives: '(1.7, 0.8)' }
+          - { call: 'train(0.0, 0.0, x, y, 0.1, 2)', gives: '(1.97, 0.93)' }
+          - { call: '[round(float(v), 3) for v in train(0.0, 0.0, x, y, 0.05, 1000)]', gives: '[2.0, 1.0]' }
+        shows: |
+          w = 2.0  b = 1.0
+        tests:
+          - { call: 'train(0.0, 0.0, x, y, 0.1, 2)', expect: '(1.97, 0.93)' }
+          - { call: 'train(5.0, -3.0, x, y, 0.1, 0)', expect: '(5.0, -3.0)' }
+          - {
+              call: '[round(float(v), 3) for v in train(0.0, 0.0, x, y, 0.05, 1000)]',
+              expect: '[2.0, 1.0]',
+              hidden: true,
+            }
+          - {
+              call: '[round(float(v), 3) for v in train(0.0, 0.0, x, y, 0.05, 100)]',
+              expect: '[2.001, 0.997]',
+              hidden: true,
+            }
+        requires: ['name:step', 'for']
+        scope: train
+        hints:
+          - '`for _ in range(steps):` and inside it, replace `w, b` with what `step` gives back.'
+          - 'Return `w, b` after the loop. At the bottom: `w, b = train(0.0, 0.0, x, y, 0.05, 1000)`, then `print(w, b)`.'
       - title: Check the gradient
         goal: >-
           Write `check(w, b, x, y)`. Work out the central difference of `loss` for `w`, then for `b`, with `h = 0.00001`, and give back the two relative
