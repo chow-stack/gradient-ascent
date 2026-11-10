@@ -182,7 +182,7 @@ cards:
       Replacing a loop with an array operation is called vectorising. It's the main skill of this unit. So when you see a loop over numbers, ask whether the array can do it for you.
 
 
-      The code below does the same sum both ways, and times them with `time`. Run it a few times. The exact numbers will vary, and in this browser everything's slower than on a normal computer, but the gap stays large.
+      The example does the same sum both ways, and times them with `time`. Run it a few times. The exact numbers will vary, and in this browser everything's slower than on a normal computer, but the gap stays large.
 
 
       Don't convert in a loop, though. Pulling items out one at a time with `a[i]` is slower than using a list, so loop over a NumPy array only when you have no other option.
@@ -319,7 +319,7 @@ cards:
     label: Worked example
     title: Your Vec class, in two lines
     body: >-
-      Remember the `Vec` project? You wrote a whole class to add vectors, scale them, and find a dot product and a length. Here's all of it with NumPy, and you can see what you were building.
+      Remember the `Vec` project? You wrote a whole class to add vectors, scale them, and find a dot product and a length. The example does all of it with NumPy, and you can see what you were building.
 
 
       Each line replaces a method. `a + b` was `__add__`, `2 * a` was `__rmul__`, `(a * b).sum()` was `dot`, and the length is the square root of the dot product with itself. NumPy also has a few functions that apply to every item, like `np.sqrt`.

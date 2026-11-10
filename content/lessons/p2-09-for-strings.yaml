@@ -157,7 +157,7 @@ cards:
       Here's the classic bug: putting an `else: return False` inside the loop. Then the function gives its answer after looking at just the first item. It looks reasonable, and it works in some tests, which is what makes it hard to spot.
 
 
-      Below, `has_digit_bad` checks only the first character, so it gets the second call wrong. As a rule, when a search says yes, it can stop immediately. When it says no, it has to wait until the end.
+      In the example, `has_digit_bad` checks only the first character, so it gets the second call wrong. As a rule, when a search says yes, it can stop immediately. When it says no, it has to wait until the end.
     code: |
       def has_digit(text):
           for ch in text:
@@ -200,16 +200,15 @@ cards:
 
   - type: blank
     id: fill-chars
-    prompt: Fill in the blank so this goes through the characters and shows `3`.
+    prompt: Fill in the blank so the loop goes through the characters of `word`, showing `s`, `k` and `y` on separate lines.
     code: |
-      count = 0
+      word = "sky"
       for ch in ____:
-          count += 1
-      print(count)
-    answers: [['"sky"', "'sky'", '"abc"', '"xyz"']]
-    expectOutput: '3'
+          print(ch)
+    answers: [['word', '"sky"', "'sky'"]]
+    expectOutput: "s\nk\ny"
     why: >-
-      Any three-character string works. The loop runs once per character.
+      `for ch in word:` gives `ch` each character of `word` in turn, so the block runs once per character.
     variants:
       - prompt: Fill in the keyword so this counts the vowels, and shows `2`.
         code: |
@@ -308,7 +307,7 @@ cards:
     label: Worked example
     title: Cleaning up text
     body: >-
-      Before a model sees any text, the text gets cleaned: everything lowercase, with odd characters removed. Here's a tiny version of that, and it's a good example of how to approach a task like this.
+      Before a model sees any text, the text gets cleaned: everything lowercase, with odd characters removed. The example is a tiny version of that, and it's a good example of how to approach a task like this.
 
 
       First, decide what each character should do. Is it a letter or a space? Keep it, in lowercase. Is it anything else? Drop it. Then the code follows directly: an accumulator for the result, a loop over the characters, and an `if` that decides.

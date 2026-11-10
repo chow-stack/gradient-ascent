@@ -19,6 +19,34 @@ cards:
     answer: 'None [1, 2]'
     why: >-
       `.sort()` changes the list and gives back `None`.
+    variants:
+      - code: |
+          nums = [3, 1, 2]
+          nums = nums.append(4)
+          print(nums)
+        choices: [None, '[3, 1, 2, 4]', '[4]', Error]
+        answer: None
+        why: '`.append` changes the list and gives back `None`, and that `None` was stored back in `nums`.'
+        misses:
+          {
+            '[3, 1, 2, 4]': 'The 4 was added, but then `nums =` replaced the list with what `.append` gave back, `None`.',
+            '[4]': '`.append` adds to the list it is called on. The problem is storing its result.',
+            Error: 'Storing `None` is allowed. The trouble only shows up later, when you try to use `nums` as a list.',
+          }
+      - code: |
+          a = [3, 1, 2]
+          b = sorted(a)
+          a.reverse()
+          print(a, b)
+        choices: ['[2, 1, 3] [1, 2, 3]', '[3, 2, 1] [1, 2, 3]', 'None [1, 2, 3]', '[2, 1, 3] None']
+        answer: '[2, 1, 3] [1, 2, 3]'
+        why: '`sorted` gives back a new sorted list and leaves `a` alone. `.reverse()` flips `a` itself, in its original order.'
+        misses:
+          {
+            '[3, 2, 1] [1, 2, 3]': '`sorted(a)` does not change `a`, so `.reverse()` flips `[3, 1, 2]`, not a sorted list.',
+            'None [1, 2, 3]': '`a.reverse()` gives back `None`, but nothing stored that. `a` itself was flipped.',
+            '[2, 1, 3] None': '`sorted` is a built-in that gives back a new list. Only list methods like `.sort` give back `None`.',
+          }
 
   - type: choice
     id: alias
@@ -48,6 +76,20 @@ cards:
         answer: '[1]'
         why: >-
           `append` changes the shared list. Assigning only moves the local name.
+      - code: |
+          row = [0, 0]
+          grid = [row, row]
+          grid[0][0] = 5
+          print(grid)
+        choices: ['[[5, 0], [5, 0]]', '[[5, 0], [0, 0]]', '[[5, 5], [0, 0]]', '[5, 0, 0, 0]']
+        answer: '[[5, 0], [5, 0]]'
+        why: Both items of `grid` are the same list, `row`, so changing it through one shows up in both.
+        misses:
+          {
+            '[[5, 0], [0, 0]]': '`[row, row]` holds two names for one list, not two copies.',
+            '[[5, 5], [0, 0]]': '`grid[0][0]` is row 0, position 0. The surprise is that row 1 is the same list.',
+            '[5, 0, 0, 0]': A list of lists keeps its inner lists. It is not flattened into one.,
+          }
 
   - type: choice
     id: loop-variable
@@ -62,6 +104,35 @@ cards:
     answer: '[1, 2]'
     why: >-
       Assigning to the loop variable doesn't touch the list.
+    variants:
+      - code: |
+          words = ["a", "b"]
+          for w in words:
+              w = w.upper()
+          print(words)
+        choices: ["['a', 'b']", "['A', 'B']", "['A', 'b']", AB]
+        answer: "['a', 'b']"
+        why: '`w` is a name for each item in turn. Giving `w` a new value does not put anything back in the list.'
+        misses:
+          {
+            "['A', 'B']": 'To change the list, you need to assign to `words[i]`, or build a new list.',
+            "['A', 'b']": Nothing in the loop changes the list on any pass.,
+            AB: 'The `print` shows the list itself, which was never changed.',
+          }
+      - code: |
+          nums = [1, 2, 3]
+          for i in range(len(nums)):
+              nums[i] = nums[i] * 2
+          print(nums)
+        choices: ['[2, 4, 6]', '[1, 2, 3]', '[0, 2, 4]', '[2, 2, 3]']
+        answer: '[2, 4, 6]'
+        why: Assigning to `nums[i]` puts the new value into the list itself, at each position.
+        misses:
+          {
+            '[1, 2, 3]': 'This time the loop assigns to `nums[i]`, a place in the list, so the list changes.',
+            '[0, 2, 4]': '`i` is the position, but the line doubles `nums[i]`, the item at that position.',
+            '[2, 2, 3]': 'The loop runs once for each position, so every item is doubled.',
+          }
 
   - type: choice
     id: grid
@@ -74,6 +145,34 @@ cards:
     answer: '2 4'
     why: >-
       There are 2 rows, and row 1, column 0 is 4.
+    variants:
+      - code: |
+          g = [[1, 2], [3, 4], [5, 6]]
+          print(g[2], g[0][1] + g[1][0])
+        choices: ['[5, 6] 5', '[5, 6] 6', '[3, 4] 5', 5 5]
+        answer: '[5, 6] 5'
+        why: '`g[2]` is the third row. `g[0][1]` is 2 and `g[1][0]` is 3, so they add to 5.'
+        misses:
+          {
+            '[5, 6] 6': 'The first index picks the row, the second the column: `g[0][1]` is 2.',
+            '[3, 4] 5': 'Indexes start at 0, so `g[2]` is the third row.',
+            5 5: 'One index picks a whole row, which is a list.',
+          }
+      - code: |
+          g = [[1, 2, 3], [4, 5, 6]]
+          total = 0
+          for row in g:
+              total += row[2]
+          print(total)
+        choices: ['9', '15', '21', '6']
+        answer: '9'
+        why: 'Each `row` is a list, and `row[2]` is its last column: 3 and 6.'
+        misses:
+          {
+            '15': 'That is the sum of row 1. The loop takes position 2 of each row: the column 3, 6.',
+            '21': 'Only one item from each row is added, `row[2]`.',
+            '6': 'There are two rows, so it adds 3 as well as 6.',
+          }
 
   - type: choice
     id: split-strings
@@ -86,6 +185,31 @@ cards:
     answer: '225'
     why: >-
       The pieces are strings, so `*` repeats and `+` joins.
+    variants:
+      - code: |
+          parts = "3 4".split()
+          print(parts[0] + parts[1], int(parts[0]) + int(parts[1]))
+        choices: [34 7, 7 7, 34 34, 3 4 7]
+        answer: 34 7
+        why: '`split` gives back strings, so `+` joins them. After `int`, `+` adds.'
+        misses:
+          {
+            7 7: 'Before converting, the pieces are text, and `+` on text joins them.',
+            34 34: '`int` turns each piece into a number, so the second `+` adds.',
+            3 4 7: '`+` joins text with nothing in between.',
+          }
+      - code: |
+          words = ["red", "fox"]
+          print("-".join(words), len("-".join(words)))
+        choices: [red-fox 7, red-fox 2, -red-fox- 9, red fox 7]
+        answer: red-fox 7
+        why: '`join` puts the separator only between items, giving a single string of 7 characters.'
+        misses:
+          {
+            red-fox 2: '`join` gives back one string, and `len` counts its characters.',
+            -red-fox- 9: 'The separator goes between items, not at the ends.',
+            red fox 7: 'The separator is the string `join` is called on, here a dash.',
+          }
 
   - type: choice
     id: dict-loop
@@ -100,6 +224,33 @@ cards:
     answer: "z 1\na 2\nz"
     why: >-
       A dict loop goes through the keys in the order they were added, and `max` compares keys.
+    variants:
+      - code: |
+          d = {"b": 3, "a": 1}
+          d["c"] = 2
+          print(list(d), sum(d.values()))
+        choices: ["['b', 'a', 'c'] 6", "['a', 'b', 'c'] 6", '[3, 1, 2] 6', "['b', 'a', 'c'] 3"]
+        answer: "['b', 'a', 'c'] 6"
+        why: '`list(d)` gives the keys in the order they were added. `.values()` gives 3, 1 and 2.'
+        misses:
+          {
+            "['a', 'b', 'c'] 6": A dict keeps the order keys were added. It does not sort them.,
+            '[3, 1, 2] 6': 'Going through a dict, or making a list of it, gives the keys.',
+            "['b', 'a', 'c'] 3": '`sum(d.values())` adds every value, including the new one.',
+          }
+      - code: |
+          d = {"x": 5, "y": 9}
+          best = max(d, key=d.get)
+          print(max(d), best)
+        choices: [y y, x y, 9 y, y 9]
+        answer: y y
+        why: '`max(d)` compares the keys, and `"y"` comes after `"x"`. With `key=d.get` it compares values, and 9 wins, which is also `"y"`.'
+        misses:
+          {
+            x y: '`max(d)` compares keys as text, and `"y"` is after `"x"`.',
+            9 y: '`max(d)` gives back a key, not a value.',
+            y 9: '`max` with a `key` still gives back the key, not the value it compared.',
+          }
 
   - type: choice
     id: which-safe
@@ -113,6 +264,32 @@ cards:
     answer: 'abs(x - 0.3) < 1e-9'
     why: >-
       Floats are approximate, so compare with a tolerance.
+    variants:
+      - prompt: '`total` is a sum of floats that should come to 1. Which loop is safe?'
+        choices:
+          ['while abs(total - 1) > 1e-9:', 'while total != 1:', 'while total != 1.0:', 'while round(total) != 1.0:']
+        answer: 'while abs(total - 1) > 1e-9:'
+        why: A sum of floats can miss 1 by a tiny amount and never equal it exactly, so a loop testing `!=` can run forever.
+        misses:
+          {
+            'while total != 1:': '`total` may be 0.9999999999999999, which is not equal to 1, so the loop never ends.',
+            'while total != 1.0:': '`1.0` is still an exact comparison. Floats need a tolerance.',
+            'while round(total) != 1.0:': '`round` stops at the nearest whole number, so 0.6 already counts as 1.',
+          }
+      - prompt: What does this print?
+        kind: predict
+        code: |
+          x = 0.1 + 0.2
+          print(x == 0.3, round(x, 2) == 0.3)
+        choices: [False True, True True, False False, True False]
+        answer: False True
+        why: '`0.1 + 0.2` is 0.30000000000000004, so `==` fails. Rounding to 2 places gives exactly the same float as `0.3`.'
+        misses:
+          {
+            True True: 'Floats are stored approximately, so `0.1 + 0.2` is a tiny bit more than 0.3.',
+            False False: 'Rounding to 2 places removes the tiny error, so it compares equal.',
+            True False: The exact comparison is the one that fails.,
+          }
 
   - type: blank
     id: fill-count
@@ -126,6 +303,33 @@ cards:
     expectOutput: '2'
     why: >-
       A new key should start from a default of 0.
+    variants:
+      - prompt: Fill in the blank so this groups words by their first letter, and shows `['ant', 'ape']`.
+        code: |
+          groups = {}
+          for w in ["ant", "bee", "ape"]:
+              first = w[0]
+              if first not in groups:
+                  groups[first] = ____
+              groups[first].append(w)
+          print(groups["a"])
+        answers:
+          - ['[]', list()]
+        expectOutput: "['ant', 'ape']"
+        why: Each new key starts with an empty list, and every word is then added to its group.
+      - prompt: Fill in the blank so this counts how often each letter appears, and shows `3`.
+        code: |
+          counts = {}
+          for ch in "banana":
+              if ch ____ counts:
+                  counts[ch] += 1
+              else:
+                  counts[ch] = 1
+          print(counts["a"])
+        answers:
+          - [in]
+        expectOutput: '3'
+        why: Only a key that is already there can be added to. A new key starts at 1.
 
   - type: fix
     id: fix-best
@@ -149,6 +353,47 @@ cards:
       - { call: 'largest([2, 9])', expect: '9' }
     why: >-
       Best so far starts from a real item.
+    variants:
+      - prompt: '`shortest(["kiwi", "fig"])` should give back `"fig"`. Fix it.'
+        code: |
+          def shortest(words):
+              best = ""
+              for w in words:
+                  if len(w) < len(best):
+                      best = w
+              return best
+        solution: |
+          def shortest(words):
+              best = words[0]
+              for w in words:
+                  if len(w) < len(best):
+                      best = w
+              return best
+        tests:
+          - { call: 'shortest(["kiwi", "fig"])', expect: "'fig'" }
+          - { call: 'shortest(["pear", "apple"])', expect: "'pear'" }
+          - { call: 'shortest(["melon"])', expect: "'melon'", hidden: true }
+        why: Nothing is shorter than `""`, so it never changed. Starting from a real item makes the comparison fair.
+      - prompt: '`coldest([-5, -9, -2])` should give back `-9`, but it gives back `-2`. Fix it.'
+        code: |
+          def coldest(temps):
+              best = temps[0]
+              for t in temps:
+                  if t > best:
+                      best = t
+              return best
+        solution: |
+          def coldest(temps):
+              best = temps[0]
+              for t in temps:
+                  if t < best:
+                      best = t
+              return best
+        tests:
+          - { call: 'coldest([-5, -9, -2])', expect: '-9' }
+          - { call: 'coldest([3, 1, 2])', expect: '1' }
+          - { call: 'coldest([4])', expect: '4', hidden: true }
+        why: 'Coldest is the smallest, so a new best has to be lower than the current one: `<`, not `>`.'
 
   - type: fix
     id: fix-remove
@@ -171,6 +416,50 @@ cards:
       - { call: 'no_negatives([])', expect: '[]' }
     why: >-
       Removing during the loop skips items, so build a new list.
+    variants:
+      - prompt: '`no_blanks(["a", "", "", "b"])` should give back `["a", "b"]`. Fix it.'
+        code: |
+          def no_blanks(items):
+              for x in items:
+                  if x == "":
+                      items.remove(x)
+              return items
+        solution: |
+          def no_blanks(items):
+              out = []
+              for x in items:
+                  if x != "":
+                      out.append(x)
+              return out
+        tests:
+          - { call: 'no_blanks(["a", "", "", "b"])', expect: "['a', 'b']" }
+          - { call: 'no_blanks([])', expect: '[]' }
+          - { call: 'no_blanks(["", ""])', expect: '[]', hidden: true }
+        why: Removing during the loop shifts the rest along, so the second blank was skipped. Build a new list instead.
+      - prompt: '`add_one(nums)` should give back a new list with 1 added to each item, and leave `nums` unchanged. Fix it.'
+        code: |
+          def add_one(nums):
+              out = nums
+              for i in range(len(out)):
+                  out[i] += 1
+              return out
+
+          a = [1, 2]
+          b = add_one(a)
+        solution: |
+          def add_one(nums):
+              out = nums[:]
+              for i in range(len(out)):
+                  out[i] += 1
+              return out
+
+          a = [1, 2]
+          b = add_one(a)
+        tests:
+          - { call: b, expect: '[2, 3]' }
+          - { call: a, expect: '[1, 2]' }
+          - { call: 'add_one([5, 0])', expect: '[6, 1]', hidden: true }
+        why: '`out = nums` is a second name for the same list, so changing `out` changed `nums`. A copy, `nums[:]`, keeps them apart.'
 
   - type: write
     id: write-matrix
@@ -189,6 +478,39 @@ cards:
       - { call: 'row_means([])', expect: '[]' }
     why: >-
       A row is a list, so `sum` and `len` work on it.
+    variants:
+      - prompt: Write `column(grid, c)`, which gives back a list of the items in column `c` of every row. So `column([[1, 2], [3, 4]], 1)` gives back `[2, 4]`.
+        starter: |
+          def column(grid, c):
+              # Your code here
+        solution: |
+          def column(grid, c):
+              out = []
+              for row in grid:
+                  out.append(row[c])
+              return out
+        tests:
+          - { call: 'column([[1, 2], [3, 4]], 1)', expect: '[2, 4]' }
+          - { call: 'column([[1, 2], [3, 4]], 0)', expect: '[1, 3]' }
+          - { call: 'column([], 0)', expect: '[]', hidden: true }
+        why: Each row is a list, and `row[c]` picks column `c` from it.
+      - prompt: Write `grid_max(grid)`, which gives back the largest number anywhere in the grid. So `grid_max([[1, 7], [4, 2]])` gives back `7`. You can assume the grid has at least one number.
+        starter: |
+          def grid_max(grid):
+              # Your code here
+        solution: |
+          def grid_max(grid):
+              best = grid[0][0]
+              for row in grid:
+                  for x in row:
+                      if x > best:
+                          best = x
+              return best
+        tests:
+          - { call: 'grid_max([[1, 7], [4, 2]])', expect: '7' }
+          - { call: 'grid_max([[-3, -8], [-5, -4]])', expect: '-3' }
+          - { call: 'grid_max([[2]])', expect: '2', hidden: true }
+        why: Best so far, started from a real item, with one loop for the rows and one inside it for each item.
 
   - type: write
     id: write-top
@@ -211,3 +533,37 @@ cards:
       - { call: 'top_word("x y")', expect: "'x'" }
     why: >-
       Two patterns one after another: count, then best so far.
+    variants:
+      - prompt: 'Write `char_counts(text)`, which gives back a dictionary of how many times each character appears, ignoring spaces. So `char_counts("aa b")` gives back `{"a": 2, "b": 1}`.'
+        starter: |
+          def char_counts(text):
+              # Your code here
+        solution: |
+          def char_counts(text):
+              counts = {}
+              for ch in text:
+                  if ch != " ":
+                      counts[ch] = counts.get(ch, 0) + 1
+              return counts
+        tests:
+          - { call: char_counts("aa b"), expect: "{'a': 2, 'b': 1}" }
+          - { call: char_counts(""), expect: '{}' }
+          - { call: char_counts("x x x"), expect: "{'x': 3}", hidden: true }
+        why: 'The counting pattern: `.get(ch, 0) + 1` handles a new key, and the `if` skips spaces.'
+      - prompt: Write `longest_word(text)`, which gives back the longest word in `text`. If there's a tie, the word seen first wins. You can assume the text has at least one word.
+        starter: |
+          def longest_word(text):
+              # Your code here
+        solution: |
+          def longest_word(text):
+              words = text.split()
+              best = words[0]
+              for w in words:
+                  if len(w) > len(best):
+                      best = w
+              return best
+        tests:
+          - { call: longest_word("a big goat"), expect: "'goat'" }
+          - { call: longest_word("hi yo"), expect: "'hi'" }
+          - { call: longest_word("summit"), expect: "'summit'", hidden: true }
+        why: Split into words, then best so far. `>` rather than `>=` keeps the first word in a tie.

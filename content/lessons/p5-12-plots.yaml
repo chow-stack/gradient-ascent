@@ -30,7 +30,7 @@ cards:
       Use `np.linspace` to get `x`, and array maths to get `y`, which is how you plot any formula. If you give only one argument, as in `plt.plot(losses)`, then `x` is just 0, 1, 2 and so on, which is what you want for a loss curve.
 
 
-      Calling `plt.plot` again adds a line to the same plot. Give each a `label`, and then call `plt.legend()` to show them. Always add `plt.xlabel`, `plt.ylabel` and `plt.title`. A plot with no labels is one that you'll misread next week. In a script, you'd finish with `plt.show()` to open the window. Here it's drawn for you, though the call does no harm.
+      Calling `plt.plot` again adds a line to the same plot. Give each a `label`, and then call `plt.legend()` to show them. Always add `plt.xlabel`, `plt.ylabel` and `plt.title`. A plot with no labels is one that you'll misread next week. In a script, you'd finish with `plt.show()` to open the window. In this app it's drawn for you, though the call does no harm.
     code: |
       import numpy as np
       import matplotlib.pyplot as plt
@@ -371,7 +371,7 @@ cards:
     label: Worked example
     title: Train, record, plot
     body: >-
-      Here's the routine you'll repeat for every model from now on, and it uses most of what's in this unit. Make some data that follows a known line, `y = 2x + 1`, with noise. Then fit it using gradient descent, as in your Unit 2 project, but this time it's vectorised over all the examples.
+      The example is the routine you'll repeat for every model from now on, and it uses most of what's in this unit. Make some data that follows a known line, `y = 2x + 1`, with noise. Then fit it using gradient descent, as in your Unit 2 project, but this time it's vectorised over all the examples.
 
 
       The key habit is to record the loss on every step in a list, and then plot that list. So there's a loop over the steps, which has to stay, and one line of array maths inside it for each stage.

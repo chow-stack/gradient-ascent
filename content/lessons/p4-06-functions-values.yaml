@@ -24,7 +24,7 @@ cards:
       The parentheses are what call a function. `square(3)` runs it and gives you the result. `square` on its own, with no parentheses, is the function itself. It doesn't run. You can assign it, as in `f = square`, and then `f(3)` does the same thing. There's one function with two names, just like with lists.
 
 
-      That means a function can be an argument. `apply_twice(f, x)` below doesn't know or care what `f` does. It only knows that `f` can be called. The person calling it decides what to do, and that makes `apply_twice` useful in many places.
+      That means a function can be an argument. In the example, `apply_twice(f, x)` doesn't know or care what `f` does. It only knows that `f` can be called. The person calling it decides what to do, and that makes `apply_twice` useful in many places.
 
 
       The classic mistakes are mirror images. Writing `apply_twice(square(), 3)` calls `square` too early, with no argument, and it crashes. Writing `print(square)` without parentheses shows something like `<function square at 0x10>`, and it doesn't call anything.

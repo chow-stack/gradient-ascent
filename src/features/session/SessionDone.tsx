@@ -1,8 +1,10 @@
-import { ArrowRight, CalendarCheck, Check, Dumbbell, Flame, Home, RotateCcw, Star, X } from 'lucide-react'
+import { ArrowRight, CalendarCheck, Check, Dumbbell, Eye, Flame, Home, RotateCcw, Star, X } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { Adam } from '../../components/Adam'
 import { RateLesson } from '../feedback/RateLesson'
 import { useProgress, type CheckpointResult } from '../progress/progress'
+import { CheckpointReview, type MissedQuestion } from './CheckpointReview'
 import { nextLesson, type SessionKind } from './plan'
 
 export type SessionSummary = {
@@ -12,6 +14,8 @@ export type SessionSummary = {
   checkpoint?: CheckpointResult
   /** A checkpoint's questions, in the order they were asked, and whether each was right. */
   questions?: { label: string; code?: string; correct: boolean }[]
+  /** The checkpoint questions missed, in the version asked, for the review after submitting. */
+  missed?: MissedQuestion[]
   xp: number
   bonus: number
   correct: number
@@ -34,6 +38,10 @@ export function SessionDone({ summary }: { summary: SessionSummary }) {
       ? summary.lessonTitle
       : 'Nice climbing'
   const failedCheckpoint = !!cp && !cp.passed
+  const missed = summary.missed ?? []
+  const [reviewing, setReviewing] = useState(false)
+
+  if (reviewing && missed.length) return <CheckpointReview questions={missed} onBack={() => setReviewing(false)} />
 
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
@@ -44,7 +52,7 @@ export function SessionDone({ summary }: { summary: SessionSummary }) {
           <p className="mt-2 text-muted">
             {cp.correct} of {cp.total} right ({Math.round((cp.correct / Math.max(1, cp.total)) * 100)}%). You need{' '}
             {cp.needed} to pass.
-            {failedCheckpoint && ' Retake it whenever you’re ready: the questions change each time.'}
+            {failedCheckpoint && ' Review what you missed, then retake it: the questions change each time.'}
           </p>
         )}
         {summary.questions && summary.questions.length > 0 && (
@@ -88,6 +96,15 @@ export function SessionDone({ summary }: { summary: SessionSummary }) {
         )}
 
         <div className="mt-8 flex w-full flex-col gap-2">
+          {missed.length > 0 && (
+            <button
+              type="button"
+              className={failedCheckpoint ? 'ga-btn ga-btn--secondary' : 'ga-btn ga-btn--ghost'}
+              onClick={() => setReviewing(true)}
+            >
+              <Eye size={16} aria-hidden /> Review what you missed ({missed.length})
+            </button>
+          )}
           {failedCheckpoint ? (
             <Link to="/session?kind=lesson" className="ga-btn ga-btn--primary">
               <RotateCcw size={16} aria-hidden /> Retake the checkpoint

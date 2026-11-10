@@ -106,7 +106,7 @@ cards:
       The first is starting the accumulator inside the loop. Then it gets reset on every pass, so it only ever remembers the last value. The second is a `return` inside the loop's block. Remember that `return` ends the function right away, so the function leaves on its first pass and gives back only the first value.
 
 
-      The fix for both is about indentation and order: set up before the `while`, update inside it, and return after it. When a loop gives a suspicious number, these are the first two things to check. Compare the wrong version below with the shape you saw earlier.
+      The fix for both is about indentation and order: set up before the `while`, update inside it, and return after it. When a loop gives a suspicious number, these are the first two things to check. Compare the wrong version in the example with the shape you saw earlier.
     code: |
       def bad_sum(limit):
           n = 1
@@ -308,7 +308,7 @@ cards:
       A loop can keep several accumulators at once. Finding a mean takes two: a running total and a count. Each has its own starting value and its own update, and you combine them after the loop.
 
 
-      Below, we'll go through the amounts that the loop generates and find the mean of those above a threshold. An `if` in the block decides which values count. Both updates go inside it, so that the total and the count stay in step.
+      In the example, we go through the amounts that the loop generates and find the mean of those above a threshold. An `if` in the block decides which values count. Both updates go inside it, so that the total and the count stay in step.
 
 
       There's one more awkward case to check. If nothing passes the `if`, the count stays 0, and dividing would crash. So a guard clause goes after the loop. Every time you divide by a count, ask whether that count could be 0.

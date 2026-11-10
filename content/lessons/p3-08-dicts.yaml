@@ -147,7 +147,7 @@ cards:
     id: missing
     title: When a key is missing
     body: >-
-      Looking up a key that isn't there stops the program with a `KeyError`. Many people expect to get `None` or 0, but Python would rather you find out. Run this code to see it, and notice that the error message shows you the missing key.
+      Looking up a key that isn't there stops the program with a `KeyError`. Many people expect to get `None` or 0, but Python would rather you find out. Run the example to see it, and notice that the error message shows you the missing key.
 
 
       There are two ways to handle it. You can check first with `if key in d:`. Or you can use `.get(key)`, which gives back `None` if the key's missing, or `.get(key, 0)`, which gives back the default you chose. `.get` never adds the key to the dict.
@@ -296,7 +296,7 @@ cards:
       Models only work with numbers, so the first step in any language model is turning characters into numbers. makemore and nanoGPT both start with exactly this, using a pair of dicts: one from characters to numbers, and one going back.
 
 
-      Below, we go through the allowed characters, giving each the next number. For each one, we fill in both dicts. Then encoding a word is a loop that looks each character up, and decoding goes the other way.
+      In the example, we go through the allowed characters, giving each the next number. For each one, we fill in both dicts. Then encoding a word is a loop that looks each character up, and decoding goes the other way.
 
 
       Look at how it uses each thing you know: a string loop, a counter, dict assignment, list building, and `join` to put the text back together. Try following `"bad"` through by hand. If the encoded list goes back to the same word, you know that it works.

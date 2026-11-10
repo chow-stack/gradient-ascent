@@ -410,7 +410,7 @@ cards:
     label: Worked example
     title: A network, level by level
     body: >-
-      Here's a small network as objects within objects, following the same structure as micrograd. Read from the bottom up.
+      The example is a small network as objects within objects, following the same structure as micrograd. Read from the bottom up.
 
 
       A `Neuron` remembers its weights, and calculates one number. A `Layer` remembers a list of neurons, and gives back a list of their outputs. An `MLP`, short for multi-layer perceptron, remembers a list of layers, and passes the data through them, with each layer's output becoming the next layer's input.

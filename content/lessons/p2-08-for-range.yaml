@@ -285,7 +285,7 @@ cards:
     label: Worked example
     title: A loop that uses its counter
     body: >-
-      The counter isn't only for repeating, and you can calculate with it. Here's the shape of a real training loop in miniature. A value starts out far from where we want it, and each pass moves it a fraction of the way towards the target. We report on progress every few passes using `%`.
+      The counter isn't only for repeating, and you can calculate with it. The example is a real training loop in miniature. A value starts out far from where we want it, and each pass moves it a fraction of the way towards the target. We report on progress every few passes using `%`.
 
 
       Look at how the pieces from this unit fit together. There's an accumulator being updated from its old value, and a `for` loop because we've chosen a number of passes in advance. An `if` inside it uses `%` to select only some passes. And it's all wrapped in a function with defaults.

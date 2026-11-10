@@ -93,7 +93,7 @@ cards:
       This is the most common misunderstanding about loops. The condition isn't watching all the time. It's checked once, at the top, before each pass. If the condition becomes false halfway through the block, the rest of the block still runs. The loop only ends when Python gets back to the top and asks again.
 
 
-      So below, when `n` becomes 3, the `print` underneath still shows it, even though `n < 3` is already false at that moment.
+      So in the example, when `n` becomes 3, the `print` underneath still shows it, even though `n < 3` is already false at that moment.
 
 
       This also means the order of lines in the block matters. Printing and then updating gives different output from updating and then printing. Compare this example with the one before.
@@ -276,7 +276,7 @@ cards:
       You can work out any loop with a small table. Write a column for each variable, and add a row each time something changes. It sounds slow, but it's the most reliable way to understand what a loop is doing, and even experienced programmers do it for tricky code.
 
 
-      Below, a balance grows by 10% a year, and we want to know how long it takes to pass 150. The table goes like this. Start: `money` 100, `years` 0. After one pass: 110, 1. After two: 121, 2. Then 133.1 with 3, then 146.41 with 4, then 161.051 with 5. Now `money < 150` is false, so the loop ends.
+      In the example, a balance grows by 10% a year, and we want to know how long it takes to pass 150. The table goes like this. Start: `money` 100, `years` 0. After one pass: 110, 1. After two: 121, 2. Then 133.1 with 3, then 146.41 with 4, then 161.051 with 5. Now `money < 150` is false, so the loop ends.
 
 
       A `while` loop suits this job because you don't know the number of passes in advance. You only know when to stop. Training a model until its error is small enough has the same shape.
@@ -292,7 +292,7 @@ cards:
       - { line: 3, label: 'Keep going until it passes 150' }
       - { line: 4, label: 'One year of growth' }
       - { line: 5, label: 'Count the passes' }
-    predict: After the table above, what will this show?
+    predict: Using that table, what will it show?
 
   - type: write
     id: halvings

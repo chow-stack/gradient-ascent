@@ -29,7 +29,7 @@ cards:
       as much as `x`.
 
 
-      That's the chain rule: the slope of the whole thing is the outside's slope, worked out at the inside's value, times the inside's slope. Here that's `2
+      That's the chain rule: the slope of the whole thing is the outside's slope, worked out at the inside's value, times the inside's slope. In the example, that's `2
       * (3 * x + 1) * 3`.
 
 
@@ -200,8 +200,8 @@ cards:
     label: Worked example
     title: The error of one prediction
     body: >-
-      Here's the chain rule on the thing you'll train in this unit. A model predicts `pred = w * x`, and the true answer is `y`. The squared error is `(w *
-      x - y) ** 2`. How does it change as the weight `w` changes? Here `x` and `y` are fixed data, and `w` is the variable.
+      The example uses the chain rule on the thing you'll train in this unit. A model predicts `pred = w * x`, and the true answer is `y`. The squared error is `(w *
+      x - y) ** 2`. How does it change as the weight `w` changes? In the example, `x` and `y` are fixed data, and `w` is the variable.
 
 
       The inside is `u = w * x - y`, the error. Its slope with respect to `w` is `x`, because `w` is multiplied by `x`. The outside is `u ** 2`, with slope

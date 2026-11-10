@@ -261,6 +261,20 @@ export function SessionRunner({ plan }: { plan: SessionPlan }) {
             return it ? [{ label: cardLabel(it.card), code, correct: r.correct }] : []
           })
         : undefined,
+      missed: cp
+        ? results.current.flatMap((r) => {
+            const it = plan.items.find((i) => i.key === r.key)
+            if (!it || r.correct) return []
+            const answer = answersRef.current[r.key]
+            return [
+              {
+                key: r.key,
+                card: it.card,
+                answer: isAnswered(it, answer) ? answer : undefined,
+              },
+            ]
+          })
+        : undefined,
       xp: totals.current.xp + bonus,
       bonus,
       correct: totals.current.correct,

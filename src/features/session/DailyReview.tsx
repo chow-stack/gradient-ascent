@@ -103,7 +103,19 @@ function kindLabel(card: Card, task: boolean): string {
   }
 }
 
-function ReviewItem({ n, result, entry }: { n: number; result: DailyResult; entry?: DailyReviewEntry }) {
+/** One answered problem, folded to its prompt. Also used for the questions missed in a checkpoint. */
+export function ReviewItem({
+  n,
+  result,
+  entry,
+  unanswered,
+}: {
+  n: number
+  result: DailyResult
+  entry?: DailyReviewEntry
+  /** Shown in place of the learner's answer when they gave none. */
+  unanswered?: string
+}) {
   // Misses start open: they're the ones worth a look.
   const [open, setOpen] = useState(result === 'missed')
   const bodyId = useId()
@@ -143,7 +155,7 @@ function ReviewItem({ n, result, entry }: { n: number; result: DailyResult; entr
             <div className="flex flex-col gap-5 px-4 pt-1 pb-5 sm:px-5">
               <span className={cn('text-small font-semibold sm:hidden', r.className)}>{r.label}</span>
               {entry ? (
-                <Body entry={entry} right={result !== 'missed'} />
+                <Body entry={entry} right={result !== 'missed'} unanswered={unanswered} />
               ) : (
                 <p className="text-muted">This one was answered before reviews were saved.</p>
               )}
@@ -156,9 +168,12 @@ function ReviewItem({ n, result, entry }: { n: number; result: DailyResult; entr
 }
 
 /** The question, the learner's answer, and the right one. */
-function Body({ entry, right }: { entry: DailyReviewEntry; right: boolean }) {
+function Body({ entry, right, unanswered }: { entry: DailyReviewEntry; right: boolean; unanswered?: string }) {
   const { card, answer } = entry
   const why = 'why' in card ? card.why : undefined
+  // The note for the wrong choice picked, naming the mistake behind it.
+  const miss =
+    card.type === 'choice' && answer?.type === 'choice' && answer.choice ? card.misses[answer.choice] : undefined
   return (
     <>
       {/* The heading already shows a short prompt in full; a task's brief or a long prompt is shown here. */}
@@ -167,14 +182,18 @@ function Body({ entry, right }: { entry: DailyReviewEntry; right: boolean }) {
         <CodeBlock code={card.code} highlightLine={'highlightLine' in card ? card.highlightLine : undefined} />
       )}
       {card.type === 'choice' ? (
-        <Choices card={card} picked={answer?.type === 'choice' ? answer.choice : null} />
+        <>
+          {!answer && unanswered && <p className="text-muted">{unanswered}</p>}
+          <Choices card={card} picked={answer?.type === 'choice' ? answer.choice : null} />
+        </>
       ) : (
-        <Answers card={card} answer={answer} right={right} />
+        <Answers card={card} answer={answer} right={right} unanswered={unanswered} />
       )}
-      {why && (
-        <div>
+      {(miss || why) && (
+        <div className="flex flex-col gap-2">
           <Label>Why</Label>
-          <Prose text={why} className="text-muted" />
+          {miss && <Prose text={miss} />}
+          {why && <Prose text={why} className="text-muted" />}
         </div>
       )}
     </>
@@ -207,7 +226,17 @@ function Choices({ card, picked }: { card: Extract<Card, { type: 'choice' }>; pi
 }
 
 /** Code and text answers: the learner's last checked one, then the right one. */
-function Answers({ card, answer, right }: { card: Card; answer?: Answer; right: boolean }) {
+function Answers({
+  card,
+  answer,
+  right,
+  unanswered,
+}: {
+  card: Card
+  answer?: Answer
+  right: boolean
+  unanswered?: string
+}) {
   const mine = shownAnswer(card, answer)
   const correct = rightAnswer(card)
   if (!correct) return null
@@ -237,7 +266,7 @@ function Answers({ card, answer, right }: { card: Card; answer?: Answer; right: 
           )}
         </Label>
         {!mine ? (
-          <p className="text-muted">You showed the answer without checking one.</p>
+          <p className="text-muted">{unanswered ?? 'You showed the answer without checking one.'}</p>
         ) : code ? (
           <CodeBlock code={mine} filename="yours.py" />
         ) : (

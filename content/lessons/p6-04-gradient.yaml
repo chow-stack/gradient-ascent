@@ -83,7 +83,7 @@ cards:
       gradient, and `f` goes down fastest. That second fact is the whole of the next lesson.
 
 
-      Each number also says how much its input matters right now. Here `w` matters four times as much as `b`, so the biggest change comes from moving `w`.
+      Each number also says how much its input matters right now. In the example, `w` matters four times as much as `b`, so the biggest change comes from moving `w`.
     code: |
       import numpy as np
 

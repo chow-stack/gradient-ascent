@@ -50,7 +50,13 @@ export function LearnView({ card }: { card: LearnCard }) {
 
         {card.code && (
           <div className="ga-split-side flex flex-col gap-5">
-            <CodeBlock code={card.code} labels={labels} />
+            {/* Line numbers only when the text points at a line, as in "on line 4". */}
+            <CodeBlock
+              code={card.code}
+              labels={labels}
+              filename="Example"
+              numbered={/\blines? \d/i.test(`${card.body} ${card.deeper ?? ''}`)}
+            />
 
             {card.code && card.predict && !result && (
               <div className="ga-hint flex gap-3">

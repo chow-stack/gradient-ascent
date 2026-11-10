@@ -364,7 +364,7 @@ cards:
     label: Worked example
     title: The classic training bug
     body: >-
-      Here's a bug that combines everything in this lesson. You want to save the best weights you've seen during training, so you can go back to them at the end.
+      The example has a bug that combines everything in this lesson. You want to save the best weights you've seen during training, so you can go back to them at the end.
 
 
       The first version does `best = w`, which is only a second name. Training then changes `w` in place with `-=`, so `best` changes too. At the end, `best` is just the final weights, whichever they were. Nothing crashes, and you'd only notice if you looked closely.

@@ -18,6 +18,34 @@ cards:
     answer: '[2 4] [1, 2, 1, 2]'
     why: >-
       An array applies `*` to each item, and a list repeats.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          print(a + 1, a > 1)
+        choices: ['[2 3 4] [False  True  True]', '[2 3 4] True', '[1 2 3 1] [False  True  True]', Error]
+        answer: '[2 3 4] [False  True  True]'
+        why: Arithmetic and comparisons on an array both work item by item and give back arrays.
+        misses:
+          {
+            '[2 3 4] True': 'A comparison on an array gives one `True` or `False` per item, not a single answer.',
+            '[1 2 3 1] [False  True  True]': '`+` on an array adds to every item. It does not add an item to the end.',
+            Error: 'Adding a number to an array is fine: the number is used for every item.',
+          }
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          b = np.array([0.5, 1, 1.5])
+          print(a.dtype == int, (a + b).dtype)
+        choices: [True float64, True int64, False float64, Error]
+        answer: True float64
+        why: Whole numbers make an integer array. Adding floats gives a float result, so nothing is lost.
+        misses:
+          {
+            True int64: 'NumPy does not throw away decimals when you mix in floats: the result is a float array.',
+            False float64: An array made only of whole numbers is an integer array.,
+            Error: Arrays of different number types can be added. The result takes the more general type.,
+          }
 
   - type: choice
     id: reshape
@@ -30,6 +58,33 @@ cards:
     answer: '(6, 8)'
     why: >-
       48 items in 6 rows leaves 8, and this is how you flatten a batch.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.arange(12)
+          print(a.reshape(3, -1).shape, a.reshape(-1, 6).shape)
+        choices: ['(3, 4) (2, 6)', '(3, 12) (12, 6)', '(4, 3) (6, 2)', Error]
+        answer: (3, 4) (2, 6)
+        why: '`-1` means "work it out": 12 items in 3 rows leaves 4 columns, and 12 items in 6 columns needs 2 rows.'
+        misses:
+          {
+            '(3, 12) (12, 6)': 'A reshape keeps the same 12 items, so the sizes have to multiply to 12.',
+            '(4, 3) (6, 2)': 'The shape lists rows first, then columns, in the order given.',
+            Error: '`-1` is allowed once in a reshape, and NumPy fills it in.',
+          }
+      - code: |
+          import numpy as np
+          a = np.zeros((2, 3))
+          print(a.ndim, a.size, a.shape[0])
+        choices: [2 6 2, 2 6 3, 6 2 2, 3 6 2]
+        answer: 2 6 2
+        why: '`ndim` counts the axes, `size` counts every item, and `shape[0]` is the number of rows.'
+        misses:
+          {
+            2 6 3: '`shape[0]` is the first number in the shape, the rows.',
+            6 2 2: '`ndim` is the number of axes, 2. `size` is the number of items, 6.',
+            3 6 2: 'A shape of `(2, 3)` has 2 axes.',
+          }
 
   - type: choice
     id: index-shape
@@ -43,6 +98,35 @@ cards:
     answer: '(3,) (5,) (5, 1)'
     why: >-
       A number removes an axis, and a slice keeps it.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.zeros((4, 6))
+          print(a[1:3].shape, a[2, 1:4].shape)
+        choices: ['(2, 6) (3,)', '(2,) (3,)', '(2, 6) (1, 3)', '(3, 6) (3,)']
+        answer: (2, 6) (3,)
+        why: '`1:3` keeps rows 1 and 2, with every column. A single number for the row removes that axis.'
+        misses:
+          {
+            '(2,) (3,)': 'A slice of rows keeps every column, so it is still 2D.',
+            '(2, 6) (1, 3)': A plain number as an index removes its axis completely.,
+            '(3, 6) (3,)': 'A slice stops before its end, so `1:3` is 2 rows.',
+          }
+      - code: |
+          import numpy as np
+          data = np.arange(20).reshape(5, 4)
+          X = data[:, :-1]
+          y = data[:, -1]
+          print(X.shape, y.shape)
+        choices: ['(5, 3) (5,)', '(5, 3) (5, 1)', '(4, 3) (4,)', '(5, 4) (5,)']
+        answer: (5, 3) (5,)
+        why: Every row and all but the last column for `X`. The last column alone, picked with a number, for `y`.
+        misses:
+          {
+            '(5, 3) (5, 1)': 'Picking the column with a number, `-1`, removes that axis. `-1:` would keep it.',
+            '(4, 3) (4,)': '`:` in the row position keeps all 5 rows.',
+            '(5, 4) (5,)': '`:-1` stops before the last column.',
+          }
 
   - type: choice
     id: view
@@ -58,6 +142,39 @@ cards:
     answer: '[1 9 3]'
     why: >-
       A slice of an array shares memory with it.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          b = a.copy()
+          c = a
+          b[0] = 7
+          c[1] = 8
+          print(a)
+        choices: ['[1 8 3]', '[7 8 3]', '[1 2 3]', '[7 2 3]']
+        answer: '[1 8 3]'
+        why: '`b` is a separate copy. `c` is a second name for `a`, so changing `c` changes `a`.'
+        misses:
+          {
+            '[7 8 3]': '`.copy()` makes new memory, so `b` no longer shares anything with `a`.',
+            '[1 2 3]': '`c = a` gives the same array a second name, so `c[1] = 8` shows up in `a`.',
+            '[7 2 3]': 'It is the copy that was changed at 0, and the alias at 1.',
+          }
+      - code: |
+          import numpy as np
+          w = np.array([1.0, 2.0])
+          best = w
+          w -= 1
+          print(best)
+        choices: ['[0. 1.]', '[1. 2.]', None, Error]
+        answer: '[0. 1.]'
+        why: '`best = w` saves the name, not a snapshot. `-=` changes the array in place, so `best` sees it.'
+        misses:
+          {
+            '[1. 2.]': To keep a snapshot you need `w.copy()`. Here both names point at the same array.,
+            None: '`best` holds the array, which was changed in place.',
+            Error: '`-=` with a number works on an array, item by item.',
+          }
 
   - type: choice
     id: axis
@@ -71,6 +188,46 @@ cards:
     answer: '(7,) (4, 1)'
     why: >-
       The axis you name vanishes, unless `keepdims` keeps it with size 1.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([[1, 5], [7, 2], [3, 3]])
+          print(a.argmax(axis=1), a.max(axis=0))
+        choices: ['[1 0 0] [7 5]', '[1 0 1] [7 5]', '[1 0 0] [5 7 3]', 1 7]
+        answer: '[1 0 0] [7 5]'
+        why: '`axis=1` goes along each row, so one answer per row. In a tie, `argmax` picks the first. `axis=0` gives one per column.'
+        misses:
+          {
+            '[1 0 1] [7 5]': 'For the row `[3, 3]`, `argmax` gives the first of the tied places, 0.',
+            '[1 0 0] [5 7 3]': '`axis=0` makes the rows vanish, so there is one answer per column.',
+            1 7: 'With an axis, you get an array with one answer per row or column.',
+          }
+      - code: |
+          import numpy as np
+          X = np.array([[1.0, 10.0], [3.0, 30.0]])
+          Z = (X - X.mean(axis=0)) / X.std(axis=0)
+          print(Z)
+        choices:
+          - |-
+            [[-1. -1.]
+             [ 1.  1.]]
+          - |-
+            [[-1.  1.]
+             [-1.  1.]]
+          - |-
+            [[0. 0.]
+             [0. 0.]]
+          - Error
+        answer: |-
+          [[-1. -1.]
+           [ 1.  1.]]
+        why: Each column is shifted by its own mean and divided by its own spread, so both columns become -1 and 1.
+        misses:
+          {
+            "[[-1.  1.]\n [-1.  1.]]": '`axis=0` gives one mean per column, so it standardises down each column, not along each row.',
+            "[[0. 0.]\n [0. 0.]]": Only the mean is subtracted; each value keeps its distance from it.,
+            Error: 'The means have shape `(2,)`, which lines up with the columns of `(2, 2)`.',
+          }
 
   - type: choice
     id: broadcast-trap
@@ -83,6 +240,34 @@ cards:
     answer: '(5, 5)'
     why: >-
       On the right, 1 with 5 stretches, so you silently get a grid.
+    variants:
+      - code: |
+          import numpy as np
+          preds = np.zeros((4, 1))
+          y = np.zeros(4)
+          print(((preds - y) ** 2).mean(), (preds - y).shape)
+        choices: ['0.0 (4, 4)', '0.0 (4,)', '0.0 (4, 1)', Error]
+        answer: 0.0 (4, 4)
+        why: '`(4, 1)` with `(4,)` broadcasts to `(4, 4)`. The mean still works, which is why this bug is silent.'
+        misses:
+          {
+            '0.0 (4,)': 'Lined up on the right, it is 1 with 4 and then 4 with nothing, so the result is a grid.',
+            '0.0 (4, 1)': 'The 1 stretches to 4, giving `(4, 4)`.',
+            Error: 'Nothing clashes, since one side of each pair is 1 or missing. That is the trap.',
+          }
+      - code: |
+          import numpy as np
+          a = np.array([1, 2, 3])
+          print((a[:, None] * a).shape)
+        choices: ['(3, 3)', '(3,)', '(3, 1)', Error]
+        answer: (3, 3)
+        why: '`a[:, None]` is a column of shape `(3, 1)`. Against `(3,)`, both stretch, giving every product in a `(3, 3)` table.'
+        misses:
+          {
+            '(3,)': '`None` adds an axis, so this is a column times a row.',
+            '(3, 1)': 'The `(3,)` row stretches down the column too.',
+            Error: 'Lined up on the right, it is 1 with 3 and 3 with nothing, which broadcasts.',
+          }
 
   - type: choice
     id: broadcast-error
@@ -95,6 +280,33 @@ cards:
     answer: '`np.zeros((3, 2)) + np.zeros(3)`'
     why: >-
       Shapes line up on the right, so that's 2 with 3.
+    variants:
+      - prompt: Which of these works without an error?
+        choices:
+          [
+            '`np.zeros((4, 3)) + np.zeros((4, 1))`',
+            '`np.zeros((4, 3)) + np.zeros(4)`',
+            '`np.zeros((4, 3)) + np.zeros((3, 4))`',
+            '`np.zeros((4, 3)) + np.zeros((2, 3))`',
+          ]
+        answer: '`np.zeros((4, 3)) + np.zeros((4, 1))`'
+        why: 'Lined up on the right: 3 with 1 stretches, and 4 with 4 matches. Each of the others has a pair that is neither equal nor 1.'
+        misses:
+          {
+            '`np.zeros((4, 3)) + np.zeros(4)`': 'On the right, 3 meets 4. A row vector has to match the columns.',
+            '`np.zeros((4, 3)) + np.zeros((3, 4))`': 'On the right, 3 meets 4, and on the left 4 meets 3. Broadcasting never transposes.',
+            '`np.zeros((4, 3)) + np.zeros((2, 3))`': '3 matches 3, but then 4 meets 2, and neither is 1.',
+          }
+      - prompt: '`X` has shape `(100, 5)`. Which subtracts the mean of each column?'
+        choices: ['`X - X.mean(axis=0)`', '`X - X.mean(axis=1)`', '`X - X.mean()`', '`X.mean(axis=0) - X.T`']
+        answer: '`X - X.mean(axis=0)`'
+        why: '`X.mean(axis=0)` has shape `(5,)`, one per column, and it lines up with the 5 columns on the right.'
+        misses:
+          {
+            '`X - X.mean(axis=1)`': 'That is one mean per row, shape `(100,)`, which clashes with the 5 columns.',
+            '`X - X.mean()`': 'With no axis, it is one mean of everything, not one per column.',
+            '`X.mean(axis=0) - X.T`': '`X.T` is `(5, 100)`, so `(5,)` meets 100 on the right and fails.',
+          }
 
   - type: choice
     id: matmul-shape
@@ -109,6 +321,36 @@ cards:
     answer: '(16, 8) (16, 16)'
     why: >-
       The inner numbers match and vanish, and the outer numbers remain.
+    variants:
+      - code: |
+          import numpy as np
+          X = np.ones((32, 10))
+          W1 = np.ones((10, 64))
+          W2 = np.ones((64, 3))
+          print((X @ W1 @ W2).shape)
+        choices: ['(32, 3)', '(10, 3)', '(32, 64)', Error]
+        answer: (32, 3)
+        why: '`(32, 10) @ (10, 64)` gives `(32, 64)`, and then `@ (64, 3)` gives `(32, 3)`: one row of 3 scores per example.'
+        misses:
+          {
+            '(10, 3)': The outer numbers stay. The first is the 32 rows of `X`.,
+            '(32, 64)': That is after the first layer. The second `@` takes 64 down to 3.,
+            Error: 'Each pair of inner numbers matches, 10 with 10 and 64 with 64.',
+          }
+      - code: |
+          import numpy as np
+          A = np.ones((3, 2))
+          B = np.ones((3, 2))
+          print((A.T @ B).shape, (A * B).shape)
+        choices: ['(2, 2) (3, 2)', '(3, 3) (3, 2)', Error, '(2, 2) (2, 2)']
+        answer: (2, 2) (3, 2)
+        why: '`A.T` is `(2, 3)`, and `(2, 3) @ (3, 2)` gives `(2, 2)`. `*` works item by item and keeps the shape.'
+        misses:
+          {
+            '(3, 3) (3, 2)': 'That would be `A @ B.T`. Here the transpose is on `A`, so the outer numbers are 2 and 2.',
+            Error: 'After the transpose the inner numbers match, 3 with 3.',
+            '(2, 2) (2, 2)': '`*` is not a matrix product. It keeps the shape `(3, 2)`.',
+          }
 
   - type: choice
     id: dot-value
@@ -123,6 +365,36 @@ cards:
     answer: '[3 2] 5'
     why: >-
       `*` works item by item, and `@` adds the products up.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([3.0, 4.0])
+          print(np.linalg.norm(a), a @ a)
+        choices: [5.0 25.0, 7.0 25.0, '5.0 [ 9. 16.]', 25.0 5.0]
+        answer: 5.0 25.0
+        why: The length is the square root of the sum of squares, 5. A vector dotted with itself is that sum, 25.
+        misses:
+          {
+            7.0 25.0: The length is not the sum of the items. It is `sqrt(3² + 4²)`.,
+            '5.0 [ 9. 16.]': '`@` adds the products up, giving one number.',
+            25.0 5.0: '`norm` is the length, 5, and `a @ a` is the squared length.',
+          }
+      - code: |
+          import numpy as np
+          a = np.array([1.0, 0.0])
+          b = np.array([5.0, 0.0])
+          c = np.array([0.0, 2.0])
+          cos = lambda u, v: (u @ v) / (np.linalg.norm(u) * np.linalg.norm(v))
+          print(cos(a, b), cos(a, c))
+        choices: [1.0 0.0, 5.0 0.0, 0.2 0.0, 1.0 2.0]
+        answer: 1.0 0.0
+        why: '`a` and `b` point the same way, so their cosine is 1 whatever their lengths. `a` and `c` are at right angles, so 0.'
+        misses:
+          {
+            5.0 0.0: 'Dividing by both lengths removes size, so cosine similarity is never above 1.',
+            0.2 0.0: Length does not matter for cosine. Same direction gives exactly 1.,
+            1.0 2.0: 'At right angles the dot product is 0, so the cosine is 0.',
+          }
 
   - type: choice
     id: mask-mean
@@ -137,6 +409,35 @@ cards:
     answer: '0.75'
     why: >-
       The predictions are `[1 0 1 0]`, and three of the four match.
+    variants:
+      - code: |
+          import numpy as np
+          a = np.array([4, -1, 7, 0, -3])
+          print(a[a > 0], (a < 0).sum(), (a < 0).mean())
+        choices: ['[4 7] 2 0.4', '[4 7] -4 0.4', '[ True False  True False False] 2 0.4', '[4 7] 2 2']
+        answer: '[4 7] 2 0.4'
+        why: A mask in brackets picks the items. Summing a mask counts the `True`s, and its mean is the fraction.
+        misses:
+          {
+            '[4 7] -4 0.4': '`(a < 0)` is a mask of `True`/`False`, so its sum counts, rather than adding the negative values.',
+            '[ True False  True False False] 2 0.4': '`a[mask]` gives the items where the mask is `True`, not the mask itself.',
+            '[4 7] 2 2': 'The mean of a mask is the fraction that are `True`: 2 out of 5.',
+          }
+      - code: |
+          import numpy as np
+          p = np.array([0.9, 0.2, 0.6, 0.4])
+          y = np.array([1, 0, 0, 1])
+          pred = np.where(p > 0.5, 1, 0)
+          print(pred, (pred == y).mean())
+        choices: ['[1 0 1 0] 0.5', '[1 0 1 0] 2', '[0 2] 0.5', '[1 0 1 0] 0.75']
+        answer: '[1 0 1 0] 0.5'
+        why: '`np.where` picks 1 or 0 for each item. Two of the four predictions match `y`.'
+        misses:
+          {
+            '[1 0 1 0] 2': 'The mean of a mask gives the fraction right, not the count.',
+            '[0 2] 0.5': 'With three arguments, `np.where` chooses a value for each item. With one, it gives positions.',
+            '[1 0 1 0] 0.75': 'Compare place by place: positions 0 and 1 match, but 2 and 3 do not.',
+          }
 
   - type: write
     id: vectorise-1
@@ -162,6 +463,52 @@ cards:
       - { call: 'total_squares(np.array([-1]))', expect: '0' }
     why: >-
       A filter becomes a mask, and an accumulator becomes a sum.
+    variants:
+      - prompt: Rewrite this loop with no loop, so that it gives back the same answer.
+        starter: |
+          import numpy as np
+
+          def count_big(a, limit):
+              # Rewrite this with no loop:
+              # n = 0
+              # for x in a:
+              #     if abs(x) > limit:
+              #         n += 1
+              # return n
+        solution: |
+          import numpy as np
+
+          def count_big(a, limit):
+              return (np.abs(a) > limit).sum()
+        tests:
+          - { call: 'count_big(np.array([1, -5, 3, 9]), 2)', expect: '3' }
+          - { call: 'count_big(np.array([1, 2]), 5)', expect: '0' }
+          - { call: 'count_big(np.array([-7, 7, 0]), 6)', expect: '2', hidden: true }
+        why: The condition becomes a mask, and counting becomes `.sum()` of the mask.
+      - prompt: Rewrite this loop with no loop, so that it gives back the same answer, the mean squared error.
+        starter: |
+          import numpy as np
+
+          def mse(preds, y):
+              # Rewrite this with no loop:
+              # total = 0
+              # for i in range(len(y)):
+              #     total += (preds[i] - y[i]) ** 2
+              # return total / len(y)
+        solution: |
+          import numpy as np
+
+          def mse(preds, y):
+              return ((preds - y) ** 2).mean()
+        tests:
+          - { call: 'mse(np.array([1.0, 2.0]), np.array([1.0, 4.0]))', expect: '2.0' }
+          - { call: 'mse(np.array([3.0]), np.array([3.0]))', expect: '0.0' }
+          - {
+              call: 'mse(np.array([0.0, 0.0, 3.0]), np.array([1.0, 1.0, 0.0]))',
+              expect: '3.6666666666666665',
+              hidden: true,
+            }
+        why: Subtracting arrays pairs the items up, and `.mean()` replaces the total and the division.
 
   - type: write
     id: vectorise-2
@@ -189,6 +536,59 @@ cards:
       - { call: 'column_means(np.zeros((5, 3))).shape', expect: '(3,)' }
     why: >-
       One per column means that the rows vanish.
+    variants:
+      - prompt: Rewrite this nested loop with no loops, so that it gives back the same answer, the index of the largest item in each row.
+        starter: |
+          import numpy as np
+
+          def row_best(X):
+              # Rewrite this with no loops:
+              # out = []
+              # for r in range(X.shape[0]):
+              #     best = 0
+              #     for c in range(X.shape[1]):
+              #         if X[r, c] > X[r, best]:
+              #             best = c
+              #     out.append(best)
+              # return np.array(out)
+        solution: |
+          import numpy as np
+
+          def row_best(X):
+              return X.argmax(axis=1)
+        tests:
+          - { call: 'row_best(np.array([[1, 9], [8, 2]]))', expect: '[1, 0]' }
+          - { call: 'row_best(np.zeros((4, 3))).shape', expect: '(4,)' }
+          - { call: 'row_best(np.array([[3, 1, 7], [5, 5, 0]]))', expect: '[2, 0]', hidden: true }
+        why: 'One answer per row means the columns vanish: `axis=1`. `argmax` gives positions, not values.'
+      - prompt: Rewrite this nested loop with no loops, so that it gives back the same answer, every row of `X` minus the vector `v`.
+        starter: |
+          import numpy as np
+
+          def subtract_each(X, v):
+              # Rewrite this with no loops:
+              # out = np.zeros(X.shape)
+              # for r in range(X.shape[0]):
+              #     for c in range(X.shape[1]):
+              #         out[r, c] = X[r, c] - v[c]
+              # return out
+        solution: |
+          import numpy as np
+
+          def subtract_each(X, v):
+              return X - v
+        tests:
+          - {
+              call: 'subtract_each(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0, 1.0]))',
+              expect: '[[0.0, 1.0], [2.0, 3.0]]',
+            }
+          - { call: 'subtract_each(np.ones((5, 3)), np.ones(3)).shape', expect: '(5, 3)' }
+          - {
+              call: 'subtract_each(np.array([[5.0, 5.0]]), np.array([2.0, 3.0]))',
+              expect: '[[3.0, 2.0]]',
+              hidden: true,
+            }
+        why: '`v` has one value per column, so it lines up on the right and is stretched down every row.'
 
   - type: fix
     id: fix-keepdims
@@ -220,6 +620,48 @@ cards:
         }
     why: >-
       `keepdims` gives `(3, 1)`, which lines up with `(3, 2)`.
+    variants:
+      - prompt: "`center_rows(X)` should subtract each row's own mean from that row. Here it gives a `ValueError` on a shape of `(3, 2)`. Fix it."
+        code: |
+          import numpy as np
+
+          def center_rows(X):
+              return X - X.mean(axis=1)
+        solution: |
+          import numpy as np
+
+          def center_rows(X):
+              return X - X.mean(axis=1, keepdims=True)
+        tests:
+          - {
+              call: 'center_rows(np.array([[1.0, 3.0], [2.0, 2.0], [0.0, 4.0]]))',
+              expect: '[[-1.0, 1.0], [0.0, 0.0], [-2.0, 2.0]]',
+            }
+          - {
+              call: 'center_rows(np.array([[5.0, 1.0], [4.0, 6.0], [3.0, 3.0]]))',
+              expect: '[[2.0, -2.0], [-1.0, 1.0], [0.0, 0.0]]',
+              hidden: true,
+            }
+        why: The row means have shape `(3,)`, which lines up with the 2 columns and fails. `keepdims` gives `(3, 1)`, one per row.
+      - prompt: '`scale_rows(X)` should divide each row by its largest value. It runs on this `(2, 2)` input, but gives the wrong numbers. Fix it.'
+        code: |
+          import numpy as np
+
+          def scale_rows(X):
+              return X / X.max(axis=1)
+        solution: |
+          import numpy as np
+
+          def scale_rows(X):
+              return X / X.max(axis=1, keepdims=True)
+        tests:
+          - { call: 'scale_rows(np.array([[1.0, 4.0], [5.0, 10.0]]))', expect: '[[0.25, 1.0], [0.5, 1.0]]' }
+          - {
+              call: 'scale_rows(np.array([[2.0, 2.0], [1.0, 4.0]]))',
+              expect: '[[1.0, 1.0], [0.25, 1.0]]',
+              hidden: true,
+            }
+        why: For a square input, the `(2,)` of row maxes lines up with the columns, so each column is divided by the wrong row's max. No error makes this the worst kind of bug.
 
   - type: fix
     id: fix-update
@@ -246,6 +688,47 @@ cards:
     expectOutput: '[0.5]'
     why: >-
       `w = ...` only moves the local name, and `-=` changes the array.
+    variants:
+      - requires: [def, 'op:*', 'name:array']
+        prompt: "`scale(w)` should halve the caller's weights, so this should show `[1. 2.]`. They stay the same. Fix it."
+        code: |
+          import numpy as np
+
+          def scale(w):
+              w = w * 0.5
+
+          w = np.array([2.0, 4.0])
+          scale(w)
+          print(w)
+        solution: |
+          import numpy as np
+
+          def scale(w):
+              w *= 0.5
+
+          w = np.array([2.0, 4.0])
+          scale(w)
+          print(w)
+        expectOutput: '[1. 2.]'
+        why: "`w = w * 0.5` makes a new array and moves only the local name. `*=` changes the caller's array in place."
+      - requires: ['name:copy']
+        prompt: This should save the starting weights in `start`, so it shows `[1.] [0.]`. It shows `[0.] [0.]`. Fix it.
+        code: |
+          import numpy as np
+
+          w = np.array([1.0])
+          start = w
+          w -= 1
+          print(start, w)
+        solution: |
+          import numpy as np
+
+          w = np.array([1.0])
+          start = w.copy()
+          w -= 1
+          print(start, w)
+        expectOutput: '[1.] [0.]'
+        why: '`start = w` is a second name for the same array, and `-=` changes it in place. `.copy()` takes a snapshot.'
 
   - type: write
     id: write-cosine
@@ -270,3 +753,41 @@ cards:
       - { call: 'cosine_matrix(np.ones((4, 2))).shape', expect: '(4, 4)' }
     why: >-
       Once the rows are unit length, a table of dot products is a table of cosine similarities.
+    variants:
+      - forbids: [loop]
+        prompt: Write `distances(P, c)`, with no loops, which gives back the distance from each row of `P` to the point `c`. Subtract, square, sum along each row, then take the square root.
+        starter: |
+          import numpy as np
+
+          def distances(P, c):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def distances(P, c):
+              return np.sqrt(((P - c) ** 2).sum(axis=1))
+        tests:
+          - { call: 'distances(np.array([[3.0, 4.0], [0.0, 0.0]]), np.array([0.0, 0.0]))', expect: '[5.0, 0.0]' }
+          - { call: 'distances(np.ones((6, 2)), np.zeros(2)).shape', expect: '(6,)' }
+          - { call: 'distances(np.array([[1.0, 1.0]]), np.array([4.0, 5.0]))', expect: '[5.0]', hidden: true }
+        why: '`P - c` broadcasts `c` down every row, and `axis=1` gives one distance per row.'
+      - forbids: [loop]
+        prompt: Write `layer(X, W, b)`, with no loops, which gives back `X @ W + b` with every negative number replaced by 0. A mask works, and so does `np.maximum(Z, 0)`, which keeps the larger of each item and 0.
+        starter: |
+          import numpy as np
+
+          def layer(X, W, b):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def layer(X, W, b):
+              return np.maximum(X @ W + b, 0)
+        tests:
+          - {
+              call: 'layer(np.array([[1.0, 2.0]]), np.array([[1.0, -1.0], [1.0, -1.0]]), np.array([0.0, 1.0]))',
+              expect: '[[3.0, 0.0]]',
+            }
+          - { call: 'layer(np.ones((5, 3)), np.ones((3, 4)), np.zeros(4)).shape', expect: '(5, 4)' }
+          - { call: 'layer(np.array([[2.0]]), np.array([[-1.0]]), np.array([5.0]))', expect: '[[3.0]]', hidden: true }
+        why: '`X @ W` makes one row of outputs per example, `+ b` broadcasts across the rows, and `np.maximum(..., 0)` clips negatives. A mask, `Z[Z < 0] = 0`, works too.'

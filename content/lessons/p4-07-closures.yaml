@@ -205,7 +205,7 @@ cards:
       A closure remembers the variable, and not the value that it had at the time. It looks up the current value each time it runs. Usually that's what you'd expect, but it causes one famous bug.
 
 
-      If you make functions in a loop, they all share the one loop variable. By the time you call them, the loop has finished, so they all see its final value. In the code below, all three functions use the same `i`, and they all give 2.
+      If you make functions in a loop, they all share the one loop variable. By the time you call them, the loop has finished, so they all see its final value. In the example, all three functions use the same `i`, and they all give 2.
 
 
       The standard fix is to give the lambda its own parameter with a default value, as in `lambda i=i: i`. Default values are worked out when the function is defined, so each one gets the value `i` has at that moment. Alternatively, you can build each one using a separate function like `make_adder`, since each call has its own variables.
@@ -346,7 +346,7 @@ cards:
     label: Worked example
     title: Remembering how to go backwards
     body: >-
-      Here's a simplified version of the idea in micrograd. To train a network, you first run it forwards to get an answer. Then you go backwards through the steps, to work out how each number affected the answer.
+      The example is a simplified version of the idea in micrograd. To train a network, you first run it forwards to get an answer. Then you go backwards through the steps, to work out how each number affected the answer.
 
 
       So, at the moment each step happens, it records how to undo it. The `steps` list stores small functions, and each one is a closure that remembers the values from its own step. When you're done, you go through the list in reverse, and call each one.

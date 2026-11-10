@@ -307,7 +307,7 @@ cards:
     label: Worked example
     title: Splitting a table of data
     body: >-
-      Real data usually comes as one table, with a row for each example and a column for each measurement. The last column is often the answer that you want to predict. Here's the routine you'll go through for every model.
+      Real data usually comes as one table, with a row for each example and a column for each measurement. The last column is often the answer that you want to predict. The example is the routine you'll go through for every model.
 
 
       First, separate the inputs from the labels. `data[:, :-1]` takes every column but the last, and `data[:, -1]` takes the last. Notice the shapes: the inputs stay as a grid, and the labels become a plain vector, which is what's usually wanted.

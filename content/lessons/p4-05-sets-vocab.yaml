@@ -287,7 +287,7 @@ cards:
     label: Worked example
     title: Encoding and decoding text
     body: >-
-      Here are the opening lines of Karpathy's GPT from scratch, written the way you now know how. Every language model begins with something like this.
+      The example has the opening lines of Karpathy's GPT from scratch, written the way you now know how. Every language model begins with something like this.
 
 
       First, get the vocabulary: the distinct characters, in sorted order. Then build two tables. `stoi`, short for string to integer, goes from a character to its number. `itos` goes the other way. `encode` turns text into a list of numbers, ready for a model, and `decode` turns the model's numbers back into text.

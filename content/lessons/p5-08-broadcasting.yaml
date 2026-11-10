@@ -336,7 +336,7 @@ cards:
     label: Worked example
     title: Every distance, with no loops
     body: >-
-      Here's the pattern in action, and you'll use it in this unit's project. You have 3 points and 2 centres, each with 2 coordinates, and you want the distance from every point to every centre.
+      The example shows the pattern in action, and you'll use it in this unit's project. You have 3 points and 2 centres, each with 2 coordinates, and you want the distance from every point to every centre.
 
 
       Write the shapes down first. `points` is `(3, 2)`, and `centres` is `(2, 2)`. To combine them, add an axis to each: `points[:, None, :]` is `(3, 1, 2)`, and `centres[None, :, :]` is `(1, 2, 2)`. Lined up on the right: 2 with 2, then 1 with 2, and then 3 with 1. The result is `(3, 2, 2)`: for each point and each centre, the two differences.

@@ -24,7 +24,7 @@ cards:
     id: memorise
     title: Perfect on training, useless on new data
     body: >-
-      Here's a model that can't possibly learn anything: the labels are random coin flips, with no connection to the features. It's nearest neighbours
+      The example has a model that can't possibly learn anything: the labels are random coin flips, with no connection to the features. It's nearest neighbours
       from Unit 5's doodle project: to classify a point, copy the label of the closest training point.
 
 

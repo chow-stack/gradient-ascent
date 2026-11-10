@@ -34,7 +34,7 @@ cards:
 
 
       Two things to keep apart: the code is what you write, and the output is what appears when it runs. Press the Run
-      button below to see the output of this code.
+      button under the example to see its output.
     code: |
       print("Good morning")
       print("Let's climb")

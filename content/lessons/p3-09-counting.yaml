@@ -305,7 +305,7 @@ cards:
     label: Worked example
     title: A tiny language model
     body: >-
-      Here's a preview of makemore, using only what you know. To guess the next letter, look at which letter most often came next in your training text.
+      The example is a preview of makemore, using only what you know. To guess the next letter, look at which letter most often came next in your training text.
 
 
       First, count. For each letter, keep a dict of what followed it, so the values are dicts themselves: `follows["a"]` is a dict of letters and their counts. Each new letter needs its inner dict started, which is the same check as for grouping.

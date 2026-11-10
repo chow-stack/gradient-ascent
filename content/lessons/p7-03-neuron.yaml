@@ -32,7 +32,7 @@ cards:
       number per email. Add `b` and you have every score. The sigmoid then turns them all into probabilities at once.
 
 
-      Here the features are how many times an email says "free", how many times it says "meeting", and whether it has a link. "free" and links push the
+      In the example, the features are how many times an email says "free", how many times it says "meeting", and whether it has a link. "free" and links push the
       score up, so their weights are positive. "meeting" pushes it down.
     code: |
       import numpy as np

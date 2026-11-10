@@ -29,7 +29,7 @@ cards:
       at all.
 
 
-      Because it stops at the first match, each condition can rely on the ones above having failed. Below, by the time Python reaches `score >= 70`, it already
+      Because it stops at the first match, each condition can rely on the ones above having failed. In the example, by the time Python reaches `score >= 70`, it already
       knows the score is under 90, so you don't need to say so.
     code: |
       score = 75
@@ -104,7 +104,7 @@ cards:
       problems.
 
 
-      Getting this wrong gives you wrong answers with no error message. Below, the second version overwrites the grade, since a score of 95 also passes the second
+      Getting this wrong gives you wrong answers with no error message. In the example, the second version overwrites the grade, since a score of 95 also passes the second
       check.
     code: |
       score = 95

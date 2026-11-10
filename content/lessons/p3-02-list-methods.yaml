@@ -317,7 +317,7 @@ cards:
     label: Worked example
     title: Tracking progress
     body: >-
-      During training, you keep a record of the loss so that you can plot it and check it's going down. Here's that shape, with a loss that shrinks by a fixed fraction on each step.
+      During training, you keep a record of the loss so that you can plot it and check it's going down. The example shows that shape, with a loss that shrinks by a fixed fraction on each step.
 
 
       The list starts empty before the loop. Each pass works out a new value and appends it. After the loop you can ask questions of the whole history: what was the first value, what was the last, and how much did it improve?

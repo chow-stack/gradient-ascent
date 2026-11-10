@@ -92,27 +92,29 @@ cards:
     id: printing-grids
     title: Printing without a new line
     body: >-
-      To see a grid, you need several values on one line, and `print` normally ends with a new line. It has an option for this: `print(x, end=" ")` ends with a space instead of a new line. You've already seen that arguments can be passed by name, and this is one.
+      Every `print` normally finishes by starting a new line. To put several values on one line, you change what it finishes with: `print(x, end=" ")` puts a space after `x` instead of a new line, and `end=""` puts nothing at all.
 
 
-      The shape for a grid is then: inside the outer loop, the inner loop prints one row's values with `end`. After the inner loop, an empty `print()` finishes that row. It has to be one level in, so that it runs once per row.
+      The example has two small programs. The first prints a times table. The inner loop prints one row's numbers, all on one line, because of `end=" "`. Then the empty `print()` on line 4 starts the next line. It's one level in, so it runs once per row, after the inner loop has finished.
 
 
-      The inner range can even depend on the outer variable. `for col in range(row + 1):` gives a triangle, because each row is longer than the last.
+      The second program prints a triangle. Its inner loop runs `range(row + 1)`, which depends on the outer variable, so each row has one more `#` than the last.
     code: |
+      # A times table
       for row in range(1, 4):
           for col in range(1, 4):
               print(row * col, end=" ")
           print()
 
+      # A triangle
       for row in range(3):
           for col in range(row + 1):
               print("#", end="")
           print()
     subgoals:
-      - { line: 3, label: 'Stay on the same line' }
-      - { line: 4, label: 'One level in: ends each row' }
-      - { line: 7, label: 'Each row is longer than the last' }
+      - { line: 4, label: 'Stay on the same line' }
+      - { line: 5, label: 'One level in: ends each row' }
+      - { line: 9, label: 'Each row is longer than the last' }
     predict: What will the bottom row of the times table be?
 
   - type: choice
@@ -166,13 +168,16 @@ cards:
     id: nested-bugs
     title: What goes wrong
     body: >-
-      Three bugs show up here. The first is using the same variable name for both loops. The inner loop overwrites the outer one's variable. Python goes on with the right number of outer passes, but any code after the inner loop that uses that variable sees the wrong value.
+      Three mistakes are common with nested loops. The example shows the correct way to handle the last two.
 
 
-      The second is where an accumulator gets reset. A total for the whole grid has to start before both loops. A total for each row has to start inside the outer loop, before the inner one. Each level has its own place, so ask how often it should go back to zero.
+      Using one name for both loops. If both loops use `i`, the inner loop overwrites the outer `i`. The outer loop still runs the right number of times, but after the inner loop, `i` holds the inner loop's last value. Give each loop its own name, like `row` and `col`.
 
 
-      The third concerns `break`, which only leaves the innermost loop. The outer loop carries on. To stop everything at once, put the loops in a function and use `return`.
+      Resetting a total in the wrong place. Ask how often it should go back to 0. A total for the whole grid starts before both loops. A total for each row starts inside the outer loop, before the inner one, like `row_total` on line 2.
+
+
+      Expecting `break` to stop both loops. It only leaves the inner loop, and the outer loop carries on. To stop both at once, put the loops in a function and `return`, like `find_pair` on line 11.
     deeper: >-
       Nested loops can get slow. Two loops over 1,000 items run a million inner passes, and three run a billion. A small image has 256 × 256, or about 65,000 pixels, so going through it pixel by pixel with Python loops is noticeably slow. NumPy does the same work in fast compiled code, using a single line, and that's why you'll learn it in a later unit.
     code: |
@@ -317,7 +322,7 @@ cards:
   - type: write
     id: times-table
     prompt: >-
-      Write `count_pairs(limit, total)`, which gives back how many pairs `a`, `b` add up to `total`, with `a` and `b` both going from 1 up to and including `limit`. So `count_pairs(3, 4)` gives back `3`, for 1 + 3, 2 + 2 and 3 + 1.
+      Write `count_pairs(limit, total)`. Try every `a` from 1 to `limit`, and for each `a`, every `b` from 1 to `limit`, including `limit` both times. Give back how many of those pairs add up to `total`. For example, `count_pairs(3, 4)` gives back `3`, for the pairs 1 + 3, 2 + 2 and 3 + 1.
     starter: |
       def count_pairs(limit, total):
           # Your code here
@@ -336,6 +341,7 @@ cards:
     why: >-
       The count starts before both loops, since it's for the whole grid. The `return` goes after both.
     hints:
+      - One loop for `a`, and a loop for `b` inside it.
       - Which `range` includes `limit`?
     variants:
       - prompt: Write `triangle(n)`, which prints a triangle of `#` with `n` rows, the first with 1 and the last with `n`. Then call `triangle(3)`.

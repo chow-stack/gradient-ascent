@@ -221,7 +221,7 @@ cards:
       at once, each by its own partial.
 
 
-      Here the loss is `(w - 1) ** 2 + (b + 2) ** 2`, smallest at `w = 1, b = -2`. Saving the loss at each step gives a loss curve, the first thing to look
+      In the example, the loss is `(w - 1) ** 2 + (b + 2) ** 2`, smallest at `w = 1, b = -2`. Saving the loss at each step gives a loss curve, the first thing to look
       at when training anything. It should drop fast and then flatten out.
     code: |
       import numpy as np

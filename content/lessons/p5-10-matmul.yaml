@@ -25,7 +25,7 @@ cards:
       In `A @ B`, each cell of the result is a dot product. The cell at row `i`, column `j` takes row `i` of `A`, and dots it with column `j` of `B`. That's the whole definition.
 
 
-      Go through the code below by hand. `A` has rows `[1, 2]` and `[3, 4]`, and `B` has columns `[5, 7]` and `[6, 8]`. The top-left cell is row 0 dot column 0: `1*5 + 2*7`, which is 19. Top-right is row 0 dot column 1: `1*6 + 2*8`, which is 22. It's worth doing all four yourself, once.
+      Go through the example by hand. `A` has rows `[1, 2]` and `[3, 4]`, and `B` has columns `[5, 7]` and `[6, 8]`. The top-left cell is row 0 dot column 0: `1*5 + 2*7`, which is 19. Top-right is row 0 dot column 1: `1*6 + 2*8`, which is 22. It's worth doing all four yourself, once.
 
 
       Two things follow from this. Order matters, so `A @ B` and `B @ A` usually differ. And `*` is a different thing altogether: `A * B` multiplies matching cells, by broadcasting. Mixing them up is a common bug, because if the shapes are square, both run without an error, and give different answers.

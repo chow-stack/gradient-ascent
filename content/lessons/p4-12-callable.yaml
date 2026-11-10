@@ -143,7 +143,7 @@ cards:
       These two are the whole of what PyTorch's `Dataset` requires. A `DataLoader` only ever asks "how many are there?" and "give me number `i`".
 
 
-      There's a bonus. If you define `__getitem__`, a `for` loop works too. Python calls it with 0, 1, 2 and so on, until it gets an `IndexError`. So if your `__getitem__` never causes that error, your loop never ends. Passing the index through to a real list gets you the error automatically. In the code below, `raise` creates the error on purpose, and you'll learn more about it two lessons from now.
+      There's a bonus. If you define `__getitem__`, a `for` loop works too. Python calls it with 0, 1, 2 and so on, until it gets an `IndexError`. So if your `__getitem__` never causes that error, your loop never ends. Passing the index through to a real list gets you the error automatically. In the example, `raise` creates the error on purpose, and you'll learn more about it two lessons from now.
 
 
       `__getitem__` can give back anything, and a tuple of an input and a label is the usual thing for a training example.
@@ -395,7 +395,7 @@ cards:
     label: Worked example
     title: A model and a dataset
     body: >-
-      Here's the shape of nearly every PyTorch program, using only plain Python. There's a dataset, a model, and a loop that brings them together.
+      The example has the shape of nearly every PyTorch program, using only plain Python. There's a dataset, a model, and a loop that brings them together.
 
 
       `Dataset` holds the examples, and answers two questions: how many, and which one. `Linear` holds a weight and a bias, and turns an input into a prediction when it's called. The loop goes through positions, unpacks each example, calls the model, and measures how wrong it was.

@@ -28,7 +28,7 @@ cards:
       The usual causes are forgetting the update, updating the wrong variable, or moving in the wrong direction, like `n = n + 1` in a loop waiting for `n` to reach 0. A program stuck like this doesn't crash, and it gives no message. It just never finishes. In this app, a run is stopped after a few seconds, and you'll see a message saying so. On your own computer, you press Ctrl+C.
 
 
-      Whenever you write a `while`, ask: what changes on each pass, and does it move towards making the condition false? The code below is what the bug looks like, with the update missing. It has been made safe with a limit on the passes, so you can run it.
+      Whenever you write a `while`, ask: what changes on each pass, and does it move towards making the condition false? The example shows what the bug looks like, with the update missing. It has been made safe with a limit on the passes, so you can run it.
     code: |
       n = 3
       passes = 0
@@ -37,7 +37,7 @@ cards:
           passes += 1
       print("Stopped by the safety limit")
     subgoals:
-      - { line: 1, label: 'Nothing below ever changes this' }
+      - { line: 1, label: 'Nothing in the loop changes this' }
       - { line: 3, label: '`n > 0` stays true forever' }
       - { line: 5, label: 'Only this counter ends the loop' }
     predict: Which number will it show, and how many times?
@@ -47,13 +47,17 @@ cards:
     kind: concept
     prompt: Which of these loops never ends?
     choices:
-      - 'n = 5, then `while n > 0:` with `n = n + 1` inside'
-      - 'n = 5, then `while n > 0:` with `n = n - 1` inside'
-      - 'n = 0, then `while n > 0:` with `n = n + 1` inside'
-      - 'n = 0, then `while n < 5:` with `n = n + 1` inside'
-    answer: 'n = 5, then `while n > 0:` with `n = n + 1` inside'
+      - "n = 5\nwhile n > 0:\n    n = n + 1"
+      - "n = 5\nwhile n > 0:\n    n = n - 1"
+      - "n = 0\nwhile n > 0:\n    n = n + 1"
+      - "n = 0\nwhile n < 5:\n    n = n + 1"
+    answer: "n = 5\nwhile n > 0:\n    n = n + 1"
     why: >-
-      `n` starts positive and only gets bigger, so `n > 0` stays true. In the third one, the condition is false from the start, so the block never runs.
+      `n` starts positive and only gets bigger, so `n > 0` stays true forever.
+    misses:
+      "n = 5\nwhile n > 0:\n    n = n - 1": '`n` goes 5, 4, 3, 2, 1, 0, and at 0 the condition `n > 0` is false, so the loop ends.'
+      "n = 0\nwhile n > 0:\n    n = n + 1": '`n > 0` is already false at the start, so the block never runs at all. A loop that never starts still ends.'
+      "n = 0\nwhile n < 5:\n    n = n + 1": '`n` counts up towards 5, and that moves it towards making `n < 5` false, so the loop ends after 5 passes.'
     variants:
       - prompt: A program has been running for a minute with no output and no error. What's the most likely cause?
         choices:
@@ -276,10 +280,10 @@ cards:
       When a loop misbehaves, the fastest tool is a `print` inside the block that shows every variable on every pass. It costs nothing, and you can remove it afterwards. Tracing by hand tells you what the code should do, and printing tells you what it really did. The bug is where they differ.
 
 
-      Below, a savings loop was meant to report the year when the balance reaches 200, but the answer looks wrong. The `print` shows `year` and `balance` on each pass. You can see the balance reaching 200 in year 4, and yet the function gives back 5.
+      In the example, `years_to_reach(200)` should give back the year the balance reaches 200. It starts at 100 and grows by 25 a year, so the answer should be 4, but it gives back 5. The `print` on line 7 shows `year` and `balance` on every pass, so run it and look.
 
 
-      So it's clear what to look at: at exactly 200, `<=` is still true, and the loop goes around once more. This one is an off-by-one in the condition, and changing it to `<` fixes the function.
+      The output shows the balance reaching 200 in year 4, and then one more pass. At exactly 200, `balance <= goal` on line 4 is still true, so the loop goes around once more. It's an off-by-one in the condition, and changing `<=` to `<` fixes it.
     code: |
       def years_to_reach(goal):
           balance = 100
@@ -299,7 +303,8 @@ cards:
 
   - type: write
     id: first-divisible
-    prompt: Write `first_divisible(start, d)`, which gives back the first number from `start` upwards that divides by `d` with no remainder. Use `while True` and leave the loop with either `break` or `return`.
+    prompt: >-
+      Write `first_divisible(start, d)`. Count up from `start`, one at a time, and give back the first number that `d` divides exactly, meaning `n % d == 0`. For example, `first_divisible(10, 7)` gives back `14`: 10, 11, 12 and 13 don't divide by 7, and 14 does. If `start` itself divides, give back `start`. Use `while True`, and leave the loop with `return`.
     starter: |
       def first_divisible(start, d):
           # Your code here
@@ -317,7 +322,8 @@ cards:
     why: >-
       The check comes before the update, so `start` itself gets checked. `return` also ends the loop, since it ends the whole function.
     hints:
-      - What should happen if `start` already divides by `d`?
+      - Keep a number `n` that starts at `start` and goes up by 1 on each pass.
+      - On each pass, check `n` first, then add 1. That way `start` itself gets checked.
     variants:
       - prompt: Write `steps_to_one(n)`. While `n` is above 1, halve it with `//`. Give back how many steps that took. So `steps_to_one(8)` gives back `3`.
         starter: |

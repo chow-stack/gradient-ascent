@@ -174,7 +174,7 @@ cards:
       To go through two lists in step, loop over positions and use the same `i` for both. If they could differ in length, the shorter one can cause an `IndexError`, so decide on which length to use. A later unit shows you a tidier tool called `zip`.
 
 
-      A warning about removing items while looping over the same list. The loop keeps track of its position by counting, so when you remove an item, everything shifts along by one, and the next item gets skipped. There's no error, just a wrong answer. Below, the `2` and the `3` were meant to go, but `3` stays.
+      A warning about removing items while looping over the same list. The loop keeps track of its position by counting, so when you remove an item, everything shifts along by one, and the next item gets skipped. There's no error, just a wrong answer. In the example, the `2` and the `3` were meant to go, but `3` stays.
 
 
       The safe way is to build a new list containing what you want to keep. That's just a filter.

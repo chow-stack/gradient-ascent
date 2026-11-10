@@ -27,7 +27,7 @@ cards:
       So trying to use it outside gives a `NameError`, because that name doesn't exist out there. This is the reason functions have `return`: the only way to get a value out is to hand it back.
 
 
-      A variable inside a function can share a name with one outside, and they're still two separate variables. Below, the `total` inside the function has nothing to do with the `total` outside. It helps to imagine each call happening in its own room: names in the room are found first.
+      A variable inside a function can share a name with one outside, and they're still two separate variables. In the example, the `total` inside the function has nothing to do with the `total` outside. It helps to imagine each call happening in its own room: names in the room are found first.
     code: |
       def add_tax(price):
           total = price * 2
@@ -94,7 +94,7 @@ cards:
 
       So if the function assigns something new to its parameter, only the local name changes. The `score` outside keeps its old value. This surprises a lot of people. To change `score`, have the function return the new value, and store it yourself: `score = bump(score)`.
 
-      There's one more trap, shown below. If a function assigns to a name anywhere in its body, Python treats that name as local for the whole function. So `count = count + 1` tries to read a local `count` that has no value yet, and you get an `UnboundLocalError`. The fix is the same: pass the value in, and return the result.
+      There's one more trap, shown in the example. If a function assigns to a name anywhere in its body, Python treats that name as local for the whole function. So `count = count + 1` tries to read a local `count` that has no value yet, and you get an `UnboundLocalError`. The fix is the same: pass the value in, and return the result.
     deeper: >-
       There is a `global` statement that lets a function assign to an outside variable. You'll see it occasionally, but it's best avoided: a function that changes things outside itself is much harder to test, because its result depends on what ran before. Later on, lists will add a twist: a function can change a list passed to it, and you'll see why.
     code: |
@@ -289,7 +289,7 @@ cards:
     body: |-
       With several functions, trace the program the way Python runs it. Each call gets a new box holding its own parameters. When the call returns, cross its box out and carry the answer back to the line that called it.
 
-      Here's the trace for the code below. There are three different `n`s:
+      Here's the trace for the example. There are three different `n`s:
 
       1. Outside, `n` is 2. Then `outer(2)` is called.
       2. `outer` gets a box. Its own `n` is 2. It calls `inner(n + 1)`, which is `inner(3)`.

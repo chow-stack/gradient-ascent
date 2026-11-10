@@ -376,7 +376,7 @@ cards:
     label: Worked example
     title: A neuron with many inputs
     body: >-
-      Here's the neuron from earlier, as a proper class. Compare it with the list `[0.5, -1, 1]`. The weights and bias have names, and the calculation is kept with them. You can't pass it the wrong list, since it uses its own.
+      The example is the neuron from earlier, as a proper class. Compare it with the list `[0.5, -1, 1]`. The weights and bias have names, and the calculation is kept with them. You can't pass it the wrong list, since it uses its own.
 
 
       Build it in two steps. First, ask what each neuron has to remember. That's its weights and its bias, so they go in `__init__`. Next, ask what it can do. It can produce an output from some inputs, so that's a method, using `zip` from earlier in this unit.

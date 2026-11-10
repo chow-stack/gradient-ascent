@@ -426,7 +426,7 @@ cards:
     label: Worked example
     title: A tiny PyTorch
     body: >-
-      Here's a small imitation of how PyTorch's `nn.Module` works. It'll make your first real model feel familiar.
+      The example is a small imitation of how PyTorch's `nn.Module` works. It'll make your first real model feel familiar.
 
 
       `Module` does the shared work. Its `__init__` sets up a list of parameters. Its `__call__` runs `self.forward(x)`. And here's the key idea: `Module` doesn't have a working `forward` of its own. It's up to each child to write one. Since `self` is the child object, `self.forward` finds the child's version.

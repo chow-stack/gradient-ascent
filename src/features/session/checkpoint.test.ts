@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { GradientDB } from '../../lib/db'
 import { lessons } from '../content/content'
-import { isCheckpoint, parseLesson } from '../content/schema'
+import { cardVariants, isCheckpoint, parseLesson } from '../content/schema'
 import { checkpointNeeded, completeCheckpoint, completeLesson, loadProgress, recordAttempt } from '../progress/progress'
 import { buildSession, nextLesson } from './plan'
 
@@ -89,6 +89,14 @@ describe('unit checkpoint', () => {
     expect(own.filter((i) => i.version === 1)).toHaveLength(withVariants.length)
     const daily = await buildSession('daily', {}, day2, db)
     expect(daily.items.some((i) => i.source === 'review' && i.lesson.id === checkpoint.id)).toBe(true)
+  })
+})
+
+describe('checkpoint question pools', () => {
+  it('gives every checkpoint question at least 3 versions, so a retake asks something new', () => {
+    for (const cp of lessons.filter(isCheckpoint))
+      for (const card of cp.cards)
+        expect([cp.id, card.id, 1 + cardVariants(card).length >= 3]).toEqual([cp.id, card.id, true])
   })
 })
 

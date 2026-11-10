@@ -32,6 +32,20 @@ cards:
         answer: '2'
         why: >-
           `return` ends the function, so the line under it never runs.
+      - code: |
+          def double(n):
+              n * 2
+
+          print(double(5))
+        choices: [None, '10', '5', Error]
+        answer: None
+        why: The function works out `n * 2` and then throws it away. With no `return`, a call gives back `None`.
+        misses:
+          {
+            '10': Working something out is not the same as giving it back. Only `return` sends a value to the caller.,
+            '5': 'The function does nothing with `n` that the caller can see, and it gives back `None`.',
+            Error: A function with no `return` is allowed. It quietly gives back `None`.,
+          }
 
   - type: choice
     id: local-name
@@ -49,6 +63,40 @@ cards:
     answer: '1'
     why: >-
       The parameter is a separate variable, and the return value isn't stored.
+    variants:
+      - code: |
+          def reset(score):
+              score = 0
+
+          score = 50
+          reset(score)
+          print(score)
+        choices: ['50', '0', None, Error]
+        answer: '50'
+        why: The parameter `score` is a separate variable inside the function. Setting it to 0 does not touch the `score` outside.
+        misses:
+          {
+            '0': Assigning to a parameter only changes the function's own copy of the name.,
+            None: '`score` outside still holds 50. `None` is what the call gives back, and nothing stored that.',
+            Error: Using the same name inside and outside is allowed. They are just two separate variables.,
+          }
+      - code: |
+          def add_bonus(points):
+              points += 10
+              return points
+
+          points = 5
+          total = add_bonus(points)
+          print(points, total)
+        choices: [5 15, 15 15, 5 10, 15 5]
+        answer: 5 15
+        why: The function changes its own `points` and gives it back, and that goes into `total`. The outside `points` stays 5.
+        misses:
+          {
+            15 15: 'The `points` inside is a separate variable, so the outside one is still 5.',
+            5 10: The function adds 10 to the 5 it was given and gives back 15.,
+            15 5: 'Only the returned value changes anything outside, and it went into `total`.',
+          }
 
   - type: choice
     id: inner-first
@@ -63,6 +111,38 @@ cards:
     answer: '6'
     why: >-
       The inner call uses the default and gives back 3. Then `add(3, 3)` is 6.
+    variants:
+      - code: |
+          def half(n):
+              return n // 2
+
+          def plus(a, b=10):
+              return a + b
+
+          print(half(plus(4)))
+        choices: ['7', '12', '2', '14']
+        answer: '7'
+        why: 'The inner call runs first: `plus(4)` uses the default and gives back 14. Then `half(14)` is 7.'
+        misses:
+          {
+            '12': 'Calls inside the brackets run first, so `half` gets 14, not 4.',
+            '2': '`plus(4)` runs before `half`, and `b` takes its default, 10.',
+            '14': That is only the inner call. Its result then goes into `half`.,
+          }
+      - code: |
+          def greet(name, greeting="Hi"):
+              return greeting + " " + name
+
+          print(greet("Ada"), greet("Bo", "Yo"))
+        choices: [Hi Ada Yo Bo, Ada Hi Bo Yo, Hi Ada Hi Bo, Yo Ada Yo Bo]
+        answer: Hi Ada Yo Bo
+        why: The first call uses the default greeting. The second passes `"Yo"`, which replaces it.
+        misses:
+          {
+            Ada Hi Bo Yo: 'The function puts `greeting` first, then the name.',
+            Hi Ada Hi Bo: 'A value you pass replaces the default, so the second call uses `"Yo"`.',
+            Yo Ada Yo Bo: The default is only replaced in the call that passes something.,
+          }
 
   - type: choice
     id: mid-pass
@@ -77,6 +157,68 @@ cards:
     answer: "1\n2"
     why: >-
       The update comes before the `print`, and the condition is only checked at the top.
+    variants:
+      - code: |
+          n = 5
+          while n > 3:
+              print(n)
+              n -= 1
+          print("end", n)
+        choices:
+          - |-
+            5
+            4
+            end 3
+          - |-
+            5
+            4
+            3
+            end 3
+          - |-
+            4
+            3
+            end 3
+          - |-
+            5
+            4
+            end 4
+        answer: |-
+          5
+          4
+          end 3
+        why: The block runs for 5 and 4. When `n` becomes 3, `n > 3` is false at the top, so the loop ends and `n` stays 3.
+        misses: { ? '5
+
+              4
+
+              3
+
+              end 3'
+            : 'The condition is checked before each pass, and `3 > 3` is false, so 3 is never shown inside the loop.', ? '4
+
+              3
+
+              end 3'
+            : 'The `print` comes before the update, so the first pass shows 5.', ? '5
+
+              4
+
+              end 4'
+            : 'The last pass still subtracts 1, so `n` ends at 3.' }
+      - code: |
+          n = 1
+          while n < 20:
+              n = n * 3
+          print(n)
+        choices: ['27', '9', '18', '20']
+        answer: '27'
+        why: '`n` goes 1, 3, 9, 27. At 9 the condition is still true, so it runs once more and passes 20.'
+        misses:
+          {
+            '9': 'At 9, `n < 20` is still true, so the block runs again and makes 27.',
+            '18': 'Each pass multiplies by 3: 9 becomes 27.',
+            '20': The loop does not stop exactly at 20. It stops at the first value that makes the condition false.,
+          }
 
   - type: choice
     id: range-stop
@@ -91,6 +233,70 @@ cards:
     answer: '4'
     why: >-
       The values are 1 and 3. The next would be 5, and the stop is left out.
+    variants:
+      - code: |
+          for n in range(10, 0, -3):
+              print(n)
+        choices:
+          - |-
+            10
+            7
+            4
+            1
+          - |-
+            10
+            7
+            4
+          - |-
+            10
+            7
+            4
+            1
+            -2
+          - |-
+            7
+            4
+            1
+        answer: |-
+          10
+          7
+          4
+          1
+        why: It starts at 10 and steps down by 3. The next value, -2, is past the stop.
+        misses: { ? '10
+
+              7
+
+              4'
+            : '1 is still above the stop, 0, so it is included.', ? '10
+
+              7
+
+              4
+
+              1
+
+              -2'
+            : The stop is never reached or passed. -2 is past 0., ? '7
+
+              4
+
+              1'
+            : 'The start is included, so the first value is 10.' }
+      - code: |
+          count = 0
+          for i in range(3, 8):
+              count += 1
+          print(count, i)
+        choices: [5 7, 5 8, 8 7, 6 8]
+        answer: 5 7
+        why: '`i` takes 3, 4, 5, 6 and 7, which is 5 values. The loop variable keeps its last value, 7.'
+        misses:
+          {
+            5 8: 'The stop, 8, is left out, so the last value `i` takes is 7.',
+            8 7: '`count` goes up once per value, and there are 5 values from 3 to 7.',
+            6 8: '`range(3, 8)` has 8 - 3 = 5 values, ending at 7.',
+          }
 
   - type: choice
     id: inner-resets
@@ -106,6 +312,45 @@ cards:
     answer: '3'
     why: >-
       `count` is reset for each outer pass, so at the end it only holds the count for the last one.
+    variants:
+      - code: |
+          total = 0
+          for a in range(3):
+              for b in range(2):
+                  total += 1
+              total += 10
+          print(total)
+        choices: ['36', '6', '16', '32']
+        answer: '36'
+        why: Each outer pass adds 1 twice and then 10, so 12. Three outer passes make 36.
+        misses:
+          {
+            '6': '`total += 10` is one level in, so it runs once per outer pass too.',
+            '16': 'The inner loop runs in full for each of the 3 outer passes, not once.',
+            '32': 'Each outer pass adds 2 from the inner loop, then 10. That is 12, three times.',
+          }
+      - code: |
+          for row in range(3):
+              line = ""
+              for col in range(row + 1):
+                  line += "*"
+          print(line)
+        choices:
+          - '***'
+          - '******'
+          - |-
+            *
+            **
+            ***
+          - '*'
+        answer: '***'
+        why: '`line` is reset for each row, and the `print` is after both loops, so only the last row is shown.'
+        misses: { '******': '`line = ""` is inside the outer loop, so it starts empty again for each row.', ? '*
+
+              **
+
+              ***'
+            : 'The `print` is not indented, so it runs once, after the loops finish.', '*': 'The last row has `row` as 2, so its inner loop adds 3 stars.' }
 
   - type: choice
     id: read-trace
@@ -124,6 +369,41 @@ cards:
     answer: 'load'
     why: >-
       `text` was `None`, and it came from `load()`, on line 10. The crash is only where it was noticed.
+    variants:
+      - prompt: Which line should you change to fix this?
+        code: |
+          Traceback (most recent call last):
+            File "main.py", line 9, in <module>
+              print(average([]))
+            File "main.py", line 5, in average
+              return total / len(nums)
+          ZeroDivisionError: division by zero
+        choices: ['Line 5, in `average`', Line 9, The `print` on line 9, 'There is no bug: `[]` is wrong input']
+        answer: Line 5, in `average`
+        why: An empty list is a fair thing to pass, so `average` should handle it, with a guard before line 5. The crash is in `average`, and so is the missing case.
+        misses:
+          {
+            Line 9: 'Line 9 only started the call. Passing an empty list is reasonable, and `average` should cope with it.',
+            The `print` on line 9: '`print` never ran. The crash happened inside `average`, before there was anything to print.',
+            'There is no bug: `[]` is wrong input': 'A function should handle every input that makes sense, and averaging nothing is a case to decide on.',
+          }
+      - prompt: '`word` is meant to come from `pick()`. Which function should you look at first?'
+        code: |
+          Traceback (most recent call last):
+            File "main.py", line 12, in <module>
+              show(pick(words))
+            File "main.py", line 8, in show
+              print(word.upper())
+          AttributeError: 'NoneType' object has no attribute 'upper'
+        choices: [pick, show, print, upper]
+        answer: pick
+        why: '`word` was `None`, and it came from `pick`. A `NoneType` error nearly always means a missing `return` earlier on.'
+        misses:
+          {
+            show: '`show` crashed, but only because it was given `None`. The bad value came from `pick`.',
+            print: '`print` never ran. The crash was in working out `word.upper()`.',
+            upper: '`upper` works on text. It failed because `word` was `None` instead of text.',
+          }
 
   - type: blank
     id: fill-stop
@@ -135,6 +415,31 @@ cards:
     expectOutput: "5\n4\n3"
     why: >-
       Counting down needs a negative step, and the stop is left out.
+    variants:
+      - prompt: Fill in the blank so this shows `0`, `5` and `10`.
+        code: |
+          for n in range(____):
+              print(n)
+        answers:
+          - ['0, 11, 5', '0, 15, 5', '0, 12, 5', '0, 13, 5', '0, 14, 5']
+        expectOutput: |-
+          0
+          5
+          10
+        why: Step by 5, with a stop just past 10. `range(0, 10, 5)` would stop before 10.
+      - prompt: Fill in the blank so the loop shows each position of `word`, `0` to `3`.
+        code: |
+          word = "goat"
+          for i in range(____):
+              print(i)
+        answers:
+          - [len(word), '4', '0, len(word)', '0, 4']
+        expectOutput: |-
+          0
+          1
+          2
+          3
+        why: '`range(len(word))` gives every position, and it stops before the length, which is 4.'
 
   - type: fix
     id: fix-early
@@ -157,6 +462,49 @@ cards:
       - { call: 'has_upper("ab")', expect: 'False' }
     why: >-
       A search can only say no after checking everything.
+    variants:
+      - prompt: '`all_digits("12a")` should give back `False`, because `a` is not a digit. Fix it.'
+        code: |
+          def all_digits(text):
+              for ch in text:
+                  if ch not in "0123456789":
+                      return False
+                  else:
+                      return True
+              return True
+        solution: |
+          def all_digits(text):
+              for ch in text:
+                  if ch not in "0123456789":
+                      return False
+              return True
+        tests:
+          - { call: all_digits("12a"), expect: 'False' }
+          - { call: all_digits("123"), expect: 'True' }
+          - { call: all_digits("a1"), expect: 'False', hidden: true }
+          - { call: all_digits("7"), expect: 'True', hidden: true }
+        why: 'The `else: return True` said yes after checking only the first character. Saying yes to "all of them" has to wait until the loop has finished.'
+      - prompt: '`has_digit("ab3")` should give back `True`. Fix it.'
+        code: |
+          def has_digit(text):
+              for ch in text:
+                  if ch in "0123456789":
+                      return True
+                  else:
+                      return False
+        solution: |
+          def has_digit(text):
+              for ch in text:
+                  if ch in "0123456789":
+                      return True
+              return False
+        tests:
+          - { call: has_digit("ab3"), expect: 'True' }
+          - { call: has_digit("abc"), expect: 'False' }
+          - { call: has_digit(""), expect: 'False', hidden: true }
+          - { call: has_digit("7"), expect: 'True', hidden: true }
+        why: 'The `else: return False` gave up after the first character. Only after the loop has checked everything can it say no.'
+        hints: []
 
   - type: fix
     id: fix-loop
@@ -181,6 +529,48 @@ cards:
       - { call: sum_to(0), expect: '0' }
     why: >-
       Nothing in the block changed `n`, so the condition stayed true.
+    variants:
+      - prompt: This should give back how many times `n` can be halved with `//` before it reaches 1, so `halvings(8)` gives back `3`. It never ends. Fix it.
+        code: |
+          def halvings(n):
+              count = 0
+              while n > 1:
+                  count += 1
+              return count
+        solution: |
+          def halvings(n):
+              count = 0
+              while n > 1:
+                  n = n // 2
+                  count += 1
+              return count
+        tests:
+          - { call: halvings(8), expect: '3' }
+          - { call: halvings(1), expect: '0' }
+          - { call: halvings(20), expect: '4', hidden: true }
+        why: The condition looks at `n`, but only `count` changed, so `n > 1` stayed true forever.
+      - prompt: '`count_up(3)` should give back `"123"`, but it gives back `"1234"`. Fix it.'
+        code: |
+          def count_up(limit):
+              text = ""
+              n = 1
+              while n <= limit + 1:
+                  text += str(n)
+                  n += 1
+              return text
+        solution: |
+          def count_up(limit):
+              text = ""
+              n = 1
+              while n <= limit:
+                  text += str(n)
+                  n += 1
+              return text
+        tests:
+          - { call: count_up(3), expect: "'123'" }
+          - { call: count_up(0), expect: "''" }
+          - { call: count_up(5), expect: "'12345'", hidden: true }
+        why: 'An off-by-one: `<= limit + 1` lets `n` reach one past the limit. `<= limit` stops at the limit.'
 
   - type: write
     id: write-count
@@ -201,6 +591,43 @@ cards:
       - { call: 'count_multiples(2, 5)', expect: '0' }
     why: >-
       A counter, a `for` loop that includes `limit`, and a `return` after the loop.
+    variants:
+      - prompt: Write `count_char(text, c)`, which gives back how many times the character `c` appears in `text`. So `count_char("banana", "a")` gives back `3`.
+        starter: |
+          def count_char(text, c):
+              # Your code here
+        solution: |
+          def count_char(text, c):
+              count = 0
+              for ch in text:
+                  if ch == c:
+                      count += 1
+              return count
+        tests:
+          - { call: 'count_char("banana", "a")', expect: '3' }
+          - { call: 'count_char("goat", "z")', expect: '0' }
+          - { call: 'count_char("", "a")', expect: '0', hidden: true }
+          - { call: 'count_char("aaaa", "a")', expect: '4', hidden: true }
+        requires: [loop]
+        why: A counter starts at 0 before the loop, goes up on each match, and is returned after the loop.
+      - prompt: Write `sum_evens(limit)`, which gives back the sum of the even numbers from 1 up to and including `limit`. So `sum_evens(6)` gives back `12`, for 2 + 4 + 6.
+        starter: |
+          def sum_evens(limit):
+              # Your code here
+        solution: |
+          def sum_evens(limit):
+              total = 0
+              for n in range(1, limit + 1):
+                  if n % 2 == 0:
+                      total += n
+              return total
+        tests:
+          - { call: sum_evens(6), expect: '12' }
+          - { call: sum_evens(1), expect: '0' }
+          - { call: sum_evens(7), expect: '12', hidden: true }
+          - { call: sum_evens(10), expect: '30', hidden: true }
+        requires: [loop]
+        why: A total, a loop that includes `limit`, and an `if` that decides which numbers count.
 
   - type: write
     id: write-compress
@@ -221,3 +648,41 @@ cards:
       - { call: 'no_vowels("")', expect: "''" }
     why: >-
       A string accumulator starts at `""`. `not (ch in "aeiou")` works too.
+    variants:
+      - prompt: Write `shout(text)`, which gives back `text` with every space replaced by `!`. So `shout("hi there")` gives back `"hi!there"`. Use a loop, not `.replace`.
+        starter: |
+          def shout(text):
+              # Your code here
+        solution: |
+          def shout(text):
+              out = ""
+              for ch in text:
+                  if ch == " ":
+                      out += "!"
+                  else:
+                      out += ch
+              return out
+        tests:
+          - { call: shout("hi there"), expect: "'hi!there'" }
+          - { call: shout("a b c"), expect: "'a!b!c'" }
+          - { call: shout(""), expect: "''", hidden: true }
+        requires: [loop]
+        forbids: ['name:replace']
+        why: A string accumulator starts at `""`, and each character adds either itself or `!`.
+      - prompt: Write `initials(text)`, which gives back the uppercase letters in `text`, in order. So `initials("Ada Byron")` gives back `"AB"`.
+        starter: |
+          def initials(text):
+              # Your code here
+        solution: |
+          def initials(text):
+              out = ""
+              for ch in text:
+                  if ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                      out += ch
+              return out
+        tests:
+          - { call: initials("Ada Byron"), expect: "'AB'" }
+          - { call: initials("goat"), expect: "''" }
+          - { call: initials("NASA"), expect: "'NASA'", hidden: true }
+        requires: [loop]
+        why: Go through each character, and keep only the ones found in the string of capital letters.

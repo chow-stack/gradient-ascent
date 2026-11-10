@@ -264,7 +264,7 @@ cards:
       Here's a real use for a tolerance. Training often stops when the loss has stopped improving. You can't check that two losses are equal, because they almost never will be, and you can't wait for 0, because you may never reach it. So you ask whether the change is below a tolerance.
 
 
-      Below, a value shrinks towards a limit by a fixed fraction on each step. The loop keeps the previous value, works out the new one, and stops when the change is tiny. It also has a limit on the number of steps, so it can't run forever if something goes wrong. Real training loops have the same safety net.
+      In the example, a value shrinks towards a limit by a fixed fraction on each step. The loop keeps the previous value, works out the new one, and stops when the change is tiny. It also has a limit on the number of steps, so it can't run forever if something goes wrong. Real training loops have the same safety net.
 
 
       The f-string gives a clean report, while the real value keeps all its digits.

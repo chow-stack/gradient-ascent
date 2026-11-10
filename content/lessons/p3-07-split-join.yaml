@@ -268,7 +268,7 @@ cards:
       A CSV file is a text file where each line is a row, with commas between the values. In a later unit you'll use pandas for this, but it's worth seeing that it's only `split` and `float`.
 
 
-      Below, each line has a name and a score. First split the text at new lines, which gives you a list of rows. Then split each row at the comma. Then convert the score, since it's a string. And there's a header line to skip, which a slice handles neatly.
+      In the example, each line has a name and a score. First split the text at new lines, which gives you a list of rows. Then split each row at the comma. Then convert the score, since it's a string. And there's a header line to skip, which a slice handles neatly.
 
 
       Nothing here is new. Once you've seen this, a CSV is just text and a couple of loops. The real-world problems, like commas inside values and missing data, are why pandas exists.

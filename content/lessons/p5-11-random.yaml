@@ -382,7 +382,7 @@ cards:
       Real training doesn't use the whole dataset on every step. It takes a small random group of examples, called a mini-batch, updates the weights, and moves on to the next group. One pass through all the data is called an epoch.
 
 
-      Here's the pattern. At the start of each epoch, make a new shuffled `order`. Then go through it in steps, using `range(0, n, batch_size)`. Each `start` gives a slice of positions, and those pick the rows. Slicing never fails at the end, so the last batch is just smaller.
+      The example shows the pattern. At the start of each epoch, make a new shuffled `order`. Then go through it in steps, using `range(0, n, batch_size)`. Each `start` gives a slice of positions, and those pick the rows. Slicing never fails at the end, so the last batch is just smaller.
 
 
       Every example is used exactly once per epoch, in a different order each time. That line, `X[batch]`, is everything you learned about picking by position. PyTorch's `DataLoader` does this for you later, but it does nothing more than this.

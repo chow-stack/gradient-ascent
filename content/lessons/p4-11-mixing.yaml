@@ -349,7 +349,7 @@ cards:
     label: Worked example
     title: The arithmetic of micrograd
     body: >-
-      Here's `Value` with all its arithmetic. It's close to the real micrograd source, without the gradient parts. You now know every line in it.
+      The example is `Value` with all its arithmetic. It's close to the real micrograd source, without the gradient parts. You now know every line in it.
 
 
       Notice how few real calculations there are. Only `__add__` and `__mul__` work directly with the data. Everything else is written in terms of them. Subtraction is adding a negative, negation is multiplying by -1, and the right-hand versions call the left-hand ones with the sides swapped.

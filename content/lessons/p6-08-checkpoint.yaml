@@ -18,6 +18,27 @@ cards:
       '`4 * x ** 2`': 'Bring the 3 down and multiply it by the 4.'
       '`12 * x ** 3`': 'The power drops by one, to 2.'
       '`3 * x ** 2`': "That's the derivative of `x ** 3`. The 4 in front stays as a multiplier."
+    variants:
+      - prompt: What's the derivative of `x ** 2 + 6 * x + 9`?
+        choices: ['`2 * x + 6`', '`2 * x + 6 * x`', '`2 * x + 15`', '`x + 6`']
+        answer: '`2 * x + 6`'
+        why: 'Take each part on its own: `x ** 2` gives `2 * x`, `6 * x` gives 6, and the constant 9 gives 0.'
+        misses:
+          {
+            '`2 * x + 6 * x`': 'The slope of `6 * x` is just 6: the power of `x` drops from 1 to 0.',
+            '`2 * x + 15`': A constant has no slope. The 9 adds nothing to the derivative.,
+            '`x + 6`': 'Bring the power down: `x ** 2` gives `2 * x`.',
+          }
+      - prompt: What's the derivative of `5 * np.log(x)`?
+        choices: ['`5 / x`', '`1 / x`', '`5 * np.log(x) / x`', '`np.log(5)`']
+        answer: '`5 / x`'
+        why: The slope of `np.log(x)` is `1 / x`, and a number in front stays as a multiplier.
+        misses:
+          {
+            '`1 / x`': The 5 in front scales the slope too.,
+            '`5 * np.log(x) / x`': 'The log itself disappears: its slope is `1 / x`.',
+            '`np.log(5)`': 'The slope of `log` depends on `x`: it is `1 / x`.',
+          }
 
   - type: choice
     id: chain
@@ -30,6 +51,27 @@ cards:
       '`np.exp(5 * x)`': "You left out the inside's slope, 5."
       '`np.exp(5)`': "The outside's slope is worked out at the inside's value, `5 * x`."
       '`5 * x * np.exp(5 * x - 1)`': "The power rule doesn't apply to `exp`. It's its own derivative."
+    variants:
+      - prompt: What's the derivative of `(3 * x - 2) ** 2`?
+        choices: ['`6 * (3 * x - 2)`', '`2 * (3 * x - 2)`', '`2 * (3 * x - 2) + 3`', '`6 * x`']
+        answer: '`6 * (3 * x - 2)`'
+        why: The outside, squaring, gives `2 * u` at `u = 3 * x - 2`. Times the inside's slope, 3, that is `6 * (3 * x - 2)`.
+        misses:
+          {
+            '`2 * (3 * x - 2)`': "You left out the inside's slope, 3.",
+            '`2 * (3 * x - 2) + 3`': The chain rule multiplies the slopes. It never adds them.,
+            '`6 * x`': "The outside's slope is worked out at the inside's value, `3 * x - 2`, not at `x`.",
+          }
+      - prompt: What's the derivative of `np.log(x ** 2 + 1)`?
+        choices: ['`2 * x / (x ** 2 + 1)`', '`1 / (x ** 2 + 1)`', '`2 * x / x`', '`1 / (2 * x)`']
+        answer: '`2 * x / (x ** 2 + 1)`'
+        why: The outside, `log`, gives `1 / u` at `u = x ** 2 + 1`. Times the inside's slope, `2 * x`.
+        misses:
+          {
+            '`1 / (x ** 2 + 1)`': "Multiply by the inside's slope, `2 * x`.",
+            '`2 * x / x`': "`log`'s slope is `1 / u`, worked out at the inside's value, not at `x`.",
+            '`1 / (2 * x)`': "The outside's slope goes at the inside's value, and then you multiply by the inside's slope.",
+          }
 
   - type: choice
     id: chain-trace
@@ -49,6 +91,42 @@ cards:
       '6': "That's the outside's slope, `2 * 3`, without the inside's 2."
       '3': "That's the inside's value. The slope is `2 * 3 * 2`."
       '9': "That's `u ** 2`, the value, not the slope."
+    variants:
+      - code: |
+          import math
+
+          def df(x):
+              u = 3 * x
+              return math.exp(u) * 3
+
+          print(round(df(0), 2))
+        choices: ['3.0', '1.0', '0.0', '9.0']
+        answer: '3.0'
+        why: At 0 the inside is 0, and `exp(0)` is 1. Times the inside's slope, 3, that is 3.
+        misses:
+          {
+            '1.0': That is the outside's slope alone. Multiply by the inside's 3.,
+            '0.0': '`exp(0)` is 1, not 0.',
+            '9.0': "The 3 appears once, as the inside's slope.",
+          }
+      - code: |
+          def f(x):
+              return (x ** 2) ** 2
+
+          def df(x):
+              u = x ** 2
+              return 2 * u * 2 * x
+
+          print(df(2), 4 * 2 ** 3)
+        choices: [32 32, 16 32, 8 32, 32 16]
+        answer: 32 32
+        why: At 2 the inside is 4. `2 * 4` times `2 * 2` is 32, and that agrees with the power rule on `x ** 4`, `4 * x ** 3`.
+        misses:
+          {
+            16 32: "The inside's slope is `2 * x`, which is 4 at `x = 2`, not 2.",
+            8 32: "Multiply the outside's slope, `2 * u` = 8, by the inside's slope, 4.",
+            32 16: '`4 * 2 ** 3` is 4 times 8.',
+          }
 
   - type: choice
     id: partial
@@ -61,6 +139,33 @@ cards:
       '`[2 * w, 1]`': 'Hold the other input fixed, but keep it as a multiplier: `w ** 2 * b` gives `2 * w * b`.'
       '`[2 * w * b, 2 * w]`': 'With `w` fixed, `w ** 2` is a constant, so the partial for `b` is `w ** 2`.'
       '`[w ** 2, 2 * w * b]`': 'Swapped: the first entry is the partial for `w`.'
+    variants:
+      - prompt: For `f(w, b) = (w + 2 * b) ** 2`, what's the gradient `[df/dw, df/db]`?
+        choices:
+          [
+            '`[2 * (w + 2 * b), 4 * (w + 2 * b)]`',
+            '`[2 * (w + 2 * b), 2 * (w + 2 * b)]`',
+            '`[2 * w, 4 * b]`',
+            '`[1, 2]`',
+          ]
+        answer: '`[2 * (w + 2 * b), 4 * (w + 2 * b)]`'
+        why: Both use the chain rule with the inside `w + 2 * b`. Its slope is 1 for `w` and 2 for `b`.
+        misses:
+          {
+            '`[2 * (w + 2 * b), 2 * (w + 2 * b)]`': "For `b`, the inside's slope is 2, so the partial is doubled.",
+            '`[2 * w, 4 * b]`': 'The square is of the whole sum, so the other input stays inside.',
+            '`[1, 2]`': "Those are the inside's slopes. Multiply each by the outside's slope, `2 * (w + 2 * b)`.",
+          }
+      - prompt: For `f(a, b) = a * b + b`, what's the gradient at `a = 3, b = 2`?
+        choices: ['`[2, 4]`', '`[2, 3]`', '`[3, 2]`', '`[2, 5]`']
+        answer: '`[2, 4]`'
+        why: 'For `a`, hold `b` fixed: the slope is `b`, 2. For `b`, hold `a` fixed: `a + 1`, which is 4.'
+        misses:
+          {
+            '`[2, 3]`': 'The `+ b` adds 1 to the partial for `b`: it is `a + 1`.',
+            '`[3, 2]`': 'Swapped: the partial for `a` is `b`, and the one for `b` is `a + 1`.',
+            '`[2, 5]`': The partial for `b` is `a + 1` = 4. The value of `b` does not appear in it.,
+          }
 
   - type: choice
     id: direction
@@ -80,6 +185,33 @@ cards:
       '`w = w + 0.1 * np.array([3, -1])`': 'Adding the gradient steps uphill. The loss grows.'
       '`w = w - 0.1 * np.array([-3, 1])`': 'That flips the sign twice, so it also steps uphill.'
       '`w = w * 0.1`': 'That shrinks the weights toward 0 and ignores the gradient.'
+    variants:
+      - prompt: '`w` is `[1.0, 1.0]` and the gradient there is `[0.0, 2.0]`. After one step with `lr = 0.5`, what is `w`?'
+        choices: ['`[1.0, 0.0]`', '`[1.0, 2.0]`', '`[0.0, 0.0]`', '`[0.5, 0.0]`']
+        answer: '`[1.0, 0.0]`'
+        why: Each weight moves by `lr` times its own partial, against it. The first partial is 0, so the first weight stays.
+        misses:
+          {
+            '`[1.0, 2.0]`': Gradient descent subtracts the gradient. Adding steps uphill.,
+            '`[0.0, 0.0]`': A partial of 0 means that weight does not move.,
+            '`[0.5, 0.0]`': 'The step for each weight is `lr` times its partial, and the first partial is 0.',
+          }
+      - prompt: At the current `w`, the slope of the loss is `0.0`. What does that tell you?
+        choices:
+          [
+            'A step would not move `w`: it is at a flat point, often the bottom',
+            The loss is 0,
+            The learning rate is too small,
+            The gradient has a bug,
+          ]
+        answer: 'A step would not move `w`: it is at a flat point, often the bottom'
+        why: A slope of 0 means flat ground. In a valley that is the bottom, and `w - lr * 0` leaves `w` where it is.
+        misses:
+          {
+            The loss is 0: 'The slope can be 0 where the loss is large: a flat bottom can sit at any height.',
+            The learning rate is too small: 'The step is `lr * slope`, so with a slope of 0 any rate gives no step.',
+            The gradient has a bug: A slope of 0 is what you expect at the bottom of a valley.,
+          }
 
   - type: choice
     id: descent-trace
@@ -100,6 +232,41 @@ cards:
       '5.0': 'One step only goes part of the way: a quarter of the slope, 2.'
       '-1.0': 'Subtracting a negative slope moves `w` up, not down.'
       '2.0': "The step is 2, but it's added to where `w` started, 1."
+    variants:
+      - code: |
+          def grad(w):
+              return 2 * (w + 1)
+
+          w = 3.0
+          for _ in range(2):
+              w = w - 0.5 * grad(w)
+          print(w)
+        choices: ['-1.0', '1.0', '-5.0', '3.0']
+        answer: '-1.0'
+        why: At 3 the slope is 8, and half of it, subtracted, lands on -1. There the slope is 0, so the second step stays.
+        misses:
+          {
+            '1.0': 'Half of the slope at 3 is 4, so the first step goes from 3 to -1.',
+            '-5.0': 'At -1 the slope is 0, so the second step does not move `w`.',
+            '3.0': 'The slope at 3 is not 0, so the first step moves `w`.',
+          }
+      - code: |
+          def grad(w):
+              return 2 * w
+
+          w = 1.0
+          for _ in range(3):
+              w = w - 1.5 * grad(w)
+          print(w)
+        choices: ['-8.0', '0.0', '-2.0', '8.0']
+        answer: '-8.0'
+        why: 'Each step does `w - 3 * w`, which is `-2 * w`. So `w` goes 1, -2, 4, -8: the rate is too big and it diverges.'
+        misses:
+          {
+            '0.0': 'With this rate, each step overshoots the bottom and lands further away.',
+            '-2.0': That is after one step. There are three.,
+            '8.0': 'Each step flips the sign: 1, -2, 4, -8.',
+          }
 
   - type: choice
     id: rate
@@ -113,6 +280,39 @@ cards:
       '1.0': '`inf` means it diverged. That rate is too big.'
       '0.001': 'It has the highest loss. It was still creeping.'
       '0.01': 'Better than 0.001, but 0.1 got lower still without diverging.'
+    variants:
+      - prompt: Your loss goes 5.0, 9.0, 30.0, 400.0 over the first steps. What should you change?
+        choices:
+          [
+            Make the learning rate smaller,
+            Make the learning rate bigger,
+            Train for more steps,
+            'Nothing, it will settle',
+          ]
+        answer: Make the learning rate smaller
+        why: 'A loss that grows faster and faster is diverging: each step overshoots the bottom by more.'
+        misses:
+          {
+            Make the learning rate bigger: Bigger steps overshoot even further.,
+            Train for more steps: More steps of a diverging run only make the loss bigger.,
+            'Nothing, it will settle': 'A loss growing each step means the steps are too big, and it will not recover.',
+          }
+      - prompt: With `lr = 0.0001`, the loss goes 5.00, 4.99, 4.98, 4.97 over 1,000 steps. What's most likely?
+        choices:
+          [
+            The learning rate is too small,
+            The model has finished learning,
+            The gradient is wrong,
+            The learning rate is too big,
+          ]
+        answer: The learning rate is too small
+        why: The loss is falling steadily, just very slowly. Bigger steps would get there in far fewer of them.
+        misses:
+          {
+            The model has finished learning: 'Finished looks flat. This is still falling, only slowly.',
+            The gradient is wrong: A steadily falling loss suggests the direction is right. The steps are just tiny.,
+            The learning rate is too big: 'Too big makes the loss jump or grow, not creep down.',
+          }
 
   - type: choice
     id: mse
@@ -132,6 +332,39 @@ cards:
       '2.0': '2 is the sum of the squared errors. There are three points, so divide by 3.'
       '0.0': 'Squaring stops the -1 and 1 from cancelling.'
       '1.0': 'The squared errors are 1, 0 and 1. The 0 counts too: 2 / 3.'
+    variants:
+      - code: |
+          import numpy as np
+
+          x = np.array([0.0, 1.0, 2.0])
+          y = np.array([1.0, 1.0, 1.0])
+          w, b = 0.0, 1.0
+          print(np.mean(2 * (w * x + b - y)))
+        choices: ['0.0', '1.0', '2.0', '3.0']
+        answer: '0.0'
+        why: The line is flat at 1, and every `y` is 1, so every error is 0. With no error, the slope for `b` is 0.
+        misses:
+          {
+            '1.0': '`w * x + b` is 1 for every `x`, which matches every `y`, so the errors are all 0.',
+            '2.0': 'The 2 multiplies the errors, and they are all 0.',
+            '3.0': This is a mean of errors that are all 0.,
+          }
+      - code: |
+          import numpy as np
+
+          x = np.array([1.0, 2.0])
+          y = np.array([1.0, 1.0])
+          pred = 2.0 * x
+          print(np.mean((pred - y) ** 2), np.mean(2 * (pred - y) * x))
+        choices: [5.0 7.0, 2.0 7.0, 5.0 4.0, 10.0 14.0]
+        answer: 5.0 7.0
+        why: 'The errors are 1 and 3, so the mean square is (1 + 9) / 2 = 5. The slope for `w` is the mean of `2 * err * x`: (2 + 12) / 2 = 7.'
+        misses:
+          {
+            2.0 7.0: 'Square each error before taking the mean: 1 and 9.',
+            5.0 4.0: '`dw` multiplies each error by its own `x`: `2 * 1 * 1` and `2 * 3 * 2`.',
+            10.0 14.0: Those are sums. The mean divides by the 2 points.,
+          }
 
   - type: choice
     id: check
@@ -145,6 +378,39 @@ cards:
       'Everything is fine': 'Anything above about `1e-3` means the formula disagrees with the nudge.'
       '`h` should be bigger': 'A bad `h` gives small errors on every weight. 0.5 on one means its formula is wrong.'
       'The loss will not fall': "A wrong gradient can still lower the loss. That's why you check."
+    variants:
+      - prompt: Your loss falls nicely during training. Does that show the gradient is right?
+        choices:
+          [
+            'No: a slightly wrong gradient can still lower the loss',
+            'Yes: a wrong gradient would make the loss grow',
+            'Yes, if it falls every single step',
+            'No: the loss only falls when the gradient is 0',
+          ]
+        answer: 'No: a slightly wrong gradient can still lower the loss'
+        why: A gradient that is off by a factor, or missing a term, often still points roughly downhill. Only a gradient check catches it.
+        misses:
+          {
+            'Yes: a wrong gradient would make the loss grow': 'Many wrong gradients still point downhill enough to lower the loss, just to the wrong place or slowly.',
+            'Yes, if it falls every single step': A gradient missing a `* 2` falls every step too.,
+            'No: the loss only falls when the gradient is 0': A gradient of 0 means no step at all.,
+          }
+      - prompt: Where should you run a gradient check?
+        choices:
+          [
+            At ordinary random weights,
+            'At the bottom, where the loss is smallest',
+            At weights of exactly 0,
+            Only after training has finished,
+          ]
+        answer: At ordinary random weights
+        why: At the bottom every partial is 0, so a buggy formula can agree with the nudges there. Random weights give every term a chance to show.
+        misses:
+          {
+            'At the bottom, where the loss is smallest': 'Both the formula and the nudge are near 0 there, so they agree even if the formula is wrong.',
+            At weights of exactly 0: 'Zeros can make whole terms vanish, like the `* w` in a partial, hiding bugs.',
+            Only after training has finished: The point is to catch a bug before you trust a training run.,
+          }
 
   - type: fix
     id: fix-grad
@@ -178,6 +444,45 @@ cards:
       - { call: 'gradients(1.0, 1.0, np.array([1.0, 2.0]), np.array([2.0, 2.0]))', expect: '(2.0, 1.0)', hidden: true }
     why: >-
       Changing `w` moves each prediction by its `x`, so `dw` needs the `* x`.
+    variants:
+      - prompt: '`gradients(w, b, x, y)` should return the gradient of the MSE of `w * x + b` as `(dw, db)`. The loss goes up instead of down. Fix it.'
+        code: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = y - (w * x + b)
+              dw = np.mean(2 * err * x)
+              db = np.mean(2 * err)
+              return dw, db
+        solution: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = (w * x + b) - y
+              dw = np.mean(2 * err * x)
+              db = np.mean(2 * err)
+              return dw, db
+        highlightLine: 4
+        why: The error has to be prediction minus truth. `y - pred` flips the sign of both partials, so every step goes uphill.
+      - prompt: '`gradients(w, b, x, y)` should return the gradient of the MSE of `w * x + b` as `(dw, db)`. Its values are too big. Fix it.'
+        code: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = w * x + b - y
+              dw = np.sum(2 * err * x)
+              db = np.sum(2 * err)
+              return dw, db
+        solution: |
+          import numpy as np
+
+          def gradients(w, b, x, y):
+              err = w * x + b - y
+              dw = np.mean(2 * err * x)
+              db = np.mean(2 * err)
+              return dw, db
+        highlightLine: 5
+        why: The loss is a mean, so its partials are means too. A sum makes them grow with the number of points.
 
   - type: write
     id: write-df
@@ -197,6 +502,37 @@ cards:
       - { call: 'df(0.5)', expect: '1.6875', hidden: true }
     why: >-
       The outside gives `3 * u ** 2` at `u = x ** 2 - 1`, times the inside's slope, `2 * x`.
+    variants:
+      - prompt: Write `df(x)`, the derivative of `np.exp(x ** 2)`. So `df(1.0)` is about `5.4366`.
+        starter: |
+          import numpy as np
+
+          def df(x):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def df(x):
+              return np.exp(x ** 2) * 2 * x
+        tests:
+          - { call: 'round(df(1.0), 4)', expect: '5.4366' }
+          - { call: df(0.0), expect: '0.0' }
+          - { call: 'round(df(-1.0), 4)', expect: '-5.4366', hidden: true }
+          - { call: 'round(df(0.5), 4)', expect: '1.2840', hidden: true }
+        why: "`exp` is its own slope, at the inside's value `x ** 2`, times the inside's slope, `2 * x`."
+      - prompt: Write `df(x)`, the derivative of `(2 * x + 1) ** 3 - 4 * x`. So `df(0.0)` is `2.0`.
+        starter: |
+          def df(x):
+              # Your code here
+        solution: |
+          def df(x):
+              return 3 * (2 * x + 1) ** 2 * 2 - 4
+        tests:
+          - { call: df(0.0), expect: '2.0' }
+          - { call: df(1.0), expect: '50.0' }
+          - { call: df(-0.5), expect: '-4.0', hidden: true }
+          - { call: df(2.0), expect: '146.0', hidden: true }
+        why: Take each part on its own. The cube needs the chain rule, `3 * u ** 2` times 2, and `- 4 * x` adds a slope of -4.
 
   - type: write
     id: write-train
@@ -230,3 +566,46 @@ cards:
         }
     why: >-
       Each step works out the errors for the current line, then moves `w` and `b` against their partials at the same time.
+    variants:
+      - prompt: Write `fit_w(x, y, lr, steps)` for a line through the origin, `pred = w * x`. Start at `w = 0.0`, take `steps` steps of gradient descent on the MSE, and return `w`.
+        starter: |
+          import numpy as np
+
+          def fit_w(x, y, lr, steps):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def fit_w(x, y, lr, steps):
+              w = 0.0
+              for _ in range(steps):
+                  err = w * x - y
+                  w = w - lr * np.mean(2 * err * x)
+              return w
+        tests:
+          - { call: 'fit_w(np.array([1.0, 2.0]), np.array([2.0, 4.0]), 0.1, 1)', expect: '1.0' }
+          - { call: 'round(fit_w(np.array([1.0, 2.0, 3.0]), np.array([3.0, 6.0, 9.0]), 0.05, 500), 4)', expect: '3.0' }
+          - { call: 'fit_w(np.array([1.0]), np.array([5.0]), 0.1, 0)', expect: '0.0', hidden: true }
+          - {
+              call: 'round(fit_w(np.array([-1.0, 1.0]), np.array([2.0, -2.0]), 0.1, 300), 4)',
+              expect: '-2.0',
+              hidden: true,
+            }
+        why: Each step works out the errors for the current `w`, then moves `w` against the mean of `2 * err * x`.
+      - prompt: Write `descend(grad, w, lr, steps)` that takes `steps` steps of gradient descent from `w`, using the function `grad` for the slope, and returns a list of every `w`, starting with the first one.
+        starter: |
+          def descend(grad, w, lr, steps):
+              # Your code here
+        solution: |
+          def descend(grad, w, lr, steps):
+              path = [w]
+              for _ in range(steps):
+                  w = w - lr * grad(w)
+                  path.append(w)
+              return path
+        tests:
+          - { call: 'descend(lambda w: 2 * (w - 3), 0.0, 0.25, 2)', expect: '[0.0, 1.5, 2.25]' }
+          - { call: 'descend(lambda w: 2 * w, 1.0, 0.5, 1)', expect: '[1.0, 0.0]' }
+          - { call: 'descend(lambda w: 2 * w, 4.0, 0.1, 0)', expect: '[4.0]', hidden: true }
+          - { call: 'descend(lambda w: 1.0, 0.0, 1.0, 3)', expect: '[0.0, -1.0, -2.0, -3.0]', hidden: true }
+        why: Keep the starting point, then each step subtracts `lr` times the slope at the current `w` and records it.

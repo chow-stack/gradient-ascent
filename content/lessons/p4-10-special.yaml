@@ -360,7 +360,7 @@ cards:
     label: Worked example
     title: The start of micrograd
     body: >-
-      This class is the first version of micrograd's `Value`, the object you'll build a whole neural network from. For now, it wraps one number.
+      The class in the example is the first version of micrograd's `Value`, the object you'll build a whole neural network from. For now, it wraps one number.
 
 
       Follow how it's built. `__init__` stores the number as `.data`. `__repr__` makes it readable. `__add__` and `__mul__` each make a new `Value`.

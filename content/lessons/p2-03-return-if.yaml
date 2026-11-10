@@ -25,7 +25,7 @@ cards:
       A `return` can sit inside an `if` block. When Python reaches it, the function ends right there. So a function can have several `return` lines, and each call uses only the first one it reaches.
 
 
-      This means you often don't need an `else`. Below, if the score is high enough, the function has already left by the time Python would reach the last line. So the last line only runs for scores that didn't
+      This means you often don't need an `else`. In the example, if the score is high enough, the function has already left by the time Python would reach the last line. So the last line only runs for scores that didn't
       match. Both styles work. Without the `else` there's less to read, especially when there are several cases.
 
 
@@ -93,7 +93,7 @@ cards:
     id: missing-path
     title: Every path needs an answer
     body: >-
-      If a function can reach its end without hitting a `return`, it gives back `None`, and Python doesn't warn you. Below, `label` handles passes and fails, but a score of exactly 50 slips between the two conditions.
+      If a function can reach its end without hitting a `return`, it gives back `None`, and Python doesn't warn you. In the example, `label` handles passes and fails, but a score of exactly 50 slips between the two conditions.
 
 
       This kind of bug can hide for a long time, because the function works for most inputs. The `None` then causes a crash somewhere else, far away from the real mistake.
@@ -170,7 +170,7 @@ cards:
       or `False`, so you can return it directly.
 
 
-      Both functions below are correct, and the second one is what experienced programmers write. When you call one of these, you can drop it straight into an `if`, and the line reads like a sentence: `if is_even(n):`.
+      Both functions in the example are correct, and the second one is what experienced programmers write. When you call one of these, you can drop it straight into an `if`, and the line reads like a sentence: `if is_even(n):`.
 
 
       You don't need to write `if is_even(n) == True:`. The call already gives you a boolean, and that's what `if` wants.
@@ -299,7 +299,7 @@ cards:
       A common shape is to deal with the awkward cases first, and leave the ordinary case for the end. Each awkward case gets its own `if` and `return`, so by the time you reach the main calculation you know the input is safe. These are often called guard clauses.
 
 
-      Say you need a safe division. Dividing by 0 would crash, so you check for it first. Below, the last line can only run if `b` isn't 0. Compare that with putting the main calculation inside a deep `else`: the code here stays flat and readable.
+      Say you need a safe division. Dividing by 0 would crash, so you check for it first. In the example, the last line can only run if `b` isn't 0. Compare that with putting the main calculation inside a deep `else`: the example stays flat and readable.
 
 
       Whenever you write this kind of function, test the awkward case and the ordinary case. Both of these calls have a different path, and you want to see both work.

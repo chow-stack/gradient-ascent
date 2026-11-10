@@ -171,7 +171,7 @@ cards:
       and it reads clearly.
 
 
-      Below, shipping costs 5 unless the order is large enough. It's still the same rules you know: `if` checks once, then the block runs or doesn't, and
+      In the example, shipping costs 5 unless the order is large enough. It's still the same rules you know: `if` checks once, then the block runs or doesn't, and
       after that, the variable holds whatever it was last given.
 
 

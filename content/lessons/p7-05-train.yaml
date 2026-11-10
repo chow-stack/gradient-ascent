@@ -33,7 +33,7 @@ cards:
       `p = 0.01`, it's about -1, a big push. For real email (`y = 0`), it's `p` itself, so the score is pushed down.
 
 
-      You don't have to trust the algebra. Below, a central difference from Unit 6 agrees with `p - y`.
+      You don't have to trust the algebra. In the example, a central difference from Unit 6 agrees with `p - y`.
     deeper: >-
       The loss's slope for `p` is `-y / p + (1 - y) / (1 - p)`. The sigmoid's slope is `p * (1 - p)`. Multiply them: `-y * (1 - p) + (1 - y) * p`,
       which simplifies to `p - y`.
@@ -190,7 +190,7 @@ cards:
     label: Worked example
     title: Training the neuron
     body: >-
-      Here's the whole thing on hours studied and passing. Start at zero, compute probabilities, step the weights against the gradient, and print the
+      The example does the whole thing on hours studied and passing. Start at zero, compute probabilities, step the weights against the gradient, and print the
       loss now and then. Check the first loss: 0.693, as expected.
 
 

@@ -25,7 +25,7 @@ cards:
     label: Worked example
     title: Memorising, step by step
     body: >-
-      Here, only the first of 25 features matters. The other 24 are noise. With just 30 training examples, there's room for the model to fit the noise.
+      In the example, only the first of 25 features matters. The other 24 are noise. With just 30 training examples, there's room for the model to fit the noise.
 
 
       Early on, both losses fall together: the model is learning the real pattern. Then they split. Training loss keeps falling towards 0 as the model

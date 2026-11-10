@@ -179,7 +179,7 @@ cards:
       Changing a value during a loop is fine, as long as the keys stay the same. So `for k in d: d[k] = d[k] * 2` works, and it's the way to update every value.
 
 
-      Adding or removing keys during a loop isn't fine. Python stops with `RuntimeError: dictionary changed size during iteration`. Run this code to see it. Unlike with lists, which silently skip items, you at least get told.
+      Adding or removing keys during a loop isn't fine. Python stops with `RuntimeError: dictionary changed size during iteration`. Run the example to see it. Unlike with lists, which silently skip items, you at least get told.
 
 
       The safe way is the same as with lists: build a new dict with the items you want to keep. Or loop over a copy of the keys, with `for k in list(d):`, which lets you delete from `d` safely.

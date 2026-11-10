@@ -43,6 +43,8 @@ await py.loadPackage(['numpy', 'matplotlib'], { messageCallback: () => {} })
 py.runPython(HARNESS_PY)
 py.runPython('__ga_prepare_plots()')
 // The browser stops a runaway loop by killing its worker. Here, a step limit does the same job.
+// Python switches tracing off once the tracer raises. A profile hook turns it back on at the next call, so a later test
+// that also never ends still hits the limit instead of hanging the check.
 py.runPython(`
 import sys
 def __ga_run_limited(code, tests, opts):
@@ -55,10 +57,17 @@ def __ga_run_limited(code, tests, opts):
             if steps[0] > 200000:
                 raise TimeoutError("ran too long")
         return tracer
+    def rearm(frame, event, arg):
+        if event == "call" and sys.gettrace() is None:
+            sys.settrace(tracer)
+            if frame.f_code.co_filename == "main.py":
+                frame.f_trace = tracer
     sys.settrace(tracer)
+    sys.setprofile(rearm)
     try:
         return __ga_run(code, tests, opts)
     finally:
+        sys.setprofile(None)
         sys.settrace(None)
 `)
 const pyRun = py.globals.get('__ga_run_limited') as (code: string, tests: string, opts: string) => string

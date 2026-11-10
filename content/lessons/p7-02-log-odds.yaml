@@ -140,7 +140,7 @@ cards:
       odds by `np.exp(w)`, the same factor every time.
 
 
-      It doesn't add the same amount to the probability. Below, with `w = 0.8`, every extra hour multiplies the odds of passing by about 2.2. Near 50%,
+      It doesn't add the same amount to the probability. In the example, with `w = 0.8`, every extra hour multiplies the odds of passing by about 2.2. Near 50%,
       that moves the probability a lot. Near 0% or 100%, it barely moves it, because there's little room left.
 
 

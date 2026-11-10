@@ -22,7 +22,7 @@ cards:
     id: indexing
     title: Two indexes
     body: >-
-      A list can hold anything, including other lists. In the code below, `grid` has 2 items, and each of them is a list of 3 numbers. It helps to write it across several lines, so that it looks like what it is.
+      A list can hold anything, including other lists. In the example, `grid` has 2 items, and each of them is a list of 3 numbers. It helps to write it across several lines, so that it looks like what it is.
 
 
       `grid[1]` gives you the second row, which is a list. Since that's a list, you can index it again: `grid[1][2]` is row 1, column 2. Read it left to right: first pick the row, then pick from that row. Rows come first, and that's also the convention in NumPy.
@@ -304,7 +304,7 @@ cards:
     label: Worked example
     title: Multiplying a matrix by a vector
     body: >-
-      This one's the central operation in neural networks, and you can now write it. A matrix times a vector gives you a new vector. For each row of the matrix, multiply the items by the matching items in the vector and add them up.
+      The example is the central operation in neural networks, and you can now write it. A matrix times a vector gives you a new vector. For each row of the matrix, multiply the items by the matching items in the vector and add them up.
 
 
       So each row gets one output number. That tells you the shape of the loops. The outer loop goes over rows and builds the result. The inner loop goes over positions, with an accumulator that resets for each row.

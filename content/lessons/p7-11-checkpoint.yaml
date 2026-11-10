@@ -26,6 +26,38 @@ cards:
       '0.25': "That's 1 over the odds. Odds of 4 to 1 mean 4 chances in 5, which is 0.8."
       '4.0': "That's the odds. The sigmoid turns log-odds into a probability, which stays below 1."
       '0.5': 'Only a score of 0 gives 0.5. `np.log(4)` is about 1.39.'
+    variants:
+      - code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          print(round(sigmoid(0.0), 3), sigmoid(-100.0) < 0.001)
+        choices: [0.5 True, 0.0 True, 0.5 False, 1.0 True]
+        answer: 0.5 True
+        why: A score of 0 means even odds, so 0.5. A very negative score gives a probability very close to 0, but never below it.
+        misses:
+          {
+            0.0 True: '`sigmoid(0)` is `1 / (1 + 1)`, which is 0.5: a score of 0 is undecided.',
+            0.5 False: 'A score of -100 gives a probability extremely close to 0, far below 0.001.',
+            1.0 True: '`np.exp(-0)` is 1, so `sigmoid(0)` is a half.',
+          }
+      - code: |
+          import numpy as np
+
+          p = 0.75
+          odds = p / (1 - p)
+          print(round(odds, 2), round(np.log(odds), 3))
+        choices: [3.0 1.099, 0.75 1.099, 3.0 0.75, 1.5 0.405]
+        answer: 3.0 1.099
+        why: A probability of 0.75 is 3 chances for every 1 against, odds of 3. The log-odds is `log(3)`, about 1.099.
+        misses:
+          {
+            0.75 1.099: 'Odds are the chance for divided by the chance against: 0.75 / 0.25.',
+            3.0 0.75: 'The log-odds is the log of the odds, `log(3)`.',
+            1.5 0.405: '`1 - p` is 0.25, so the odds are 0.75 / 0.25 = 3.',
+          }
 
   - type: choice
     id: weight
@@ -44,6 +76,41 @@ cards:
       'Adds 1.1 to the probability of spam': 'A probability can never pass 1. The weight is added to the score, the log-odds.'
       'Multiplies the probability of spam by 1.1': 'It multiplies the odds, by `np.exp(1.1)`, not the probability by 1.1.'
       'Adds 110% to the probability of spam': 'A weight is in log-odds. How far the probability moves depends on where it started.'
+    variants:
+      - prompt: In a spam filter, the word "meeting" has weight `-2.0`. What does an email containing it get?
+        choices:
+          [
+            Its log-odds of spam lowered by 2,
+            Its probability of spam lowered by 2,
+            A probability of spam of 0,
+            Its probability of spam halved,
+          ]
+        answer: Its log-odds of spam lowered by 2
+        why: Each feature adds its weight to the score, the log-odds. A negative weight pushes toward "not spam", by an amount in log-odds.
+        misses:
+          {
+            Its probability of spam lowered by 2: A probability cannot drop by 2. Weights act on the log-odds.,
+            A probability of spam of 0: The sigmoid never reaches 0. Other words can still push the score up.,
+            Its probability of spam halved: 'It divides the odds by `np.exp(2)`, about 7.4. What that does to the probability depends on where it started.',
+          }
+      - kind: predict
+        prompt: What does this print?
+        code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          print(round(sigmoid(1.0) - sigmoid(0.0), 3), round(sigmoid(6.0) - sigmoid(5.0), 3))
+        choices: [0.231 0.004, 0.231 0.231, 1.0 1.0, 0.5 0.5]
+        answer: 0.231 0.004
+        why: Adding the same 1 to the score moves the probability a lot near 0.5 and hardly at all when the model is already sure.
+        misses:
+          {
+            0.231 0.231: 'The sigmoid is steep in the middle and flat at the ends, so the same step in score moves the probability by different amounts.',
+            1.0 1.0: That is the change in score. The sigmoid squashes it into a change in probability.,
+            0.5 0.5: 'A probability can only rise towards 1, and near 1 there is little room left.',
+          }
 
   - type: choice
     id: boundary
@@ -64,6 +131,40 @@ cards:
       '[1 0 0]': 'The third score is `0.6 - 0.5 = 0.1`, which is positive. Comparing it with 0.5 is the mistake.'
       '[1 1 1]': 'The second score is `-1 - 0.5`, which is negative.'
       '[0 0 1]': 'The first score is `2 - 0.5 = 1.5`, well above 0.'
+    variants:
+      - code: |
+          import numpy as np
+
+          x = np.array([0.2, 0.5, 0.9])
+          w, b = 3.0, -1.5
+          print((x * w + b >= 0).astype(int))
+        choices: ['[0 1 1]', '[0 0 1]', '[1 1 1]', '[0 1 0]']
+        answer: '[0 1 1]'
+        why: The scores are -0.9, 0.0 and 1.2. A score of at least 0 means a probability of at least 0.5, so class 1.
+        misses:
+          {
+            '[0 0 1]': 'At 0.5 the score is exactly 0, a probability of 0.5, which counts as class 1 with `>=`.',
+            '[1 1 1]': 'At 0.2 the score is `0.6 - 1.5`, which is negative.',
+            '[0 1 0]': 'At 0.9 the score is `2.7 - 1.5`, positive.',
+          }
+      - kind: concept
+        code: ''
+        prompt: A neuron has `w = [1, 1]` and `b = -1`. Where is its decision boundary?
+        choices:
+          [
+            The straight line where `x1 + x2 = 1`,
+            The straight line where `x1 + x2 = 0.5`,
+            The straight line where `x1 + x2 = 0`,
+            'A curve, which training can bend',
+          ]
+        answer: The straight line where `x1 + x2 = 1`
+        why: "The boundary is where the score is 0: `x1 + x2 - 1 = 0`. One neuron's boundary is always a straight line."
+        misses:
+          {
+            The straight line where `x1 + x2 = 0.5`: 'The 0.5 is a probability. On the score, the boundary is at 0.',
+            The straight line where `x1 + x2 = 0`: 'The bias moves the line: the score is 0 when `x1 + x2` is 1.',
+            'A curve, which training can bend': 'A single neuron is a weighted sum, so its boundary stays straight however long it trains.',
+          }
 
   - type: choice
     id: bce
@@ -83,6 +184,35 @@ cards:
       '0.347': "That counts only one example's loss and halves it. The `(1 - y)` term scores the 0 label too."
       '0.5': 'The loss is `-log` of the probability, not the probability.'
       '0.0': 'A loss of 0 needs the truth to get a probability of 1. Here it gets 0.5.'
+    variants:
+      - code: |
+          import numpy as np
+
+          print(round(-np.log(0.9), 3), round(-np.log(0.1), 3))
+        choices: [0.105 2.303, 0.9 0.1, 0.1 0.9, 0.105 0.105]
+        answer: 0.105 2.303
+        why: Giving the truth 0.9 costs little. Giving it 0.1 costs over 20 times as much, which is how cross-entropy punishes confident mistakes.
+        misses:
+          {
+            0.9 0.1: 'The loss is `-log` of the probability, not the probability itself.',
+            0.1 0.9: 'That is `1 - p`. Cross-entropy uses `-log(p)`, which grows fast as `p` nears 0.',
+            0.105 0.105: A smaller probability for the truth gives a bigger loss.,
+          }
+      - code: |
+          import numpy as np
+
+          y = np.array([1, 0, 1])
+          p = np.clip(np.array([1.0, 0.0, 0.0]), 1e-7, 1 - 1e-7)
+          print(round(np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p))), 3))
+        choices: ['5.373', '0.333', inf, '0.0']
+        answer: '5.373'
+        why: 'Two answers are confidently right and cost almost nothing. The third is confidently wrong: `-log(1e-7)` is about 16, and the mean of the three is about 5.4.'
+        misses:
+          {
+            '0.333': Cross-entropy is not the fraction wrong. One confident mistake costs about 16 on its own.,
+            inf: '`np.clip` keeps `p` away from exactly 0, so the log stays finite.',
+            '0.0': 'The third example gives the truth a probability of almost 0, which is a huge loss.',
+          }
 
   - type: choice
     id: gradient
@@ -95,6 +225,35 @@ cards:
       '-0.2': '`p - y` is `0.2 - 0`, which is positive.'
       '-0.8': "That's `p - 1`, the slope if it were spam. Its label is 0."
       '0.8': "That's `1 - p`, the probability it gave the truth. The slope is `p - y`."
+    variants:
+      - prompt: A spam email (`y = 1`) gets `p = 0.9`. What is the slope of the cross-entropy for its score?
+        choices: ['-0.1', '0.1', '0.9', '-0.9']
+        answer: '-0.1'
+        why: The slope for the score is `p - y`, `0.9 - 1`. Negative and small, so a step pushes the score up a little.
+        misses:
+          {
+            '0.1': '`p - y` is `0.9 - 1`, which is negative.',
+            '0.9': 'That is `p`. The slope subtracts the label: `p - y`.',
+            '-0.9': That would be `0 - 0.9`. The label here is 1.,
+          }
+      - kind: predict
+        prompt: What does this print?
+        code: |
+          import numpy as np
+
+          X = np.array([[1.0, 2.0], [3.0, 0.0]])
+          y = np.array([1.0, 0.0])
+          p = np.array([0.5, 0.5])
+          print(X.T @ (p - y) / len(y))
+        choices: ['[ 0.5 -0.5]', '[-0.5  0.5]', '[ 1. -1.]', '0.0']
+        answer: '[ 0.5 -0.5]'
+        why: "`p - y` is `[-0.5, 0.5]`. Each weight's slope is its feature column dotted with that, divided by 2: `(-0.5 + 1.5) / 2` and `(-1 + 0) / 2`."
+        misses:
+          {
+            '[-0.5  0.5]': That is `p - y` itself. `X.T @` weights each error by the feature values.,
+            '[ 1. -1.]': That is the sum. The `/ len(y)` makes it a mean.,
+            '0.0': '`X.T @` gives one slope per weight, so the result has 2 numbers.',
+          }
 
   - type: choice
     id: which-set
@@ -107,6 +266,33 @@ cards:
       'Training': 'Training scores flatter the model, so a threshold chosen on them suits data it has already memorised.'
       'Test': 'Choosing on the test set tunes the model to it, and its score stops meaning anything.'
       'Training and test together': 'Any choice made on the test set leaks it into the model.'
+    variants:
+      - prompt: You're comparing 5 learning rates. On which data should you compare them?
+        choices: [Validation, Training, Test, Whichever set gives the clearest difference]
+        answer: Validation
+        why: A learning rate is a choice, and choices are made on validation. The test set is kept for one final, honest score.
+        misses:
+          {
+            Training: 'Training loss rewards memorising, so it can pick a setting that does worse on new data.',
+            Test: 'Choosing on the test set makes its score too hopeful, since you picked what suits it.',
+            Whichever set gives the clearest difference: Picking the data that flatters a choice is how scores end up meaning nothing.,
+          }
+      - prompt: Every choice about your model is made. What is the test set for now?
+        choices:
+          [
+            'Scoring the model once, for the final report',
+            Picking the best checkpoint,
+            Tuning the threshold,
+            A few more training steps,
+          ]
+        answer: Scoring the model once, for the final report
+        why: The test set stays untouched until the end, so its score is an honest guess at how the model does on new data.
+        misses:
+          {
+            Picking the best checkpoint: 'Picking a checkpoint is a choice, so it belongs on validation.',
+            Tuning the threshold: A threshold is a choice too. Tuning it on the test set leaks the test set into the model.,
+            A few more training steps: Training on the test set means it is no longer new data.,
+          }
 
   - type: choice
     id: baseline
@@ -125,6 +311,39 @@ cards:
       'It is a strong filter': '82% sounds good, but doing nothing scores 80% here.'
       'It is 32 points better than guessing': 'Guessing the majority, not a coin flip, is the baseline, and it scores 80%.'
       'It must have leaked': 'Leakage gives scores that are too good. This one is barely above the baseline.'
+    variants:
+      - prompt: Your house-price model has a validation MSE of 410. Always predicting the training set's mean price gives 400. What's fair to say?
+        choices:
+          [
+            It is worse than predicting the mean,
+            'It is good, since 410 is close to 400',
+            The baseline should use the validation mean,
+            MSE cannot be compared like this,
+          ]
+        answer: It is worse than predicting the mean
+        why: A model has to beat the simplest guess to be worth anything. Here, the mean does better with no learning at all.
+        misses:
+          {
+            'It is good, since 410 is close to 400': 'For a loss, lower is better, so 410 is worse than doing nothing clever.',
+            The baseline should use the validation mean: 'The baseline only gets to use training data, like the model. The validation mean would be peeking.',
+            MSE cannot be compared like this: 'Both are MSE on the same validation set, so they compare directly.',
+          }
+      - prompt: On a validation set of 50 emails, model A scores 92% and model B 94%. What's fair to say?
+        choices:
+          [
+            'The difference is one email, which may be noise',
+            B is clearly better,
+            'A is clearly better, since it is simpler',
+            'Both are excellent, since they are above 90%',
+          ]
+        answer: The difference is one email, which may be noise
+        why: 2% of 50 is a single email. That is easily chance, so a bigger validation set is needed to tell them apart.
+        misses:
+          {
+            B is clearly better: One email out of 50 is too small a difference to trust.,
+            'A is clearly better, since it is simpler': "Nothing here says which is simpler, and the scores can't tell them apart.",
+            'Both are excellent, since they are above 90%': 'Without the baseline you cannot tell. If 92% of the emails are real, doing nothing scores 92%.',
+          }
 
   - type: choice
     id: precision
@@ -145,6 +364,36 @@ cards:
       '0.6666666666666666 0.4': 'Swapped. `pred.sum()` counts the flags, so the first number is precision.'
       '0.4 0.4': '`y.sum()` is 3, the number of real positives. 2 of 3 is two thirds.'
       '0.5 0.6666666666666666': 'Five were flagged, not four. Count the 1s in `pred`.'
+    variants:
+      - code: |
+          import numpy as np
+
+          y    = np.array([1, 0, 0, 1, 0])
+          pred = np.array([0, 0, 0, 1, 0])
+          tp = ((pred == 1) & (y == 1)).sum()
+          print(tp / pred.sum(), tp / y.sum())
+        choices: [1.0 0.5, 0.5 1.0, 0.2 0.5, 1.0 1.0]
+        answer: 1.0 0.5
+        why: It flagged one email and that one was right, so precision is 1.0. It caught 1 of the 2 real positives, so recall is 0.5.
+        misses:
+          {
+            0.5 1.0: 'Swapped. Precision divides by what was flagged, `pred.sum()`.',
+            0.2 0.5: 'Precision is out of the flagged emails, not all 5.',
+            1.0 1.0: 'One real positive, at position 0, was missed, so recall is 1 of 2.',
+          }
+      - kind: concept
+        code: ''
+        prompt: You raise the threshold from 0.5 to 0.9. What usually happens?
+        choices:
+          ['Precision goes up, recall goes down', Both go up, 'Precision goes down, recall goes up', Both go down]
+        answer: Precision goes up, recall goes down
+        why: Fewer emails get flagged, only the ones the model is most sure of. Those are more often right, but more real positives are missed.
+        misses:
+          {
+            Both go up: A threshold trades one for the other. Flagging less means missing more.,
+            'Precision goes down, recall goes up': That is what lowering the threshold does.,
+            Both go down: 'The flags that remain are the most confident ones, so they are usually more precise.',
+          }
 
   - type: choice
     id: curves
@@ -163,6 +412,39 @@ cards:
       'Train for longer, since training loss is still falling': 'A falling training loss with rising validation loss is memorising. More steps make it worse.'
       'Use a bigger model': 'A bigger model has more room to memorise, so it would overfit more.'
       'Lower the threshold': "The threshold trades precision for recall. It doesn't fix overfitting."
+    variants:
+      - prompt: After many steps, training loss is 0.60 and validation loss is 0.62, and both have been flat for a while. What's happening?
+        choices:
+          [
+            "Underfitting: the model can't capture the pattern",
+            'Overfitting: stop earlier',
+            'Nothing: matching losses mean it is perfect',
+            The learning rate is too big,
+          ]
+        answer: "Underfitting: the model can't capture the pattern"
+        why: Both losses are high and close together. The model is not memorising, it just is not good enough. More features or a bigger model can help.
+        misses:
+          {
+            'Overfitting: stop earlier': 'Overfitting shows as a gap, with validation loss well above training loss. Here they are close.',
+            'Nothing: matching losses mean it is perfect': 'Close losses rule out memorising, but both are still high.',
+            The learning rate is too big: 'A rate that is too big makes the loss jump or grow, not settle flat.',
+          }
+      - prompt: Training loss is 0.30 and validation loss is 0.31, and both are still falling. What should you do?
+        choices:
+          [
+            'Keep training: both are still improving',
+            'Stop now: it has started to overfit',
+            Check the test set to decide,
+            Lower the threshold,
+          ]
+        answer: 'Keep training: both are still improving'
+        why: Overfitting would show as validation loss rising while training loss falls. Both falling together means there is more to learn.
+        misses:
+          {
+            'Stop now: it has started to overfit': 'There is no gap and validation is still falling, so it is not overfitting yet.',
+            Check the test set to decide: 'When to stop is a choice, so it is made on validation.',
+            Lower the threshold: 'The threshold changes which emails are flagged, not how training is going.',
+          }
 
   - type: choice
     id: leak
@@ -181,6 +463,39 @@ cards:
       'Nothing, standardising only rescales': 'It rescales using numbers computed from validation too, so validation leaked in.'
       'Standardising should happen after training': "The model trains on standardised features, so it has to happen before training, using training's numbers."
       'The validation part should be standardised with its own statistics': 'Then the same raw value means something different in each part. Use the training numbers for both.'
+    variants:
+      - prompt: You're predicting which customers will complain. One feature is "refund issued", which is recorded after a complaint is handled. What's wrong?
+        choices:
+          [
+            The feature comes from after the outcome,
+            'Nothing, it is a strong feature',
+            It needs standardising first,
+            It should only be in the validation set,
+          ]
+        answer: The feature comes from after the outcome
+        why: When you make a real prediction, a refund has not happened yet. The model looks brilliant in testing and fails in use.
+        misses:
+          {
+            'Nothing, it is a strong feature': It is strong because it is a result of the answer. You will not have it when you need a prediction.,
+            It needs standardising first: Scaling does not fix a feature that arrives too late.,
+            It should only be in the validation set: Training and validation need the same features. This one should not be used at all.,
+          }
+      - prompt: Your dataset has the same email copied 20 times, and the copies land on both sides of the split. What happens?
+        choices:
+          [
+            Validation accuracy looks better than it really is,
+            Validation accuracy looks worse than it really is,
+            'Nothing, copies are harmless',
+            Training fails with an error,
+          ]
+        answer: Validation accuracy looks better than it really is
+        why: The model has already seen those exact emails in training, so getting them right in validation says nothing about new data. Remove duplicates before splitting.
+        misses:
+          {
+            Validation accuracy looks worse than it really is: Copies it has seen are the easiest possible validation examples.,
+            'Nothing, copies are harmless': Copies on both sides let memorising pass for learning.,
+            Training fails with an error: Nothing crashes. That is why leaks are dangerous.,
+          }
 
   - type: fix
     id: fix-bce
@@ -204,6 +519,61 @@ cards:
       - { call: 'round(bce(np.array([0]), np.array([0.99])), 3)', expect: '4.605', hidden: true }
     why: >-
       Without the `(1 - y)` term, examples labelled 0 add nothing to the loss, so wrongly flagging them is never punished.
+    variants:
+      - prompt: '`predict(X, w, b)` should give class 1 when the probability is at least 0.5. It misses some emails that should be 1. Fix it.'
+        code: |
+          import numpy as np
+
+          def predict(X, w, b):
+              z = X @ w + b
+              return (z >= 0.5).astype(int)
+        solution: |
+          import numpy as np
+
+          def predict(X, w, b):
+              z = X @ w + b
+              return (z >= 0).astype(int)
+        highlightLine: 5
+        tests:
+          - { call: 'predict(np.array([[0.2], [1.0], [-1.0]]), np.array([1.0]), 0.0)', expect: '[1, 1, 0]' }
+          - { call: 'predict(np.array([[0.3], [0.6]]), np.array([1.0]), 0.0)', expect: '[1, 1]', hidden: true }
+          - { call: 'predict(np.array([[1.0], [2.0]]), np.array([1.0]), -1.2)', expect: '[0, 1]', hidden: true }
+        why: '`z` is a score, not a probability. A probability of 0.5 is a score of 0, so the threshold on `z` is 0.'
+      - prompt: '`step` should take one gradient descent step for logistic regression. The weights wander off instead of settling. Fix it.'
+        code: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          def step(X, y, w, b, lr):
+              z = X @ w + b
+              w = w - lr * X.T @ (z - y) / len(y)
+              b = b - lr * np.mean(z - y)
+              return w, b
+        solution: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          def step(X, y, w, b, lr):
+              p = sigmoid(X @ w + b)
+              w = w - lr * X.T @ (p - y) / len(y)
+              b = b - lr * np.mean(p - y)
+              return w, b
+        highlightLine: 8
+        tests:
+          - {
+              call: 'step(np.array([[1.0], [2.0]]), np.array([1.0, 0.0]), np.array([0.0]), 0.0, 1.0)',
+              expect: '([-0.25], 0.0)',
+            }
+          - {
+              call: '(lambda r: (r[0].round(3).tolist(), round(float(r[1]), 3)))(step(np.array([[1.0], [2.0]]), np.array([1.0, 0.0]), np.array([1.0]), 0.0, 1.0))',
+              expect: '([0.254], -0.306)',
+              hidden: true,
+            }
+        why: The slope for the score is `p - y`, with `p` the probability. `z - y` treats the score as if it were a probability.
 
   - type: write
     id: write-train
@@ -249,6 +619,73 @@ cards:
     requires: ['loop', 'name:sigmoid']
     why: >-
       Each step works out the probabilities, then moves the weights by `X.T @ (p - y) / n` and `b` by the mean error.
+    variants:
+      - prompt: Write `loss(X, y, w, b)`, which gives back the mean binary cross-entropy of `sigmoid(X @ w + b)` against `y`. Clip the probabilities to between `1e-7` and `1 - 1e-7` first, so a confident mistake can't give `inf`. `sigmoid` is given.
+        starter: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          def loss(X, y, w, b):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def sigmoid(z):
+              return 1 / (1 + np.exp(-z))
+
+          def loss(X, y, w, b):
+              p = np.clip(sigmoid(X @ w + b), 1e-7, 1 - 1e-7)
+              return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+        tests:
+          - {
+              call: 'round(loss(np.array([[1.0], [2.0]]), np.array([1.0, 0.0]), np.array([0.0]), 0.0), 3)',
+              expect: '0.693',
+            }
+          - {
+              call: 'round(loss(np.array([[1.0], [2.0]]), np.array([1.0, 0.0]), np.array([1.0]), 0.0), 3)',
+              expect: '1.22',
+            }
+          - {
+              call: 'round(loss(np.array([[100.0]]), np.array([0.0]), np.array([1.0]), 0.0), 3)',
+              expect: '16.118',
+              hidden: true,
+            }
+        requires: ['name:clip', 'name:sigmoid']
+        forbids: [loop]
+        why: Probabilities from the sigmoid, clipped, then the two-term formula so both labels count, averaged over the examples.
+      - prompt: Write `split(X, y, frac, seed)`, which shuffles the rows with `np.random.default_rng(seed).permutation`, puts the first `int(len(y) * frac)` of the shuffled rows into validation, and gives back `(X_train, y_train, X_val, y_val)`. Each row of `X` must stay with its label.
+        starter: |
+          import numpy as np
+
+          def split(X, y, frac, seed):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def split(X, y, frac, seed):
+              order = np.random.default_rng(seed).permutation(len(y))
+              n_val = int(len(y) * frac)
+              val, train = order[:n_val], order[n_val:]
+              return X[train], y[train], X[val], y[val]
+        tests:
+          - {
+              call: '(lambda r: (len(r[1]), len(r[3])))(split(np.arange(20).reshape(10, 2), np.arange(10), 0.2, 0))',
+              expect: '(8, 2)',
+            }
+          - {
+              call: '(lambda r: bool((r[0][:, 0] // 2 == r[1]).all() and (r[2][:, 0] // 2 == r[3]).all()))(split(np.arange(20).reshape(10, 2), np.arange(10), 0.3, 1))',
+              expect: 'True',
+            }
+          - {
+              call: '(lambda r: sorted(np.concatenate([r[1], r[3]]).tolist()))(split(np.arange(20).reshape(10, 2), np.arange(10), 0.5, 2))',
+              expect: '[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]',
+              hidden: true,
+            }
+        requires: ['name:permutation']
+        forbids: [loop]
+        why: One shuffled order of positions, used to pick rows from both `X` and `y`, keeps every example with its label.
 
   - type: write
     id: write-evaluate
@@ -287,3 +724,53 @@ cards:
           hidden: true,
         }
     forbids: ['loop']
+    variants:
+      - prompt: Write `baseline(y_train, y_val)`, which gives back the validation accuracy of always predicting the most common label in `y_train`. The labels are 0 and 1, and a tie predicts 1.
+        starter: |
+          import numpy as np
+
+          def baseline(y_train, y_val):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def baseline(y_train, y_val):
+              majority = 1 if y_train.mean() >= 0.5 else 0
+              return np.mean(y_val == majority)
+        tests:
+          - { call: 'baseline(np.array([1, 1, 0]), np.array([0, 0, 1, 1]))', expect: '0.5' }
+          - { call: 'baseline(np.array([0, 0, 1]), np.array([0, 0, 0, 1]))', expect: '0.75' }
+          - { call: 'baseline(np.array([0, 1]), np.array([1, 1, 0]))', expect: '0.6666666666666666', hidden: true }
+          - {
+              call: 'baseline(np.array([1, 1, 1, 0]), np.array([1, 0, 0]))',
+              expect: '0.3333333333333333',
+              hidden: true,
+            }
+        forbids: [loop]
+        why: The majority comes from training labels only, then a mask compares it with every validation label.
+      - prompt: Write `standardise(train, val)`, which rescales each column of both arrays using the mean and standard deviation of that column in `train` only, and gives back `(train_scaled, val_scaled)`.
+        starter: |
+          import numpy as np
+
+          def standardise(train, val):
+              # Your code here
+        solution: |
+          import numpy as np
+
+          def standardise(train, val):
+              mean = train.mean(axis=0)
+              std = train.std(axis=0)
+              return (train - mean) / std, (val - mean) / std
+        tests:
+          - { call: 'standardise(np.array([[1.0], [3.0]]), np.array([[5.0]]))', expect: '([[-1.0], [1.0]], [[3.0]])' }
+          - {
+              call: 'standardise(np.array([[0.0, 10.0], [2.0, 30.0]]), np.array([[1.0, 40.0]]))',
+              expect: '([[-1.0, -1.0], [1.0, 1.0]], [[0.0, 2.0]])',
+            }
+          - {
+              call: 'standardise(np.array([[2.0], [4.0], [6.0]]), np.array([[4.0], [8.0]]))[1].round(3).tolist()',
+              expect: '[[0.0], [2.449]]',
+              hidden: true,
+            }
+        forbids: [loop]
+        why: The validation part is scaled with the training numbers, so the same raw value means the same thing in both, and nothing leaks from validation.

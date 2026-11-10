@@ -30,6 +30,20 @@ cards:
         answer: '5 4'
         why: >-
           `t` becomes 4, then `s` becomes 5. Trace one line at a time.
+      - code: |
+          price = 10
+          total = price + 5
+          price = price * 2
+          print(total, price)
+        choices: [15 20, 25 20, 15 10, 30 20]
+        answer: 15 20
+        why: '`total` got 15 when its line ran. Changing `price` afterwards does not go back and change `total`.'
+        misses:
+          {
+            25 20: '`total` is not a lasting rule linked to `price`. It was worked out once, as 10 + 5.',
+            15 10: '`price = price * 2` does change `price`: the right side is 20, and that gets stored.',
+            30 20: '`total` was worked out once, when `price` was still 10, so it stays 15.',
+          }
 
   - type: choice
     id: division-kinds
@@ -41,6 +55,29 @@ cards:
     answer: '2.0 2 1'
     why: >-
       `/` always gives a float, `//` counts whole times, and `%` gives the remainder.
+    variants:
+      - code: |
+          print(7 / 2, 7 // 2, 7 % 2)
+        choices: [3.5 3 1, 3 3 1, 3.5 3.5 1, 3.5 3 0.5]
+        answer: 3.5 3 1
+        why: '`/` gives the exact answer as a float, `//` counts the whole 2s in 7, and `%` gives what is left over.'
+        misses:
+          {
+            3 3 1: '`/` never drops the decimals. `7 / 2` is 3.5.',
+            3.5 3.5 1: '`//` keeps only the whole number of times 2 fits into 7, which is 3.',
+            3.5 3 0.5: '`%` is the remainder as a whole amount: 7 is 3 twos with 1 left over.',
+          }
+      - code: |
+          print(10 // 3 * 3 + 10 % 3)
+        choices: ['10', '2', '9', '10.0']
+        answer: '10'
+        why: '`10 // 3` is 3, times 3 is 9, and `10 % 3` is 1, so it is 10. `//`, `*` and `%` go left to right before the `+`.'
+        misses:
+          {
+            '2': '`//` and `*` have the same priority, so they go left to right: `10 // 3` first, then `* 3`.',
+            '9': 'The `+ 10 % 3` adds the remainder, 1.',
+            '10.0': '`//` and `%` on whole numbers give whole numbers. Only `/` makes a float.',
+          }
 
   - type: choice
     id: slice-end
@@ -53,6 +90,31 @@ cards:
     answer: 'rad t'
     why: >-
       The slice stops just before index 4, and `[-1]` is the last character.
+    variants:
+      - code: |
+          word = "python"
+          print(word[2:5], word[-2])
+        choices: [tho o, thon o, yth o, tho n]
+        answer: tho o
+        why: Counting from 0, indexes 2, 3 and 4 are `t`, `h` and `o`, and the slice stops before 5. `[-2]` is the second from the end.
+        misses:
+          {
+            thon o: 'A slice stops just before its end index, so index 5 is not included.',
+            yth o: 'Indexes count from 0, so index 2 is the third character, `t`.',
+            tho n: '`[-1]` is the last character, `n`. `[-2]` is the one before it.',
+          }
+      - code: |
+          word = "summit"
+          print(word[:3], len(word))
+        choices: [sum 6, summ 6, sum 5, umm 6]
+        answer: sum 6
+        why: '`[:3]` starts at the beginning and stops before index 3. `len` counts every character, and there are 6.'
+        misses:
+          {
+            summ 6: 'The slice stops before index 3, so it has indexes 0, 1 and 2.',
+            sum 5: '`len` counts characters, and "summit" has 6. Only indexes start at 0.',
+            umm 6: 'Leaving out the start means start at index 0, the `s`.',
+          }
 
   - type: choice
     id: name-vs-text
@@ -65,6 +127,31 @@ cards:
     answer: 'n 3 4'
     why: >-
       Quotes make the word itself, no quotes looks up the value, and braces in an f-string are worked out.
+    variants:
+      - code: |
+          x = 5
+          print("x + 1", x + 1)
+        choices: [x + 1 6, 6 6, x + 1 x + 1, 5 + 1 6]
+        answer: x + 1 6
+        why: In quotes, `x + 1` is just text. Without quotes, it is worked out as 6.
+        misses:
+          {
+            6 6: 'Quotes make text, so Python shows it exactly as written and does not work it out.',
+            x + 1 x + 1: 'Without quotes, `x + 1` is code, so Python looks up `x` and adds 1.',
+            5 + 1 6: 'Text in quotes is never changed, so the `x` inside it stays as the letter x.',
+          }
+      - code: |
+          name = "Ada"
+          print(f"Hi {name}", "name")
+        choices: [Hi Ada name, Hi Ada Ada, 'Hi {name} name', Hi name Ada]
+        answer: Hi Ada name
+        why: Braces in an f-string are filled in with the value. The plain `"name"` is just the word.
+        misses:
+          {
+            Hi Ada Ada: '`"name"` has quotes and no `f`, so it is the word name, not the variable.',
+            'Hi {name} name': The `f` before the quotes makes Python fill in the braces.,
+            Hi name Ada: 'Each piece keeps its place: the f-string comes first, then the word.',
+          }
 
   - type: choice
     id: return-none
@@ -74,6 +161,43 @@ cards:
     answer: 'None'
     why: >-
       `print` shows a value, but it doesn't give one back.
+    variants:
+      - kind: predict
+        prompt: What does this print?
+        code: |
+          x = len("goat")
+          print(x + 1)
+        choices: ['5', goat1, '4', None]
+        answer: '5'
+        why: '`len` gives back a value, 4, which gets stored in `x`. Then `x + 1` is 5.'
+        misses:
+          {
+            goat1: '`len` gives back the length, a number, not the text itself.',
+            '4': '`x` holds 4, but the line prints `x + 1`.',
+            None: 'Unlike `print`, `len` gives back a value you can store.',
+          }
+      - kind: predict
+        prompt: What does this print?
+        code: |
+          y = print("hi")
+          print(y)
+        choices:
+          - |-
+            hi
+            None
+          - |-
+            hi
+            hi
+          - None
+          - hi
+        answer: |-
+          hi
+          None
+        why: The first line shows `hi`, but `print` gives nothing back, so `y` holds `None`.
+        misses: { ? 'hi
+
+              hi'
+            : '`print` shows a value on the screen, but it does not give one back. `y` gets `None`.', None: 'The first line still runs `print("hi")`, so `hi` appears first.', hi: 'The second `print` shows whatever `y` holds, and that is `None`.' }
 
   - type: choice
     id: chain-order
@@ -91,6 +215,56 @@ cards:
     answer: "a\nc"
     why: >-
       The chain stops at its first match, so `b` never runs. The last `if` is a separate question, so `c` runs.
+    variants:
+      - code: |
+          t = 25
+          if t > 30:
+              print("hot")
+          elif t > 20:
+              print("warm")
+          elif t > 10:
+              print("mild")
+          else:
+              print("cold")
+        choices:
+          - warm
+          - |-
+            warm
+            mild
+          - mild
+          - cold
+        answer: warm
+        why: '`t > 30` is false, `t > 20` is true, and the chain stops at that first match.'
+        misses: { ? 'warm
+
+              mild'
+            : 'In an `if`/`elif` chain, only the first matching branch runs.', mild: 'Python checks from the top and stops at the first true condition, `t > 20`.', cold: '`else` only runs when no condition above it matched.' }
+      - code: |
+          n = 7
+          if n > 5:
+              print("big")
+          if n > 0:
+              print("positive")
+          else:
+              print("zero or less")
+        choices:
+          - |-
+            big
+            positive
+          - big
+          - |-
+            big
+            zero or less
+          - positive
+        answer: |-
+          big
+          positive
+        why: These are two separate `if` statements, so each one asks its own question. Both are true.
+        misses:
+          { big: 'The second `if` is not part of the first one. It is a new question, and it is also true.', ? 'big
+
+              zero or less'
+            : 'The `else` belongs to the second `if`, and `n > 0` is true, so it is skipped.', positive: '`n > 5` is true too, so `big` is shown first.' }
 
   - type: choice
     id: which-error
@@ -100,6 +274,26 @@ cards:
     answer: 'print("7" * 2)'
     why: >-
       Multiplying text by a whole number repeats it. The next two are `TypeError`s, and the last is a `NameError`.
+    variants:
+      - choices: [print("3" + "4"), print("3" + 4), print(int("3.5")), print(len(34))]
+        answer: print("3" + "4")
+        why: Two pieces of text join into `34`. The others are a `TypeError`, a `ValueError` and a `TypeError`.
+        misses:
+          {
+            print("3" + 4): 'Text and a number cannot be added: `TypeError`. Convert one so both match.',
+            print(int("3.5")): '`int` only reads whole-number text. `"3.5"` gives a `ValueError`.',
+            print(len(34)): '`len` measures text, not numbers. A number has no length: `TypeError`.',
+          }
+      - prompt: Which of these gives an error?
+        choices: ['print("age: " + 30)', 'print("age:", 30)', 'print(f"age: {30}")', 'print("age: " + str(30))']
+        answer: 'print("age: " + 30)'
+        why: '`+` cannot join text and a number. The other three turn the number into text or pass it separately.'
+        misses:
+          {
+            'print("age:", 30)': 'A comma gives `print` two separate values, and it shows both with a space.',
+            'print(f"age: {30}")': An f-string turns whatever is in the braces into text.,
+            'print("age: " + str(30))': '`str(30)` is the text `"30"`, so `+` joins two pieces of text.',
+          }
 
   - type: blank
     id: fill-even
@@ -111,6 +305,23 @@ cards:
     expectOutput: 'True'
     why: >-
       A number is even when its remainder after dividing by 2 is 0.
+    variants:
+      - prompt: Fill in the operator so this shows `3`, the number of whole hours in 200 minutes.
+        code: |
+          minutes = 200
+          print(minutes ____ 60)
+        answers:
+          - [//]
+        expectOutput: '3'
+        why: '`//` counts how many whole 60s fit into 200.'
+      - prompt: Fill in the word so this shows `False`, because 12 is not between 1 and 10.
+        code: |
+          n = 12
+          print(n >= 1 ____ n <= 10)
+        answers:
+          - [and]
+        expectOutput: 'False'
+        why: Both conditions have to be true, so it needs `and`. With `or`, any number above 1 would count.
 
   - type: fix
     id: fix-lost-value
@@ -127,6 +338,35 @@ cards:
     expectOutput: HELLO
     why: >-
       String tools hand back a new string, so you have to store it.
+    variants:
+      - vary:
+          - { word: "'gig'" }
+          - { word: "'rag'" }
+        prompt: This should print `boat`. Fix it.
+        code: |
+          word = "goat"
+          word.replace("g", "b")
+          print(word)
+        solution: |
+          word = "goat"
+          word = word.replace("g", "b")
+          print(word)
+        expectOutput: boat
+        why: '`.replace` hands back a new string. The original stays the same unless you store the result.'
+      - vary:
+          - { age: "'9'" }
+          - { age: "'70'" }
+        prompt: This should print `42`, one more than the age, but it crashes. Fix it.
+        code: |
+          age = "41"
+          int(age)
+          print(age + 1)
+        solution: |
+          age = "41"
+          age = int(age)
+          print(age + 1)
+        expectOutput: '42'
+        why: '`int(age)` gives back a number, but nothing stored it, so `age` was still text.'
 
   - type: fix
     id: fix-compare
@@ -143,6 +383,43 @@ cards:
     expectOutput: 'yes'
     why: >-
       A condition asks a question, so it needs `==`.
+    variants:
+      - vary:
+          - { day: "'mon'" }
+          - { day: "'sat'" }
+        prompt: This should print `weekend` only when `day` is `"sat"` or `"sun"`, but it prints `weekend` for every day. Fix it.
+        code: |
+          day = "sun"
+          if day == "sat" or "sun":
+              print("weekend")
+          else:
+              print("weekday")
+        solution: |
+          day = "sun"
+          if day == "sat" or day == "sun":
+              print("weekend")
+          else:
+              print("weekday")
+        expectOutput: weekend
+        why: Each side of `or` is its own question. `"sun"` on its own counts as true, so the whole condition always was.
+      - vary:
+          - { temp: '10' }
+          - { temp: '25' }
+        prompt: This should print `hot` when `temp` is above 25 and `not hot` otherwise, but it won't run. Fix it.
+        code: |
+          temp = 30
+          if temp > 25:
+              print("hot")
+          else temp <= 25:
+              print("not hot")
+        solution: |
+          temp = 30
+          if temp > 25:
+              print("hot")
+          else:
+              print("not hot")
+        expectOutput: hot
+        why: '`else` takes no condition. It already means "every other case".'
 
   - type: write
     id: write-convert
@@ -159,6 +436,32 @@ cards:
       - { call: total, expect: '42' }
     why: >-
       Convert first, because `+` on text would join them.
+    variants:
+      - requires: ['name:float', 'op:*']
+        vary:
+          - { price: "'4.0'" }
+        prompt: '`price` holds a price as text. Make `total` hold the cost of 3 of them, as a number.'
+        starter: |
+          price = "2.5"
+        solution: |
+          price = "2.5"
+          total = float(price) * 3
+        tests:
+          - { call: total, expect: '7.5' }
+        why: The price has decimals, so `float` converts it. Multiplying text by 3 would repeat it instead.
+      - requires: []
+        vary:
+          - { level: '1' }
+          - { level: '41' }
+        prompt: 'Make `message` hold the text `Next: 7`, using `level` plus 1, so it still works if `level` changes.'
+        starter: |
+          level = 6
+        solution: |
+          level = 6
+          message = f"Next: {level + 1}"
+        tests:
+          - { call: message, expect: "'Next: 7'" }
+        why: An f-string works out `level + 1` and puts it in the text. With `+`, you would need `str(level + 1)`.
 
   - type: write
     id: write-chain
@@ -178,3 +481,42 @@ cards:
       - { call: result, expect: "'pass (high)'" }
     why: >-
       These are two separate questions, so they need separate `if` statements.
+    variants:
+      - requires: [elif]
+        vary:
+          - { age: '3' }
+          - { age: '40' }
+          - { age: '18' }
+          - { age: '5' }
+        prompt: Make `ticket` hold `"free"` if `age` is under 5, `"child"` if it is under 18, and `"adult"` otherwise.
+        starter: |
+          age = 12
+        solution: |
+          age = 12
+          if age < 5:
+              ticket = "free"
+          elif age < 18:
+              ticket = "child"
+          else:
+              ticket = "adult"
+        tests:
+          - { call: ticket, expect: "'child'" }
+        why: The chain checks the smallest group first, so each later condition can rely on the earlier ones being false.
+      - vary:
+          - { n: '7' }
+          - { n: '101' }
+          - { n: '100' }
+        prompt: Make `label` hold `"even"` or `"odd"` for `n`. Then, if `n` is over 100, add `" and big"` to the end.
+        starter: |
+          n = 150
+        solution: |
+          n = 150
+          if n % 2 == 0:
+              label = "even"
+          else:
+              label = "odd"
+          if n > 100:
+              label = label + " and big"
+        tests:
+          - { call: label, expect: "'even and big'" }
+        why: Even or odd is one question, and big is another, so they need separate `if` statements.

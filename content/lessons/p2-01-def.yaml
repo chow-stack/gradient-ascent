@@ -295,7 +295,7 @@ cards:
       and the part that stays the same becomes the body.
 
 
-      Below, two lines report on two hikes. They do the same job with different values, so they turn into one function with two parameters. Now if you want to change
+      In the example, two lines report on two hikes. They do the same job with different values, so they turn into one function with two parameters. Now if you want to change
       the message, you only change it once. A clear name helps too: `report("Ridge", 12)` says what it's doing.
     code: |
       # Before: the same line twice

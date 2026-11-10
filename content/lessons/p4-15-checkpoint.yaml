@@ -19,6 +19,36 @@ cards:
     answer: '2 3'
     why: >-
       The right side uses the old values, and only then are the names updated.
+    variants:
+      - code: |
+          def stats(nums):
+              return min(nums), max(nums)
+
+          lo, hi = stats([4, 9, 1])
+          print(hi - lo)
+        choices: ['8', '5', '(1, 9)', Error]
+        answer: '8'
+        why: The function gives back one tuple, `(1, 9)`, and unpacking puts its two items into `lo` and `hi`.
+        misses:
+          {
+            '5': '`min` and `max` look at the whole list, so they are 1 and 9, not the first and last.',
+            '(1, 9)': 'Two names on the left unpack the tuple, so `lo` and `hi` are plain numbers.',
+            Error: 'Returning `a, b` gives back a tuple, and two names can unpack it.',
+          }
+      - code: |
+          point = (3, 4)
+          x, y = point
+          x = x + 10
+          print(point, x)
+        choices: ['(3, 4) 13', '(13, 4) 13', '(3, 4) 3', Error]
+        answer: (3, 4) 13
+        why: Unpacking copies each value into a new name. Changing `x` afterwards does not touch the tuple.
+        misses:
+          {
+            '(13, 4) 13': '`x` is a separate name holding 3. Tuples cannot be changed at all.',
+            '(3, 4) 3': '`x = x + 10` gives `x` a new value, 13.',
+            Error: Reassigning `x` is fine. Only changing an item inside the tuple would be an error.,
+          }
 
   - type: choice
     id: zip-silent
@@ -30,6 +60,32 @@ cards:
     answer: '6'
     why: >-
       `zip` stops at the shorter list, so the 3 is ignored.
+    variants:
+      - code: |
+          names = ["a", "b", "c"]
+          for i, n in enumerate(names, 1):
+              print(i, n, end=" ")
+        choices: [1 a 2 b 3 c, 0 a 1 b 2 c, a 1 b 2 c 3, 1 2 3]
+        answer: 1 a 2 b 3 c
+        why: '`enumerate` gives the position first and the item second, and the `1` makes it count from 1.'
+        misses:
+          {
+            0 a 1 b 2 c: 'The second argument to `enumerate` is where counting starts, here 1.',
+            a 1 b 2 c 3: '`enumerate` gives `(position, item)`, in that order.',
+            1 2 3: '`n` is also printed, the item at each position.',
+          }
+      - code: |
+          text = "abca"
+          print([a + b for a, b in zip(text, text[1:])])
+        choices: ["['ab', 'bc', 'ca']", "['ab', 'bc', 'ca', 'a']", "['aa', 'bb', 'cc']", Error]
+        answer: "['ab', 'bc', 'ca']"
+        why: '`text[1:]` is the text moved along by one, so `zip` pairs each letter with the next. It stops at the shorter one, so there are 3 pairs.'
+        misses:
+          {
+            "['ab', 'bc', 'ca', 'a']": '`zip` stops when the shorter sequence runs out, so the last letter has no partner.',
+            "['aa', 'bb', 'cc']": '`text[1:]` starts one letter later, so each letter is paired with the next one.',
+            Error: '`zip` never runs past the end. It just stops early, with no error.',
+          }
 
   - type: choice
     id: comp-filter
@@ -42,6 +98,32 @@ cards:
     answer: "['a', 'c']"
     why: >-
       Each tuple is unpacked, the filter keeps odd values of `n`, and each kept `s` goes in the new list.
+    variants:
+      - code: |
+          nums = [3, -1, 4, -2]
+          print([n if n > 0 else 0 for n in nums])
+        choices: ['[3, 0, 4, 0]', '[3, 4]', '[0, -1, 0, -2]', Error]
+        answer: '[3, 0, 4, 0]'
+        why: An `if`-`else` at the front chooses a value for every item, so nothing is dropped.
+        misses:
+          {
+            '[3, 4]': Dropping items needs an `if` at the end. An `if`-`else` at the front keeps every item.,
+            '[0, -1, 0, -2]': 'The value before `if` is used when the condition is true, so positive numbers stay.',
+            Error: An `if`-`else` at the front is allowed. An `if` alone at the front is not.,
+          }
+      - code: |
+          words = ["hi", "goat", "ok"]
+          lengths = {w: len(w) for w in words if len(w) > 2}
+          print(lengths)
+        choices: ["{'goat': 4}", "{'hi': 2, 'goat': 4, 'ok': 2}", '[4]', "{4: 'goat'}"]
+        answer: "{'goat': 4}"
+        why: 'A dict comprehension makes `key: value` pairs, and the `if` at the end keeps only words longer than 2.'
+        misses:
+          {
+            "{'hi': 2, 'goat': 4, 'ok': 2}": 'The `if` at the end filters, so short words are left out.',
+            '[4]': 'Braces with `key: value` make a dict, not a list.',
+            "{4: 'goat'}": 'The part before the colon is the key, here the word.',
+          }
 
   - type: choice
     id: late-closure
@@ -56,6 +138,46 @@ cards:
     answer: '1'
     why: >-
       A closure keeps the variable, not its value at the time, and the loop leaves `i` at 1.
+    variants:
+      - code: |
+          def make_adder(n):
+              def add(x):
+                  return x + n
+              return add
+
+          add2 = make_adder(2)
+          add5 = make_adder(5)
+          print(add2(10), add5(10))
+        choices: [12 15, 15 15, 12 12, Error]
+        answer: 12 15
+        why: Each call to `make_adder` makes a new `n`, and each inner function remembers its own.
+        misses:
+          {
+            15 15: The two calls each have their own `n`. Sharing only happens when functions are made in one loop.,
+            12 12: '`add5` was made by a separate call, with `n` as 5.',
+            Error: '`add` can still use `n` after `make_adder` returns. That is what a closure is.',
+          }
+      - code: |
+          def counter():
+              count = 0
+              def step():
+                  nonlocal count
+                  count += 1
+                  return count
+              return step
+
+          c = counter()
+          c()
+          print(c(), c())
+        choices: [2 3, 1 1, 1 2, 3 3]
+        answer: 2 3
+        why: '`nonlocal` lets `step` change the one `count` it shares. The first call made it 1, then the next two make 2 and 3.'
+        misses:
+          {
+            1 1: '`nonlocal count` means every call updates the same `count`, so it keeps growing.',
+            1 2: 'The bare `c()` call on its own line also runs, and made `count` 1.',
+            3 3: 'Each call gives back the value at that moment: 2, then 3.',
+          }
 
   - type: choice
     id: alias-class
@@ -75,6 +197,48 @@ cards:
     answer: '[1, 2]'
     why: >-
       Both objects hold the same list.
+    variants:
+      - code: |
+          class Bag:
+              def __init__(self, items=[]):
+                  self.items = items
+
+          a = Bag()
+          b = Bag()
+          a.items.append("x")
+          print(b.items)
+        choices: ["['x']", '[]', None, Error]
+        answer: "['x']"
+        why: The default `[]` is made once, when the `def` runs, so every `Bag()` without an argument shares it.
+        misses:
+          {
+            '[]': A default list is not made fresh on each call. Both objects got the same one.,
+            None: '`b.items` is the shared default list, which now holds `"x"`.',
+            Error: 'A list as a default is allowed. It is just shared, which is why it is a trap.',
+          }
+      - code: |
+          class Counter:
+              total = 0
+              def __init__(self):
+                  self.count = 0
+              def hit(self):
+                  self.count += 1
+                  Counter.total += 1
+
+          a = Counter()
+          b = Counter()
+          a.hit()
+          b.hit()
+          print(a.count, Counter.total)
+        choices: [1 2, 2 2, 1 1, 0 2]
+        answer: 1 2
+        why: '`count` is set on each object, so each has its own. `total` belongs to the class, so both hits add to it.'
+        misses:
+          {
+            2 2: '`self.count` belongs to one object. Only `a.hit()` changed `a.count`.',
+            1 1: '`Counter.total` is one value shared by the class, and both objects added to it.',
+            0 2: '`a.hit()` added 1 to `a.count`.',
+          }
 
   - type: choice
     id: eq-dunder
@@ -94,6 +258,45 @@ cards:
     answer: 'True False'
     why: >-
       `__eq__` compares values, while `is` still asks whether they're the same object.
+    variants:
+      - code: |
+          class P:
+              def __init__(self, x):
+                  self.x = x
+
+          a = P(1)
+          b = P(1)
+          print(a == b, a == a)
+        choices: [False True, True True, False False, Error]
+        answer: False True
+        why: With no `__eq__`, `==` asks whether they are the same object. `a` and `b` are two objects with equal fields.
+        misses:
+          {
+            True True: Python does not compare fields by itself. That needs an `__eq__`.,
+            False False: Any object is equal to itself.,
+            Error: 'Every object can use `==`. Without `__eq__`, it checks identity.',
+          }
+      - code: |
+          class V:
+              def __init__(self, x):
+                  self.x = x
+              def __repr__(self):
+                  return f"V({self.x})"
+              def __add__(self, other):
+                  return V(self.x + other.x)
+
+          a = V(1)
+          b = a + V(2)
+          print(a, b)
+        choices: [V(1) V(3), V(3) V(3), V(1) V(2), 1 3]
+        answer: V(1) V(3)
+        why: '`__add__` makes and gives back a new `V`, so `a` is unchanged. `print` uses `__repr__` for both.'
+        misses:
+          {
+            V(3) V(3): '`__add__` builds a new object instead of changing `self`.',
+            V(1) V(2): '`b` is the sum, 1 + 2.',
+            1 3: '`print` shows what `__repr__` gives back, `V(...)`.',
+          }
 
   - type: choice
     id: rmul-order
@@ -105,6 +308,39 @@ cards:
     answer: "`TypeError`, since `int` can't do it and there's no fallback"
     why: >-
       Python never swaps the sides by itself. It needs `__rmul__` on the right-hand object.
+    variants:
+      - prompt: '`v` is a `Vec` with `__add__` and no `__radd__`. Why does `sum([v, v])` fail?'
+        choices:
+          [
+            '`sum` starts from 0, and `0 + v` needs `__radd__`',
+            '`sum` only works on numbers',
+            '`v + v` is not allowed',
+            '`sum` needs `__len__`',
+          ]
+        answer: '`sum` starts from 0, and `0 + v` needs `__radd__`'
+        why: '`sum` begins with 0, so its first step has the number on the left. `int` cannot add a `Vec`, so Python asks the `Vec` for `__radd__`.'
+        misses:
+          {
+            '`sum` only works on numbers': '`sum` works on anything that can be added, once both sides of `0 + v` are handled.',
+            '`v + v` is not allowed': '`v + v` works through `__add__`. The problem is the very first step, `0 + v`.',
+            '`sum` needs `__len__`': '`sum` just goes through the items one at a time. It never asks for a length.',
+          }
+      - prompt: '`v` has `__sub__` and `__rsub__`. Which method runs for `10 - v`, and with what as `other`?'
+        choices:
+          [
+            '`v.__rsub__`, with `other` as 10',
+            '`v.__sub__`, with `other` as 10',
+            '`v.__rsub__`, with `other` as `v`',
+            '`int.__sub__`, which handles it',
+          ]
+        answer: '`v.__rsub__`, with `other` as 10'
+        why: '`int` cannot subtract a `v`, so Python calls `v.__rsub__(10)`. Inside it, the answer is `other - self`.'
+        misses:
+          {
+            '`v.__sub__`, with `other` as 10': '`__sub__` is for `v - 10`. With `v` on the right, it is `__rsub__`.',
+            '`v.__rsub__`, with `other` as `v`': '`self` is `v`. `other` is the number on the left, 10.',
+            '`int.__sub__`, which handles it': '`int` does not know your class. It gives up, and Python tries the right-hand object.',
+          }
 
   - type: choice
     id: forward
@@ -124,6 +360,52 @@ cards:
     answer: '7'
     why: >-
       Calling the object runs the parent's `__call__`, and `self.forward` finds the child's method.
+    variants:
+      - code: |
+          class Layer:
+              def __init__(self, w):
+                  self.w = w
+              def __call__(self, x):
+                  return self.w * x
+
+          class Net:
+              def __init__(self):
+                  self.a = Layer(2)
+                  self.b = Layer(5)
+              def __call__(self, x):
+                  return self.b(self.a(x)) + 1
+
+          print(Net()(3))
+        choices: ['31', '30', '16', Error]
+        answer: '31'
+        why: '`self.a(3)` is 6, `self.b(6)` is 30, and the `+ 1` makes 31. Calling an object runs its `__call__`.'
+        misses:
+          {
+            '30': The `+ 1` at the end of `Net.__call__` adds one more.,
+            '16': 'The layers are applied one after the other: the output of `a` goes into `b`.',
+            Error: 'An object with `__call__` can be called like a function, so `self.a(x)` works.',
+          }
+      - code: |
+          class Animal:
+              def speak(self):
+                  return "..."
+              def greet(self):
+                  return "I say " + self.speak()
+
+          class Goat(Animal):
+              def speak(self):
+                  return "baa"
+
+          print(Goat().greet(), Animal().greet())
+        choices: [I say baa I say ..., I say ... I say ..., I say baa I say baa, Error]
+        answer: I say baa I say ...
+        why: "`greet` comes from `Animal`, but `self` is whatever object it was called on. For a `Goat`, `self.speak()` finds the goat's method."
+        misses:
+          {
+            I say ... I say ...: "`self` inside `greet` is the `Goat`, so `self.speak` uses the child's version.",
+            I say baa I say baa: A plain `Animal` has only its own `speak`.,
+            Error: '`Goat` inherits `greet`, so it can call it.',
+          }
 
   - type: choice
     id: try-order
@@ -139,6 +421,57 @@ cards:
     answer: 'caught'
     why: >-
       The error jumps straight to the `except`, skipping the rest of the `try`.
+    variants:
+      - code: |
+          def safe_div(a, b):
+              try:
+                  return a / b
+              except ZeroDivisionError:
+                  return None
+
+          print(safe_div(6, 3), safe_div(1, 0))
+        choices: [2.0 None, 2 None, 2.0 0, Error]
+        answer: 2.0 None
+        why: The first call works and gives 2.0. The second raises `ZeroDivisionError`, and the `except` gives back `None`.
+        misses:
+          {
+            2 None: '`/` always gives a float.',
+            2.0 0: 'The `except` block gives back `None`, not 0.',
+            Error: 'The error happens inside the `try`, so the matching `except` catches it.',
+          }
+      - code: |
+          try:
+              x = [1, 2][5]
+          except ValueError:
+              print("value")
+          except IndexError:
+              print("index")
+          print("done")
+        choices:
+          - |-
+            index
+            done
+          - |-
+            value
+            done
+          - index
+          - |-
+            value
+            index
+            done
+        answer: |-
+          index
+          done
+        why: Position 5 does not exist, which is an `IndexError`. Python runs the first `except` that matches, then carries on after the `try`.
+        misses: { ? 'value
+
+              done'
+            : 'Only an `except` that names the right kind of error catches it, and this is an `IndexError`.', index: 'Once the error is caught, the program carries on, so `done` is shown.', ? 'value
+
+              index
+
+              done'
+            : 'At most one `except` block runs, the first one that matches.' }
 
   - type: fix
     id: fix-init
@@ -170,6 +503,56 @@ cards:
       - { call: 'Net(2)(3)', expect: '6' }
     why: >-
       The child's `__init__` replaces the parent's, so call `super().__init__()` yourself.
+    variants:
+      - prompt: '`Dog("Rex").describe()` should give back `"Rex barks"`, but it crashes. Fix it.'
+        code: |
+          class Pet:
+              def __init__(self, name):
+                  self.name = name
+
+          class Dog(Pet):
+              def __init__(self, name):
+                  self.sound = "barks"
+
+              def describe(self):
+                  return self.name + " " + self.sound
+        solution: |
+          class Pet:
+              def __init__(self, name):
+                  self.name = name
+
+          class Dog(Pet):
+              def __init__(self, name):
+                  super().__init__(name)
+                  self.sound = "barks"
+
+              def describe(self):
+                  return self.name + " " + self.sound
+        tests:
+          - { call: Dog("Rex").describe(), expect: "'Rex barks'" }
+          - { call: Dog("Bo").describe(), expect: "'Bo barks'", hidden: true }
+        why: "`Dog.__init__` replaced `Pet.__init__`, so `self.name` was never set. `super().__init__(name)` runs the parent's too."
+      - prompt: '`Money(5) + Money(3)` should give back a new `Money` whose `amount` is 8, without changing either one. Fix `__add__`.'
+        code: |
+          class Money:
+              def __init__(self, amount):
+                  self.amount = amount
+
+              def __add__(self, other):
+                  self.amount += other.amount
+                  return self
+        solution: |
+          class Money:
+              def __init__(self, amount):
+                  self.amount = amount
+
+              def __add__(self, other):
+                  return Money(self.amount + other.amount)
+        tests:
+          - { call: (Money(5) + Money(3)).amount, expect: '8' }
+          - { call: '(lambda a: (a + Money(3), a.amount)[1])(Money(5))', expect: '5' }
+          - { call: (Money(1) + Money(1)).amount, expect: '2', hidden: true }
+        why: An operator should give back a new object. Changing `self` means `a + b` quietly changes `a` too.
 
   - type: fix
     id: fix-mutation
@@ -191,6 +574,38 @@ cards:
       - { call: 'normalize([3, 5])', expect: '[0.375, 0.625]', hidden: true }
     why: >-
       A parameter names the caller's list, so assigning to `nums[i]` changes it. A comprehension makes a new list.
+    variants:
+      - prompt: '`clipped` should give back a new list where every number above `limit` becomes `limit`, and leave its input alone. Fix it.'
+        code: |
+          def clipped(nums, limit):
+              for i in range(len(nums)):
+                  if nums[i] > limit:
+                      nums[i] = limit
+              return nums
+        solution: |
+          def clipped(nums, limit):
+              return [min(n, limit) for n in nums]
+        tests:
+          - { call: 'clipped([1, 9, 4], 5)', expect: '[1, 5, 4]' }
+          - { call: '(lambda a: (clipped(a, 5), a)[1])([1, 9])', expect: '[1, 9]', hidden: true }
+          - { call: 'clipped([7, 8], 2)', expect: '[2, 2]', hidden: true }
+        why: The parameter names the caller's list, so assigning to `nums[i]` changed it. A comprehension builds a new one.
+      - prompt: '`with_bias` should give back a new list with `1` added at the end, and leave `x` alone. Fix it.'
+        code: |
+          def with_bias(x):
+              out = x
+              out.append(1)
+              return out
+        solution: |
+          def with_bias(x):
+              out = x[:]
+              out.append(1)
+              return out
+        tests:
+          - { call: 'with_bias([4, 5])', expect: '[4, 5, 1]' }
+          - { call: '(lambda a: (with_bias(a), a)[1])([4, 5])', expect: '[4, 5]', hidden: true }
+          - { call: 'with_bias([])', expect: '[1]', hidden: true }
+        why: "`out = x` is a second name for the same list. A copy, `x[:]` or `x + []`, keeps the caller's list as it was."
 
   - type: write
     id: write-vocab
@@ -207,6 +622,32 @@ cards:
       - { call: 'encode("", {})', expect: '[]' }
     why: >-
       A comprehension with a dict lookup does it.
+    variants:
+      - prompt: 'Write `decode(ids, itos)`, which turns a list of numbers back into text using the dict `itos`, which maps numbers to characters. So `decode([1, 0], {0: "a", 1: "b"})` gives back `"ba"`.'
+        starter: |
+          def decode(ids, itos):
+              # Your code here
+        solution: |
+          def decode(ids, itos):
+              return "".join(itos[i] for i in ids)
+        tests:
+          - { call: 'decode([1, 0], {0: "a", 1: "b"})', expect: "'ba'" }
+          - { call: 'decode([], {})', expect: "''" }
+          - { call: 'decode([0, 0, 1], {0: "x", 1: "y"})', expect: "'xxy'", hidden: true }
+        why: Look up each number, then `join` the characters into one string.
+      - prompt: 'Write `make_vocab(text)`, which gives back a dict mapping each different character in `text` to a number, in sorted order from 0. So `make_vocab("bab")` gives back `{"a": 0, "b": 1}`.'
+        starter: |
+          def make_vocab(text):
+              # Your code here
+        solution: |
+          def make_vocab(text):
+              chars = sorted(set(text))
+              return {ch: i for i, ch in enumerate(chars)}
+        tests:
+          - { call: make_vocab("bab"), expect: "{'a': 0, 'b': 1}" }
+          - { call: make_vocab(""), expect: '{}' }
+          - { call: make_vocab("cab"), expect: "{'a': 0, 'b': 1, 'c': 2}", hidden: true }
+        why: A set removes repeats, `sorted` puts them in order, and `enumerate` numbers them for a dict comprehension.
 
   - type: write
     id: write-class
@@ -228,3 +669,43 @@ cards:
       - { call: 'Batch([1, 2])[1]', expect: '4' }
     why: >-
       `__len__` and `__getitem__` are what let `len` and square brackets work.
+    variants:
+      - prompt: Write a class `Scaler`. `Scaler(k)` stores `k`, and calling the object, `s(x)`, gives back `x * k`. Its `__repr__` gives back `Scaler(k)`, with the number, so `Scaler(3)` shows as `Scaler(3)`.
+        starter: |
+          # Write the Scaler class here
+        solution: |
+          class Scaler:
+              def __init__(self, k):
+                  self.k = k
+
+              def __call__(self, x):
+                  return x * self.k
+
+              def __repr__(self):
+                  return f"Scaler({self.k})"
+        tests:
+          - { call: Scaler(3)(4), expect: '12' }
+          - { call: repr(Scaler(3)), expect: "'Scaler(3)'" }
+          - { call: Scaler(0.5)(8), expect: '4.0', hidden: true }
+          - { call: repr(Scaler(7)), expect: "'Scaler(7)'", hidden: true }
+        why: '`__call__` is what runs when you call the object, and `__repr__` is what `print` and the console show.'
+      - prompt: Write a class `Point` with `x` and `y`. `p1 + p2` gives back a new `Point` with the sums, and `p1 == p2` is `True` when both coordinates match.
+        starter: |
+          # Write the Point class here
+        solution: |
+          class Point:
+              def __init__(self, x, y):
+                  self.x = x
+                  self.y = y
+
+              def __add__(self, other):
+                  return Point(self.x + other.x, self.y + other.y)
+
+              def __eq__(self, other):
+                  return self.x == other.x and self.y == other.y
+        tests:
+          - { call: '(Point(1, 2) + Point(3, 4)).y', expect: '6' }
+          - { call: 'Point(1, 2) == Point(1, 2)', expect: 'True' }
+          - { call: 'Point(1, 2) == Point(2, 1)', expect: 'False', hidden: true }
+          - { call: '(Point(1, 2) + Point(3, 4)).x', expect: '4', hidden: true }
+        why: '`__add__` builds a new object from both, and `__eq__` decides what `==` means for your class.'

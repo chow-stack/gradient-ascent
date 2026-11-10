@@ -354,7 +354,7 @@ cards:
       When a program surprises you, draw it. Draw each list as a box, and each name as a label pointing at a box. Then step through. Any line with `=` and a bare name moves a label. A method or an index assignment changes what's inside a box.
 
 
-      Follow the code below. After line 2 there's one box with labels `a` and `b`. Line 3 changes the box, so it holds 1 and 2. Line 4 creates a second box, a copy, labelled `c`. Line 5 changes only that box. Line 6 moves `b` to a brand new box holding 9. So at the end, `a` holds `[1, 2]`, `b` holds `[9]`, and `c` holds `[1, 2, 3]`.
+      Follow the example line by line. After line 2 there's one box with labels `a` and `b`. Line 3 changes the box, so it holds 1 and 2. Line 4 creates a second box, a copy, labelled `c`. Line 5 changes only that box. Line 6 moves `b` to a brand new box holding 9. So at the end, `a` holds `[1, 2]`, `b` holds `[9]`, and `c` holds `[1, 2, 3]`.
 
 
       That's the whole model, and there are no exceptions. Python Tutor is a free website that draws exactly these diagrams for you, if you ever want to see one.
@@ -373,7 +373,7 @@ cards:
       - { line: 3, label: 'Changes the box' }
       - { line: 4, label: 'A second box' }
       - { line: 6, label: 'Moves only the label `b`' }
-    predict: Does the output match what's described above?
+    predict: Does the output match that description?
 
   - type: write
     id: with-item

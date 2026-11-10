@@ -78,22 +78,26 @@ cards:
         answer: 'Line 12'
         why: >-
           The top step is the outermost call. The crash itself is at the bottom, on line 3.
-      - prompt: 'What kind of error is this, and what does it say is wrong?'
+      - prompt: 'What went wrong, and on which line?'
         code: |
           Traceback (most recent call last):
-            File "main.py", line 5, in <module>
-              show(4)
-            File "main.py", line 2, in show
-              print(valeu)
-          NameError: name 'valeu' is not defined
+            File "main.py", line 7, in <module>
+              print(total_cost(3))
+            File "main.py", line 4, in total_cost
+              return count * pric
+          NameError: name 'pric' is not defined
         choices:
-          - 'A NameError: `valeu` is misspelled on line 2'
-          - 'A NameError: `show` does not exist'
-          - 'A TypeError: 4 is the wrong type'
-          - 'A SyntaxError on line 5'
-        answer: 'A NameError: `valeu` is misspelled on line 2'
+          - '`pric` has no value, on line 4 inside `total_cost`'
+          - '`pric` has no value, on line 7 where `total_cost` is called'
+          - '`total_cost` has no value, on line 7'
+          - '`count` and `pric` cannot be multiplied, on line 4'
+        answer: '`pric` has no value, on line 4 inside `total_cost`'
         why: >-
-          The last line gives the type and the message, and the step above it points to the line.
+          The last line says what went wrong: no variable called `pric` exists, probably a misspelling. The step just above it says where: line 4, inside `total_cost`.
+        misses:
+          '`pric` has no value, on line 7 where `total_cost` is called': 'Line 7 is the top step, where the chain of calls started. The crash is in the step just above the error message, line 4.'
+          '`total_cost` has no value, on line 7': '`total_cost` was found and called, since the traceback goes inside it. The name that is missing is the one in the message, `pric`.'
+          '`count` and `pric` cannot be multiplied, on line 4': 'That would be a `TypeError`. A `NameError` means Python never got as far as multiplying, because it could not find `pric`.'
 
   - type: learn
     id: real-cause
@@ -102,7 +106,7 @@ cards:
       The traceback tells you where Python got stuck, and that's different from where you made the mistake. Very often, the line that crashed is fine, and it was given a bad value by something earlier.
 
 
-      Below, `shout` crashes, but `shout` is correct. The real bug is in `get_name`, which printed its result rather than returning it. So `get_name` gave back `None`, and that travelled along until something tried to use it.
+      In the example, `shout` crashes, but `shout` is correct. The real bug is in `get_name`, which printed its result rather than returning it. So `get_name` gave back `None`, and that travelled along until something tried to use it.
 
 
       So after you've found the crash, ask: what values did this line have, and are they what I expected? If not, where did they come from? Follow the trail upwards through the traceback, and back through earlier lines. The `NoneType` here is a big clue: it nearly always means a missing `return`.
@@ -270,13 +274,13 @@ cards:
     label: Worked example
     title: Debugging from start to finish
     body: >-
-      Here's the whole process on a real bug. A function should give the percentage of vowels in some text. Run it and you get `ZeroDivisionError` from inside `percent`.
+      The example is a bug that has already been fixed. `vowel_share` gives the percentage of vowels in some text. Before the fix, lines 5 and 6 weren't there, and `vowel_share("")` crashed with a `ZeroDivisionError` inside `percent`. Here's how the traceback led to the fix.
 
 
-      Step 1: read the bottom. Division by zero, in `percent`, so `whole` must be 0. Step 2: go up. `whole` came from `vowel_share`, which passes `len(text)`. So `text` must be empty. Step 3: is that the bug? `percent` is fine. An empty string is a valid input, and `vowel_share` doesn't handle it. Step 4: fix it there, with a guard.
+      Step 1: read the bottom. Division by zero on line 2, in `percent`, so `whole` must have been 0. Step 2: go up one step. `whole` came from line 11, where `vowel_share` passes `len(text)`. So `text` must have been empty. Step 3: is that the bug? `percent` is fine. An empty string is a valid input, and `vowel_share` didn't handle it. Step 4: fix it there, with the guard on lines 5 and 6.
 
 
-      Notice what we didn't do. We didn't change things at random, and we didn't start by rereading all the code. The traceback told us where to look, and each step was just a question about one value. The corrected version is below.
+      Notice what we didn't do. We didn't change things at random, and we didn't start by rereading all the code. The traceback told us where to look, and each step was just a question about one value.
     code: |
       def percent(part, whole):
           return part / whole * 100

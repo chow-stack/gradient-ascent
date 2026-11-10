@@ -31,7 +31,7 @@ cards:
       accurate for the same `h`. The step between the two points is `2 * h`, so that's what you divide by.
 
 
-      Here the true slope of `x ** 3` at 2 is 12. The one-sided nudge is off in the third decimal place. The central one is off in the sixth.
+      In the example, the true slope of `x ** 3` at 2 is 12. The one-sided nudge is off in the third decimal place. The central one is off in the sixth.
     code: |
       def f(x):
           return x ** 3
@@ -179,7 +179,7 @@ cards:
     label: Worked example
     title: Catching a planted bug
     body: >-
-      Here's the full check on the line-fitting gradient from last lesson, with a bug planted: `db` is missing its 2. Nudge the loss both ways for `w`, then
+      The example runs the full check on the line-fitting gradient from last lesson, with a bug planted: `db` is missing its 2. Nudge the loss both ways for `w`, then
       for `b`, and compare each with the formula.
 
 

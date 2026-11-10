@@ -380,10 +380,10 @@ cards:
     label: Worked example
     title: Finding a bug that doesn't crash
     body: >-
-      Here's a realistic debugging session. A function works out how accurate a model is, and it reports 100%, which is suspicious. There's no error, so a traceback can't help. What do you do?
+      The example is a realistic debugging session. A function works out how accurate a model is, and it reports 100%, which is suspicious. There's no error, so a traceback can't help. What do you do?
 
 
-      First, add checks for what you believe to be true. Should `preds` and `labels` be the same length? Add an `assert` and find out. Here it fails, and the message shows 2 and 4. That tells you that half the labels aren't being compared.
+      First, add checks for what you believe to be true. Should `preds` and `labels` be the same length? Add an `assert` and find out. In the example it fails, and the message shows 2 and 4. That tells you that half the labels aren't being compared.
 
 
       Then look at the cause. The list of predictions was cut short somewhere earlier, and `zip` hid it. After you've fixed that, the `assert` stays in place. It costs almost nothing, and it'll catch the same bug next time. Good ML code is full of checks like this.
